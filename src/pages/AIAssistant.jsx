@@ -145,7 +145,7 @@ export default function AIAssistant() {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || sending) return;
+    if (!input.trim() || sending || !businessData) return;
 
     const userMessage = { role: 'user', content: input, timestamp: new Date().toISOString() };
     const newMessages = [...messages, userMessage];
@@ -351,17 +351,21 @@ ${businessData.products.slice(0, 20).map(p => `${p.brand} ${p.model}: ${p.stock}
               />
               <Button 
                 onClick={sendMessage} 
-                disabled={sending || !input.trim() || !activeChat}
+                disabled={sending || !input.trim() || !activeChat || !businessData}
                 className="bg-indigo-600 hover:bg-indigo-700"
               >
                 {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
               </Button>
             </div>
-            {!activeChat && (
+            {!activeChat ? (
               <p className="text-sm text-slate-500 mt-2 text-center">
                 Создайте новый чат, чтобы начать разговор
               </p>
-            )}
+            ) : !businessData ? (
+              <p className="text-sm text-amber-500 mt-2 text-center">
+                Загрузка данных бизнеса...
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
