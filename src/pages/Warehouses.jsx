@@ -298,7 +298,11 @@ export default function Warehouses() {
                     const value = (product.boxes_in_stock || 0) * (product.sale_price || 0);
                     
                     return (
-                      <tr key={product.id} className="hover:bg-slate-50">
+                      <tr 
+                        key={product.id} 
+                        className="hover:bg-slate-50 cursor-pointer"
+                        onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + product.id}
+                      >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             {product.photo_url ? (

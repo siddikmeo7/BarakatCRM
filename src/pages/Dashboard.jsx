@@ -18,7 +18,8 @@ import {
   Plus,
   ArrowRight,
   Warehouse,
-  Users
+  Users,
+  LayoutDashboard
 } from 'lucide-react';
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 
