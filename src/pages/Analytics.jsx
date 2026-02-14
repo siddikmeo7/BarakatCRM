@@ -178,17 +178,27 @@ export default function Analytics() {
         {/* Sales Type Chart */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <h3 className="font-semibold text-slate-900 mb-4">Наличные vs В долг</h3>
-          <SalesTypeChart sales={filteredSales} />
-          <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-100">
-            <div>
-              <p className="text-sm text-slate-500">Наличные</p>
-              <p className="text-xl font-bold text-emerald-600">{cashPercent}%</p>
-              <p className="text-xs text-slate-500">{cashSales.length} продаж</p>
+          <div className="h-64">
+            <SalesTypeChart sales={filteredSales} />
+          </div>
+          <div className="grid grid-cols-2 gap-6 mt-6 pt-6 border-t border-slate-100">
+            <div className="text-center p-4 bg-emerald-50 rounded-xl">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                <p className="text-sm font-medium text-slate-600">Наличные</p>
+              </div>
+              <p className="text-3xl font-bold text-emerald-600">{cashPercent}%</p>
+              <p className="text-sm text-slate-500 mt-1">{cashSales.length} продаж</p>
+              <p className="text-lg font-semibold text-slate-900 mt-2">{cashAmount.toLocaleString()} с.</p>
             </div>
-            <div>
-              <p className="text-sm text-slate-500">В долг</p>
-              <p className="text-xl font-bold text-amber-600">{debtPercent}%</p>
-              <p className="text-xs text-slate-500">{debtSales.length} продаж</p>
+            <div className="text-center p-4 bg-amber-50 rounded-xl">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="w-3 h-3 rounded-full bg-amber-500" />
+                <p className="text-sm font-medium text-slate-600">В долг</p>
+              </div>
+              <p className="text-3xl font-bold text-amber-600">{debtPercent}%</p>
+              <p className="text-sm text-slate-500 mt-1">{debtSales.length} продаж</p>
+              <p className="text-lg font-semibold text-slate-900 mt-2">{debtAmount.toLocaleString()} с.</p>
             </div>
           </div>
         </div>

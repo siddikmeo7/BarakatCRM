@@ -497,7 +497,7 @@ export default function Sales() {
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={saving || !formData.product_id || (formData.is_debt && !formData.customer_id)}
+              disabled={saving || !formData.product_id || formData.boxes_sold < 1 || (formData.is_debt && !formData.customer_id)}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Продать'}

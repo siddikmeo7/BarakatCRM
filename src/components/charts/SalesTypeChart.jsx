@@ -17,38 +17,29 @@ export default function SalesTypeChart({ sales }) {
   const COLORS = ['#10b981', '#f59e0b'];
 
   return (
-    <div className="space-y-4">
-      <ResponsiveContainer width="100%" height={200}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={80}
-            fill="#8884d8"
-            paddingAngle={5}
-            dataKey="value"
-            label={({ percent }) => `${percent}%`}
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip formatter={(value) => value.toLocaleString() + ' с.'} />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="grid grid-cols-2 gap-4">
-        {data.map((item, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i] }} />
-            <div>
-              <p className="text-xs text-slate-500">{item.name}</p>
-              <p className="font-semibold text-slate-900">{item.value.toLocaleString()} с.</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          innerRadius={70}
+          outerRadius={100}
+          fill="#8884d8"
+          paddingAngle={5}
+          dataKey="value"
+          label={({ name, percent }) => `${name}: ${percent}%`}
+          labelLine={true}
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip 
+          formatter={(value) => value.toLocaleString() + ' с.'} 
+          contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
   );
 }

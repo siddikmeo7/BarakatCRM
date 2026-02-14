@@ -33,6 +33,7 @@ export default function Debts() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [filterCustomer, setFilterCustomer] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all'); // all, paid, unpaid
   const [paymentAmount, setPaymentAmount] = useState('');
   const [selectedCustomerHistory, setSelectedCustomerHistory] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -124,11 +125,19 @@ export default function Debts() {
   const filteredSales = sales.filter(sale => {
     const customer = customers.find(c => c.id === sale.customer_id);
     const product = products.find(p => p.id === sale.product_id);
+    const paidAmount = getSalePaidAmount(sale.id);
+    const remaining = (sale.total_amount || 0) - paidAmount;
+    const isPaid = remaining <= 0;
+    
     const matchesSearch = 
       customer?.name?.toLowerCase().includes(search.toLowerCase()) ||
       product?.brand?.toLowerCase().includes(search.toLowerCase());
     const matchesCustomer = filterCustomer === 'all' || sale.customer_id === filterCustomer;
-    return matchesSearch && matchesCustomer;
+    const matchesStatus = filterStatus === 'all' || 
+      (filterStatus === 'paid' && isPaid) || 
+      (filterStatus === 'unpaid' && !isPaid);
+    
+    return matchesSearch && matchesCustomer && matchesStatus;
   });
 
   // Итоги
@@ -201,6 +210,16 @@ export default function Debts() {
               {customers.map(customer => (
                 <SelectItem key={customer.id} value={customer.id}>{customer.name}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Статус" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все</SelectItem>
+              <SelectItem value="unpaid">Не погашено</SelectItem>
+              <SelectItem value="paid">Погашено</SelectItem>
             </SelectContent>
           </Select>
         </div>

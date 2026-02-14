@@ -18,7 +18,8 @@ import {
   CheckCircle,
   MessageCircle,
   Mail,
-  Bell
+  Bell,
+  Edit2
 } from 'lucide-react';
 
 const LANGUAGES = [
@@ -58,6 +59,10 @@ export default function Settings() {
   });
   const [newColor, setNewColor] = useState('');
   const [newProductType, setNewProductType] = useState('');
+  const [editingColor, setEditingColor] = useState(null);
+  const [editingType, setEditingType] = useState(null);
+  const [editColorDialog, setEditColorDialog] = useState(false);
+  const [editTypeDialog, setEditTypeDialog] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -515,6 +520,15 @@ export default function Settings() {
                     <div key={i} className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-2">
                       <span className="text-sm">{color}</span>
                       <button
+                        onClick={() => {
+                          setEditingColor({ index: i, value: color });
+                          setEditColorDialog(true);
+                        }}
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      <button
                         onClick={async () => {
                           const updatedColors = business.custom_colors.filter((_, idx) => idx !== i);
                           await base44.entities.Business.update(business.id, { custom_colors: updatedColors });
@@ -557,6 +571,15 @@ export default function Settings() {
                     <div key={i} className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-2">
                       <span className="text-sm">{type}</span>
                       <button
+                        onClick={() => {
+                          setEditingType({ index: i, value: type });
+                          setEditTypeDialog(true);
+                        }}
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      <button
                         onClick={async () => {
                           const updatedTypes = business.custom_product_types.filter((_, idx) => idx !== i);
                           await base44.entities.Business.update(business.id, { custom_product_types: updatedTypes });
@@ -597,6 +620,76 @@ export default function Settings() {
           )}
         </Button>
       </div>
+
+      {/* Edit Color Dialog */}
+      <Dialog open={editColorDialog} onOpenChange={setEditColorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Редактировать цвет</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label>Название цвета</Label>
+            <Input
+              value={editingColor?.value || ''}
+              onChange={(e) => setEditingColor({ ...editingColor, value: e.target.value })}
+              className="mt-1.5"
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setEditColorDialog(false)}>
+              Отмена
+            </Button>
+            <Button
+              onClick={async () => {
+                if (editingColor?.value.trim()) {
+                  const updatedColors = [...business.custom_colors];
+                  updatedColors[editingColor.index] = editingColor.value.trim();
+                  await base44.entities.Business.update(business.id, { custom_colors: updatedColors });
+                  await loadData();
+                  setEditColorDialog(false);
+                }
+              }}
+            >
+              Сохранить
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Type Dialog */}
+      <Dialog open={editTypeDialog} onOpenChange={setEditTypeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Редактировать тип товара</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label>Название типа</Label>
+            <Input
+              value={editingType?.value || ''}
+              onChange={(e) => setEditingType({ ...editingType, value: e.target.value })}
+              className="mt-1.5"
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setEditTypeDialog(false)}>
+              Отмена
+            </Button>
+            <Button
+              onClick={async () => {
+                if (editingType?.value.trim()) {
+                  const updatedTypes = [...business.custom_product_types];
+                  updatedTypes[editingType.index] = editingType.value.trim();
+                  await base44.entities.Business.update(business.id, { custom_product_types: updatedTypes });
+                  await loadData();
+                  setEditTypeDialog(false);
+                }
+              }}
+            >
+              Сохранить
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
