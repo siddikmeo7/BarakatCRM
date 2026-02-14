@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SearchableSelect from '@/components/search/SearchableSelect';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Plus, 
@@ -18,8 +19,8 @@ import {
   Filter
 } from 'lucide-react';
 
-const PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
-const COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый', 'Другой'];
+const BASE_PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
+const BASE_COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый', 'Другой'];
 
 export default function Products() {
   const [business, setBusiness] = useState(null);
@@ -171,6 +172,10 @@ export default function Products() {
     }
   };
 
+  // Все типы и цвета (базовые + кастомные)
+  const allProductTypes = [...BASE_PRODUCT_TYPES, ...(business?.custom_product_types || [])];
+  const allColors = [...BASE_COLORS, ...(business?.custom_colors || [])];
+
   // Фильтрация
   const filteredProducts = products.filter(product => {
     const matchesSearch = 
@@ -222,7 +227,7 @@ export default function Products() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Все типы</SelectItem>
-              {PRODUCT_TYPES.map(type => (
+              {allProductTypes.map(type => (
                 <SelectItem key={type} value={type}>{type}</SelectItem>
               ))}
             </SelectContent>
@@ -390,32 +395,20 @@ export default function Products() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Тип товара</Label>
-                <Select value={formData.product_type} onValueChange={(v) => setFormData({ ...formData, product_type: v })}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRODUCT_TYPES.map(type => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Цвет</Label>
-                <Select value={formData.color} onValueChange={(v) => setFormData({ ...formData, color: v })}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COLORS.map(color => (
-                      <SelectItem key={color} value={color}>{color}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <SearchableSelect
+                label="Тип товара"
+                options={allProductTypes}
+                value={formData.product_type}
+                onChange={(v) => setFormData({ ...formData, product_type: v })}
+                placeholder="Поиск типа..."
+              />
+              <SearchableSelect
+                label="Цвет"
+                options={allColors}
+                value={formData.color}
+                onChange={(v) => setFormData({ ...formData, color: v })}
+                placeholder="Поиск цвета..."
+              />
             </div>
 
             <div className="grid grid-cols-3 gap-4">
@@ -486,18 +479,54 @@ export default function Products() {
             </div>
 
             {warehouses.length > 0 && (
-              <div>
-                <Label>Склад</Label>
-                <Select value={formData.warehouse_id} onValueChange={(v) => setFormData({ ...formData, warehouse_id: v })}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue placeholder="Выберите склад" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {warehouses.map(wh => (
-                      <SelectItem key={wh.id} value={wh.id}>{wh.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <SearchableSelect
+                label="Склад"
+                options={warehouses.map(w => w.name)}
+                value={warehouses.find(w => w.id === formData.warehouse_id)?.name || ''}
+                onChange={(name) => {
+                  const wh = warehouses.find(w => w.name === name);
+                  setFormData({ ...formData, warehouse_id: wh?.id || '' });
+                }}
+                placeholder="Поиск склада..."
+              />
+            )}
+            
+            {/* Auto Calculations */}
+            {selectedProduct && formData.boxes_in_stock > 0 && (
+              <div className="p-4 bg-indigo-50 rounded-xl">
+                <h4 className="font-semibold text-slate-900 mb-3">Автоматический расчёт</h4>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-sm text-slate-500">Коробок</p>
+                    <p className="text-xl font-bold text-indigo-600">{formData.boxes_in_stock}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Пар</p>
+                    <p className="text-xl font-bold text-slate-700">
+                      {formData.boxes_in_stock * (formData.pairs_per_box || 6)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Штук</p>
+                    <p className="text-xl font-bold text-slate-700">
+                      {formData.boxes_in_stock * (formData.pairs_per_box || 6) * 2}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-indigo-200">
+                  <div>
+                    <p className="text-sm text-slate-500">Общая стоимость</p>
+                    <p className="text-lg font-bold text-slate-900">
+                      {(formData.boxes_in_stock * (parseFloat(formData.sale_price) || 0)).toLocaleString()} с.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Прибыль</p>
+                    <p className="text-lg font-bold text-emerald-600">
+                      {(formData.boxes_in_stock * ((parseFloat(formData.sale_price) || 0) - (parseFloat(formData.purchase_price) || 0))).toLocaleString()} с.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>

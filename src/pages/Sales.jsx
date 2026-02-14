@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
 import { 
   Plus, 
   ShoppingCart, 
@@ -480,21 +481,13 @@ export default function Sales() {
             </div>
 
             {formData.is_debt && (
-              <div>
-                <Label>Клиент *</Label>
-                <Select value={formData.customer_id} onValueChange={(v) => setFormData({ ...formData, customer_id: v })}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue placeholder="Выберите клиента" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map(customer => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name} ({customer.phone})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <CustomerSearchSelect
+                customers={customers}
+                value={formData.customer_id}
+                onChange={(v) => setFormData({ ...formData, customer_id: v })}
+                businessId={business.id}
+                onCustomerAdded={loadData}
+              />
             )}
           </div>
 

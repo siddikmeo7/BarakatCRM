@@ -56,6 +56,8 @@ export default function Settings() {
     phone: '',
     role: 'Менеджер'
   });
+  const [newColor, setNewColor] = useState('');
+  const [newProductType, setNewProductType] = useState('');
 
   useEffect(() => {
     loadData();
@@ -158,8 +160,12 @@ export default function Settings() {
             Сотрудники
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
-            <SettingsIcon className="w-4 h-4" />
+            <Bell className="w-4 h-4" />
             Уведомления
+          </TabsTrigger>
+          <TabsTrigger value="custom" className="gap-2">
+            <Palette className="w-4 h-4" />
+            Кастомные поля
           </TabsTrigger>
         </TabsList>
 
@@ -470,6 +476,99 @@ export default function Settings() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Custom Fields */}
+        <TabsContent value="custom">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">Кастомные поля</h3>
+            
+            <div className="space-y-6 max-w-2xl">
+              {/* Custom Colors */}
+              <div>
+                <h4 className="font-medium text-slate-900 mb-3">Дополнительные цвета</h4>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    value={newColor}
+                    onChange={(e) => setNewColor(e.target.value)}
+                    placeholder="Например: Золотой"
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={async () => {
+                      if (newColor.trim()) {
+                        const updatedColors = [...(business.custom_colors || []), newColor.trim()];
+                        await base44.entities.Business.update(business.id, { custom_colors: updatedColors });
+                        await loadData();
+                        setNewColor('');
+                      }
+                    }}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(business?.custom_colors || []).map((color, i) => (
+                    <div key={i} className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-2">
+                      <span className="text-sm">{color}</span>
+                      <button
+                        onClick={async () => {
+                          const updatedColors = business.custom_colors.filter((_, idx) => idx !== i);
+                          await base44.entities.Business.update(business.id, { custom_colors: updatedColors });
+                          await loadData();
+                        }}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Product Types */}
+              <div>
+                <h4 className="font-medium text-slate-900 mb-3">Дополнительные типы товара</h4>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    value={newProductType}
+                    onChange={(e) => setNewProductType(e.target.value)}
+                    placeholder="Например: Кроссовки"
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={async () => {
+                      if (newProductType.trim()) {
+                        const updatedTypes = [...(business.custom_product_types || []), newProductType.trim()];
+                        await base44.entities.Business.update(business.id, { custom_product_types: updatedTypes });
+                        await loadData();
+                        setNewProductType('');
+                      }
+                    }}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(business?.custom_product_types || []).map((type, i) => (
+                    <div key={i} className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-2">
+                      <span className="text-sm">{type}</span>
+                      <button
+                        onClick={async () => {
+                          const updatedTypes = business.custom_product_types.filter((_, idx) => idx !== i);
+                          await base44.entities.Business.update(business.id, { custom_product_types: updatedTypes });
+                          await loadData();
+                        }}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

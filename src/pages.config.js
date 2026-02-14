@@ -59,6 +59,7 @@ import Sales from './pages/Sales';
 import Settings from './pages/Settings';
 import Warehouses from './pages/Warehouses';
 import Returns from './pages/Returns';
+import Analytics from './pages/Analytics';
 import __Layout from './Layout.jsx';
 
 
@@ -75,6 +76,7 @@ export const PAGES = {
     "Settings": Settings,
     "Warehouses": Warehouses,
     "Returns": Returns,
+    "Analytics": Analytics,
 }
 
 export const pagesConfig = {
