@@ -5,6 +5,8 @@ import { createPageUrl } from '@/utils';
 import PageHeader from '@/components/ui/PageHeader';
 import StatCard from '@/components/ui/StatCard';
 import DateFilter from '@/components/filters/DateFilter';
+import SalesChart from '@/components/charts/SalesChart';
+import SalesTypeChart from '@/components/charts/SalesTypeChart';
 import { Button } from '@/components/ui/button';
 import { 
   Package, 
@@ -26,6 +28,7 @@ export default function Dashboard() {
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [widgets, setWidgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
@@ -45,17 +48,19 @@ export default function Dashboard() {
         const biz = businesses[0];
         setBusiness(biz);
         
-        const [salesData, productsData, warehousesData, customersData] = await Promise.all([
+        const [salesData, productsData, warehousesData, customersData, widgetsData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
           base44.entities.Warehouse.filter({ business_id: biz.id }),
-          base44.entities.Customer.filter({ business_id: biz.id })
+          base44.entities.Customer.filter({ business_id: biz.id }),
+          base44.entities.DashboardWidget.filter({ business_id: biz.id })
         ]);
         
         setSales(salesData);
         setProducts(productsData);
         setWarehouses(warehousesData);
         setCustomers(customersData);
+        setWidgets(widgetsData.filter(w => w.is_visible).sort((a, b) => a.position - b.position));
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -79,6 +84,13 @@ export default function Dashboard() {
   const totalProfit = filteredSales.reduce((sum, s) => sum + (s.profit || 0), 0);
   const totalStock = products.reduce((sum, p) => sum + (p.boxes_in_stock || 0), 0);
   const totalDebt = customers.reduce((sum, c) => sum + (c.total_debt || 0), 0);
+  
+  // Наличные vs Долг
+  const cashSales = filteredSales.filter(s => !s.is_debt);
+  const debtSales = filteredSales.filter(s => s.is_debt);
+  const cashAmount = cashSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const debtAmount = debtSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const totalSalesValue = cashAmount + debtAmount;
 
   // Топ товары
   const productSales = {};
@@ -113,12 +125,20 @@ export default function Dashboard() {
         title="Главная"
         subtitle={`Добро пожаловать, ${business?.name}`}
         actions={
-          <Link to={createPageUrl('Sales')}>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-              <Plus className="w-4 h-4" />
-              Новая продажа
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link to={createPageUrl('CustomizeDashboard')}>
+              <Button variant="outline" className="gap-2">
+                <LayoutDashboard className="w-4 h-4" />
+                Настроить
+              </Button>
+            </Link>
+            <Link to={createPageUrl('Sales')}>
+              <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+                <Plus className="w-4 h-4" />
+                Новая продажа
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -127,74 +147,75 @@ export default function Dashboard() {
         <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
       </div>
 
-      {/* Main Stats */}
+      {/* Dynamic Widgets */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Продажи"
-          value={totalRevenue.toLocaleString()}
-          subtitle="сомони"
-          icon={ShoppingCart}
-          iconBg="bg-blue-100"
-          iconColor="text-blue-600"
-        />
-        <StatCard
-          title="Прибыль"
-          value={totalProfit.toLocaleString()}
-          subtitle="сомони"
-          icon={TrendingUp}
-          iconBg="bg-emerald-100"
-          iconColor="text-emerald-600"
-        />
-        <StatCard
-          title="Коробок продано"
-          value={totalBoxes}
-          icon={Box}
-          iconBg="bg-purple-100"
-          iconColor="text-purple-600"
-        />
-        <StatCard
-          title="Пар продано"
-          value={totalPairs}
-          icon={Layers}
-          iconBg="bg-amber-100"
-          iconColor="text-amber-600"
-        />
+        {(widgets.length === 0 ? ['sales', 'profit', 'boxes', 'stock'] : widgets.filter(w => ['sales', 'profit', 'boxes', 'pairs', 'stock', 'debt', 'customers'].includes(w.widget_type))).map((widget) => {
+          const widgetType = typeof widget === 'string' ? widget : widget.widget_type;
+          
+          const widgetConfigs = {
+            sales: { title: 'Продажи', value: totalRevenue.toLocaleString(), subtitle: 'сомони', icon: ShoppingCart, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
+            profit: { title: 'Прибыль', value: totalProfit.toLocaleString(), subtitle: 'сомони', icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+            boxes: { title: 'Коробок продано', value: totalBoxes, icon: Box, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
+            pairs: { title: 'Пар продано', value: totalPairs, icon: Layers, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+            stock: { title: 'Товаров на складе', value: `${totalStock} коробок`, icon: Warehouse, iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
+            debt: { title: 'Долги клиентов', value: totalDebt.toLocaleString(), subtitle: 'сомони', icon: Users, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
+            customers: { title: 'Всего клиентов', value: customers.length, icon: Users, iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' }
+          };
+          
+          const config = widgetConfigs[widgetType];
+          if (!config) return null;
+          
+          return <StatCard key={widgetType} {...config} />;
+        })}
       </div>
 
-      {/* Secondary Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Штук продано"
-          value={totalItems}
-          icon={Hash}
-          iconBg="bg-rose-100"
-          iconColor="text-rose-600"
-        />
-        <StatCard
-          title="Товаров на складе"
-          value={`${totalStock} коробок`}
-          icon={Warehouse}
-          iconBg="bg-cyan-100"
-          iconColor="text-cyan-600"
-        />
-        <StatCard
-          title="Долги клиентов"
-          value={totalDebt.toLocaleString()}
-          subtitle="сомони"
-          icon={Users}
-          iconBg="bg-orange-100"
-          iconColor="text-orange-600"
-        />
-        <StatCard
-          title="Всего товаров"
-          value={products.length}
-          icon={Package}
-          iconBg="bg-indigo-100"
-          iconColor="text-indigo-600"
-        />
-      </div>
+      {/* Charts & Analytics */}
+      {(widgets.length === 0 || widgets.some(w => ['chart_sales', 'sales_type'].includes(w.widget_type))) && (
+        <div className="grid lg:grid-cols-2 gap-6">
+          {(widgets.length === 0 || widgets.some(w => w.widget_type === 'chart_sales')) && (
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+              <h3 className="font-semibold text-slate-900 mb-4">Динамика продаж</h3>
+              <SalesChart sales={filteredSales} days={7} />
+            </div>
+          )}
+          
+          {(widgets.length === 0 || widgets.some(w => w.widget_type === 'sales_type')) && (
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+              <h3 className="font-semibold text-slate-900 mb-4">Наличные vs В долг</h3>
+              <div className="h-64">
+                <SalesTypeChart sales={filteredSales} />
+              </div>
+              <div className="grid grid-cols-2 gap-6 mt-6 pt-6 border-t border-slate-100">
+                <div className="text-center p-4 bg-emerald-50 rounded-xl">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                    <p className="text-sm font-medium text-slate-600">Наличные</p>
+                  </div>
+                  <p className="text-3xl font-bold text-emerald-600">
+                    {totalSalesValue ? ((cashAmount / totalSalesValue) * 100).toFixed(1) : 0}%
+                  </p>
+                  <p className="text-sm text-slate-500 mt-1">{cashSales.length} продаж</p>
+                  <p className="text-lg font-semibold text-slate-900 mt-2">{cashAmount.toLocaleString()} с.</p>
+                </div>
+                <div className="text-center p-4 bg-amber-50 rounded-xl">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <div className="w-3 h-3 rounded-full bg-amber-500" />
+                    <p className="text-sm font-medium text-slate-600">В долг</p>
+                  </div>
+                  <p className="text-3xl font-bold text-amber-600">
+                    {totalSalesValue ? ((debtAmount / totalSalesValue) * 100).toFixed(1) : 0}%
+                  </p>
+                  <p className="text-sm text-slate-500 mt-1">{debtSales.length} продаж</p>
+                  <p className="text-lg font-semibold text-slate-900 mt-2">{debtAmount.toLocaleString()} с.</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Top Products & Quick Actions */}
+      {(widgets.length === 0 || widgets.some(w => w.widget_type === 'top_products')) && (
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Top Products */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
@@ -264,6 +285,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

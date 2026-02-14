@@ -492,7 +492,7 @@ export default function Products() {
             )}
             
             {/* Auto Calculations */}
-            {selectedProduct && formData.boxes_in_stock > 0 && (
+            {formData.boxes_in_stock > 0 && formData.sale_price && (
               <div className="p-4 bg-indigo-50 rounded-xl">
                 <h4 className="font-semibold text-slate-900 mb-3">Автоматический расчёт</h4>
                 <div className="grid grid-cols-3 gap-4 text-center">
@@ -503,13 +503,13 @@ export default function Products() {
                   <div>
                     <p className="text-sm text-slate-500">Пар</p>
                     <p className="text-xl font-bold text-slate-700">
-                      {formData.boxes_in_stock * (formData.pairs_per_box || 6)}
+                      {parseInt(formData.boxes_in_stock) * (parseInt(formData.pairs_per_box) || 6)}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">Штук</p>
                     <p className="text-xl font-bold text-slate-700">
-                      {formData.boxes_in_stock * (formData.pairs_per_box || 6) * 2}
+                      {parseInt(formData.boxes_in_stock) * (parseInt(formData.pairs_per_box) || 6) * 2}
                     </p>
                   </div>
                 </div>
@@ -517,13 +517,13 @@ export default function Products() {
                   <div>
                     <p className="text-sm text-slate-500">Общая стоимость</p>
                     <p className="text-lg font-bold text-slate-900">
-                      {(formData.boxes_in_stock * (parseFloat(formData.sale_price) || 0)).toLocaleString()} с.
+                      {(parseInt(formData.boxes_in_stock) * (parseFloat(formData.sale_price) || 0)).toLocaleString()} с.
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">Прибыль</p>
                     <p className="text-lg font-bold text-emerald-600">
-                      {(formData.boxes_in_stock * ((parseFloat(formData.sale_price) || 0) - (parseFloat(formData.purchase_price) || 0))).toLocaleString()} с.
+                      {(parseInt(formData.boxes_in_stock) * ((parseFloat(formData.sale_price) || 0) - (parseFloat(formData.purchase_price) || 0))).toLocaleString()} с.
                     </p>
                   </div>
                 </div>

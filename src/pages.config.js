@@ -60,6 +60,7 @@ import Settings from './pages/Settings';
 import Warehouses from './pages/Warehouses';
 import Returns from './pages/Returns';
 import Analytics from './pages/Analytics';
+import CustomizeDashboard from './pages/CustomizeDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -77,6 +78,7 @@ export const PAGES = {
     "Warehouses": Warehouses,
     "Returns": Returns,
     "Analytics": Analytics,
+    "CustomizeDashboard": CustomizeDashboard,
 }
 
 export const pagesConfig = {
