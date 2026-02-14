@@ -1,0 +1,269 @@
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import PageHeader from '@/components/ui/PageHeader';
+import StatCard from '@/components/ui/StatCard';
+import DateFilter from '@/components/filters/DateFilter';
+import { Button } from '@/components/ui/button';
+import { 
+  Package, 
+  ShoppingCart, 
+  TrendingUp, 
+  Box,
+  Layers,
+  Hash,
+  Plus,
+  ArrowRight,
+  Warehouse,
+  Users
+} from 'lucide-react';
+import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
+
+export default function Dashboard() {
+  const [business, setBusiness] = useState(null);
+  const [sales, setSales] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date())
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const user = await base44.auth.me();
+      const businesses = await base44.entities.Business.filter({ owner_email: user.email });
+      
+      if (businesses.length > 0) {
+        const biz = businesses[0];
+        setBusiness(biz);
+        
+        const [salesData, productsData, warehousesData, customersData] = await Promise.all([
+          base44.entities.Sale.filter({ business_id: biz.id }),
+          base44.entities.Product.filter({ business_id: biz.id }),
+          base44.entities.Warehouse.filter({ business_id: biz.id }),
+          base44.entities.Customer.filter({ business_id: biz.id })
+        ]);
+        
+        setSales(salesData);
+        setProducts(productsData);
+        setWarehouses(warehousesData);
+        setCustomers(customersData);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Фильтрация продаж по дате
+  const filteredSales = sales.filter(sale => {
+    if (!dateRange?.from) return true;
+    const saleDate = parseISO(sale.sale_date || sale.created_date);
+    return isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to || dateRange.from });
+  });
+
+  // Расчёты
+  const totalBoxes = filteredSales.reduce((sum, s) => sum + (s.boxes_sold || 0), 0);
+  const totalPairs = filteredSales.reduce((sum, s) => sum + (s.pairs_sold || 0), 0);
+  const totalItems = filteredSales.reduce((sum, s) => sum + (s.items_sold || 0), 0);
+  const totalRevenue = filteredSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const totalProfit = filteredSales.reduce((sum, s) => sum + (s.profit || 0), 0);
+  const totalStock = products.reduce((sum, p) => sum + (p.boxes_in_stock || 0), 0);
+  const totalDebt = customers.reduce((sum, c) => sum + (c.total_debt || 0), 0);
+
+  // Топ товары
+  const productSales = {};
+  filteredSales.forEach(sale => {
+    if (!productSales[sale.product_id]) {
+      productSales[sale.product_id] = { boxes: 0, revenue: 0 };
+    }
+    productSales[sale.product_id].boxes += sale.boxes_sold || 0;
+    productSales[sale.product_id].revenue += sale.total_amount || 0;
+  });
+
+  const topProducts = Object.entries(productSales)
+    .sort((a, b) => b[1].boxes - a[1].boxes)
+    .slice(0, 5)
+    .map(([productId, data]) => {
+      const product = products.find(p => p.id === productId);
+      return { product, ...data };
+    })
+    .filter(item => item.product);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader 
+        title="Главная"
+        subtitle={`Добро пожаловать, ${business?.name}`}
+        actions={
+          <Link to={createPageUrl('Sales')}>
+            <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+              <Plus className="w-4 h-4" />
+              Новая продажа
+            </Button>
+          </Link>
+        }
+      />
+
+      {/* Date Filter */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+        <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+      </div>
+
+      {/* Main Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Продажи"
+          value={totalRevenue.toLocaleString()}
+          subtitle="сомони"
+          icon={ShoppingCart}
+          iconBg="bg-blue-100"
+          iconColor="text-blue-600"
+        />
+        <StatCard
+          title="Прибыль"
+          value={totalProfit.toLocaleString()}
+          subtitle="сомони"
+          icon={TrendingUp}
+          iconBg="bg-emerald-100"
+          iconColor="text-emerald-600"
+        />
+        <StatCard
+          title="Коробок продано"
+          value={totalBoxes}
+          icon={Box}
+          iconBg="bg-purple-100"
+          iconColor="text-purple-600"
+        />
+        <StatCard
+          title="Пар продано"
+          value={totalPairs}
+          icon={Layers}
+          iconBg="bg-amber-100"
+          iconColor="text-amber-600"
+        />
+      </div>
+
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Штук продано"
+          value={totalItems}
+          icon={Hash}
+          iconBg="bg-rose-100"
+          iconColor="text-rose-600"
+        />
+        <StatCard
+          title="Товаров на складе"
+          value={`${totalStock} коробок`}
+          icon={Warehouse}
+          iconBg="bg-cyan-100"
+          iconColor="text-cyan-600"
+        />
+        <StatCard
+          title="Долги клиентов"
+          value={totalDebt.toLocaleString()}
+          subtitle="сомони"
+          icon={Users}
+          iconBg="bg-orange-100"
+          iconColor="text-orange-600"
+        />
+        <StatCard
+          title="Всего товаров"
+          value={products.length}
+          icon={Package}
+          iconBg="bg-indigo-100"
+          iconColor="text-indigo-600"
+        />
+      </div>
+
+      {/* Top Products & Quick Actions */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Top Products */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-slate-900">Топ товары</h3>
+            <Link to={createPageUrl('Products')} className="text-sm text-indigo-600 hover:text-indigo-700">
+              Все товары →
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {topProducts.length > 0 ? topProducts.map((item, index) => (
+              <div key={item.product.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
+                <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold">
+                  {index + 1}
+                </div>
+                {item.product.photo_url ? (
+                  <img src={item.product.photo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center">
+                    <Package className="w-6 h-6 text-slate-400" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-900 truncate">{item.product.brand} {item.product.model}</p>
+                  <p className="text-sm text-slate-500">{item.boxes} коробок</p>
+                </div>
+                <p className="font-semibold text-slate-900">{item.revenue.toLocaleString()} с.</p>
+              </div>
+            )) : (
+              <p className="text-center text-slate-500 py-8">Нет данных о продажах</p>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+          <h3 className="font-semibold text-slate-900 mb-4">Быстрые действия</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <Link to={createPageUrl('Products')}>
+              <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
+                <Package className="w-8 h-8 text-indigo-600 mb-2" />
+                <p className="font-medium text-slate-900">Добавить товар</p>
+                <ArrowRight className="w-4 h-4 text-indigo-600 mt-2 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+            <Link to={createPageUrl('Sales')}>
+              <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
+                <ShoppingCart className="w-8 h-8 text-emerald-600 mb-2" />
+                <p className="font-medium text-slate-900">Новая продажа</p>
+                <ArrowRight className="w-4 h-4 text-emerald-600 mt-2 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+            <Link to={createPageUrl('Warehouses')}>
+              <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
+                <Warehouse className="w-8 h-8 text-purple-600 mb-2" />
+                <p className="font-medium text-slate-900">Склады</p>
+                <ArrowRight className="w-4 h-4 text-purple-600 mt-2 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+            <Link to={createPageUrl('Customers')}>
+              <div className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
+                <Users className="w-8 h-8 text-amber-600 mb-2" />
+                <p className="font-medium text-slate-900">Клиенты</p>
+                <ArrowRight className="w-4 h-4 text-amber-600 mt-2 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
