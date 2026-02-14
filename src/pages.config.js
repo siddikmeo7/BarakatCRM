@@ -49,12 +49,22 @@
  */
 import RegisterBusiness from './pages/RegisterBusiness';
 import Dashboard from './pages/Dashboard';
+import Products from './pages/Products';
+import Warehouses from './pages/Warehouses';
+import Sales from './pages/Sales';
+import Customers from './pages/Customers';
+import Debts from './pages/Debts';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "RegisterBusiness": RegisterBusiness,
     "Dashboard": Dashboard,
+    "Products": Products,
+    "Warehouses": Warehouses,
+    "Sales": Sales,
+    "Customers": Customers,
+    "Debts": Debts,
 }
 
 export const pagesConfig = {
