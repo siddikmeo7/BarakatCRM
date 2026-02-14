@@ -43,6 +43,7 @@ export default function Sales() {
   const [formData, setFormData] = useState({
     product_id: '',
     boxes_sold: 1,
+    custom_sale_price: '',
     is_debt: false,
     customer_id: ''
   });
@@ -85,8 +86,9 @@ export default function Sales() {
   // Расчёты для выбранного товара
   const pairsSold = formData.boxes_sold * (selectedProduct?.pairs_per_box || 6);
   const itemsSold = pairsSold * 2;
-  const totalAmount = formData.boxes_sold * (selectedProduct?.sale_price || 0);
-  const profit = formData.boxes_sold * ((selectedProduct?.sale_price || 0) - (selectedProduct?.purchase_price || 0));
+  const actualSalePrice = formData.custom_sale_price ? parseFloat(formData.custom_sale_price) : (selectedProduct?.sale_price || 0);
+  const totalAmount = formData.boxes_sold * actualSalePrice;
+  const profit = formData.boxes_sold * (actualSalePrice - (selectedProduct?.purchase_price || 0));
 
   const handleSave = async () => {
     if (!formData.product_id || formData.boxes_sold < 1) return;
@@ -100,7 +102,7 @@ export default function Sales() {
         boxes_sold: parseInt(formData.boxes_sold),
         pairs_sold: pairsSold,
         items_sold: itemsSold,
-        sale_price: selectedProduct?.sale_price || 0,
+        sale_price: actualSalePrice,
         purchase_price: selectedProduct?.purchase_price || 0,
         total_amount: totalAmount,
         profit: profit,
@@ -127,7 +129,7 @@ export default function Sales() {
       
       await loadData();
       setDialogOpen(false);
-      setFormData({ product_id: '', boxes_sold: 1, is_debt: false, customer_id: '' });
+      setFormData({ product_id: '', boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '' });
       setProductSearch('');
     } catch (error) {
       console.error('Error saving sale:', error);
@@ -416,16 +418,31 @@ export default function Sales() {
             )}
 
             {/* Boxes Quantity */}
-            <div>
-              <Label>Количество коробок *</Label>
-              <Input 
-                type="number"
-                min="1"
-                max={selectedProduct?.boxes_in_stock || 999}
-                value={formData.boxes_sold}
-                onChange={(e) => setFormData({ ...formData, boxes_sold: parseInt(e.target.value) || 1 })}
-                className="mt-1.5"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Количество коробок *</Label>
+                <Input 
+                  type="number"
+                  min="1"
+                  max={selectedProduct?.boxes_in_stock || 999}
+                  value={formData.boxes_sold}
+                  onChange={(e) => setFormData({ ...formData, boxes_sold: parseInt(e.target.value) || 1 })}
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label>Цена продажи за коробку</Label>
+                <Input 
+                  type="number"
+                  value={formData.custom_sale_price}
+                  onChange={(e) => setFormData({ ...formData, custom_sale_price: e.target.value })}
+                  placeholder={selectedProduct?.sale_price || '0'}
+                  className="mt-1.5"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  По умолчанию: {selectedProduct?.sale_price?.toLocaleString() || 0} с.
+                </p>
+              </div>
             </div>
 
             {/* Auto Calculations */}

@@ -15,7 +15,10 @@ import {
   Trash2,
   Loader2,
   Save,
-  CheckCircle
+  CheckCircle,
+  MessageCircle,
+  Mail,
+  Bell
 } from 'lucide-react';
 
 const LANGUAGES = [
@@ -30,6 +33,7 @@ const COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Сини�
 export default function Settings() {
   const [business, setBusiness] = useState(null);
   const [employees, setEmployees] = useState([]);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -59,8 +63,9 @@ export default function Settings() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
-      const businesses = await base44.entities.Business.filter({ owner_email: user.email });
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+      const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
       
       if (businesses.length > 0) {
         const biz = businesses[0];
@@ -151,6 +156,10 @@ export default function Settings() {
           <TabsTrigger value="employees" className="gap-2">
             <Users className="w-4 h-4" />
             Сотрудники
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2">
+            <SettingsIcon className="w-4 h-4" />
+            Уведомления
           </TabsTrigger>
         </TabsList>
 
@@ -364,6 +373,104 @@ export default function Settings() {
                   Сотрудники пока не добавлены
                 </p>
               )}
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Notifications Settings */}
+        <TabsContent value="notifications">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">Настройки уведомлений</h3>
+            
+            <div className="space-y-6 max-w-xl">
+              <div className="flex items-start gap-4 p-4 border border-slate-200 rounded-xl">
+                <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-slate-900 mb-1">WhatsApp уведомления</h4>
+                  <p className="text-sm text-slate-500 mb-3">
+                    Отправлять уведомления клиентам в WhatsApp при продаже в долг и оплате
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox"
+                      id="whatsapp"
+                      checked={user?.whatsapp_notifications !== false}
+                      onChange={async (e) => {
+                        await base44.auth.updateMe({ whatsapp_notifications: e.target.checked });
+                        await loadData();
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="whatsapp" className="text-sm text-slate-700">
+                      Включить WhatsApp уведомления
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 p-4 border border-slate-200 rounded-xl">
+                <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-slate-900 mb-1">Email уведомления</h4>
+                  <p className="text-sm text-slate-500 mb-3">
+                    Отправлять уведомления клиентам на Email при продаже в долг и оплате
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox"
+                      id="email"
+                      checked={user?.email_notifications !== false}
+                      onChange={async (e) => {
+                        await base44.auth.updateMe({ email_notifications: e.target.checked });
+                        await loadData();
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="email" className="text-sm text-slate-700">
+                      Включить Email уведомления
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <Bell className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-amber-900 mb-1">Когда отправляются уведомления</h4>
+                    <ul className="text-sm text-amber-700 space-y-1">
+                      <li>• При продаже товара в долг клиенту</li>
+                      <li>• При частичной оплате долга</li>
+                      <li>• При полном погашении долга</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 rounded-xl">
+                <h4 className="font-medium text-slate-900 mb-2">Язык уведомлений</h4>
+                <Select 
+                  value={user?.language || formData.language} 
+                  onValueChange={async (v) => {
+                    await base44.auth.updateMe({ language: v });
+                    setFormData({ ...formData, language: v });
+                    await loadData();
+                  }}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map(lang => (
+                      <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </TabsContent>

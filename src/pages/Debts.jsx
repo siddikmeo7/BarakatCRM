@@ -14,7 +14,9 @@ import {
   Package,
   Calendar,
   CheckCircle,
-  Loader2
+  Loader2,
+  History,
+  Clock
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -32,6 +34,8 @@ export default function Debts() {
   const [search, setSearch] = useState('');
   const [filterCustomer, setFilterCustomer] = useState('all');
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [selectedCustomerHistory, setSelectedCustomerHistory] = useState(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -130,6 +134,7 @@ export default function Debts() {
   // Итоги
   const totalDebt = customers.reduce((sum, c) => sum + (c.total_debt || 0), 0);
   const totalPaid = customers.reduce((sum, c) => sum + (c.total_paid || 0), 0);
+  const fullyPaidCount = customers.filter(c => (c.total_debt || 0) === 0 && (c.total_paid || 0) > 0).length;
 
   if (loading) {
     return (
@@ -147,7 +152,7 @@ export default function Debts() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-2 mb-2">
             <CreditCard className="w-5 h-5 text-orange-600" />
@@ -168,6 +173,13 @@ export default function Debts() {
             <span className="text-sm text-slate-500">Продаж в долг</span>
           </div>
           <p className="text-2xl font-bold text-slate-900">{sales.length}</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+          <div className="flex items-center gap-2 mb-2">
+            <CheckCircle className="w-5 h-5 text-emerald-600" />
+            <span className="text-sm text-slate-500">Погашено</span>
+          </div>
+          <p className="text-2xl font-bold text-emerald-600">{fullyPaidCount} клиентов</p>
         </div>
       </div>
 
@@ -207,6 +219,7 @@ export default function Debts() {
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Сумма</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Оплачено</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Остаток</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">История</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Действие</th>
               </tr>
             </thead>
@@ -261,6 +274,19 @@ export default function Debts() {
                       <span className={`font-bold ${isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
                         {remaining.toLocaleString()} с.
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedCustomerHistory({ customerId: customer?.id, customerName: customer?.name });
+                          setHistoryOpen(true);
+                        }}
+                        className="gap-1"
+                      >
+                        <History className="w-4 h-4" />
+                      </Button>
                     </td>
                     <td className="px-4 py-3 text-center">
                       {isPaid ? (
@@ -341,6 +367,45 @@ export default function Debts() {
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Принять оплату'}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment History Dialog */}
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>История платежей - {selectedCustomerHistory?.customerName}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 py-4 max-h-96 overflow-y-auto">
+            {selectedCustomerHistory && payments
+              .filter(p => p.customer_id === selectedCustomerHistory.customerId)
+              .sort((a, b) => new Date(b.payment_date || b.created_date) - new Date(a.payment_date || a.created_date))
+              .map(payment => (
+                <div key={payment.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-slate-900">
+                      Оплачено: {payment.amount?.toLocaleString()} сомони
+                    </p>
+                    <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {format(parseISO(payment.payment_date || payment.created_date), 'dd MMM yyyy, HH:mm:ss', { locale: ru })}
+                      </span>
+                    </div>
+                    {payment.note && (
+                      <p className="text-sm text-slate-600 mt-1">{payment.note}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            {selectedCustomerHistory && payments.filter(p => p.customer_id === selectedCustomerHistory.customerId).length === 0 && (
+              <p className="text-center text-slate-500 py-8">История платежей пуста</p>
+            )}
           </div>
         </DialogContent>
       </Dialog>
