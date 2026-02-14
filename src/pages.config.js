@@ -54,6 +54,10 @@ import Warehouses from './pages/Warehouses';
 import Sales from './pages/Sales';
 import Customers from './pages/Customers';
 import Debts from './pages/Debts';
+import AIAssistant from './pages/AIAssistant';
+import Settings from './pages/Settings';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminBusinesses from './pages/AdminBusinesses';
 import __Layout from './Layout.jsx';
 
 
@@ -65,6 +69,10 @@ export const PAGES = {
     "Sales": Sales,
     "Customers": Customers,
     "Debts": Debts,
+    "AIAssistant": AIAssistant,
+    "Settings": Settings,
+    "AdminDashboard": AdminDashboard,
+    "AdminBusinesses": AdminBusinesses,
 }
 
 export const pagesConfig = {
