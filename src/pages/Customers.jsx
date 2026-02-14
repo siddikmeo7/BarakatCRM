@@ -14,7 +14,8 @@ import {
   Phone,
   Mail,
   CreditCard,
-  Loader2
+  Loader2,
+  MapPin
 } from 'lucide-react';
 
 export default function Customers() {
@@ -29,7 +30,8 @@ export default function Customers() {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    email: ''
+    email: '',
+    address: ''
   });
 
   useEffect(() => {
@@ -61,11 +63,12 @@ export default function Customers() {
       setFormData({
         name: customer.name || '',
         phone: customer.phone || '',
-        email: customer.email || ''
+        email: customer.email || '',
+        address: customer.address || ''
       });
     } else {
       setEditingCustomer(null);
-      setFormData({ name: '', phone: '', email: '' });
+      setFormData({ name: '', phone: '', email: '', address: '' });
     }
     setDialogOpen(true);
   };
@@ -198,6 +201,12 @@ export default function Customers() {
                     {customer.email}
                   </p>
                 )}
+                {customer.address && (
+                  <p className="text-sm text-slate-500 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    {customer.address}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
@@ -262,6 +271,15 @@ export default function Customers() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="client@example.com"
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label>Адрес</Label>
+              <Input 
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="Город, улица, дом"
                 className="mt-1.5"
               />
             </div>

@@ -15,7 +15,9 @@ import {
   X,
   LogOut,
   ChevronDown,
-  Building2
+  Building2,
+  RotateCcw,
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -27,8 +29,10 @@ const menuItems = [
   { name: 'Products', icon: Package, label: 'Товары' },
   { name: 'Warehouses', icon: Warehouse, label: 'Склады' },
   { name: 'Sales', icon: ShoppingCart, label: 'Продажи' },
+  { name: 'Returns', icon: RotateCcw, label: 'Возвраты' },
   { name: 'Customers', icon: Users, label: 'Клиенты' },
   { name: 'Debts', icon: CreditCard, label: 'Долги' },
+  { name: 'Analytics', icon: TrendingUp, label: 'Аналитика' },
   { name: 'AIAssistant', icon: Bot, label: 'AI Ассистент' },
   { name: 'Settings', icon: Settings, label: 'Настройки' },
 ];

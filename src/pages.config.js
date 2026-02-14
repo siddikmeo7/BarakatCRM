@@ -47,32 +47,34 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import RegisterBusiness from './pages/RegisterBusiness';
-import Dashboard from './pages/Dashboard';
-import Products from './pages/Products';
-import Warehouses from './pages/Warehouses';
-import Sales from './pages/Sales';
-import Customers from './pages/Customers';
-import Debts from './pages/Debts';
 import AIAssistant from './pages/AIAssistant';
-import Settings from './pages/Settings';
-import AdminDashboard from './pages/AdminDashboard';
 import AdminBusinesses from './pages/AdminBusinesses';
+import AdminDashboard from './pages/AdminDashboard';
+import Customers from './pages/Customers';
+import Dashboard from './pages/Dashboard';
+import Debts from './pages/Debts';
+import Products from './pages/Products';
+import RegisterBusiness from './pages/RegisterBusiness';
+import Sales from './pages/Sales';
+import Settings from './pages/Settings';
+import Warehouses from './pages/Warehouses';
+import Returns from './pages/Returns';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "RegisterBusiness": RegisterBusiness,
-    "Dashboard": Dashboard,
-    "Products": Products,
-    "Warehouses": Warehouses,
-    "Sales": Sales,
-    "Customers": Customers,
-    "Debts": Debts,
     "AIAssistant": AIAssistant,
-    "Settings": Settings,
-    "AdminDashboard": AdminDashboard,
     "AdminBusinesses": AdminBusinesses,
+    "AdminDashboard": AdminDashboard,
+    "Customers": Customers,
+    "Dashboard": Dashboard,
+    "Debts": Debts,
+    "Products": Products,
+    "RegisterBusiness": RegisterBusiness,
+    "Sales": Sales,
+    "Settings": Settings,
+    "Warehouses": Warehouses,
+    "Returns": Returns,
 }
 
 export const pagesConfig = {
