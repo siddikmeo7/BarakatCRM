@@ -15,7 +15,9 @@ import {
   Mail,
   CreditCard,
   Loader2,
-  MapPin
+  MapPin,
+  MessageCircle,
+  Send
 } from 'lucide-react';
 
 export default function Customers() {
@@ -237,11 +239,26 @@ export default function Customers() {
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
-        );
-        })}
-      </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
+                <div>
+                  <p className="text-sm text-slate-500">Долг</p>
+                  <p className={`text-lg font-bold ${(customer.total_debt || 0) > 0 ? 'text-orange-600' : 'text-slate-400'}`}>
+                    {(customer.total_debt || 0).toLocaleString()} с.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Оплачено</p>
+                  <p className="text-lg font-bold text-emerald-600">
+                    {(customer.total_paid || 0).toLocaleString()} с.
+                  </p>
+                </div>
+              </div>
+              </div>
+              </div>
+              );
+              })}
+              </div>
 
       {filteredCustomers.length === 0 && (
         <div className="text-center py-12">
