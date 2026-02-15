@@ -50,18 +50,18 @@
 import AIAssistant from './pages/AIAssistant';
 import AdminBusinesses from './pages/AdminBusinesses';
 import AdminDashboard from './pages/AdminDashboard';
+import Analytics from './pages/Analytics';
 import Customers from './pages/Customers';
+import CustomizeDashboard from './pages/CustomizeDashboard';
 import Dashboard from './pages/Dashboard';
 import Debts from './pages/Debts';
+import ProductDetail from './pages/ProductDetail';
 import Products from './pages/Products';
 import RegisterBusiness from './pages/RegisterBusiness';
+import Returns from './pages/Returns';
 import Sales from './pages/Sales';
 import Settings from './pages/Settings';
 import Warehouses from './pages/Warehouses';
-import Returns from './pages/Returns';
-import Analytics from './pages/Analytics';
-import CustomizeDashboard from './pages/CustomizeDashboard';
-import ProductDetail from './pages/ProductDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -69,18 +69,18 @@ export const PAGES = {
     "AIAssistant": AIAssistant,
     "AdminBusinesses": AdminBusinesses,
     "AdminDashboard": AdminDashboard,
+    "Analytics": Analytics,
     "Customers": Customers,
+    "CustomizeDashboard": CustomizeDashboard,
     "Dashboard": Dashboard,
     "Debts": Debts,
+    "ProductDetail": ProductDetail,
     "Products": Products,
     "RegisterBusiness": RegisterBusiness,
+    "Returns": Returns,
     "Sales": Sales,
     "Settings": Settings,
     "Warehouses": Warehouses,
-    "Returns": Returns,
-    "Analytics": Analytics,
-    "CustomizeDashboard": CustomizeDashboard,
-    "ProductDetail": ProductDetail,
 }
 
 export const pagesConfig = {

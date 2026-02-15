@@ -247,14 +247,14 @@ export default function Products() {
       </div>
 
       {/* Products Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {filteredProducts.map(product => {
           const warehouse = warehouses.find(w => w.id === product.warehouse_id);
           const totalPairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);
           const totalItems = totalPairs * 2;
           
           return (
-            <div key={product.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
+            <div key={product.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
               {/* Photo */}
               <div className="aspect-square bg-slate-100 relative">
                 {product.photo_url ? (
@@ -281,53 +281,36 @@ export default function Products() {
               </div>
 
               {/* Info */}
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div>
-                    <p className="font-semibold text-slate-900">{product.brand}</p>
-                    <p className="text-sm text-slate-500">{product.model}</p>
+              <div className="p-3">
+                <div className="mb-2">
+                  <p className="font-semibold text-slate-900 text-sm truncate">{product.brand}</p>
+                  <p className="text-xs text-slate-500 truncate">{product.model}</p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-1 p-2 bg-slate-50 rounded-lg mb-2">
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-indigo-600">{product.boxes_in_stock || 0}</p>
+                    <p className="text-[10px] text-slate-500">короб</p>
                   </div>
-                  <span className="px-2 py-1 bg-slate-100 rounded-lg text-xs text-slate-600">
+                  <div className="text-center border-x border-slate-200">
+                    <p className="text-sm font-bold text-slate-700">{totalPairs}</p>
+                    <p className="text-[10px] text-slate-500">пар</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-slate-700">{totalItems}</p>
+                    <p className="text-[10px] text-slate-500">шт</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <div>
+                    <p className="text-[10px] text-slate-500">Продажа</p>
+                    <p className="font-semibold text-emerald-600">{product.sale_price?.toLocaleString()}</p>
+                  </div>
+                  <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] text-slate-600">
                     {product.product_type}
                   </span>
                 </div>
-
-                <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
-                  <span className="w-4 h-4 rounded-full border-2 border-slate-300" style={{ backgroundColor: product.color === 'Чёрный' ? '#000' : product.color === 'Белый' ? '#fff' : product.color === 'Коричневый' ? '#8B4513' : '#ccc' }} />
-                  <span>{product.color}</span>
-                  <span>•</span>
-                  <span>{product.size_from}-{product.size_to}</span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded-xl mb-3">
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-indigo-600">{product.boxes_in_stock || 0}</p>
-                    <p className="text-xs text-slate-500">коробок</p>
-                  </div>
-                  <div className="text-center border-x border-slate-200">
-                    <p className="text-lg font-bold text-slate-700">{totalPairs}</p>
-                    <p className="text-xs text-slate-500">пар</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-slate-700">{totalItems}</p>
-                    <p className="text-xs text-slate-500">штук</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-slate-500">Закупка</p>
-                    <p className="font-semibold text-slate-700">{product.purchase_price?.toLocaleString()} с.</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-slate-500">Продажа</p>
-                    <p className="font-semibold text-emerald-600">{product.sale_price?.toLocaleString()} с.</p>
-                  </div>
-                </div>
-
-                {warehouse && (
-                  <p className="text-xs text-slate-400 mt-2 truncate">📍 {warehouse.name}</p>
-                )}
               </div>
             </div>
           );
