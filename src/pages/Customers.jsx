@@ -239,7 +239,8 @@ export default function Customers() {
               </div>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {filteredCustomers.length === 0 && (
@@ -278,6 +279,45 @@ export default function Customers() {
                 className="mt-1.5"
               />
             </div>
+            
+            {/* Use phone for all messengers */}
+            <div className="col-span-2">
+              <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="use_phone_for_all"
+                  checked={formData.use_phone_for_all}
+                  onChange={(e) => setFormData({ ...formData, use_phone_for_all: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="use_phone_for_all" className="text-sm text-slate-700">
+                  Использовать основной номер для WhatsApp и Telegram
+                </label>
+              </div>
+            </div>
+            
+            {!formData.use_phone_for_all && (
+              <>
+                <div>
+                  <Label>WhatsApp</Label>
+                  <Input 
+                    value={formData.whatsapp}
+                    onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                    placeholder="+992 XXX XX XX XX"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label>Telegram</Label>
+                  <Input 
+                    value={formData.telegram}
+                    onChange={(e) => setFormData({ ...formData, telegram: e.target.value })}
+                    placeholder="@username или +992..."
+                    className="mt-1.5"
+                  />
+                </div>
+              </>
+            )}
             <div>
               <Label>Email (необязательно)</Label>
               <Input 

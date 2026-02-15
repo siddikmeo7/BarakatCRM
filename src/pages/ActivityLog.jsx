@@ -95,7 +95,15 @@ export default function ActivityLog() {
       log.user_email?.toLowerCase().includes(search.toLowerCase());
     const matchesAction = filterAction === 'all' || log.action_type === filterAction;
     const matchesEntity = filterEntity === 'all' || log.entity_type === filterEntity;
-    const matchesDate = logDate >= dateRange.from && logDate <= dateRange.to;
+    
+    // Безопасная проверка дат
+    let matchesDate = true;
+    if (dateRange?.from && dateRange?.to) {
+      const fromDate = new Date(dateRange.from);
+      const toDate = new Date(dateRange.to);
+      toDate.setHours(23, 59, 59, 999);
+      matchesDate = logDate >= fromDate && logDate <= toDate;
+    }
     
     return matchesSearch && matchesAction && matchesEntity && matchesDate;
   });

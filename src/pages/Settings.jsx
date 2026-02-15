@@ -167,7 +167,7 @@ export default function Settings() {
       />
 
       <Tabs defaultValue="business" className="space-y-6">
-        <TabsList className="bg-white border border-slate-200 p-1">
+        <TabsList className="bg-white border border-slate-200 p-1 flex-wrap">
           <TabsTrigger value="business" className="gap-2">
             <Building2 className="w-4 h-4" />
             Бизнес
@@ -187,6 +187,10 @@ export default function Settings() {
           <TabsTrigger value="custom" className="gap-2">
             <Palette className="w-4 h-4" />
             Кастомные поля
+          </TabsTrigger>
+          <TabsTrigger value="security" className="gap-2">
+            <Settings className="w-4 h-4" />
+            Безопасность
           </TabsTrigger>
         </TabsList>
 
@@ -608,6 +612,59 @@ export default function Settings() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Security Tab */}
+        <TabsContent value="security">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">Безопасность и аккаунт</h3>
+            
+            <div className="space-y-6 max-w-xl">
+              <div className="p-4 border border-slate-200 rounded-xl">
+                <h4 className="font-medium text-slate-900 mb-2">Информация аккаунта</h4>
+                <div className="space-y-2 text-sm">
+                  <p className="text-slate-600">Email: <span className="font-medium text-slate-900">{user?.email}</span></p>
+                  <p className="text-slate-600">Имя: <span className="font-medium text-slate-900">{user?.full_name || 'Не указано'}</span></p>
+                  <p className="text-slate-600">Роль: <span className="font-medium text-slate-900">{user?.role === 'admin' ? 'Администратор' : 'Пользователь'}</span></p>
+                </div>
+              </div>
+
+              <div className="p-4 border border-amber-200 bg-amber-50 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <Bell className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-amber-900 mb-1">Резервное копирование</h4>
+                    <p className="text-sm text-amber-700 mb-3">
+                      Рекомендуем регулярно создавать резервные копии ваших данных
+                    </p>
+                    <Button variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
+                      Создать резервную копию
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 border border-red-200 bg-red-50 rounded-xl">
+                <h4 className="font-semibold text-red-900 mb-2">Удаление данных</h4>
+                <p className="text-sm text-red-700 mb-3">
+                  Удаление всех данных бизнеса. Это действие необратимо!
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="text-red-700 border-red-300 hover:bg-red-100"
+                  onClick={() => {
+                    if (confirm('Вы уверены? Все данные будут безвозвратно удалены!')) {
+                      if (confirm('Это последнее предупреждение! Вы точно хотите удалить все данные?')) {
+                        alert('Функция удаления временно недоступна. Обратитесь в поддержку.');
+                      }
+                    }
+                  }}
+                >
+                  Удалить все данные
+                </Button>
               </div>
             </div>
           </div>

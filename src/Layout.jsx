@@ -22,20 +22,21 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/utils/translations';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
-const menuItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, label: 'Главная' },
-  { name: 'Analytics', icon: TrendingUp, label: 'Аналитика' },
-  { name: 'Products', icon: Package, label: 'Товары' },
-  { name: 'Warehouses', icon: Warehouse, label: 'Склады' },
-  { name: 'Sales', icon: ShoppingCart, label: 'Продажи' },
-  { name: 'Returns', icon: RotateCcw, label: 'Возвраты' },
-  { name: 'Customers', icon: Users, label: 'Клиенты' },
-  { name: 'Debts', icon: CreditCard, label: 'Долги' },
-  { name: 'ActivityLog', icon: History, label: 'История' },
-  { name: 'AIAssistant', icon: Bot, label: 'AI Ассистент' },
+const getMenuItems = (t) => [
+  { name: 'Dashboard', icon: LayoutDashboard, label: t('dashboard') },
+  { name: 'Analytics', icon: TrendingUp, label: t('analytics') },
+  { name: 'Products', icon: Package, label: t('products') },
+  { name: 'Warehouses', icon: Warehouse, label: t('warehouses') },
+  { name: 'Sales', icon: ShoppingCart, label: t('sales') },
+  { name: 'Returns', icon: RotateCcw, label: t('returns') },
+  { name: 'Customers', icon: Users, label: t('customers') },
+  { name: 'Debts', icon: CreditCard, label: t('debts') },
+  { name: 'ActivityLog', icon: History, label: t('history') },
+  { name: 'AIAssistant', icon: Bot, label: t('ai_assistant') },
 ];
 
 const adminMenuItems = [
@@ -48,7 +49,9 @@ export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [language, setLanguage] = useState('ru');
   const navigate = useNavigate();
+  const t = useTranslation(language);
 
   useEffect(() => {
     loadUserAndBusiness();
@@ -63,6 +66,7 @@ export default function Layout({ children, currentPageName }) {
         const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
         if (businesses.length > 0) {
           setBusiness(businesses[0]);
+          setLanguage(businesses[0].language || 'ru');
         }
       }
     } catch (error) {
@@ -80,6 +84,7 @@ export default function Layout({ children, currentPageName }) {
 
   const isAdmin = user?.email === ADMIN_EMAIL;
   const isAdminPage = currentPageName?.startsWith('Admin');
+  const menuItems = getMenuItems(t);
   const currentMenu = isAdmin && isAdminPage ? adminMenuItems : menuItems;
 
   if (loading) {
