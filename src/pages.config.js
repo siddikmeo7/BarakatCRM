@@ -64,6 +64,8 @@ import Settings from './pages/Settings';
 import Warehouses from './pages/Warehouses';
 import ActivityLog from './pages/ActivityLog';
 import ChartSettings from './pages/ChartSettings';
+import WarehouseSalesHistory from './pages/WarehouseSalesHistory';
+import AdvancedSettings from './pages/AdvancedSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -85,6 +87,8 @@ export const PAGES = {
     "Warehouses": Warehouses,
     "ActivityLog": ActivityLog,
     "ChartSettings": ChartSettings,
+    "WarehouseSalesHistory": WarehouseSalesHistory,
+    "AdvancedSettings": AdvancedSettings,
 }
 
 export const pagesConfig = {

@@ -219,8 +219,16 @@ export default function Warehouses() {
                       <p className="text-xs text-slate-500">товаров</p>
                     </div>
                     <div>
-                      <p className="text-lg font-semibold text-blue-600">{stats.soldBoxes}</p>
-                      <p className="text-xs text-slate-500">продано</p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.href = createPageUrl('WarehouseSalesHistory') + '?id=' + warehouse.id;
+                        }}
+                        className="text-left p-2 hover:bg-blue-50 rounded-lg transition-colors -m-2"
+                      >
+                        <p className="text-lg font-semibold text-blue-600">{stats.soldBoxes}</p>
+                        <p className="text-xs text-blue-500 underline">продано →</p>
+                      </button>
                     </div>
                   </div>
 

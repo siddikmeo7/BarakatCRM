@@ -179,86 +179,106 @@ export default function Customers() {
 
       {/* Customers Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredCustomers.map(customer => (
-          <div key={customer.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
-                  <span className="text-xl font-bold text-indigo-600">
-                    {customer.name?.charAt(0)?.toUpperCase()}
-                  </span>
+        {filteredCustomers.map(customer => {
+          const whatsappNum = customer.use_phone_for_all ? customer.phone : (customer.whatsapp || customer.phone);
+          const telegramNum = customer.use_phone_for_all ? customer.phone : (customer.telegram || customer.phone);
+          
+          return (
+            <div key={customer.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
+                    <span className="text-xl font-bold text-indigo-600">
+                      {customer.name?.charAt(0)?.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={() => handleOpenDialog(customer)}
+                      className="p-2 hover:bg-slate-100 rounded-lg"
+                    >
+                      <Edit2 className="w-4 h-4 text-slate-500" />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(customer.id)}
+                      className="p-2 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-1">
-                  <button 
-                    onClick={() => handleOpenDialog(customer)}
-                    className="p-2 hover:bg-slate-100 rounded-lg"
-                  >
-                    <Edit2 className="w-4 h-4 text-slate-500" />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(customer.id)}
-                    className="p-2 hover:bg-red-50 rounded-lg"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
-                </div>
-              </div>
 
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">{customer.name}</h3>
-              
-              <div className="space-y-2 mb-4">
-                <p className="text-sm text-slate-500 flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  {customer.phone}
-                </p>
-                {customer.email && (
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">{customer.name}</h3>
+                
+                <div className="space-y-2 mb-4">
                   <p className="text-sm text-slate-500 flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    {customer.email}
+                    <Phone className="w-4 h-4" />
+                    {customer.phone}
                   </p>
-                )}
-                {customer.address && (
-                  <p className="text-sm text-slate-500 flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    {customer.address}
-                  </p>
-                )}
-              </div>
+                  {customer.email && (
+                    <p className="text-sm text-slate-500 flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      {customer.email}
+                    </p>
+                  )}
+                  {customer.address && (
+                    <p className="text-sm text-slate-500 flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      {customer.address}
+                    </p>
+                  )}
+                </div>
+                
+                {/* Messenger Buttons */}
+                <div className="flex gap-2 mb-4">
+                  <a
+                    href={`https://wa.me/${whatsappNum.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 p-2 bg-green-50 hover:bg-green-100 rounded-lg flex items-center justify-center gap-1 text-green-700 transition-colors"
+                  >
+                    <MessageCircle className="w-3 h-3" />
+                    <span className="text-xs font-medium">WA</span>
+                  </a>
+                  <a
+                    href={`https://t.me/${telegramNum.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 p-2 bg-blue-50 hover:bg-blue-100 rounded-lg flex items-center justify-center gap-1 text-blue-700 transition-colors"
+                  >
+                    <Send className="w-3 h-3" />
+                    <span className="text-xs font-medium">TG</span>
+                  </a>
+                  {customer.email && (
+                    <a
+                      href={`mailto:${customer.email}`}
+                      className="flex-1 p-2 bg-purple-50 hover:bg-purple-100 rounded-lg flex items-center justify-center gap-1 text-purple-700 transition-colors"
+                    >
+                      <Mail className="w-3 h-3" />
+                      <span className="text-xs font-medium">Email</span>
+                    </a>
+                  )}
+                </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
-                <div>
-                  <p className="text-sm text-slate-500">Долг</p>
-                  <p className={`text-lg font-bold ${(customer.total_debt || 0) > 0 ? 'text-orange-600' : 'text-slate-400'}`}>
-                    {(customer.total_debt || 0).toLocaleString()} с.
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Оплачено</p>
-                  <p className="text-lg font-bold text-emerald-600">
-                    {(customer.total_paid || 0).toLocaleString()} с.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
-                <div>
-                  <p className="text-sm text-slate-500">Долг</p>
-                  <p className={`text-lg font-bold ${(customer.total_debt || 0) > 0 ? 'text-orange-600' : 'text-slate-400'}`}>
-                    {(customer.total_debt || 0).toLocaleString()} с.
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Оплачено</p>
-                  <p className="text-lg font-bold text-emerald-600">
-                    {(customer.total_paid || 0).toLocaleString()} с.
-                  </p>
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
+                  <div>
+                    <p className="text-sm text-slate-500">Долг</p>
+                    <p className={`text-lg font-bold ${(customer.total_debt || 0) > 0 ? 'text-orange-600' : 'text-slate-400'}`}>
+                      {(customer.total_debt || 0).toLocaleString()} с.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Оплачено</p>
+                    <p className="text-lg font-bold text-emerald-600">
+                      {(customer.total_paid || 0).toLocaleString()} с.
+                    </p>
+                  </div>
                 </div>
               </div>
-              </div>
-              </div>
-              );
-              })}
-              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {filteredCustomers.length === 0 && (
         <div className="text-center py-12">

@@ -189,7 +189,7 @@ export default function Settings() {
             Кастомные поля
           </TabsTrigger>
           <TabsTrigger value="security" className="gap-2">
-            <Settings className="w-4 h-4" />
+            <SettingsIcon className="w-4 h-4" />
             Безопасность
           </TabsTrigger>
         </TabsList>
