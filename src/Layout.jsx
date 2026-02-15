@@ -25,8 +25,6 @@ import { cn } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
-import { History } from 'lucide-react';
-
 const menuItems = [
   { name: 'Dashboard', icon: LayoutDashboard, label: 'Главная' },
   { name: 'Analytics', icon: TrendingUp, label: 'Аналитика' },
