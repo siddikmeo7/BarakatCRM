@@ -20,7 +20,8 @@ import {
   MessageCircle,
   Mail,
   Bell,
-  Edit2
+  Edit2,
+  LogOut
 } from 'lucide-react';
 
 const LANGUAGES = [
@@ -149,6 +150,20 @@ export default function Settings() {
       <PageHeader 
         title="Настройки"
         subtitle="Управление настройками бизнеса"
+        actions={
+          <Button 
+            variant="outline" 
+            className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+            onClick={() => {
+              if (confirm('Вы уверены, что хотите выйти?')) {
+                base44.auth.logout();
+              }
+            }}
+          >
+            <LogOut className="w-4 h-4" />
+            Выйти
+          </Button>
+        }
       />
 
       <Tabs defaultValue="business" className="space-y-6">

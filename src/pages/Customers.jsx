@@ -30,8 +30,11 @@ export default function Customers() {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    whatsapp: '',
+    telegram: '',
     email: '',
-    address: ''
+    address: '',
+    use_phone_for_all: true
   });
 
   useEffect(() => {
@@ -63,12 +66,23 @@ export default function Customers() {
       setFormData({
         name: customer.name || '',
         phone: customer.phone || '',
+        whatsapp: customer.whatsapp || '',
+        telegram: customer.telegram || '',
         email: customer.email || '',
-        address: customer.address || ''
+        address: customer.address || '',
+        use_phone_for_all: customer.use_phone_for_all !== false
       });
     } else {
       setEditingCustomer(null);
-      setFormData({ name: '', phone: '', email: '', address: '' });
+      setFormData({ 
+        name: '', 
+        phone: '', 
+        whatsapp: '', 
+        telegram: '', 
+        email: '', 
+        address: '',
+        use_phone_for_all: true
+      });
     }
     setDialogOpen(true);
   };

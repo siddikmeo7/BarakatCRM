@@ -62,6 +62,8 @@ import Returns from './pages/Returns';
 import Sales from './pages/Sales';
 import Settings from './pages/Settings';
 import Warehouses from './pages/Warehouses';
+import ActivityLog from './pages/ActivityLog';
+import ChartSettings from './pages/ChartSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -81,6 +83,8 @@ export const PAGES = {
     "Sales": Sales,
     "Settings": Settings,
     "Warehouses": Warehouses,
+    "ActivityLog": ActivityLog,
+    "ChartSettings": ChartSettings,
 }
 
 export const pagesConfig = {

@@ -36,7 +36,6 @@ const menuItems = [
   { name: 'Debts', icon: CreditCard, label: 'Долги' },
   { name: 'ActivityLog', icon: History, label: 'История' },
   { name: 'AIAssistant', icon: Bot, label: 'AI Ассистент' },
-  { name: 'Settings', icon: Settings, label: 'Настройки' },
 ];
 
 const adminMenuItems = [
@@ -96,24 +95,12 @@ export default function Layout({ children, currentPageName }) {
     return <div className="min-h-screen bg-slate-50">{children}</div>;
   }
 
-  // Если нет бизнеса и не админ - редирект
-  if (!business && !isAdmin && currentPageName !== 'RegisterBusiness') {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <Building2 className="w-16 h-16 text-indigo-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Добро пожаловать!</h2>
-          <p className="text-slate-600 mb-6">
-            Для начала работы необходимо зарегистрировать ваш бизнес
-          </p>
-          <Link to={createPageUrl('RegisterBusiness')}>
-            <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-              Зарегистрировать бизнес
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
+  // Если нет бизнеса и не админ - редирект на регистрацию
+  if (!business && !isAdmin && !loading) {
+    if (currentPageName !== 'RegisterBusiness') {
+      window.location.href = createPageUrl('RegisterBusiness');
+      return null;
+    }
   }
 
   return (
