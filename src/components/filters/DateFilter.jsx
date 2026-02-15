@@ -15,17 +15,21 @@ const presets = [
   { label: 'Год', getValue: () => ({ from: startOfYear(new Date()), to: endOfYear(new Date()) }) },
 ];
 
-export default function DateFilter({ dateRange, onDateRangeChange }) {
+export default function DateFilter({ value, onChange, dateRange, onDateRangeChange }) {
   const [isOpen, setIsOpen] = React.useState(false);
+  
+  // Support both prop names for backward compatibility
+  const range = value || dateRange;
+  const handleChange = onChange || onDateRangeChange;
 
   const handlePresetClick = (preset) => {
-    onDateRangeChange(preset.getValue());
+    handleChange?.(preset.getValue());
   };
 
   const formatDateRange = () => {
-    if (!dateRange?.from) return 'Выберите период';
-    if (!dateRange.to) return format(dateRange.from, 'dd MMM yyyy', { locale: ru });
-    return `${format(dateRange.from, 'dd MMM', { locale: ru })} - ${format(dateRange.to, 'dd MMM yyyy', { locale: ru })}`;
+    if (!range?.from) return 'Выберите период';
+    if (!range.to) return format(range.from, 'dd MMM yyyy', { locale: ru });
+    return `${format(range.from, 'dd MMM', { locale: ru })} - ${format(range.to, 'dd MMM yyyy', { locale: ru })}`;
   };
 
   return (
@@ -38,8 +42,8 @@ export default function DateFilter({ dateRange, onDateRangeChange }) {
           onClick={() => handlePresetClick(preset)}
           className={cn(
             "text-xs",
-            dateRange?.from && 
-            format(dateRange.from, 'yyyy-MM-dd') === format(preset.getValue().from, 'yyyy-MM-dd') &&
+            range?.from && 
+            format(range.from, 'yyyy-MM-dd') === format(preset.getValue().from, 'yyyy-MM-dd') &&
             "bg-indigo-50 border-indigo-200 text-indigo-700"
           )}
         >
@@ -57,10 +61,10 @@ export default function DateFilter({ dateRange, onDateRangeChange }) {
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="range"
-            selected={dateRange}
-            onSelect={(range) => {
-              onDateRangeChange(range);
-              if (range?.from && range?.to) setIsOpen(false);
+            selected={range}
+            onSelect={(newRange) => {
+              handleChange?.(newRange);
+              if (newRange?.from && newRange?.to) setIsOpen(false);
             }}
             numberOfMonths={2}
             locale={ru}
@@ -68,11 +72,11 @@ export default function DateFilter({ dateRange, onDateRangeChange }) {
         </PopoverContent>
       </Popover>
 
-      {dateRange?.from && (
+      {range?.from && (
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => onDateRangeChange(null)}
+          onClick={() => handleChange?.(null)}
           className="text-slate-500 hover:text-slate-700"
         >
           Сбросить
