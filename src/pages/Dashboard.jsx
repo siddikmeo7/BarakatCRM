@@ -84,6 +84,8 @@ export default function Dashboard() {
   const totalRevenue = filteredSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const totalProfit = filteredSales.reduce((sum, s) => sum + (s.profit || 0), 0);
   const totalStock = products.reduce((sum, p) => sum + (p.boxes_in_stock || 0), 0);
+  const totalStockValue = products.reduce((sum, p) => sum + ((p.boxes_in_stock || 0) * (p.sale_price || 0)), 0);
+  const totalPurchaseValue = products.reduce((sum, p) => sum + ((p.boxes_in_stock || 0) * (p.purchase_price || 0)), 0);
   const totalDebt = customers.reduce((sum, c) => sum + (c.total_debt || 0), 0);
   
   // Наличные vs Долг
@@ -158,7 +160,7 @@ export default function Dashboard() {
             profit: { title: 'Прибыль', value: totalProfit.toLocaleString(), subtitle: 'сомони', icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
             boxes: { title: 'Коробок продано', value: totalBoxes, icon: Box, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
             pairs: { title: 'Пар продано', value: totalPairs, icon: Layers, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
-            stock: { title: 'Товаров на складе', value: `${totalStock} коробок`, icon: Warehouse, iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
+            stock: { title: 'Товаров на складе', value: `${totalStock} коробок`, subtitle: `Закупка: ${totalPurchaseValue.toLocaleString()} с.`, icon: Warehouse, iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
             debt: { title: 'Долги клиентов', value: totalDebt.toLocaleString(), subtitle: 'сомони', icon: Users, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
             customers: { title: 'Всего клиентов', value: customers.length, icon: Users, iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' }
           };
