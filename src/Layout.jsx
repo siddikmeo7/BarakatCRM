@@ -34,7 +34,6 @@ const menuItems = [
   { name: 'Returns', icon: RotateCcw, label: 'Возвраты' },
   { name: 'Customers', icon: Users, label: 'Клиенты' },
   { name: 'Debts', icon: CreditCard, label: 'Долги' },
-  { name: 'ActivityLog', icon: History, label: 'История' },
   { name: 'AIAssistant', icon: Bot, label: 'AI Ассистент' },
   { name: 'Settings', icon: Settings, label: 'Настройки' },
 ];

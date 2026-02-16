@@ -21,7 +21,12 @@ import {
   Mail,
   Bell,
   Edit2,
-  LogOut
+  LogOut,
+  History,
+  Download,
+  Shield,
+  RotateCcw,
+  AlertCircle
 } from 'lucide-react';
 
 const LANGUAGES = [
@@ -57,7 +62,21 @@ export default function Settings() {
     name: '',
     user_email: '',
     phone: '',
-    role: 'Менеджер'
+    role: 'Менеджер',
+    permissions: {
+      view_analytics: false,
+      view_profit: false,
+      add_products: true,
+      edit_products: false,
+      delete_products: false,
+      add_sales: true,
+      view_warehouses: true,
+      manage_warehouses: false,
+      view_customers: true,
+      manage_customers: false,
+      view_debts: false,
+      manage_returns: false
+    }
   });
   const [newColor, setNewColor] = useState('');
   const [newProductType, setNewProductType] = useState('');
@@ -123,8 +142,39 @@ export default function Settings() {
         business_id: business.id,
         is_active: true
       });
+      
+      // Отправить приглашение на email
+      try {
+        await base44.integrations.Core.SendEmail({
+          to: newEmployee.user_email,
+          subject: `Приглашение в бизнес ${business.name}`,
+          body: `Здравствуйте, ${newEmployee.name}!\n\nВы были добавлены как ${newEmployee.role} в бизнес "${business.name}".\n\nВойдите в систему ShoeWholesale используя эту почту: ${newEmployee.user_email}\n\nС уважением,\n${business.name}`
+        });
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+      }
+      
       await loadData();
-      setNewEmployee({ name: '', user_email: '', phone: '', role: 'Менеджер' });
+      setNewEmployee({ 
+        name: '', 
+        user_email: '', 
+        phone: '', 
+        role: 'Менеджер',
+        permissions: {
+          view_analytics: false,
+          view_profit: false,
+          add_products: true,
+          edit_products: false,
+          delete_products: false,
+          add_sales: true,
+          view_warehouses: true,
+          manage_warehouses: false,
+          view_customers: true,
+          manage_customers: false,
+          view_debts: false,
+          manage_returns: false
+        }
+      });
     } catch (error) {
       console.error('Error adding employee:', error);
     }
@@ -191,6 +241,10 @@ export default function Settings() {
           <TabsTrigger value="security" className="gap-2">
             <SettingsIcon className="w-4 h-4" />
             Безопасность
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="w-4 h-4" />
+            История
           </TabsTrigger>
         </TabsList>
 
