@@ -46,7 +46,10 @@ export default function Sales() {
     boxes_sold: 1,
     custom_sale_price: '',
     is_debt: false,
-    customer_id: ''
+    customer_id: '',
+    customer_name: '',
+    customer_address: '',
+    partial_payment: 0
   });
   const [productSearch, setProductSearch] = useState('');
 
@@ -96,6 +99,9 @@ export default function Sales() {
     
     setSaving(true);
     try {
+      const partialPay = formData.is_debt ? parseFloat(formData.partial_payment) || 0 : 0;
+      const remainingDebt = totalAmount - partialPay;
+      
       const saleData = {
         business_id: business.id,
         product_id: formData.product_id,
@@ -109,7 +115,10 @@ export default function Sales() {
         profit: profit,
         sale_date: new Date().toISOString(),
         is_debt: formData.is_debt,
-        customer_id: formData.is_debt ? formData.customer_id : ''
+        customer_id: formData.is_debt ? formData.customer_id : '',
+        customer_name: formData.customer_name || 'Неизвестный',
+        customer_address: formData.customer_address || '',
+        partial_payment: partialPay
       };
 
       await base44.entities.Sale.create(saleData);
@@ -123,14 +132,15 @@ export default function Sales() {
         const customer = customers.find(c => c.id === formData.customer_id);
         if (customer) {
           await base44.entities.Customer.update(formData.customer_id, {
-            total_debt: (customer.total_debt || 0) + totalAmount
+            total_debt: (customer.total_debt || 0) + remainingDebt,
+            total_paid: (customer.total_paid || 0) + partialPay
           });
         }
       }
       
       await loadData();
       setDialogOpen(false);
-      setFormData({ product_id: '', boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '' });
+      setFormData({ product_id: '', boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_address: '', partial_payment: 0 });
       setProductSearch('');
     } catch (error) {
       console.error('Error saving sale:', error);
@@ -318,16 +328,29 @@ export default function Sales() {
                     <td className="px-4 py-3 text-right font-semibold text-emerald-600">
                       +{sale.profit?.toLocaleString()} с.
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      {sale.is_debt ? (
-                        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-medium">
-                          В долг {customer?.name && `(${customer.name})`}
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium">
-                          Наличные
-                        </span>
-                      )}
+                    <td className="px-4 py-3">
+                      <div className="text-xs space-y-1">
+                        {sale.is_debt ? (
+                          <>
+                            <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-lg font-medium">
+                              В долг {customer?.name && `(${customer.name})`}
+                            </span>
+                            {sale.partial_payment > 0 && (
+                              <p className="text-emerald-600">Оплачено: {sale.partial_payment.toLocaleString()} с.</p>
+                            )}
+                          </>
+                        ) : (
+                          <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg font-medium">
+                            Наличные
+                          </span>
+                        )}
+                        {sale.customer_name && sale.customer_name !== 'Неизвестный' && (
+                          <p className="text-slate-600">{sale.customer_name}</p>
+                        )}
+                        {sale.customer_address && (
+                          <p className="text-slate-500">{sale.customer_address}</p>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -480,14 +503,54 @@ export default function Sales() {
               </label>
             </div>
 
+            {/* Customer Info */}
+            <div className="space-y-3">
+              <div>
+                <Label>Имя клиента</Label>
+                <Input 
+                  value={formData.customer_name}
+                  onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                  placeholder="Не указано"
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label>Адрес клиента</Label>
+                <Input 
+                  value={formData.customer_address}
+                  onChange={(e) => setFormData({ ...formData, customer_address: e.target.value })}
+                  placeholder="Не указано"
+                  className="mt-1.5"
+                />
+              </div>
+            </div>
+
             {formData.is_debt && (
-              <CustomerSearchSelect
-                customers={customers}
-                value={formData.customer_id}
-                onChange={(v) => setFormData({ ...formData, customer_id: v })}
-                businessId={business.id}
-                onCustomerAdded={loadData}
-              />
+              <>
+                <CustomerSearchSelect
+                  customers={customers}
+                  value={formData.customer_id}
+                  onChange={(v) => setFormData({ ...formData, customer_id: v })}
+                  businessId={business.id}
+                  onCustomerAdded={loadData}
+                />
+                
+                {formData.customer_id && (
+                  <div>
+                    <Label>Частичная оплата сейчас (сомони)</Label>
+                    <Input 
+                      type="number"
+                      value={formData.partial_payment}
+                      onChange={(e) => setFormData({ ...formData, partial_payment: e.target.value })}
+                      placeholder="0"
+                      className="mt-1.5"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      Остаток долга: {(totalAmount - (parseFloat(formData.partial_payment) || 0)).toLocaleString()} с.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

@@ -48,9 +48,12 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import AIAssistant from './pages/AIAssistant';
+import ActivityLog from './pages/ActivityLog';
 import AdminBusinesses from './pages/AdminBusinesses';
 import AdminDashboard from './pages/AdminDashboard';
+import AdvancedSettings from './pages/AdvancedSettings';
 import Analytics from './pages/Analytics';
+import ChartSettings from './pages/ChartSettings';
 import Customers from './pages/Customers';
 import CustomizeDashboard from './pages/CustomizeDashboard';
 import Dashboard from './pages/Dashboard';
@@ -61,19 +64,19 @@ import RegisterBusiness from './pages/RegisterBusiness';
 import Returns from './pages/Returns';
 import Sales from './pages/Sales';
 import Settings from './pages/Settings';
-import Warehouses from './pages/Warehouses';
-import ActivityLog from './pages/ActivityLog';
-import ChartSettings from './pages/ChartSettings';
 import WarehouseSalesHistory from './pages/WarehouseSalesHistory';
-import AdvancedSettings from './pages/AdvancedSettings';
+import Warehouses from './pages/Warehouses';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AIAssistant": AIAssistant,
+    "ActivityLog": ActivityLog,
     "AdminBusinesses": AdminBusinesses,
     "AdminDashboard": AdminDashboard,
+    "AdvancedSettings": AdvancedSettings,
     "Analytics": Analytics,
+    "ChartSettings": ChartSettings,
     "Customers": Customers,
     "CustomizeDashboard": CustomizeDashboard,
     "Dashboard": Dashboard,
@@ -84,11 +87,8 @@ export const PAGES = {
     "Returns": Returns,
     "Sales": Sales,
     "Settings": Settings,
-    "Warehouses": Warehouses,
-    "ActivityLog": ActivityLog,
-    "ChartSettings": ChartSettings,
     "WarehouseSalesHistory": WarehouseSalesHistory,
-    "AdvancedSettings": AdvancedSettings,
+    "Warehouses": Warehouses,
 }
 
 export const pagesConfig = {

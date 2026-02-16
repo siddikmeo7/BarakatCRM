@@ -40,12 +40,14 @@ export default function Returns() {
   const [formData, setFormData] = useState({
     customer_id: '',
     product_id: '',
+    warehouse_id: '',
     sale_id: '',
     boxes_returned: 1,
     condition: 'Хорошее',
     refund_amount: '',
     reason: ''
   });
+  const [warehouses, setWarehouses] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -60,17 +62,19 @@ export default function Returns() {
         const biz = businesses[0];
         setBusiness(biz);
         
-        const [returnsData, productsData, customersData, salesData] = await Promise.all([
+        const [returnsData, productsData, customersData, salesData, warehousesData] = await Promise.all([
           base44.entities.Return.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
           base44.entities.Customer.filter({ business_id: biz.id }),
-          base44.entities.Sale.filter({ business_id: biz.id })
+          base44.entities.Sale.filter({ business_id: biz.id }),
+          base44.entities.Warehouse.filter({ business_id: biz.id })
         ]);
         
         setReturns(returnsData.sort((a, b) => new Date(b.return_date || b.created_date) - new Date(a.return_date || a.created_date)));
         setProducts(productsData);
         setCustomers(customersData);
         setSales(salesData);
+        setWarehouses(warehousesData);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -86,6 +90,7 @@ export default function Returns() {
         business_id: business.id,
         customer_id: formData.customer_id,
         product_id: formData.product_id,
+        warehouse_id: formData.warehouse_id,
         sale_id: formData.sale_id,
         boxes_returned: parseInt(formData.boxes_returned),
         condition: formData.condition,
@@ -96,11 +101,17 @@ export default function Returns() {
 
       await base44.entities.Return.create(returnData);
 
-      // Возвращаем товар на склад
-      const product = products.find(p => p.id === formData.product_id);
-      if (product) {
-        await base44.entities.Product.update(product.id, {
-          boxes_in_stock: (product.boxes_in_stock || 0) + parseInt(formData.boxes_returned)
+      // Возвращаем товар на выбранный склад
+      const warehouseProducts = products.filter(p => 
+        p.warehouse_id === formData.warehouse_id && 
+        p.brand === products.find(pr => pr.id === formData.product_id)?.brand &&
+        p.model === products.find(pr => pr.id === formData.product_id)?.model
+      );
+      
+      if (warehouseProducts.length > 0) {
+        const targetProduct = warehouseProducts[0];
+        await base44.entities.Product.update(targetProduct.id, {
+          boxes_in_stock: (targetProduct.boxes_in_stock || 0) + parseInt(formData.boxes_returned)
         });
       }
 
@@ -109,6 +120,7 @@ export default function Returns() {
       setFormData({
         customer_id: '',
         product_id: '',
+        warehouse_id: '',
         sale_id: '',
         boxes_returned: 1,
         condition: 'Хорошее',
@@ -326,6 +338,22 @@ export default function Returns() {
               </Select>
             </div>
 
+            <div>
+              <Label>Склад возврата *</Label>
+              <Select value={formData.warehouse_id} onValueChange={(v) => setFormData({ ...formData, warehouse_id: v })}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Выберите склад" />
+                </SelectTrigger>
+                <SelectContent>
+                  {warehouses.map(wh => (
+                    <SelectItem key={wh.id} value={wh.id}>
+                      {wh.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Коробок возвращено *</Label>
@@ -380,7 +408,7 @@ export default function Returns() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={saving || !formData.product_id || !formData.customer_id}
+              disabled={saving || !formData.product_id || !formData.customer_id || !formData.warehouse_id}
               className="bg-orange-600 hover:bg-orange-700"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Оформить возврат'}

@@ -36,6 +36,7 @@ const menuItems = [
   { name: 'Debts', icon: CreditCard, label: 'Долги' },
   { name: 'ActivityLog', icon: History, label: 'История' },
   { name: 'AIAssistant', icon: Bot, label: 'AI Ассистент' },
+  { name: 'Settings', icon: Settings, label: 'Настройки' },
 ];
 
 const adminMenuItems = [
