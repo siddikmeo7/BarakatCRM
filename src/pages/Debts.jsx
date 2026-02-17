@@ -226,9 +226,15 @@ export default function Debts() {
           </Select>
           <div className="flex-1">
             <Input
-              type="number"
+              type="text"
+              pattern="[0-9.]*"
+              inputMode="decimal"
               placeholder="Фильтр по сумме долга..."
-              onChange={(e) => setFilterAmount(e.target.value)}
+              value={filterAmount}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9.]/g, '');
+                setFilterAmount(val);
+              }}
               className="max-w-xs"
             />
           </div>
@@ -373,11 +379,15 @@ export default function Debts() {
                 <div>
                   <Label>Сумма оплаты *</Label>
                   <Input 
-                    type="number"
+                    type="text"
+                    pattern="[0-9.]*"
+                    inputMode="decimal"
                     value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9.]/g, '');
+                      setPaymentAmount(val);
+                    }}
                     placeholder="Введите сумму"
-                    max={remaining}
                     className="mt-1.5"
                   />
                 </div>

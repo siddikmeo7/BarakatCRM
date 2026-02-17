@@ -446,21 +446,30 @@ export default function Sales() {
               <div>
                 <Label>Количество коробок *</Label>
                 <Input 
-                  type="number"
+                  type="text"
+                  pattern="[0-9]*"
                   min="1"
                   max={selectedProduct?.boxes_in_stock || 999}
                   value={formData.boxes_sold}
-                  onChange={(e) => setFormData({ ...formData, boxes_sold: parseInt(e.target.value) || 1 })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData({ ...formData, boxes_sold: val ? parseInt(val) : '' });
+                  }}
                   className="mt-1.5"
-                  inputMode="decimal"
+                  inputMode="numeric"
                 />
               </div>
               <div>
                 <Label>Цена продажи за коробку</Label>
                 <Input 
-                  type="number"
+                  type="text"
+                  pattern="[0-9.]*"
+                  inputMode="decimal"
                   value={formData.custom_sale_price}
-                  onChange={(e) => setFormData({ ...formData, custom_sale_price: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9.]/g, '');
+                    setFormData({ ...formData, custom_sale_price: val });
+                  }}
                   placeholder={selectedProduct?.sale_price || '0'}
                   className="mt-1.5"
                 />
@@ -540,9 +549,14 @@ export default function Sales() {
                   <div>
                     <Label>Частичная оплата сейчас (сомони)</Label>
                     <Input 
-                      type="number"
+                      type="text"
+                      pattern="[0-9.]*"
+                      inputMode="decimal"
                       value={formData.partial_payment}
-                      onChange={(e) => setFormData({ ...formData, partial_payment: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.]/g, '');
+                        setFormData({ ...formData, partial_payment: val });
+                      }}
                       placeholder="0"
                       className="mt-1.5"
                     />

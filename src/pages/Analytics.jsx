@@ -15,7 +15,7 @@ import {
   Clock
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
+import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format } from 'date-fns';
 
 const EXCHANGE_RATES = {
   TJS: 1,

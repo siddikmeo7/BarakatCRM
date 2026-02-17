@@ -358,10 +358,15 @@ export default function Returns() {
               <div>
                 <Label>Коробок возвращено *</Label>
                 <Input
-                  type="number"
+                  type="text"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   min="1"
                   value={formData.boxes_returned}
-                  onChange={(e) => setFormData({ ...formData, boxes_returned: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData({ ...formData, boxes_returned: val });
+                  }}
                   className="mt-1.5"
                 />
               </div>
@@ -383,9 +388,14 @@ export default function Returns() {
             <div>
               <Label>Сумма возврата *</Label>
               <Input
-                type="number"
+                type="text"
+                pattern="[0-9.]*"
+                inputMode="decimal"
                 value={formData.refund_amount}
-                onChange={(e) => setFormData({ ...formData, refund_amount: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9.]/g, '');
+                  setFormData({ ...formData, refund_amount: val });
+                }}
                 placeholder="0"
                 className="mt-1.5"
               />

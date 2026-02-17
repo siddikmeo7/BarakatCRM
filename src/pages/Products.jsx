@@ -155,8 +155,26 @@ export default function Products() {
 
   const handleDelete = async (productId) => {
     if (confirm('Удалить этот товар?')) {
-      await base44.entities.Product.delete(productId);
-      await loadData();
+      try {
+        const product = products.find(p => p.id === productId);
+        const user = await base44.auth.me();
+        
+        // Логируем удаление
+        await base44.entities.ActivityLog.create({
+          business_id: business.id,
+          action_type: 'delete',
+          entity_type: 'Product',
+          entity_id: productId,
+          entity_data: product,
+          user_email: user.email,
+          description: `Удалён товар: ${product.brand} ${product.model}`
+        });
+        
+        await base44.entities.Product.delete(productId);
+        await loadData();
+      } catch (error) {
+        console.error('Error deleting product:', error);
+      }
     }
   };
 
@@ -398,18 +416,28 @@ export default function Products() {
               <div>
                 <Label>Размер от</Label>
                 <Input 
-                  type="number"
+                  type="text"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   value={formData.size_from}
-                  onChange={(e) => setFormData({ ...formData, size_from: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData({ ...formData, size_from: val });
+                  }}
                   className="mt-1.5"
                 />
               </div>
               <div>
                 <Label>Размер до</Label>
                 <Input 
-                  type="number"
+                  type="text"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   value={formData.size_to}
-                  onChange={(e) => setFormData({ ...formData, size_to: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData({ ...formData, size_to: val });
+                  }}
                   className="mt-1.5"
                 />
               </div>
@@ -432,9 +460,14 @@ export default function Products() {
               <div>
                 <Label>Цена закупки (сомони) *</Label>
                 <Input 
-                  type="number"
+                  type="text"
+                  pattern="[0-9.]*"
+                  inputMode="decimal"
                   value={formData.purchase_price}
-                  onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9.]/g, '');
+                    setFormData({ ...formData, purchase_price: val });
+                  }}
                   placeholder="0"
                   className="mt-1.5"
                 />
@@ -442,9 +475,14 @@ export default function Products() {
               <div>
                 <Label>Цена продажи (сомони) *</Label>
                 <Input 
-                  type="number"
+                  type="text"
+                  pattern="[0-9.]*"
+                  inputMode="decimal"
                   value={formData.sale_price}
-                  onChange={(e) => setFormData({ ...formData, sale_price: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9.]/g, '');
+                    setFormData({ ...formData, sale_price: val });
+                  }}
                   placeholder="0"
                   className="mt-1.5"
                 />
@@ -452,9 +490,14 @@ export default function Products() {
               <div>
                 <Label>Коробок на складе</Label>
                 <Input 
-                  type="number"
+                  type="text"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   value={formData.boxes_in_stock}
-                  onChange={(e) => setFormData({ ...formData, boxes_in_stock: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData({ ...formData, boxes_in_stock: val });
+                  }}
                   placeholder="0"
                   className="mt-1.5"
                 />

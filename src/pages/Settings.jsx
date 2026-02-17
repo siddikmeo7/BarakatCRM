@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { createPageUrl } from './utils';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -332,18 +333,28 @@ export default function Settings() {
               <div>
                 <Label>Размер от</Label>
                 <Input 
-                  type="number"
+                  type="text"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   value={formData.default_size_from}
-                  onChange={(e) => setFormData({ ...formData, default_size_from: parseInt(e.target.value) })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData({ ...formData, default_size_from: val ? parseInt(val) : '' });
+                  }}
                   className="mt-1.5"
                 />
               </div>
               <div>
                 <Label>Размер до</Label>
                 <Input 
-                  type="number"
+                  type="text"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   value={formData.default_size_to}
-                  onChange={(e) => setFormData({ ...formData, default_size_to: parseInt(e.target.value) })}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData({ ...formData, default_size_to: val ? parseInt(val) : '' });
+                  }}
                   className="mt-1.5"
                 />
               </div>
@@ -679,7 +690,10 @@ export default function Settings() {
               Здесь отображается история всех действий в системе. Вы можете восстановить удалённые данные.
             </p>
             <Button
-              onClick={() => window.location.href = '/ActivityLog'}
+              onClick={() => {
+                const pageUrl = createPageUrl('ActivityLog');
+                window.location.href = pageUrl;
+              }}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
               <History className="w-4 h-4 mr-2" />
