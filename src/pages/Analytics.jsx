@@ -21,7 +21,8 @@ const EXCHANGE_RATES = {
   TJS: 1,
   USD: 0.091,
   RUB: 8.5,
-  EUR: 0.084
+  EUR: 0.084,
+  CNY: 0.66
 };
 
 export default function Analytics() {
@@ -32,6 +33,7 @@ export default function Analytics() {
   const [currency, setCurrency] = useState('TJS');
   const [showTime, setShowTime] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [chartType, setChartType] = useState('line'); // line, bar, area
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
@@ -120,6 +122,7 @@ export default function Analytics() {
       case 'USD': return '$';
       case 'RUB': return '₽';
       case 'EUR': return '€';
+      case 'CNY': return '¥';
       default: return 'с.';
     }
   };
@@ -145,6 +148,17 @@ export default function Analytics() {
                 <SelectItem value="USD">Доллар ($)</SelectItem>
                 <SelectItem value="RUB">Рубль (₽)</SelectItem>
                 <SelectItem value="EUR">Евро (€)</SelectItem>
+                <SelectItem value="CNY">Юань (¥)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={chartType} onValueChange={setChartType}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="line">Линейный</SelectItem>
+                <SelectItem value="bar">Столбчатый</SelectItem>
+                <SelectItem value="area">Областной</SelectItem>
               </SelectContent>
             </Select>
             {showTime && (
@@ -225,7 +239,7 @@ export default function Analytics() {
         {/* Sales & Profit Chart */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <h3 className="font-semibold text-slate-900 mb-4">Динамика продаж и прибыли</h3>
-          <SalesChart sales={filteredSales} days={14} />
+          <SalesChart sales={filteredSales} days={14} chartType={chartType} />
         </div>
 
         {/* Sales Type Chart */}
