@@ -1,9 +1,9 @@
 import React from 'react';
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { format, parseISO, startOfDay, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
-export default function SalesChart({ sales, days = 7 }) {
+export default function SalesChart({ sales, days = 7, chartType = 'line' }) {
   // Группируем продажи по дням
   const chartData = [];
   for (let i = days - 1; i >= 0; i--) {
@@ -24,9 +24,11 @@ export default function SalesChart({ sales, days = 7 }) {
     });
   }
 
+  const ChartComponent = chartType === 'bar' ? BarChart : chartType === 'area' ? AreaChart : LineChart;
+
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={chartData}>
+      <ChartComponent data={chartData}>
         <defs>
           <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
@@ -45,9 +47,23 @@ export default function SalesChart({ sales, days = 7 }) {
           formatter={(value) => value.toLocaleString() + ' с.'}
         />
         <Legend />
-        <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRevenue)" name="Выручка" />
-        <Area type="monotone" dataKey="profit" stroke="#10b981" fillOpacity={1} fill="url(#colorProfit)" name="Прибыль" />
-      </AreaChart>
+        {chartType === 'bar' ? (
+          <>
+            <Bar dataKey="revenue" fill="#3b82f6" name="Выручка" />
+            <Bar dataKey="profit" fill="#10b981" name="Прибыль" />
+          </>
+        ) : chartType === 'area' ? (
+          <>
+            <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRevenue)" name="Выручка" />
+            <Area type="monotone" dataKey="profit" stroke="#10b981" fillOpacity={1} fill="url(#colorProfit)" name="Прибыль" />
+          </>
+        ) : (
+          <>
+            <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} name="Выручка" />
+            <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2} name="Прибыль" />
+          </>
+        )}
+      </ChartComponent>
     </ResponsiveContainer>
   );
 }

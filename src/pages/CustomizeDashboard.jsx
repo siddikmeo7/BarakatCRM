@@ -131,10 +131,18 @@ export default function CustomizeDashboard() {
         title="Настроить главную страницу"
         subtitle="Выберите виджеты для отображения"
         actions={
-          <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Сохранить
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline"
+              onClick={() => navigate(createPageUrl('Dashboard'))}
+            >
+              Назад
+            </Button>
+            <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Сохранить
+            </Button>
+          </div>
         }
       />
 
