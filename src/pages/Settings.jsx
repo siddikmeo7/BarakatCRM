@@ -671,6 +671,23 @@ export default function Settings() {
           </div>
         </TabsContent>
 
+        {/* History Tab */}
+        <TabsContent value="history">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">История действий</h3>
+            <p className="text-slate-600 mb-4">
+              Здесь отображается история всех действий в системе. Вы можете восстановить удалённые данные.
+            </p>
+            <Button
+              onClick={() => window.location.href = '/ActivityLog'}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              <History className="w-4 h-4 mr-2" />
+              Перейти к истории
+            </Button>
+          </div>
+        </TabsContent>
+
         {/* Security Tab */}
         <TabsContent value="security">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">

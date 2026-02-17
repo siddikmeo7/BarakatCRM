@@ -368,7 +368,7 @@ export default function Sales() {
 
       {/* New Sale Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Новая продажа</DialogTitle>
           </DialogHeader>
@@ -452,6 +452,7 @@ export default function Sales() {
                   value={formData.boxes_sold}
                   onChange={(e) => setFormData({ ...formData, boxes_sold: parseInt(e.target.value) || 1 })}
                   className="mt-1.5"
+                  inputMode="decimal"
                 />
               </div>
               <div>

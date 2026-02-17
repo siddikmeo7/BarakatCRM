@@ -34,6 +34,7 @@ export default function Debts() {
   const [search, setSearch] = useState('');
   const [filterCustomer, setFilterCustomer] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all'); // all, paid, unpaid
+  const [filterAmount, setFilterAmount] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [selectedCustomerHistory, setSelectedCustomerHistory] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -136,8 +137,9 @@ export default function Debts() {
     const matchesStatus = filterStatus === 'all' || 
       (filterStatus === 'paid' && isPaid) || 
       (filterStatus === 'unpaid' && !isPaid);
+    const matchesAmount = !filterAmount || remaining >= parseFloat(filterAmount);
     
-    return matchesSearch && matchesCustomer && matchesStatus;
+    return matchesSearch && matchesCustomer && matchesStatus && matchesAmount;
   });
 
   // Итоги
@@ -218,10 +220,18 @@ export default function Debts() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Все</SelectItem>
-              <SelectItem value="unpaid">Не погашено</SelectItem>
-              <SelectItem value="paid">Погашено</SelectItem>
+              <SelectItem value="unpaid">Активные</SelectItem>
+              <SelectItem value="paid">Погашенные</SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex-1">
+            <Input
+              type="number"
+              placeholder="Фильтр по сумме долга..."
+              onChange={(e) => setFilterAmount(e.target.value)}
+              className="max-w-xs"
+            />
+          </div>
         </div>
       </div>
 

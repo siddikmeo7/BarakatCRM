@@ -11,19 +11,36 @@ import {
   Box,
   DollarSign,
   Package,
-  Percent
+  Percent,
+  Clock
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
+
+const EXCHANGE_RATES = {
+  TJS: 1,
+  USD: 0.091,
+  RUB: 8.5,
+  EUR: 0.084
+};
 
 export default function Analytics() {
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currency, setCurrency] = useState('TJS');
+  const [showTime, setShowTime] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
   });
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -94,6 +111,19 @@ export default function Analytics() {
     );
   }
 
+  const convertCurrency = (amount) => {
+    return (amount * EXCHANGE_RATES[currency]).toFixed(2);
+  };
+
+  const getCurrencySymbol = () => {
+    switch(currency) {
+      case 'USD': return '$';
+      case 'RUB': return '₽';
+      case 'EUR': return '€';
+      default: return 'с.';
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader 
@@ -101,25 +131,48 @@ export default function Analytics() {
         subtitle="Визуализация данных вашего бизнеса"
       />
 
-      {/* Date Filter */}
+      {/* Date Filter & Time */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+        <div className="flex flex-wrap items-center gap-4 justify-between">
+          <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+          <div className="flex items-center gap-4">
+            <Select value={currency} onValueChange={setCurrency}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TJS">Сомони (с.)</SelectItem>
+                <SelectItem value="USD">Доллар ($)</SelectItem>
+                <SelectItem value="RUB">Рубль (₽)</SelectItem>
+                <SelectItem value="EUR">Евро (€)</SelectItem>
+              </SelectContent>
+            </Select>
+            {showTime && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-lg">
+                <Clock className="w-4 h-4 text-indigo-600" />
+                <span className="font-semibold text-indigo-900">
+                  {format(currentTime, 'HH:mm:ss')} • {format(currentTime, 'dd MMM yyyy')}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Main Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Выручка"
-          value={totalRevenue.toLocaleString()}
-          subtitle="сомони"
+          value={convertCurrency(totalRevenue)}
+          subtitle={getCurrencySymbol()}
           icon={ShoppingCart}
           iconBg="bg-blue-100"
           iconColor="text-blue-600"
         />
         <StatCard
           title="Прибыль"
-          value={totalProfit.toLocaleString()}
-          subtitle="сомони"
+          value={convertCurrency(totalProfit)}
+          subtitle={getCurrencySymbol()}
           icon={TrendingUp}
           iconBg="bg-emerald-100"
           iconColor="text-emerald-600"
@@ -144,15 +197,15 @@ export default function Analytics() {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           title="Стоимость склада"
-          value={totalStockValue.toLocaleString()}
-          subtitle="сомони"
+          value={convertCurrency(totalStockValue)}
+          subtitle={getCurrencySymbol()}
           icon={Package}
           iconBg="bg-cyan-100"
           iconColor="text-cyan-600"
         />
         <StatCard
           title="Потенциальная прибыль"
-          value={potentialProfit.toLocaleString()}
+          value={convertCurrency(potentialProfit)}
           subtitle="от склада"
           icon={DollarSign}
           iconBg="bg-indigo-100"
