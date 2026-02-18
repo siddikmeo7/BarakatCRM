@@ -58,6 +58,17 @@ export default function Layout({ children, currentPageName }) {
     loadUserAndBusiness();
   }, []);
 
+  // Подписка на изменение языка в реальном времени
+  useEffect(() => {
+    if (!business?.id) return;
+    const unsubscribe = base44.entities.Business.subscribe((event) => {
+      if (event.id === business.id && event.data?.language) {
+        setLang(event.data.language);
+      }
+    });
+    return unsubscribe;
+  }, [business?.id]);
+
   const loadUserAndBusiness = async () => {
     try {
       const currentUser = await base44.auth.me();
