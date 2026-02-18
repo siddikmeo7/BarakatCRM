@@ -337,31 +337,31 @@ export default function Settings() {
         <TabsList className="bg-white border border-slate-200 p-1 flex-wrap">
           <TabsTrigger value="business" className="gap-2">
             <Building2 className="w-4 h-4" />
-            Бизнес
+            {t(lang, 'settings_business')}
           </TabsTrigger>
           <TabsTrigger value="defaults" className="gap-2">
             <Palette className="w-4 h-4" />
-            По умолчанию
+            {t(lang, 'settings_defaults')}
           </TabsTrigger>
           <TabsTrigger value="employees" className="gap-2">
             <Users className="w-4 h-4" />
-            Сотрудники
+            {t(lang, 'settings_employees')}
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="w-4 h-4" />
-            Уведомления
+            {t(lang, 'settings_notifications')}
           </TabsTrigger>
           <TabsTrigger value="custom" className="gap-2">
             <Palette className="w-4 h-4" />
-            Кастомные поля
+            {t(lang, 'settings_custom')}
           </TabsTrigger>
           <TabsTrigger value="security" className="gap-2">
             <SettingsIcon className="w-4 h-4" />
-            Безопасность
+            {t(lang, 'settings_security')}
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-2">
             <History className="w-4 h-4" />
-            История
+            {t(lang, 'settings_history')}
           </TabsTrigger>
         </TabsList>
 
