@@ -542,6 +542,95 @@ export default function Debts() {
         </DialogContent>
       </Dialog>
 
+      {/* Customer Detail Dialog */}
+      <Dialog open={customerDetailOpen} onOpenChange={setCustomerDetailOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Информация о клиенте</DialogTitle>
+          </DialogHeader>
+          {selectedCustomerDetail && (() => {
+            const c = selectedCustomerDetail;
+            const whatsappNum = c.use_phone_for_all ? c.phone : (c.whatsapp || c.phone);
+            const telegramNum = c.use_phone_for_all ? c.phone : (c.telegram || c.phone);
+            return (
+              <div className="space-y-4 py-2">
+                {/* Avatar + Name */}
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center">
+                    <span className="text-2xl font-bold text-indigo-600">{c.name?.charAt(0)?.toUpperCase()}</span>
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-slate-900">{c.name}</p>
+                    {c.address && <p className="text-sm text-slate-500">{c.address}</p>}
+                  </div>
+                </div>
+
+                {/* Contact Info */}
+                <div className="bg-slate-50 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="w-4 h-4 text-slate-400" />
+                    <span className="text-slate-700">{c.phone}</span>
+                  </div>
+                  {c.email && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-700">{c.email}</span>
+                    </div>
+                  )}
+                  {c.address && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-700">{c.address}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Debt Summary */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-orange-50 rounded-xl p-3 text-center">
+                    <p className="text-xs text-orange-500 mb-1">Текущий долг</p>
+                    <p className="text-lg font-bold text-orange-600">{(c.total_debt || 0).toLocaleString()} с.</p>
+                  </div>
+                  <div className="bg-emerald-50 rounded-xl p-3 text-center">
+                    <p className="text-xs text-emerald-500 mb-1">Всего оплачено</p>
+                    <p className="text-lg font-bold text-emerald-600">{(c.total_paid || 0).toLocaleString()} с.</p>
+                  </div>
+                </div>
+
+                {/* Messenger Buttons */}
+                <div className="flex gap-2">
+                  <a
+                    href={`https://wa.me/${whatsappNum?.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-green-50 hover:bg-green-100 rounded-xl text-green-700 text-sm font-medium transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4" /> WhatsApp
+                  </a>
+                  <a
+                    href={`https://t.me/${telegramNum?.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 hover:bg-blue-100 rounded-xl text-blue-700 text-sm font-medium transition-colors"
+                  >
+                    <Send className="w-4 h-4" /> Telegram
+                  </a>
+                </div>
+
+                {/* Edit Button */}
+                <Link
+                  to={createPageUrl('Customers')}
+                  onClick={() => setCustomerDetailOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" /> Изменить данные клиента
+                </Link>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
       {/* Payment History Dialog */}
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent className="max-w-2xl">
