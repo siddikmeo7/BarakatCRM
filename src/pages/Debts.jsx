@@ -420,15 +420,15 @@ export default function Debts() {
             return (
               <div key={sale.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <button onClick={() => customer && openCustomerDetail(customer)} className="flex items-center gap-2 hover:opacity-75 transition-opacity text-left">
                     <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center">
                       <span className="text-sm font-bold text-indigo-600">{customer?.name?.charAt(0)?.toUpperCase()}</span>
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900">{customer?.name || 'Неизвестный'}</p>
+                      <p className="font-semibold text-slate-900 hover:underline underline-offset-2">{customer?.name || 'Неизвестный'}</p>
                       <p className="text-xs text-slate-500">{customer?.phone}</p>
                     </div>
-                  </div>
+                  </button>
                   <span className={`text-xs px-2 py-1 rounded-lg font-medium ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
                     {isPaid ? 'Оплачено' : 'Активный'}
                   </span>
