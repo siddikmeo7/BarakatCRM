@@ -230,6 +230,8 @@ export default function Products() {
         const valA = (a.boxes_in_stock || 0) * (a.sale_price || 0);
         const valB = (b.boxes_in_stock || 0) * (b.sale_price || 0);
         return valB - valA;
+      case 'date':
+        return new Date(b.created_date || 0) - new Date(a.created_date || 0);
       case 'name':
       default:
         return (a.brand + a.model).localeCompare(b.brand + b.model);
