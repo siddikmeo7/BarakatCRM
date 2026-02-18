@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { base44 } from '@/api/base44Client';
+import ViewToggle from '@/components/ui/ViewToggle';
 import { 
   CreditCard, 
   DollarSign,
@@ -16,7 +18,9 @@ import {
   CheckCircle,
   Loader2,
   History,
-  Clock
+  Clock,
+  MessageCircle,
+  Send
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
