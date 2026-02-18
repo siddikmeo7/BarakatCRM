@@ -34,6 +34,7 @@ export default function Sales() {
   const [warehouses, setWarehouses] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lang, setLang] = useState('ru');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -69,6 +70,7 @@ export default function Sales() {
       if (businesses.length > 0) {
         const biz = businesses[0];
         setBusiness(biz);
+        setLang(biz.language || 'ru');
         
         const [salesData, productsData, warehousesData, customersData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
@@ -208,12 +210,12 @@ export default function Sales() {
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Продажи"
-        subtitle={`${filteredSales.length} продаж`}
+        title={t(lang,'sales_title')}
+        subtitle={`${filteredSales.length} ${t(lang,'dash_sales_count')}`}
         actions={
           <Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
             <Plus className="w-4 h-4" />
-            Новая продажа
+            {t(lang,'sales_new')}
           </Button>
         }
       />
@@ -223,35 +225,35 @@ export default function Sales() {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-2 mb-2">
             <Box className="w-5 h-5 text-indigo-600" />
-            <span className="text-sm text-slate-500">Коробок</span>
+            <span className="text-sm text-slate-500">{t(lang,'sales_boxes_label')}</span>
           </div>
           <p className="text-2xl font-bold text-slate-900">{totals.boxes}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-2 mb-2">
             <Layers className="w-5 h-5 text-purple-600" />
-            <span className="text-sm text-slate-500">Пар</span>
+            <span className="text-sm text-slate-500">{t(lang,'sales_pairs_label')}</span>
           </div>
           <p className="text-2xl font-bold text-slate-900">{totals.pairs}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-2 mb-2">
             <Hash className="w-5 h-5 text-amber-600" />
-            <span className="text-sm text-slate-500">Штук</span>
+            <span className="text-sm text-slate-500">{t(lang,'sales_items_label')}</span>
           </div>
           <p className="text-2xl font-bold text-slate-900">{totals.items}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-2 mb-2">
             <ShoppingCart className="w-5 h-5 text-blue-600" />
-            <span className="text-sm text-slate-500">Выручка</span>
+            <span className="text-sm text-slate-500">{t(lang,'sales_revenue')}</span>
           </div>
           <p className="text-2xl font-bold text-slate-900">{totals.revenue.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-5 h-5 text-emerald-600" />
-            <span className="text-sm text-slate-500">Прибыль</span>
+            <span className="text-sm text-slate-500">{t(lang,'sales_profit')}</span>
           </div>
           <p className="text-2xl font-bold text-emerald-600">{totals.profit.toLocaleString()}</p>
         </div>
@@ -264,15 +266,15 @@ export default function Sales() {
           <SearchInput 
             value={search} 
             onChange={setSearch} 
-            placeholder="Поиск по товару..."
+            placeholder={t(lang,'sales_search')}
             className="w-full sm:w-64"
           />
           <Select value={filterWarehouse} onValueChange={setFilterWarehouse}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="Склад" />
+              <SelectValue placeholder={t(lang,'prod_warehouse')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Все склады</SelectItem>
+              <SelectItem value="all">{t(lang,'sales_wh_all')}</SelectItem>
               {warehouses.map(wh => (
                 <SelectItem key={wh.id} value={wh.id}>{wh.name}</SelectItem>
               ))}
@@ -283,9 +285,9 @@ export default function Sales() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="boxes">Коробки</SelectItem>
-              <SelectItem value="pairs">Пары</SelectItem>
-              <SelectItem value="items">Штуки</SelectItem>
+              <SelectItem value="boxes">{t(lang,'sales_boxes')}</SelectItem>
+              <SelectItem value="pairs">{t(lang,'sales_pairs')}</SelectItem>
+              <SelectItem value="items">{t(lang,'sales_items')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -298,14 +300,14 @@ export default function Sales() {
           <table className="w-full">
             <thead className="bg-slate-50">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Дата</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_date')}</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_product')}</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">
-                  {displayUnit === 'boxes' ? 'Коробок' : displayUnit === 'pairs' ? 'Пар' : 'Штук'}
+                  {displayUnit === 'boxes' ? t(lang,'sales_boxes_label') : displayUnit === 'pairs' ? t(lang,'sales_pairs_label') : t(lang,'sales_items_label')}
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Сумма</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Прибыль</th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Тип</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'sales_amount')}</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'sales_profit')}</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">{t(lang,'sales_type')}</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -335,7 +337,7 @@ export default function Sales() {
                         )}
                         <div>
                           <p className="font-medium text-slate-900 text-sm">{product?.brand || 'Удалён'} {product?.model}</p>
-                          {sale.is_cancelled && <span className="text-xs text-red-500">Отменена</span>}
+                          {sale.is_cancelled && <span className="text-xs text-red-500">{t(lang,'sales_cancelled')}</span>}
                         </div>
                       </div>
                     </td>
@@ -348,7 +350,7 @@ export default function Sales() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-1 rounded-lg text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                        {sale.is_debt ? `В долг${customer?.name ? ` (${customer.name})` : ''}` : 'Наличные'}
+                        {sale.is_debt ? `${t(lang,'sales_in_debt')}${customer?.name ? ` (${customer.name})` : ''}` : t(lang,'sales_cash')}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -396,10 +398,10 @@ export default function Sales() {
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {sale.is_debt ? 'В долг' : 'Наличные'}
+                          {sale.is_debt ? t(lang,'sales_in_debt') : t(lang,'sales_cash')}
                         </span>
-                        <span className="text-xs text-slate-500">{sale.boxes_sold} кор.</span>
-                        {sale.is_cancelled && <span className="text-xs text-red-500 font-medium">Отменена</span>}
+                        <span className="text-xs text-slate-500">{sale.boxes_sold} {t(lang,'sales_boxes_short')}</span>
+                        {sale.is_cancelled && <span className="text-xs text-red-500 font-medium">{t(lang,'sales_cancelled')}</span>}
                       </div>
                       <ChevronRight className="w-4 h-4 text-slate-300" />
                     </div>
@@ -416,7 +418,7 @@ export default function Sales() {
         {filteredSales.length === 0 && (
           <div className="text-center py-12 text-slate-500">
             <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-            <p>Продажи не найдены</p>
+            <p>{t(lang,'sales_not_found')}</p>
           </div>
         )}
       </div>
@@ -436,19 +438,19 @@ export default function Sales() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Новая продажа</DialogTitle>
+            <DialogTitle>{t(lang,'sales_new')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {/* Product Search */}
             <div>
-              <Label>Поиск товара *</Label>
+              <Label>{t(lang,'sales_search_product')} *</Label>
               <div className="relative mt-1.5">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input 
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  placeholder="Введите бренд или модель..."
+                  placeholder={t(lang,'sales_search_placeholder')}
                   className="pl-10"
                 />
               </div>
@@ -474,7 +476,7 @@ export default function Sales() {
                       <div className="flex-1">
                         <p className="font-medium text-slate-900">{product.brand} {product.model}</p>
                         <p className="text-sm text-slate-500">
-                          {product.boxes_in_stock} коробок • {product.sale_price?.toLocaleString()} с.
+                          {product.boxes_in_stock} {t(lang,'sales_boxes_label').toLowerCase()} • {product.sale_price?.toLocaleString()} с.
                         </p>
                       </div>
                     </div>
@@ -500,7 +502,7 @@ export default function Sales() {
                   <div>
                     <p className="font-semibold text-slate-900">{selectedProduct.brand} {selectedProduct.model}</p>
                     <p className="text-sm text-slate-600">
-                      На складе: {selectedProduct.boxes_in_stock} коробок
+                      {t(lang,'sales_on_stock')}: {selectedProduct.boxes_in_stock} {t(lang,'sales_boxes_label').toLowerCase()}
                     </p>
                   </div>
                 </div>
@@ -510,7 +512,7 @@ export default function Sales() {
             {/* Boxes Quantity */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Количество коробок *</Label>
+                <Label>{t(lang,'sales_qty_boxes')} *</Label>
                 <Input 
                   type="text"
                   pattern="[0-9]*"
@@ -526,7 +528,7 @@ export default function Sales() {
                 />
               </div>
               <div>
-                <Label>Цена продажи за коробку</Label>
+                <Label>{t(lang,'sales_price_per_box')}</Label>
                 <Input 
                   type="text"
                   pattern="[0-9.]*"
@@ -540,7 +542,7 @@ export default function Sales() {
                   className="mt-1.5"
                 />
                 <p className="text-xs text-slate-500 mt-1">
-                  По умолчанию: {selectedProduct?.sale_price?.toLocaleString() || 0} с.
+                  {t(lang,'sales_default_price')}: {selectedProduct?.sale_price?.toLocaleString() || 0} с.
                 </p>
               </div>
             </div>
@@ -549,19 +551,19 @@ export default function Sales() {
             {selectedProduct && (
               <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-xl">
                 <div>
-                  <p className="text-sm text-slate-500">Пар</p>
+                  <p className="text-sm text-slate-500">{t(lang,'sales_pairs_label')}</p>
                   <p className="text-lg font-semibold text-slate-900">{pairsSold}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">Штук</p>
+                  <p className="text-sm text-slate-500">{t(lang,'sales_items_label')}</p>
                   <p className="text-lg font-semibold text-slate-900">{itemsSold}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">Сумма</p>
+                  <p className="text-sm text-slate-500">{t(lang,'sales_amount')}</p>
                   <p className="text-lg font-semibold text-slate-900">{totalAmount.toLocaleString()} с.</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">Прибыль</p>
+                  <p className="text-sm text-slate-500">{t(lang,'sales_profit')}</p>
                   <p className="text-lg font-semibold text-emerald-600">+{profit.toLocaleString()} с.</p>
                 </div>
               </div>
@@ -575,27 +577,27 @@ export default function Sales() {
                 onCheckedChange={(checked) => setFormData({ ...formData, is_debt: checked })}
               />
               <label htmlFor="is_debt" className="font-medium text-slate-900 cursor-pointer">
-                Продажа в долг
+                {t(lang,'sales_debt_sale')}
               </label>
             </div>
 
             {/* Customer Info */}
             <div className="space-y-3">
               <div>
-                <Label>Имя клиента</Label>
+                <Label>{t(lang,'sales_customer_name')}</Label>
                 <Input 
                   value={formData.customer_name}
                   onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                  placeholder="Не указано"
+                  placeholder={t(lang,'sales_not_specified')}
                   className="mt-1.5"
                 />
               </div>
               <div>
-                <Label>Адрес клиента</Label>
+                <Label>{t(lang,'sales_customer_address')}</Label>
                 <Input 
                   value={formData.customer_address}
                   onChange={(e) => setFormData({ ...formData, customer_address: e.target.value })}
-                  placeholder="Не указано"
+                  placeholder={t(lang,'sales_not_specified')}
                   className="mt-1.5"
                 />
               </div>
@@ -613,7 +615,7 @@ export default function Sales() {
                 
                 {formData.customer_id && (
                   <div>
-                    <Label>Частичная оплата сейчас (сомони)</Label>
+                    <Label>{t(lang,'sales_partial_pay')}</Label>
                     <Input 
                       type="text"
                       pattern="[0-9.]*"
@@ -627,7 +629,7 @@ export default function Sales() {
                       className="mt-1.5"
                     />
                     <p className="text-xs text-slate-500 mt-1">
-                      Остаток долга: {(totalAmount - (parseFloat(formData.partial_payment) || 0)).toLocaleString()} с.
+                      {t(lang,'sales_remaining_debt')}: {(totalAmount - (parseFloat(formData.partial_payment) || 0)).toLocaleString()} с.
                     </p>
                   </div>
                 )}
@@ -637,14 +639,14 @@ export default function Sales() {
 
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Отмена
+              {t(lang,'cancel')}
             </Button>
             <Button 
               onClick={handleSave} 
               disabled={saving || !formData.product_id || formData.boxes_sold < 1 || (formData.is_debt && !formData.customer_id)}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Продать'}
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t(lang,'sales_sell_btn')}
             </Button>
           </div>
         </DialogContent>
