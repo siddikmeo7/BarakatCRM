@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { t } from '@/components/i18n/translations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
 import {
   Bot, Send, Plus, MessageSquare, Trash2, Loader2, Sparkles,
   Menu, X, Package, Users, ShoppingCart, TrendingUp, History,
