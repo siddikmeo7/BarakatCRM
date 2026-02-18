@@ -208,7 +208,7 @@ IMPORTANT: ${t(lang, 'ai_lang_instruction')} Be helpful and give specific recomm
       console.error('Error sending message:', error);
       setMessages([...newMessages, { 
         role: 'assistant', 
-        content: 'Извините, произошла ошибка. Попробуйте ещё раз.', 
+        content: t(lang, 'ai_error'), 
         timestamp: new Date().toISOString() 
       }]);
     } finally {
