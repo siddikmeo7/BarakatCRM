@@ -252,7 +252,7 @@ IMPORTANT: ${t(lang, 'ai_lang_instruction')} Be helpful and give specific recomm
           <div className="p-4 border-b border-slate-100">
             <Button onClick={createNewChat} className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2">
               <Plus className="w-4 h-4" />
-              Новый чат
+              {t(lang, 'ai_new_chat')}
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
