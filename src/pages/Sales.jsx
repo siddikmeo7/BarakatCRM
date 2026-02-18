@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
+import SaleDetailDialog from '@/components/sales/SaleDetailDialog';
 import { 
   Plus, 
   ShoppingCart, 
@@ -19,7 +20,8 @@ import {
   Hash,
   TrendingUp,
   Loader2,
-  Search
+  Search,
+  ChevronRight
 } from 'lucide-react';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -32,6 +34,7 @@ export default function Sales() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedSale, setSelectedSale] = useState(null);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [filterWarehouse, setFilterWarehouse] = useState('all');
@@ -276,9 +279,10 @@ export default function Sales() {
         </div>
       </div>
 
-      {/* Sales Table */}
+      {/* Sales List — Mobile Cards + Desktop Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50">
               <tr>
@@ -290,6 +294,7 @@ export default function Sales() {
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Сумма</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Прибыль</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Тип</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -298,59 +303,44 @@ export default function Sales() {
                 const customer = customers.find(c => c.id === sale.customer_id);
                 const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
                                   displayUnit === 'pairs' ? sale.pairs_sold : sale.items_sold;
-                
                 return (
-                  <tr key={sale.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
+                  <tr 
+                    key={sale.id} 
+                    className={`hover:bg-slate-50 cursor-pointer ${sale.is_cancelled ? 'opacity-50' : ''}`}
+                    onClick={() => setSelectedSale(sale)}
+                  >
+                    <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                      {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM, HH:mm', { locale: ru })}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {product?.photo_url ? (
-                          <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                          <img src={product.photo_url} alt="" className="w-9 h-9 rounded-lg object-cover" />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                            <Package className="w-5 h-5 text-slate-400" />
+                          <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
+                            <Package className="w-4 h-4 text-slate-400" />
                           </div>
                         )}
                         <div>
-                          <p className="font-medium text-slate-900">{product?.brand || 'Удалён'}</p>
-                          <p className="text-sm text-slate-500">{product?.model}</p>
+                          <p className="font-medium text-slate-900 text-sm">{product?.brand || 'Удалён'} {product?.model}</p>
+                          {sale.is_cancelled && <span className="text-xs text-red-500">Отменена</span>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-center font-semibold text-indigo-600">
-                      {displayQty}
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                    <td className="px-4 py-3 text-center font-semibold text-indigo-600">{displayQty}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-900 whitespace-nowrap">
                       {sale.total_amount?.toLocaleString()} с.
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">
+                    <td className="px-4 py-3 text-right font-semibold text-emerald-600 whitespace-nowrap">
                       +{sale.profit?.toLocaleString()} с.
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2 py-1 rounded-lg text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                        {sale.is_debt ? `В долг${customer?.name ? ` (${customer.name})` : ''}` : 'Наличные'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3">
-                      <div className="text-xs space-y-1">
-                        {sale.is_debt ? (
-                          <>
-                            <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-lg font-medium">
-                              В долг {customer?.name && `(${customer.name})`}
-                            </span>
-                            {sale.partial_payment > 0 && (
-                              <p className="text-emerald-600">Оплачено: {sale.partial_payment.toLocaleString()} с.</p>
-                            )}
-                          </>
-                        ) : (
-                          <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg font-medium">
-                            Наличные
-                          </span>
-                        )}
-                        {sale.customer_name && sale.customer_name !== 'Неизвестный' && (
-                          <p className="text-slate-600">{sale.customer_name}</p>
-                        )}
-                        {sale.customer_address && (
-                          <p className="text-slate-500">{sale.customer_address}</p>
-                        )}
-                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
                     </td>
                   </tr>
                 );
@@ -358,6 +348,59 @@ export default function Sales() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Cards */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredSales.map(sale => {
+            const product = products.find(p => p.id === sale.product_id);
+            const customer = customers.find(c => c.id === sale.customer_id);
+            return (
+              <div
+                key={sale.id}
+                onClick={() => setSelectedSale(sale)}
+                className={`p-4 active:bg-slate-50 cursor-pointer ${sale.is_cancelled ? 'opacity-50' : ''}`}
+              >
+                <div className="flex items-center gap-3">
+                  {product?.photo_url ? (
+                    <img src={product.photo_url} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-6 h-6 text-slate-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-slate-900 text-sm">{product?.brand} {product?.model}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold text-slate-900 text-sm">{sale.total_amount?.toLocaleString()} с.</p>
+                        <p className="text-xs text-emerald-600">+{sale.profit?.toLocaleString()} с.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                          {sale.is_debt ? 'В долг' : 'Наличные'}
+                        </span>
+                        <span className="text-xs text-slate-500">{sale.boxes_sold} кор.</span>
+                        {sale.is_cancelled && <span className="text-xs text-red-500 font-medium">Отменена</span>}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-300" />
+                    </div>
+                    {(customer?.name || sale.customer_name) && sale.customer_name !== 'Неизвестный' && (
+                      <p className="text-xs text-slate-500 mt-1">👤 {customer?.name || sale.customer_name}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         {filteredSales.length === 0 && (
           <div className="text-center py-12 text-slate-500">
             <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-slate-300" />
@@ -365,6 +408,17 @@ export default function Sales() {
           </div>
         )}
       </div>
+
+      {/* Sale Detail Dialog */}
+      {selectedSale && (
+        <SaleDetailDialog
+          sale={selectedSale}
+          product={products.find(p => p.id === selectedSale.product_id)}
+          customer={customers.find(c => c.id === selectedSale.customer_id)}
+          onClose={() => setSelectedSale(null)}
+          onUpdated={() => { loadData(); setSelectedSale(null); }}
+        />
+      )}
 
       {/* New Sale Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
