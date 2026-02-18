@@ -45,6 +45,7 @@ export default function Sales() {
     to: endOfMonth(new Date())
   });
   const [displayUnit, setDisplayUnit] = useState('boxes'); // boxes, pairs, items
+  const [sortBy, setSortBy] = useState('date'); // date, amount, profit, boxes
   
   const [formData, setFormData] = useState({
     product_id: '',
@@ -167,7 +168,7 @@ export default function Sales() {
   };
 
   // Фильтрация продаж
-  const filteredSales = sales.filter(sale => {
+  let filteredSales = sales.filter(sale => {
     const product = products.find(p => p.id === sale.product_id);
     const matchesSearch = 
       product?.brand?.toLowerCase().includes(search.toLowerCase()) ||
@@ -181,6 +182,21 @@ export default function Sales() {
     }
     
     return matchesSearch && matchesWarehouse && matchesDate;
+  });
+
+  // Сортировка
+  filteredSales = [...filteredSales].sort((a, b) => {
+    switch(sortBy) {
+      case 'amount':
+        return (b.total_amount || 0) - (a.total_amount || 0);
+      case 'profit':
+        return (b.profit || 0) - (a.profit || 0);
+      case 'boxes':
+        return (b.boxes_sold || 0) - (a.boxes_sold || 0);
+      case 'date':
+      default:
+        return new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date);
+    }
   });
 
   // Итоги
@@ -288,6 +304,17 @@ export default function Sales() {
               <SelectItem value="boxes">{t(lang,'sales_boxes')}</SelectItem>
               <SelectItem value="pairs">{t(lang,'sales_pairs')}</SelectItem>
               <SelectItem value="items">{t(lang,'sales_items')}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Сортировка" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date">По дате (новые)</SelectItem>
+              <SelectItem value="amount">По сумме</SelectItem>
+              <SelectItem value="profit">По прибыли</SelectItem>
+              <SelectItem value="boxes">По коробкам</SelectItem>
             </SelectContent>
           </Select>
         </div>
