@@ -161,7 +161,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {!hideData || true ? (
       <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {(widgets.length === 0 ? ['sales', 'profit', 'boxes', 'stock'] : widgets.filter(w => ['sales', 'profit', 'boxes', 'pairs', 'stock', 'debt', 'customers'].includes(w.widget_type))).map((widget) => {
