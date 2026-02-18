@@ -242,8 +242,8 @@ IMPORTANT: ${t(lang, 'ai_lang_instruction')} Be helpful and give specific recomm
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col">
       <PageHeader 
-        title="AI Ассистент"
-        subtitle="Умный помощник для анализа вашего бизнеса"
+        title={t(lang, 'ai_title')}
+        subtitle={t(lang, 'ai_subtitle')}
       />
 
       <div className="flex-1 flex gap-6 min-h-0">
