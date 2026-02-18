@@ -24,7 +24,6 @@ export default function AIAssistant() {
   const [lang, setLang] = useState('ru');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dataStats, setDataStats] = useState(null);
-  const [showChatHistory, setShowChatHistory] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
