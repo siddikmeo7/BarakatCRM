@@ -123,6 +123,7 @@ export default function Debts() {
       // Обновляем данные клиента
       if (customer) {
         const newDebt = Math.max(0, (customer.total_debt || 0) - amount);
+        const product = products.find(p => p.id === selectedSale.product_id);
         await base44.entities.Customer.update(customer.id, {
           total_debt: newDebt,
           total_paid: (customer.total_paid || 0) + amount
@@ -132,6 +133,9 @@ export default function Debts() {
           const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
             phone: customer.phone,
             customer_name: customer.name,
+            product_name: product ? `${product.brand} ${product.model}` : 'Товар',
+            total_debt: selectedSale.total_amount,
+            paid_amount: amount,
             remaining_debt: newDebt,
             business_name: business?.name,
             type: 'payment'
