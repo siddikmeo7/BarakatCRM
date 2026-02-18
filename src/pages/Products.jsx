@@ -267,76 +267,124 @@ export default function Products() {
         </div>
       </div>
 
-      {/* Products Grid */}
-      <div className="grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-        {filteredProducts.map(product => {
-          const warehouse = warehouses.find(w => w.id === product.warehouse_id);
-          const totalPairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);
-          const totalItems = totalPairs * 2;
-          
-          return (
-            <div key={product.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
-              {/* Photo */}
-              <div className="aspect-square bg-slate-100 relative">
-                {product.photo_url ? (
-                  <img src={product.photo_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="w-16 h-16 text-slate-300" />
+      {/* Products Grid/List */}
+      {view === 'grid' ? (
+        <div className="grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          {filteredProducts.map(product => {
+            const totalPairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);
+            const totalItems = totalPairs * 2;
+            return (
+              <div key={product.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
+                <div className="aspect-square bg-slate-100 relative">
+                  {product.photo_url ? (
+                    <img src={product.photo_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="w-16 h-16 text-slate-300" />
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <button onClick={() => handleOpenDialog(product)} className="p-2 bg-white rounded-lg shadow-md hover:bg-slate-50">
+                      <Edit2 className="w-4 h-4 text-slate-600" />
+                    </button>
+                    <button onClick={() => handleDelete(product.id)} className="p-2 bg-white rounded-lg shadow-md hover:bg-red-50">
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </button>
                   </div>
-                )}
-                <div className="absolute top-2 right-2 flex gap-1">
-                  <button 
-                    onClick={() => handleOpenDialog(product)}
-                    className="p-2 bg-white rounded-lg shadow-md hover:bg-slate-50"
-                  >
-                    <Edit2 className="w-4 h-4 text-slate-600" />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(product.id)}
-                    className="p-2 bg-white rounded-lg shadow-md hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
+                </div>
+                <div className="p-3">
+                  <div className="mb-2">
+                    <p className="font-semibold text-slate-900 text-sm truncate">{product.brand}</p>
+                    <p className="text-xs text-slate-500 truncate">{product.model}</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1 p-2 bg-slate-50 rounded-lg mb-2">
+                    <div className="text-center">
+                      <p className="text-sm font-bold text-indigo-600">{product.boxes_in_stock || 0}</p>
+                      <p className="text-[10px] text-slate-500">короб</p>
+                    </div>
+                    <div className="text-center border-x border-slate-200">
+                      <p className="text-sm font-bold text-slate-700">{totalPairs}</p>
+                      <p className="text-[10px] text-slate-500">пар</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-bold text-slate-700">{totalItems}</p>
+                      <p className="text-[10px] text-slate-500">шт</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <div>
+                      <p className="text-[10px] text-slate-500">Продажа</p>
+                      <p className="font-semibold text-emerald-600">{product.sale_price?.toLocaleString()}</p>
+                    </div>
+                    <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] text-slate-600">{product.product_type}</span>
+                  </div>
                 </div>
               </div>
-
-              {/* Info */}
-              <div className="p-3">
-                <div className="mb-2">
-                  <p className="font-semibold text-slate-900 text-sm truncate">{product.brand}</p>
-                  <p className="text-xs text-slate-500 truncate">{product.model}</p>
-                </div>
-
-                <div className="grid grid-cols-3 gap-1 p-2 bg-slate-50 rounded-lg mb-2">
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-indigo-600">{product.boxes_in_stock || 0}</p>
-                    <p className="text-[10px] text-slate-500">короб</p>
-                  </div>
-                  <div className="text-center border-x border-slate-200">
-                    <p className="text-sm font-bold text-slate-700">{totalPairs}</p>
-                    <p className="text-[10px] text-slate-500">пар</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-slate-700">{totalItems}</p>
-                    <p className="text-[10px] text-slate-500">шт</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-xs">
-                  <div>
-                    <p className="text-[10px] text-slate-500">Продажа</p>
-                    <p className="font-semibold text-emerald-600">{product.sale_price?.toLocaleString()}</p>
-                  </div>
-                  <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] text-slate-600">
-                    {product.product_type}
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Коробок</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Пар</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Закупка</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Продажа</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Стоимость склада</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Тип</th>
+                <th className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredProducts.map(product => {
+                const totalPairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);
+                const stockValue = (product.boxes_in_stock || 0) * (product.sale_price || 0);
+                const warehouse = warehouses.find(w => w.id === product.warehouse_id);
+                return (
+                  <tr key={product.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {product.photo_url ? (
+                          <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                            <Package className="w-5 h-5 text-slate-300" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-slate-900">{product.brand} {product.model}</p>
+                          <p className="text-xs text-slate-500">{product.color} • {product.size_from}-{product.size_to}{warehouse ? ` • ${warehouse.name}` : ''}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center font-bold text-indigo-600">{product.boxes_in_stock || 0}</td>
+                    <td className="px-4 py-3 text-center text-slate-700">{totalPairs}</td>
+                    <td className="px-4 py-3 text-right text-slate-700">{product.purchase_price?.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">{product.sale_price?.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-900">{stockValue.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600">{product.product_type}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1 justify-end">
+                        <button onClick={() => handleOpenDialog(product)} className="p-1.5 hover:bg-slate-100 rounded-lg">
+                          <Edit2 className="w-4 h-4 text-slate-500" />
+                        </button>
+                        <button onClick={() => handleDelete(product.id)} className="p-1.5 hover:bg-red-50 rounded-lg">
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {filteredProducts.length === 0 && (
         <div className="text-center py-12">
