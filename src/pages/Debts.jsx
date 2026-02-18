@@ -50,6 +50,8 @@ export default function Debts() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [view, setView] = useState('list');
   const [sendingMsg, setSendingMsg] = useState(null);
+  const [selectedCustomerDetail, setSelectedCustomerDetail] = useState(null);
+  const [customerDetailOpen, setCustomerDetailOpen] = useState(false);
 
   useEffect(() => {
     loadData();
