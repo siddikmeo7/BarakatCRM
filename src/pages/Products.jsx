@@ -300,6 +300,7 @@ export default function Products() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="name">По названию</SelectItem>
+              <SelectItem value="date">По дате</SelectItem>
               <SelectItem value="stock">По складу</SelectItem>
               <SelectItem value="price">По цене</SelectItem>
               <SelectItem value="value">По стоимости</SelectItem>
