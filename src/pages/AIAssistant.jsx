@@ -514,6 +514,50 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
           </div>
         </div>
       </div>
+
+      {/* Chat History Modal */}
+      <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
+        <DialogContent className="max-w-2xl max-h-96">
+          <DialogHeader>
+            <DialogTitle>История чатов</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 overflow-y-auto max-h-72">
+            {chats.length === 0 ? (
+              <p className="text-center text-slate-500 py-8">Чатов не найдено</p>
+            ) : (
+              chats.map(chat => (
+                <div
+                  key={chat.id}
+                  onClick={() => {
+                    selectChat(chat);
+                    setHistoryModalOpen(false);
+                  }}
+                  className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg cursor-pointer transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900 dark:text-white truncate">{chat.title || 'Без названия'}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {format(new Date(chat.updated_date || chat.created_date), 'dd MMM yyyy HH:mm')}
+                    </p>
+                  </div>
+                  <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded ml-2 flex-shrink-0">
+                    {(chat.messages || []).length} сообщений
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteChat(e, chat.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-opacity ml-2 flex-shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
