@@ -125,10 +125,16 @@ export default function ChartSettings() {
         title="Настройка графиков"
         subtitle="Выберите типы графиков для каждого раздела"
         actions={
-          <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Сохранить
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Назад
+            </Button>
+            <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Сохранить
+            </Button>
+          </div>
         }
       />
 

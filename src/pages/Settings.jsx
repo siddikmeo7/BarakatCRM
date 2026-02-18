@@ -49,6 +49,7 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
+  const [driveBackupLoading, setDriveBackupLoading] = useState(false);
   const [clearingCache, setClearingCache] = useState(false);
   
   const [formData, setFormData] = useState({
