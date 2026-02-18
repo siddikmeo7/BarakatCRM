@@ -44,15 +44,16 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
   body {
     @apply bg-background text-foreground;
     overscroll-behavior: none;
-    -webkit-user-select: none;
-    user-select: none;
+    user-select: text;
   }
-  body * {
-    -webkit-tap-highlight-color: transparent;
+  button, a, [role="button"], svg, [role="img"] {
+    user-select: none;
+    -webkit-user-select: none;
   }
 }
 
