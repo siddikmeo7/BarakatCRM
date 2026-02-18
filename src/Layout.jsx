@@ -51,6 +51,7 @@ export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lang, setLang] = useState('ru');
   const navigate = useNavigate();
 
   useEffect(() => {
