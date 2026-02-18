@@ -406,6 +406,9 @@ export default function Products() {
                         <div>
                           <p className="font-semibold text-slate-900">{product.brand} {product.model}</p>
                           <p className="text-xs text-slate-500">{product.color} • {product.size_from}-{product.size_to}{warehouse ? ` • ${warehouse.name}` : ''}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {product.created_date ? new Date(product.created_date).toLocaleDateString('ru-RU') : ''}
+                          </p>
                         </div>
                       </div>
                     </td>
