@@ -326,25 +326,25 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
   }
 
   return (
-    <div className="h-screen lg:h-[calc(100vh-2rem)] flex overflow-hidden -m-4 lg:-m-8 flex-col lg:flex-row">
+    <div className="h-screen flex overflow-hidden flex-col lg:flex-row bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* SIDEBAR */}
+      {/* SIDEBAR - Desktop Fixed, Mobile Modal */}
       <div className={`
         fixed lg:relative z-50 lg:z-auto
-        h-screen lg:h-full w-72 bg-slate-900 flex flex-col
-        transition-transform duration-300 overflow-y-auto
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        h-screen lg:h-full w-80 bg-white dark:bg-slate-900 flex flex-col
+        transition-transform duration-300 overflow-hidden border-r border-slate-200 dark:border-slate-800
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-80 lg:translate-x-0'}
       `}>
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-slate-700">
+        <div className="p-5 border-b border-slate-200 dark:border-slate-800">
           <Button
             onClick={createNewChat}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2 justify-start"
+            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 gap-2 justify-start rounded-xl shadow-lg shadow-indigo-500/20"
           >
             <Plus className="w-4 h-4" />
             {t(lang, 'ai_new_chat')}
@@ -353,159 +353,154 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
 
         {/* Stats mini panel */}
         {dataStats && (
-          <div className="px-3 py-2 border-b border-slate-700 grid grid-cols-2 gap-1">
-            {[
-              { icon: Package, label: lang === 'ru' ? 'Товаров' : lang === 'tj' ? 'Молҳо' : 'Products', val: dataStats.totalProducts },
-              { icon: Users, label: lang === 'ru' ? 'Клиентов' : lang === 'tj' ? 'Муштариён' : 'Customers', val: dataStats.customersCount },
-              { icon: ShoppingCart, label: lang === 'ru' ? 'Продажи' : lang === 'tj' ? 'Фурӯш' : 'Sales', val: dataStats.debtSalesCount + (dataStats.totalProducts || 0) },
-              { icon: AlertTriangle, label: lang === 'ru' ? 'Должников' : lang === 'tj' ? 'Қарздор' : 'Debtors', val: dataStats.debtorsCount },
-            ].map(({ icon: Icon, label, val }) => (
-              <div key={label} className="flex items-center gap-1.5 bg-slate-800 rounded-lg px-2 py-1.5">
-                <Icon className="w-3 h-3 text-indigo-400 flex-shrink-0" />
-                <div>
-                  <div className="text-white text-xs font-semibold">{val}</div>
-                  <div className="text-slate-400 text-[10px]">{label}</div>
+          <div className="px-4 py-4 border-b border-slate-200 dark:border-slate-800">
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-3 uppercase tracking-wider">Статистика</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { icon: Package, label: 'Товаров', val: dataStats.totalProducts },
+                { icon: Users, label: 'Клиентов', val: dataStats.customersCount },
+                { icon: AlertTriangle, label: 'Должников', val: dataStats.debtorsCount },
+                { icon: TrendingUp, label: 'Продаж', val: dataStats.debtSalesCount },
+              ].map(({ icon: Icon, label, val }) => (
+                <div key={label} className="bg-slate-100 dark:bg-slate-800 rounded-lg p-3 text-center">
+                  <div className="flex items-center justify-center mb-1">
+                    <Icon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="text-lg font-bold text-slate-900 dark:text-white">{val}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{label}</div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
+        <div className="flex-1 overflow-y-auto py-3 px-3 space-y-2">
           {chats.length === 0 && (
-            <p className="text-slate-500 text-sm text-center py-8">{t(lang, 'ai_create_chat')}</p>
+            <div className="text-center py-12 text-slate-500 text-sm">
+              <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              {t(lang, 'ai_create_chat')}
+            </div>
           )}
           {chats.map(chat => (
             <div
               key={chat.id}
               onClick={() => selectChat(chat)}
-              className={`group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+              className={`group flex items-start gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
                 activeChat?.id === chat.id
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-300 hover:bg-slate-800'
+                  ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-900 dark:text-indigo-100 shadow-sm'
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
-              <MessageSquare className="w-4 h-4 flex-shrink-0 text-slate-400" />
-              <span className="flex-1 truncate text-sm">
+              <MessageSquare className={`w-4 h-4 flex-shrink-0 mt-1 ${
+                activeChat?.id === chat.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'
+              }`} />
+              <span className="flex-1 truncate text-sm font-medium">
                 {chat.title || t(lang, 'ai_new_chat')}
               </span>
               <button
                 onClick={(e) => deleteChat(e, chat.id)}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-opacity flex-shrink-0"
+                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/10 rounded-lg transition-opacity flex-shrink-0"
               >
-                <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                <Trash2 className="w-3.5 h-3.5 text-red-500" />
               </button>
             </div>
           ))}
         </div>
 
         {/* Sidebar footer */}
-        <div className="p-3 border-t border-slate-700">
-          <div className="flex items-center gap-2 text-slate-400 text-xs">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs">
             <History className="w-3.5 h-3.5" />
-            <span>{dataStats?.logsCount || 0} {lang === 'ru' ? 'действий в истории' : lang === 'tj' ? 'амал дар таърих' : 'actions in history'}</span>
+            <span>{dataStats?.logsCount || 0} {lang === 'ru' ? 'действий в системе' : 'actions'}</span>
           </div>
         </div>
       </div>
 
       {/* MAIN CHAT */}
-      <div className="flex-1 flex flex-col bg-white min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 min-w-0 overflow-hidden lg:ml-0">
 
         {/* Chat Top Bar */}
-        <div className="h-14 border-b border-slate-200 flex items-center px-4 gap-3 flex-shrink-0">
+        <div className="h-16 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 lg:px-6 gap-4 flex-shrink-0 bg-white dark:bg-slate-900">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 hover:bg-slate-100 rounded-lg"
+            className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
           >
-            <Menu className="w-5 h-5 text-slate-600" />
+            <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
           </button>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-            <Bot className="w-4 h-4 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/30">
+            <Bot className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-slate-900 text-sm truncate">
+            <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">
               {activeChat?.title || t(lang, 'ai_title')}
             </p>
-            <p className="text-xs text-slate-500">{t(lang, 'ai_subtitle')}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t(lang, 'ai_subtitle')}</p>
           </div>
-          {/* New chat button for desktop in header */}
-          <button
-            onClick={createNewChat}
-            className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            {t(lang, 'ai_new_chat')}
-          </button>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-6 py-12">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-5 shadow-lg shadow-indigo-500/25">
-                <Sparkles className="w-8 h-8 text-white" />
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-6 shadow-lg shadow-indigo-500/30">
+                <Sparkles className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">{t(lang, 'ai_greeting')}</h3>
-              <p className="text-slate-500 mb-2 max-w-md text-sm">{t(lang, 'ai_greeting_sub')}</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t(lang, 'ai_greeting')}</h3>
+              <p className="text-slate-600 dark:text-slate-400 mb-3 max-w-md text-sm">{t(lang, 'ai_greeting_sub')}</p>
               {businessData && (
-                <p className="text-xs text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full mb-6">
-                  {lang === 'ru' ? `Вижу: ${dataStats?.totalProducts} товаров, ${dataStats?.customersCount} клиентов, ${dataStats?.logsCount} действий в истории` :
-                   lang === 'tj' ? `Мебинам: ${dataStats?.totalProducts} мол, ${dataStats?.customersCount} муштарӣ` :
-                   `Seeing: ${dataStats?.totalProducts} products, ${dataStats?.customersCount} customers`}
-                </p>
+                <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-xl text-xs font-medium mb-6 inline-block">
+                  {lang === 'ru' ? `✓ ${dataStats?.totalProducts} товаров • ${dataStats?.customersCount} клиентов` :
+                   lang === 'tj' ? `✓ ${dataStats?.totalProducts} мол • ${dataStats?.customersCount} муштарӣ` :
+                   `✓ ${dataStats?.totalProducts} products • ${dataStats?.customersCount} customers`}
+                </div>
               )}
-              <div className="flex flex-wrap justify-center gap-2 max-w-xl">
+              <div className="flex flex-wrap justify-center gap-2 max-w-2xl">
                 {suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { setInput(s); inputRef.current?.focus(); }}
-                    className="px-3 py-2 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-transparent rounded-xl text-sm text-slate-700 transition-colors text-left"
-                  >
-                    {s}
-                  </button>
-                ))}
+                   <button
+                     key={i}
+                     onClick={() => { setInput(s); inputRef.current?.focus(); }}
+                     className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-xl text-sm text-slate-700 dark:text-slate-300 transition-all text-left font-medium"
+                   >
+                     {s}
+                   </button>
+                 ))}
               </div>
             </div>
           ) : (
             <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
               {messages.map((msg, i) => (
-                <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  {msg.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Bot className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                  <div className={`max-w-[85%] ${msg.role === 'user' ? 'order-1' : ''}`}>
-                    <div className={`rounded-2xl px-4 py-3 ${
-                      msg.role === 'user'
-                        ? 'bg-indigo-600 text-white rounded-br-sm'
-                        : 'bg-slate-100 text-slate-900 rounded-bl-sm'
-                    }`}>
-                      {msg.role === 'assistant' ? (
-                        <ReactMarkdown className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:my-2">
-                          {msg.content}
-                        </ReactMarkdown>
-                      ) : (
-                        <p className="text-sm leading-relaxed">{msg.content}</p>
-                      )}
-                    </div>
-                  </div>
-                  {msg.role === 'user' && (
-                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-indigo-600 text-sm font-semibold">Вы</span>
-                    </div>
-                  )}
-                </div>
-              ))}
+                 <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                   {msg.role === 'assistant' && (
+                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-lg shadow-indigo-500/30">
+                       <Bot className="w-4 h-4 text-white" />
+                     </div>
+                   )}
+                   <div className={`max-w-[85%] ${msg.role === 'user' ? 'order-1' : ''}`}>
+                     <div className={`rounded-2xl px-4 py-3 shadow-sm ${
+                       msg.role === 'user'
+                         ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-br-sm'
+                         : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-bl-sm border border-slate-200 dark:border-slate-700'
+                     }`}>
+                       {msg.role === 'assistant' ? (
+                         <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:my-2">
+                           {msg.content}
+                         </ReactMarkdown>
+                       ) : (
+                         <p className="text-sm leading-relaxed">{msg.content}</p>
+                       )}
+                     </div>
+                   </div>
+                 </div>
+               ))}
               {sending && (
                 <div className="flex gap-3 justify-start">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/30">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
-                  <div className="bg-slate-100 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
-                    <span className="text-slate-500 text-sm">{t(lang, 'ai_thinking')}</span>
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2 border border-slate-200 dark:border-slate-700">
+                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-slate-600 dark:text-slate-400 text-sm">{t(lang, 'ai_thinking')}</span>
                   </div>
                 </div>
               )}
@@ -515,9 +510,9 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
         </div>
 
         {/* Input */}
-        <div className="border-t border-slate-200 p-4 bg-white">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex gap-2 items-end">
+        <div className="border-t border-slate-200 dark:border-slate-800 p-4 bg-white dark:bg-slate-900">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex gap-3 items-end">
               <div className="flex-1 relative">
                 <Input
                   ref={inputRef}
@@ -526,19 +521,19 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
                   onKeyDown={handleKeyPress}
                   placeholder={t(lang, 'ai_placeholder')}
                   disabled={sending || !businessData}
-                  className="pr-4 py-3 text-sm rounded-xl border-slate-300 focus:border-indigo-400"
+                  className="pr-4 py-3 text-sm rounded-xl border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 focus:border-indigo-400 dark:focus:border-indigo-500"
                 />
               </div>
               <Button
                 onClick={sendMessage}
                 disabled={sending || !input.trim() || !businessData}
-                className="bg-indigo-600 hover:bg-indigo-700 rounded-xl h-9 w-9 p-0 flex-shrink-0"
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl h-10 w-10 p-0 flex-shrink-0 shadow-lg shadow-indigo-500/30"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
             {!businessData && (
-              <p className="text-xs text-amber-500 mt-2 text-center">{t(lang, 'ai_loading_biz')}</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 text-center">{t(lang, 'ai_loading_biz')}</p>
             )}
           </div>
         </div>
