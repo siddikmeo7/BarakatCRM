@@ -111,7 +111,25 @@ export default function ActivityLog() {
     }
     
     return matchesSearch && matchesAction && matchesEntity && matchesDate;
+  }).sort((a, b) => {
+    let valA, valB;
+    if (sortField === 'date') { valA = new Date(a.created_date); valB = new Date(b.created_date); }
+    else if (sortField === 'action') { valA = a.action_type; valB = b.action_type; }
+    else if (sortField === 'entity') { valA = a.entity_type; valB = b.entity_type; }
+    if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+    if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+    return 0;
   });
+
+  const toggleSort = (field) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('desc'); }
+  };
+
+  const SortIcon = ({ field }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 text-slate-400" />;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3 text-indigo-500" /> : <ArrowDown className="w-3 h-3 text-indigo-500" />;
+  };
 
   const actionLabels = {
     create: 'Создание',
