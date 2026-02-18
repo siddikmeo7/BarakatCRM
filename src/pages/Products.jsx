@@ -462,6 +462,26 @@ export default function Products() {
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            {/* Product Info & Timestamps */}
+            {editingProduct && (
+              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-lg text-xs">
+                <div>
+                  <p className="text-slate-500">Дата добавления</p>
+                  <p className="font-semibold text-slate-900 flex items-center gap-1 mt-1">
+                    <Calendar className="w-3 h-3" />
+                    {editingProduct.created_date ? format(parseISO(editingProduct.created_date), 'dd MMM yyyy, HH:mm:ss', { locale: ru }) : '—'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500">Последнее обновление</p>
+                  <p className="font-semibold text-slate-900 flex items-center gap-1 mt-1">
+                    <History className="w-3 h-3" />
+                    {editingProduct.updated_date ? format(parseISO(editingProduct.updated_date), 'dd MMM yyyy, HH:mm:ss', { locale: ru }) : '—'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Photo Upload */}
             <div>
               <Label>{t(lang,'prod_photo')}</Label>
