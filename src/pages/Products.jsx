@@ -250,6 +250,7 @@ export default function Products() {
   }
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="space-y-6">
       <PageHeader 
         title={t(lang,'prod_title')}
