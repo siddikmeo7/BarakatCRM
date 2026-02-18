@@ -130,6 +130,13 @@ export default function ProductDetail() {
                 <p className="text-sm text-slate-500">Склад</p>
                 <p className="font-medium text-slate-900">{warehouse?.name || 'Не указан'}</p>
               </div>
+              <div>
+                <p className="text-sm text-slate-500">Дата добавления</p>
+                <div className="flex items-center gap-2 font-medium text-slate-900">
+                  <Calendar className="w-4 h-4 text-slate-400" />
+                  {product.created_date ? format(parseISO(product.created_date), 'dd MMM yyyy', { locale: ru }) : '—'}
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
