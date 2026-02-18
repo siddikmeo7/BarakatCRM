@@ -908,15 +908,15 @@ export default function Settings() {
                 >
                   <Trash2 className="w-4 h-4" />
                   {t(lang,'settings_sec_delete_btn')}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+                  </Button>
+                  </div>
+                  </div>
+                  </CollapsibleContent>
+                  </Collapsible>
+                  </div>
 
-      {/* Save Button */}
-      <div className="flex justify-end">
+                  {/* Save Button */}
+                  <div className="sticky bottom-0 bg-white border-t border-slate-200 p-4 flex justify-end gap-3 -mx-8 px-8">
         <Button 
           onClick={handleSave}
           disabled={saving}
