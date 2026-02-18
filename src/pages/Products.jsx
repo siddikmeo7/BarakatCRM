@@ -468,7 +468,7 @@ export default function Products() {
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label>Размер от</Label>
+                <Label>{t(lang,'prod_size_from')}</Label>
                 <Input 
                   type="text"
                   pattern="[0-9]*"
@@ -482,7 +482,7 @@ export default function Products() {
                 />
               </div>
               <div>
-                <Label>Размер до</Label>
+                <Label>{t(lang,'prod_size_to')}</Label>
                 <Input 
                   type="text"
                   pattern="[0-9]*"
@@ -496,15 +496,15 @@ export default function Products() {
                 />
               </div>
               <div>
-                <Label>Пар в коробке</Label>
+                <Label>{t(lang,'prod_pairs_box')}</Label>
                 <Select value={String(formData.pairs_per_box)} onValueChange={(v) => setFormData({ ...formData, pairs_per_box: parseInt(v) })}>
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="4">4 пары</SelectItem>
-                    <SelectItem value="6">6 пар</SelectItem>
-                    <SelectItem value="8">8 пар</SelectItem>
+                    <SelectItem value="4">{t(lang,'prod_pairs_4')}</SelectItem>
+                    <SelectItem value="6">{t(lang,'prod_pairs_6')}</SelectItem>
+                    <SelectItem value="8">{t(lang,'prod_pairs_8')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -512,7 +512,7 @@ export default function Products() {
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label>Цена закупки (сомони) *</Label>
+                <Label>{t(lang,'prod_purchase_price')} *</Label>
                 <Input 
                   type="text"
                   pattern="[0-9.]*"
@@ -527,7 +527,7 @@ export default function Products() {
                 />
               </div>
               <div>
-                <Label>Цена продажи (сомони) *</Label>
+                <Label>{t(lang,'prod_sale_price')} *</Label>
                 <Input 
                   type="text"
                   pattern="[0-9.]*"
@@ -542,7 +542,7 @@ export default function Products() {
                 />
               </div>
               <div>
-                <Label>Коробок на складе</Label>
+                <Label>{t(lang,'prod_boxes_stock')}</Label>
                 <Input 
                   type="text"
                   pattern="[0-9]*"
@@ -560,34 +560,34 @@ export default function Products() {
 
             {warehouses.length > 0 && (
               <SearchableSelect
-                label="Склад"
+                label={t(lang,'prod_warehouse')}
                 options={warehouses.map(w => w.name)}
                 value={warehouses.find(w => w.id === formData.warehouse_id)?.name || ''}
                 onChange={(name) => {
                   const wh = warehouses.find(w => w.name === name);
                   setFormData({ ...formData, warehouse_id: wh?.id || '' });
                 }}
-                placeholder="Поиск склада..."
+                placeholder={t(lang,'prod_search_wh')}
               />
             )}
             
             {/* Auto Calculations */}
             {formData.boxes_in_stock > 0 && formData.sale_price && (
               <div className="p-4 bg-indigo-50 rounded-xl">
-                <h4 className="font-semibold text-slate-900 mb-3">Автоматический расчёт</h4>
+                <h4 className="font-semibold text-slate-900 mb-3">{t(lang,'prod_auto_calc')}</h4>
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-sm text-slate-500">Коробок</p>
+                    <p className="text-sm text-slate-500">{t(lang,'prod_boxes')}</p>
                     <p className="text-xl font-bold text-indigo-600">{formData.boxes_in_stock}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">Пар</p>
+                    <p className="text-sm text-slate-500">{t(lang,'prod_pairs')}</p>
                     <p className="text-xl font-bold text-slate-700">
                       {parseInt(formData.boxes_in_stock) * (parseInt(formData.pairs_per_box) || 6)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">Штук</p>
+                    <p className="text-sm text-slate-500">{t(lang,'prod_items')}</p>
                     <p className="text-xl font-bold text-slate-700">
                       {parseInt(formData.boxes_in_stock) * (parseInt(formData.pairs_per_box) || 6) * 2}
                     </p>
@@ -595,13 +595,13 @@ export default function Products() {
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-indigo-200">
                   <div>
-                    <p className="text-sm text-slate-500">Общая стоимость</p>
+                    <p className="text-sm text-slate-500">{t(lang,'prod_total_value')}</p>
                     <p className="text-lg font-bold text-slate-900">
                       {(parseInt(formData.boxes_in_stock) * (parseFloat(formData.sale_price) || 0)).toLocaleString()} с.
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">Прибыль</p>
+                    <p className="text-sm text-slate-500">{t(lang,'prod_total_profit')}</p>
                     <p className="text-lg font-bold text-emerald-600">
                       {(parseInt(formData.boxes_in_stock) * ((parseFloat(formData.sale_price) || 0) - (parseFloat(formData.purchase_price) || 0))).toLocaleString()} с.
                     </p>
@@ -613,14 +613,14 @@ export default function Products() {
 
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Отмена
+              {t(lang,'cancel')}
             </Button>
             <Button 
               onClick={handleSave} 
               disabled={saving || !formData.brand || !formData.model}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingProduct ? 'Сохранить' : 'Добавить'}
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingProduct ? t(lang,'prod_save') : t(lang,'prod_add')}
             </Button>
           </div>
         </DialogContent>
