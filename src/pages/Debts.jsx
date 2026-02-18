@@ -286,117 +286,179 @@ export default function Debts() {
         </div>
       </div>
 
-      {/* Debts Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Дата</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Клиент</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Коробок</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Сумма</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Оплачено</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Остаток</th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">История</th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Действие</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredSales.map(sale => {
-                const customer = customers.find(c => c.id === sale.customer_id);
-                const product = products.find(p => p.id === sale.product_id);
-                const paidAmount = getSalePaidAmount(sale.id);
-                const remaining = (sale.total_amount || 0) - paidAmount;
-                const isPaid = remaining <= 0;
-                
-                return (
-                  <tr key={sale.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy', { locale: ru })}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                          <span className="text-sm font-bold text-indigo-600">
-                            {customer?.name?.charAt(0)?.toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900">{customer?.name || 'Неизвестный'}</p>
-                          <p className="text-xs text-slate-500">{customer?.phone}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {product?.photo_url ? (
-                          <img src={product.photo_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                            <Package className="w-4 h-4 text-slate-400" />
+      {/* Debts Table / Cards */}
+      {view === 'list' ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Дата</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Клиент</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Кор.</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Сумма</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Оплачено</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Остаток</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">WA</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Действие</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredSales.map(sale => {
+                  const customer = customers.find(c => c.id === sale.customer_id);
+                  const product = products.find(p => p.id === sale.product_id);
+                  const paidAmount = getSalePaidAmount(sale.id);
+                  const remaining = (sale.total_amount || 0) - paidAmount;
+                  const isPaid = remaining <= 0;
+                  return (
+                    <tr key={sale.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                        {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy', { locale: ru })}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                            <span className="text-sm font-bold text-indigo-600">{customer?.name?.charAt(0)?.toUpperCase()}</span>
                           </div>
+                          <div>
+                            <p className="font-medium text-slate-900">{customer?.name || 'Неизвестный'}</p>
+                            <p className="text-xs text-slate-500">{customer?.phone}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {product?.photo_url ? (
+                            <img src={product.photo_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                              <Package className="w-4 h-4 text-slate-400" />
+                            </div>
+                          )}
+                          <span className="text-sm text-slate-900">{product?.brand} {product?.model}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center font-medium text-slate-900">{sale.boxes_sold}</td>
+                      <td className="px-4 py-3 text-right font-medium text-slate-900">{sale.total_amount?.toLocaleString()} с.</td>
+                      <td className="px-4 py-3 text-right font-medium text-emerald-600">{paidAmount.toLocaleString()} с.</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className={`font-bold ${isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>{remaining.toLocaleString()} с.</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {!isPaid && customer && (
+                          <button
+                            onClick={() => openWhatsApp(customer, remaining, 'reminder')}
+                            disabled={sendingMsg === customer.id}
+                            className="p-1.5 bg-green-50 hover:bg-green-100 rounded-lg text-green-700"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </button>
                         )}
-                        <span className="text-sm text-slate-900">{product?.brand} {product?.model}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center font-medium text-slate-900">
-                      {sale.boxes_sold}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900">
-                      {sale.total_amount?.toLocaleString()} с.
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium text-emerald-600">
-                      {paidAmount.toLocaleString()} с.
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className={`font-bold ${isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
-                        {remaining.toLocaleString()} с.
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedCustomerHistory({ customerId: customer?.id, customerName: customer?.name });
-                          setHistoryOpen(true);
-                        }}
-                        className="gap-1"
-                      >
-                        <History className="w-4 h-4" />
-                      </Button>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {isPaid ? (
-                        <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium">
-                          Оплачено
-                        </span>
-                      ) : (
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleOpenPayment(sale)}
-                          className="bg-indigo-600 hover:bg-indigo-700"
-                        >
-                          <DollarSign className="w-4 h-4 mr-1" />
-                          Оплата
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        {filteredSales.length === 0 && (
-          <div className="text-center py-12 text-slate-500">
-            <CreditCard className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-            <p>Нет продаж в долг</p>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button variant="ghost" size="sm"
+                            onClick={() => { setSelectedCustomerHistory({ customerId: customer?.id, customerName: customer?.name }); setHistoryOpen(true); }}>
+                            <History className="w-4 h-4" />
+                          </Button>
+                          {isPaid ? (
+                            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium">Оплачено</span>
+                          ) : (
+                            <Button size="sm" onClick={() => handleOpenPayment(sale)} className="bg-indigo-600 hover:bg-indigo-700">
+                              <DollarSign className="w-3 h-3 mr-1" />Оплата
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+          {filteredSales.length === 0 && (
+            <div className="text-center py-12 text-slate-500">
+              <CreditCard className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+              <p>Нет продаж в долг</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredSales.map(sale => {
+            const customer = customers.find(c => c.id === sale.customer_id);
+            const product = products.find(p => p.id === sale.product_id);
+            const paidAmount = getSalePaidAmount(sale.id);
+            const remaining = (sale.total_amount || 0) - paidAmount;
+            const isPaid = remaining <= 0;
+            return (
+              <div key={sale.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center">
+                      <span className="text-sm font-bold text-indigo-600">{customer?.name?.charAt(0)?.toUpperCase()}</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">{customer?.name || 'Неизвестный'}</p>
+                      <p className="text-xs text-slate-500">{customer?.phone}</p>
+                    </div>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-lg font-medium ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
+                    {isPaid ? 'Оплачено' : 'Активный'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  {product?.photo_url ? (
+                    <img src={product.photo_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                      <Package className="w-4 h-4 text-slate-300" />
+                    </div>
+                  )}
+                  <span>{product?.brand} {product?.model} · {sale.boxes_sold} кор.</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-center">
+                  <div>
+                    <p className="text-xs text-slate-400">Сумма</p>
+                    <p className="font-semibold text-slate-900 text-sm">{sale.total_amount?.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400">Оплачено</p>
+                    <p className="font-semibold text-emerald-600 text-sm">{paidAmount.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400">Остаток</p>
+                    <p className={`font-bold text-sm ${isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>{remaining.toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  {!isPaid && customer && (
+                    <button onClick={() => openWhatsApp(customer, remaining, 'reminder')}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-green-50 hover:bg-green-100 rounded-lg text-green-700 text-xs font-medium">
+                      <MessageCircle className="w-3 h-3" /> WhatsApp
+                    </button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => { setSelectedCustomerHistory({ customerId: customer?.id, customerName: customer?.name }); setHistoryOpen(true); }}>
+                    <History className="w-4 h-4" />
+                  </Button>
+                  {!isPaid && (
+                    <Button size="sm" onClick={() => handleOpenPayment(sale)} className="bg-indigo-600 hover:bg-indigo-700 flex-1">
+                      <DollarSign className="w-3 h-3 mr-1" />Оплата
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {filteredSales.length === 0 && (
+            <div className="col-span-3 text-center py-12 text-slate-500">
+              <CreditCard className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+              <p>Нет продаж в долг</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Payment Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
