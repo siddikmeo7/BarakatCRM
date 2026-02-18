@@ -161,14 +161,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Dynamic Widgets */}
-      {hideData && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 text-center text-slate-400">
-          <EyeOff className="w-8 h-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Данные скрыты</p>
-        </div>
-      )}
-      {!hideData && (
+      {!hideData || true ? (
       <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {(widgets.length === 0 ? ['sales', 'profit', 'boxes', 'stock'] : widgets.filter(w => ['sales', 'profit', 'boxes', 'pairs', 'stock', 'debt', 'customers'].includes(w.widget_type))).map((widget) => {
