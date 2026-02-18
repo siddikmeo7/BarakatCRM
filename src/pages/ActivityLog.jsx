@@ -29,6 +29,7 @@ export default function ActivityLog() {
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
   });
+  const [detailLog, setDetailLog] = useState(null);
 
   useEffect(() => {
     loadData();
