@@ -340,8 +340,7 @@ export default function Customers() {
           );
         })}
       </div>
-
-      {view === 'grid' && </div>}
+      )}
 
       {filteredCustomers.length === 0 && (
         <div className="text-center py-12">
