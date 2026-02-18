@@ -341,6 +341,9 @@ export default function Products() {
                   <div className="mb-2">
                     <p className="font-semibold text-slate-900 text-sm truncate">{product.brand}</p>
                     <p className="text-xs text-slate-500 truncate">{product.model}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      {product.created_date ? new Date(product.created_date).toLocaleDateString('ru-RU') : ''}
+                    </p>
                   </div>
                   <div className="grid grid-cols-3 gap-1 p-2 bg-slate-50 rounded-lg mb-2">
                     <div className="text-center">
