@@ -189,59 +189,65 @@ export default function Analytics() {
       />
 
       {/* Date Filter & Time */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <div className="flex flex-wrap items-center gap-4 justify-between">
-          <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-36">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TJS">Сомони (с.)</SelectItem>
-                  <SelectItem value="USD">Доллар ($)</SelectItem>
-                  <SelectItem value="RUB">Рубль (₽)</SelectItem>
-                  <SelectItem value="EUR">Евро (€)</SelectItem>
-                  <SelectItem value="CNY">Юань (¥)</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => loadExchangeRates(true)}
-                disabled={ratesLoading}
-                className="gap-1 text-xs"
-                title="Обновить курс валют"
-              >
-                <RefreshCw className={`w-3 h-3 ${ratesLoading ? 'animate-spin' : ''}`} />
-                {ratesLoading ? 'Загрузка...' : 'Обновить курс'}
-              </Button>
-            </div>
-            {ratesDate && currency !== 'TJS' && (
-              <span className="text-xs text-slate-400">
-                1 с. = {exchangeRates[currency]} {currency} · {ratesDate}
-              </span>
-            )}
-            <Select value={chartType} onValueChange={setChartType}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="line">Линейный</SelectItem>
-                <SelectItem value="bar">Столбчатый</SelectItem>
-                <SelectItem value="area">Областной</SelectItem>
-              </SelectContent>
-            </Select>
-            {showTime && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-lg">
-                <Clock className="w-4 h-4 text-indigo-600" />
-                <span className="font-semibold text-indigo-900">
-                  {format(currentTime, 'HH:mm:ss')} • {format(currentTime, 'dd MMM yyyy')}
-                </span>
-              </div>
-            )}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+        {/* Top row: Clock + Hide button */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-lg">
+            <Clock className="w-4 h-4 text-indigo-600" />
+            <span className="font-semibold text-indigo-900 tabular-nums">
+              {format(currentTime, 'HH:mm:ss')} • {format(currentTime, 'dd MMM yyyy')}
+            </span>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setHideData(h => !h)}
+            className="gap-2"
+          >
+            {hideData ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            {hideData ? 'Показать данные' : 'Скрыть данные'}
+          </Button>
+        </div>
+        {/* Bottom row: filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+          <Select value={currency} onValueChange={setCurrency}>
+            <SelectTrigger className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TJS">Сомони (с.)</SelectItem>
+              <SelectItem value="USD">Доллар ($)</SelectItem>
+              <SelectItem value="RUB">Рубль (₽)</SelectItem>
+              <SelectItem value="EUR">Евро (€)</SelectItem>
+              <SelectItem value="CNY">Юань (¥)</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadExchangeRates(true)}
+            disabled={ratesLoading}
+            className="gap-1 text-xs"
+          >
+            <RefreshCw className={`w-3 h-3 ${ratesLoading ? 'animate-spin' : ''}`} />
+            {ratesLoading ? 'Загрузка...' : 'Обновить курс'}
+          </Button>
+          {ratesDate && currency !== 'TJS' && (
+            <span className="text-xs text-slate-400">
+              1 с. = {exchangeRates[currency]} {currency}
+            </span>
+          )}
+          <Select value={chartType} onValueChange={setChartType}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="line">Линейный</SelectItem>
+              <SelectItem value="bar">Столбчатый</SelectItem>
+              <SelectItem value="area">Областной</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
