@@ -60,7 +60,6 @@ import Dashboard from './pages/Dashboard';
 import Debts from './pages/Debts';
 import ProductDetail from './pages/ProductDetail';
 import Products from './pages/Products';
-import RegisterBusiness from './pages/RegisterBusiness';
 import Returns from './pages/Returns';
 import Sales from './pages/Sales';
 import Settings from './pages/Settings';
@@ -83,7 +82,6 @@ export const PAGES = {
     "Debts": Debts,
     "ProductDetail": ProductDetail,
     "Products": Products,
-    "RegisterBusiness": RegisterBusiness,
     "Returns": Returns,
     "Sales": Sales,
     "Settings": Settings,
@@ -92,7 +90,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "RegisterBusiness",
+    mainPage: "AIAssistant",
     Pages: PAGES,
     Layout: __Layout,
 };

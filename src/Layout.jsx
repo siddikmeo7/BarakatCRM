@@ -58,11 +58,25 @@ export default function Layout({ children, currentPageName }) {
       setUser(currentUser);
       
       if (currentUser.email !== ADMIN_EMAIL) {
-        const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
-        if (businesses.length > 0) {
-          setBusiness(businesses[0]);
-        }
-      }
+            const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
+            if (businesses.length > 0) {
+              setBusiness(businesses[0]);
+            } else {
+              // Автоматически создать бизнес при первом входе
+              const newBiz = await base44.entities.Business.create({
+                name: currentUser.full_name ? `Бизнес ${currentUser.full_name}` : 'Мой бизнес',
+                owner_email: currentUser.email,
+                is_active: true,
+                default_color: 'Чёрный',
+                default_size_from: 39,
+                default_size_to: 44,
+                default_pairs_per_box: 6,
+                default_product_type: 'Туфли',
+                language: 'ru'
+              });
+              setBusiness(newBiz);
+            }
+          }
     } catch (error) {
       console.error('Error loading user:', error);
     } finally {
