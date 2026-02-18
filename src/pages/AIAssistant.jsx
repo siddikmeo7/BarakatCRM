@@ -290,11 +290,10 @@ IMPORTANT: ${t(lang, 'ai_lang_instruction')} Be helpful and give specific recomm
                   <Sparkles className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 mb-2">
-                  Привет! Я ваш AI-ассистент
+                  {t(lang, 'ai_greeting')}
                 </h3>
                 <p className="text-slate-500 mb-6 max-w-md">
-                  Я могу анализировать ваш бизнес, отвечать на вопросы о продажах, 
-                  товарах, клиентах и давать рекомендации
+                  {t(lang, 'ai_greeting_sub')}
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {suggestions.map((suggestion, i) => (
@@ -334,7 +333,7 @@ IMPORTANT: ${t(lang, 'ai_lang_instruction')} Be helpful and give specific recomm
               <div className="flex justify-start">
                 <div className="bg-slate-100 rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
-                  <span className="text-slate-500">Думаю...</span>
+                  <span className="text-slate-500">{t(lang, 'ai_thinking')}</span>
                 </div>
               </div>
             )}
@@ -348,7 +347,7 @@ IMPORTANT: ${t(lang, 'ai_lang_instruction')} Be helpful and give specific recomm
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Задайте вопрос..."
+                placeholder={t(lang, 'ai_placeholder')}
                 disabled={sending || !activeChat}
                 className="flex-1"
               />
@@ -362,11 +361,11 @@ IMPORTANT: ${t(lang, 'ai_lang_instruction')} Be helpful and give specific recomm
             </div>
             {!activeChat ? (
               <p className="text-sm text-slate-500 mt-2 text-center">
-                Создайте новый чат, чтобы начать разговор
+                {t(lang, 'ai_create_chat')}
               </p>
             ) : !businessData ? (
               <p className="text-sm text-amber-500 mt-2 text-center">
-                Загрузка данных бизнеса...
+                {t(lang, 'ai_loading_biz')}
               </p>
             ) : null}
           </div>
