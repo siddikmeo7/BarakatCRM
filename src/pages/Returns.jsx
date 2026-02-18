@@ -325,7 +325,7 @@ export default function Returns() {
 
             <div>
               <Label>Товар *</Label>
-              <Select value={formData.product_id} onValueChange={(v) => setFormData({ ...formData, product_id: v })}>
+              <Select value={formData.product_id} onValueChange={(v) => setFormData({ ...formData, product_id: v, sale_id: '', boxes_returned: 1 }); setReturnWarning('')}>
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Выберите товар" />
                 </SelectTrigger>
@@ -338,6 +338,33 @@ export default function Returns() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Оригинальная продажа — для валидации */}
+            {formData.customer_id && formData.product_id && (
+              <div>
+                <Label>Привязать к продаже (необязательно)</Label>
+                <Select value={formData.sale_id} onValueChange={(v) => {
+                  setFormData({ ...formData, sale_id: v });
+                  setReturnWarning('');
+                }}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue placeholder="Выберите продажу" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sales.filter(s => s.customer_id === formData.customer_id && s.product_id === formData.product_id && !s.is_cancelled).map(s => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {new Date(s.sale_date || s.created_date).toLocaleDateString('ru')} — {s.boxes_sold} кор. × {s.sale_price} с.
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.sale_id && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Продано: {sales.find(s => s.id === formData.sale_id)?.boxes_sold} коробок
+                  </p>
+                )}
+              </div>
+            )}
 
             <div>
               <Label>Склад возврата *</Label>
@@ -367,9 +394,21 @@ export default function Returns() {
                   onChange={(e) => {
                     const val = e.target.value.replace(/[^0-9]/g, '');
                     setFormData({ ...formData, boxes_returned: val });
+                    // Проверка: не больше чем было продано
+                    if (formData.sale_id) {
+                      const sale = sales.find(s => s.id === formData.sale_id);
+                      if (sale && parseInt(val) > sale.boxes_sold) {
+                        setReturnWarning(`⚠️ Нельзя вернуть больше чем было продано (${sale.boxes_sold} коробок)`);
+                      } else {
+                        setReturnWarning('');
+                      }
+                    }
                   }}
-                  className="mt-1.5"
+                  className={`mt-1.5 ${returnWarning ? 'border-red-400' : ''}`}
                 />
+                {returnWarning && (
+                  <p className="text-xs text-red-600 mt-1 font-medium">{returnWarning}</p>
+                )}
               </div>
               <div>
                 <Label>Состояние *</Label>
@@ -419,7 +458,7 @@ export default function Returns() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={saving || !formData.product_id || !formData.customer_id || !formData.warehouse_id}
+              disabled={saving || !formData.product_id || !formData.customer_id || !formData.warehouse_id || !!returnWarning}
               className="bg-orange-600 hover:bg-orange-700"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Оформить возврат'}
