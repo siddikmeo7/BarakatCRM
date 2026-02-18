@@ -274,9 +274,64 @@ export default function Warehouses() {
               </div>
             );
           })}
-        </div>
-      ) : (
-        /* Warehouse Details */
+          </div>
+          ) : !selectedWarehouse && view === 'list' ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Склад</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Товаров</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Коробок</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Стоимость</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Продано</th>
+                <th className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredWarehouses.map(warehouse => {
+                const stats = getWarehouseStats(warehouse.id);
+                return (
+                  <tr key={warehouse.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setSelectedWarehouse(warehouse)}>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-100 rounded-lg">
+                          <WarehouseIconComp iconKey={warehouse.icon} className="w-4 h-4 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900">{warehouse.name}</p>
+                          {warehouse.address && <p className="text-xs text-slate-500">{warehouse.address}</p>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-900">{stats.productsCount}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-purple-600">{stats.totalBoxes}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">{stats.totalValue.toLocaleString()} с.</td>
+                    <td className="px-4 py-3 text-center text-blue-600 font-semibold">{stats.soldBoxes}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1 justify-end">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleOpenDialog(warehouse); }}
+                          className="p-1.5 hover:bg-slate-100 rounded-lg"
+                        >
+                          <Edit2 className="w-4 h-4 text-slate-500" />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDelete(warehouse.id); }}
+                          className="p-1.5 hover:bg-red-50 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          </div>
+          ) : (
+          /* Warehouse Details */
         <div className="space-y-6">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
