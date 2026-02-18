@@ -175,10 +175,10 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed top-0 left-0 h-full w-72 bg-white border-r border-slate-200 z-50 transition-transform duration-300",
+        "fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 transition-transform duration-300",
         "lg:translate-x-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      )} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
