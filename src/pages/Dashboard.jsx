@@ -254,7 +254,7 @@ export default function Dashboard() {
                   <p className="font-medium text-slate-900 truncate">{item.product.brand} {item.product.model}</p>
                   <p className="text-sm text-slate-500">{item.boxes} коробок</p>
                 </div>
-                <p className="font-semibold text-slate-900">{item.revenue.toLocaleString()} с.</p>
+                <p className="font-semibold text-slate-900">{hideData ? masked : `${item.revenue.toLocaleString()} с.`}</p>
               </div>
             )) : (
               <p className="text-center text-slate-500 py-8">Нет данных о продажах</p>
