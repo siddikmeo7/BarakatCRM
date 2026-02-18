@@ -12,9 +12,13 @@ import {
   DollarSign,
   Package,
   Percent,
-  Clock
+  Clock,
+  Settings2
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format } from 'date-fns';
 
 const EXCHANGE_RATES = {
@@ -132,6 +136,14 @@ export default function Analytics() {
       <PageHeader 
         title="Аналитика и статистика"
         subtitle="Визуализация данных вашего бизнеса"
+        actions={
+          <Link to={createPageUrl('ChartSettings')}>
+            <Button variant="outline" className="gap-2">
+              <Settings2 className="w-4 h-4" />
+              Настройка графиков
+            </Button>
+          </Link>
+        }
       />
 
       {/* Date Filter & Time */}
