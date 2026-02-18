@@ -309,14 +309,6 @@ export default function Analytics() {
           iconColor="text-indigo-600"
         />
         <StatCard
-          title="Потенциальная прибыль"
-          value={convertCurrency(potentialProfit)}
-          subtitle="от склада"
-          icon={DollarSign}
-          iconBg="bg-indigo-100"
-          iconColor="text-indigo-600"
-        />
-        <StatCard
           title="Всего товаров"
           value={products.length}
           icon={Package}
@@ -345,18 +337,18 @@ export default function Analytics() {
                 <div className="w-3 h-3 rounded-full bg-emerald-500" />
                 <p className="text-sm font-medium text-slate-600">Наличные</p>
               </div>
-              <p className="text-3xl font-bold text-emerald-600">{cashPercent}%</p>
+              <p className="text-3xl font-bold text-emerald-600">{hideData ? masked : `${cashPercent}%`}</p>
               <p className="text-sm text-slate-500 mt-1">{cashSales.length} продаж</p>
-              <p className="text-lg font-semibold text-slate-900 mt-2">{cashAmount.toLocaleString()} с.</p>
+              <p className="text-lg font-semibold text-slate-900 mt-2">{hideData ? masked : `${cashAmount.toLocaleString()} с.`}</p>
             </div>
             <div className="text-center p-4 bg-amber-50 rounded-xl">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <div className="w-3 h-3 rounded-full bg-amber-500" />
                 <p className="text-sm font-medium text-slate-600">В долг</p>
               </div>
-              <p className="text-3xl font-bold text-amber-600">{debtPercent}%</p>
+              <p className="text-3xl font-bold text-amber-600">{hideData ? masked : `${debtPercent}%`}</p>
               <p className="text-sm text-slate-500 mt-1">{debtSales.length} продаж</p>
-              <p className="text-lg font-semibold text-slate-900 mt-2">{debtAmount.toLocaleString()} с.</p>
+              <p className="text-lg font-semibold text-slate-900 mt-2">{hideData ? masked : `${debtAmount.toLocaleString()} с.`}</p>
             </div>
           </div>
         </div>
