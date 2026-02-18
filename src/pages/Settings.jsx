@@ -47,6 +47,7 @@ export default function Settings() {
   const [employees, setEmployees] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lang, setLang] = useState('ru');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
