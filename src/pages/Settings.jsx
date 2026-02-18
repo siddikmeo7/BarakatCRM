@@ -32,7 +32,8 @@ import {
   RefreshCw,
   ChevronDown,
   Lock,
-  Database
+  Database,
+  Zap
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
