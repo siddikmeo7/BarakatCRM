@@ -139,18 +139,28 @@ export default function Layout({ children, currentPageName }) {
 
 
 
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col">
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-40 flex items-center justify-between px-4">
-        <button onClick={() => setSidebarOpen(true)} className="p-2">
-          <Menu className="w-6 h-6 text-slate-700" />
-        </button>
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-40 flex items-center justify-between px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        {currentPageName && !['RegisterBusiness', 'Dashboard', 'AdminDashboard', 'AdminBusinesses'].includes(currentPageName) ? (
+          <button onClick={handleGoBack} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+            <ChevronLeft className="w-6 h-6 text-slate-700 dark:text-slate-200" />
+          </button>
+        ) : (
+          <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+            <Menu className="w-6 h-6 text-slate-700 dark:text-slate-200" />
+          </button>
+        )}
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
             <Package className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-slate-900">BarakatCRM</span>
+          <span className="font-bold text-slate-900 dark:text-white">BarakatCRM</span>
         </div>
         <div className="w-10" />
       </div>
