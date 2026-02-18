@@ -470,12 +470,12 @@ export default function Debts() {
                   </div>
                 </div>
                 <div className="flex gap-2 pt-1">
-                  {!isPaid && customer && (
-                    <button onClick={() => openWhatsApp(customer, remaining, 'reminder')}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-green-50 hover:bg-green-100 rounded-lg text-green-700 text-xs font-medium">
-                      <MessageCircle className="w-3 h-3" /> WhatsApp
-                    </button>
-                  )}
+                   {!isPaid && customer && (
+                     <button onClick={() => openWhatsApp(customer, remaining, 'reminder', sale)}
+                       className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-green-50 hover:bg-green-100 rounded-lg text-green-700 text-xs font-medium">
+                       <MessageCircle className="w-3 h-3" /> WhatsApp
+                     </button>
+                   )}
                   <Button variant="ghost" size="sm" onClick={() => { setSelectedCustomerHistory({ customerId: customer?.id, customerName: customer?.name }); setHistoryOpen(true); }}>
                     <History className="w-4 h-4" />
                   </Button>
