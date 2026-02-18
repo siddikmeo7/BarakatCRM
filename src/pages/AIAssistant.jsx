@@ -367,21 +367,21 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
             <div
               key={chat.id}
               onClick={() => selectChat(chat)}
-              className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+              className={`group flex items-center gap-1 px-2 py-1 rounded cursor-pointer transition-colors text-xs ${
                 activeChat?.id === chat.id
                   ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-100'
                   : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
-              <MessageSquare className={`w-4 h-4 flex-shrink-0 ${activeChat?.id === chat.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
-              <span className="flex-1 truncate text-sm">
+              <MessageSquare className={`w-3 h-3 flex-shrink-0 ${activeChat?.id === chat.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
+              <span className="flex-1 truncate">
                 {chat.title || t(lang, 'ai_new_chat')}
               </span>
               <button
                 onClick={(e) => deleteChat(e, chat.id)}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-opacity flex-shrink-0"
+                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-red-500/20 rounded transition-opacity flex-shrink-0"
               >
-                <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                <Trash2 className="w-3 h-3 text-red-500" />
               </button>
             </div>
           ))}
