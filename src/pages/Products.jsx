@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SearchableSelect from '@/components/search/SearchableSelect';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import ViewToggle from '@/components/ui/ViewToggle';
 import { 
   Plus, 
   Package, 
@@ -33,6 +34,7 @@ export default function Products() {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterWarehouse, setFilterWarehouse] = useState('all');
+  const [view, setView] = useState('grid');
   
   const [formData, setFormData] = useState({
     brand: '',
