@@ -553,6 +553,20 @@ export default function Debts() {
                     className="mt-1.5"
                   />
                 </div>
+
+                <div>
+                  <Label>Отправить уведомление</Label>
+                  <Select value={messageChannel} onValueChange={setMessageChannel}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="telegram">📱 Telegram</SelectItem>
+                      <SelectItem value="whatsapp">💬 WhatsApp</SelectItem>
+                      <SelectItem value="none">Без уведомления</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             );
           })()}
