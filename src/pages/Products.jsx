@@ -686,6 +686,35 @@ export default function Products() {
             )}
           </div>
 
+          {editingProduct && (
+            <Collapsible className="border border-slate-200 rounded-lg overflow-hidden">
+              <CollapsibleTrigger className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 flex items-center gap-2 text-sm font-medium text-slate-700 transition-colors">
+                <History className="w-4 h-4" />
+                История изменений
+              </CollapsibleTrigger>
+              <CollapsibleContent className="p-4 bg-white border-t border-slate-200 space-y-3">
+                <div className="text-xs space-y-2">
+                  <div className="flex items-start gap-2 pb-2 border-b border-slate-100">
+                    <Calendar className="w-3 h-3 text-indigo-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-slate-900">Создано</p>
+                      <p className="text-slate-500">{editingProduct.created_date ? format(parseISO(editingProduct.created_date), 'dd MMMM yyyy в HH:mm:ss', { locale: ru }) : '—'}</p>
+                    </div>
+                  </div>
+                  {editingProduct.updated_date && editingProduct.updated_date !== editingProduct.created_date && (
+                    <div className="flex items-start gap-2 pt-1">
+                      <History className="w-3 h-3 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium text-slate-900">Последнее обновление</p>
+                        <p className="text-slate-500">{format(parseISO(editingProduct.updated_date), 'dd MMMM yyyy в HH:mm:ss', { locale: ru })}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               {t(lang,'cancel')}
