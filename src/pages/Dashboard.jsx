@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [widgets, setWidgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hideData, setHideData] = useState(false);
+  const [lang, setLang] = useState('ru');
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
@@ -52,6 +53,7 @@ export default function Dashboard() {
       if (businesses.length > 0) {
         const biz = businesses[0];
         setBusiness(biz);
+        setLang(biz.language || 'ru');
         
         const [salesData, productsData, warehousesData, customersData, widgetsData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
