@@ -302,6 +302,22 @@ export default function Settings() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== user?.email) {
+      alert('Подтверждение не совпадает. Пожалуйста, введите правильный email.');
+      return;
+    }
+    try {
+      // Delete all business data first
+      await handleDeleteAllData();
+      // Then delete the user account
+      await base44.auth.logout();
+    } catch (e) {
+      console.error(e);
+      alert('Ошибка при удалении аккаунта.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
