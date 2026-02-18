@@ -322,13 +322,13 @@ export default function Settings() {
             variant="outline" 
             className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
             onClick={() => {
-              if (confirm('Вы уверены, что хотите выйти?')) {
+              if (confirm(t(lang, 'settings_logout_confirm'))) {
                 base44.auth.logout();
               }
             }}
           >
             <LogOut className="w-4 h-4" />
-            Выйти
+            {t(lang, 'settings_logout')}
           </Button>
         </div>
       </div>
