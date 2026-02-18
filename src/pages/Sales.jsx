@@ -151,7 +151,10 @@ export default function Sales() {
             const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
               phone: customer.phone,
               customer_name: customer.name,
-              remaining_debt: (customer.total_debt || 0) + remainingDebt,
+              product_name: selectedProduct ? `${selectedProduct.brand} ${selectedProduct.model}` : 'Товар',
+              total_debt: totalAmount,
+              paid_amount: partialPay,
+              remaining_debt: remainingDebt,
               business_name: business.name,
               type: 'new_debt'
             });
