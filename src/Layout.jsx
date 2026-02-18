@@ -93,7 +93,16 @@ export default function Layout({ children, currentPageName }) {
 
   const isAdmin = user?.email === ADMIN_EMAIL;
   const isAdminPage = currentPageName?.startsWith('Admin');
+  const menuItems = getMenuItems(lang);
+  const adminMenuItems = getAdminMenuItems(lang);
   const currentMenu = isAdmin && isAdminPage ? adminMenuItems : menuItems;
+
+  const changeLang = async (newLang) => {
+    setLang(newLang);
+    if (business) {
+      await base44.entities.Business.update(business.id, { language: newLang });
+    }
+  };
 
   if (loading) {
     return (
