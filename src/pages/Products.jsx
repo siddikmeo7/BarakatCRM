@@ -29,6 +29,7 @@ export default function Products() {
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lang, setLang] = useState('ru');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -64,6 +65,7 @@ export default function Products() {
       if (businesses.length > 0) {
         const biz = businesses[0];
         setBusiness(biz);
+        setLang(biz.language || 'ru');
         
         const [productsData, warehousesData] = await Promise.all([
           base44.entities.Product.filter({ business_id: biz.id }),
@@ -157,7 +159,7 @@ export default function Products() {
   };
 
   const handleDelete = async (productId) => {
-    if (confirm('Удалить этот товар?')) {
+    if (confirm(t(lang, 'prod_delete_confirm'))) {
       try {
         const product = products.find(p => p.id === productId);
         const user = await base44.auth.me();
@@ -223,12 +225,12 @@ export default function Products() {
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Товары"
-        subtitle={`${products.length} товаров на общую сумму ${totalStockValue.toLocaleString()} сомони`}
+        title={t(lang,'prod_title')}
+        subtitle={`${products.length} ${t(lang,'prod_subtitle_count')} ${totalStockValue.toLocaleString()} ${t(lang,'dash_somoni')}`}
         actions={
           <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
             <Plus className="w-4 h-4" />
-            Добавить товар
+            {t(lang,'prod_add')}
           </Button>
         }
       />
@@ -239,15 +241,15 @@ export default function Products() {
           <SearchInput 
             value={search} 
             onChange={setSearch} 
-            placeholder="Поиск по бренду или модели..."
+            placeholder={t(lang,'prod_search')}
             className="w-full sm:w-64"
           />
           <Select value={filterType} onValueChange={setFilterType}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="Тип товара" />
+              <SelectValue placeholder={t(lang,'prod_type')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Все типы</SelectItem>
+              <SelectItem value="all">{t(lang,'prod_type_all')}</SelectItem>
               {allProductTypes.map(type => (
                 <SelectItem key={type} value={type}>{type}</SelectItem>
               ))}
@@ -255,10 +257,10 @@ export default function Products() {
           </Select>
           <Select value={filterWarehouse} onValueChange={setFilterWarehouse}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="Склад" />
+              <SelectValue placeholder={t(lang,'prod_warehouse')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Все склады</SelectItem>
+              <SelectItem value="all">{t(lang,'prod_wh_all')}</SelectItem>
               {warehouses.map(wh => (
                 <SelectItem key={wh.id} value={wh.id}>{wh.name}</SelectItem>
               ))}
@@ -301,20 +303,20 @@ export default function Products() {
                   <div className="grid grid-cols-3 gap-1 p-2 bg-slate-50 rounded-lg mb-2">
                     <div className="text-center">
                       <p className="text-sm font-bold text-indigo-600">{product.boxes_in_stock || 0}</p>
-                      <p className="text-[10px] text-slate-500">короб</p>
+                      <p className="text-[10px] text-slate-500">{t(lang,'prod_boxes').toLowerCase()}</p>
                     </div>
                     <div className="text-center border-x border-slate-200">
                       <p className="text-sm font-bold text-slate-700">{totalPairs}</p>
-                      <p className="text-[10px] text-slate-500">пар</p>
+                      <p className="text-[10px] text-slate-500">{t(lang,'prod_pairs').toLowerCase()}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-sm font-bold text-slate-700">{totalItems}</p>
-                      <p className="text-[10px] text-slate-500">шт</p>
+                      <p className="text-[10px] text-slate-500">{t(lang,'prod_items').toLowerCase()}</p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <div>
-                      <p className="text-[10px] text-slate-500">Продажа</p>
+                      <p className="text-[10px] text-slate-500">{t(lang,'prod_sale_col')}</p>
                       <p className="font-semibold text-emerald-600">{product.sale_price?.toLocaleString()}</p>
                     </div>
                     <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] text-slate-600">{product.product_type}</span>
@@ -329,13 +331,13 @@ export default function Products() {
           <table className="w-full">
             <thead className="bg-slate-50">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Коробок</th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Пар</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Закупка</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Продажа</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Стоимость склада</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Тип</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_product')}</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">{t(lang,'prod_boxes')}</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">{t(lang,'prod_pairs')}</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'prod_purchase_col')}</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'prod_sale_col')}</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'prod_stock_value')}</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'prod_type')}</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -390,9 +392,9 @@ export default function Products() {
       {filteredProducts.length === 0 && (
         <div className="text-center py-12">
           <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500">Товары не найдены</p>
+          <p className="text-slate-500">{t(lang,'prod_not_found')}</p>
           <Button onClick={() => handleOpenDialog()} variant="outline" className="mt-4">
-            Добавить первый товар
+            {t(lang,'prod_add_first')}
           </Button>
         </div>
       )}
@@ -401,13 +403,13 @@ export default function Products() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingProduct ? 'Редактировать товар' : 'Добавить товар'}</DialogTitle>
+            <DialogTitle>{editingProduct ? t(lang,'prod_edit') : t(lang,'prod_add')}</DialogTitle>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             {/* Photo Upload */}
             <div>
-              <Label>Фото товара</Label>
+              <Label>{t(lang,'prod_photo')}</Label>
               <div className="mt-2 flex items-center gap-4">
                 {formData.photo_url ? (
                   <img src={formData.photo_url} alt="" className="w-24 h-24 rounded-xl object-cover" />
@@ -420,7 +422,7 @@ export default function Products() {
                   <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
                   <div className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2">
                     <Upload className="w-4 h-4" />
-                    Загрузить фото
+                    {t(lang,'prod_upload_photo')}
                   </div>
                 </label>
               </div>
@@ -428,7 +430,7 @@ export default function Products() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Бренд *</Label>
+                <Label>{t(lang,'prod_brand')} *</Label>
                 <Input 
                   value={formData.brand}
                   onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
@@ -437,7 +439,7 @@ export default function Products() {
                 />
               </div>
               <div>
-                <Label>Модель *</Label>
+                <Label>{t(lang,'prod_model')} *</Label>
                 <Input 
                   value={formData.model}
                   onChange={(e) => setFormData({ ...formData, model: e.target.value })}
@@ -449,18 +451,18 @@ export default function Products() {
 
             <div className="grid grid-cols-2 gap-4">
               <SearchableSelect
-                label="Тип товара"
+                label={t(lang,'prod_type')}
                 options={allProductTypes}
                 value={formData.product_type}
                 onChange={(v) => setFormData({ ...formData, product_type: v })}
-                placeholder="Поиск типа..."
+                placeholder={t(lang,'prod_search_type')}
               />
               <SearchableSelect
-                label="Цвет"
+                label={t(lang,'prod_color')}
                 options={allColors}
                 value={formData.color}
                 onChange={(v) => setFormData({ ...formData, color: v })}
-                placeholder="Поиск цвета..."
+                placeholder={t(lang,'prod_search_color')}
               />
             </div>
 
