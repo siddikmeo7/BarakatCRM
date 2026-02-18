@@ -201,7 +201,7 @@ export default function Warehouses() {
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="p-3 bg-purple-100 rounded-xl">
-                      <WarehouseIcon className="w-6 h-6 text-purple-600" />
+                      <WarehouseIconComp iconKey={warehouse.icon} className="w-6 h-6 text-purple-600" />
                     </div>
                     <div className="flex gap-1">
                       <button 
@@ -266,16 +266,27 @@ export default function Warehouses() {
       ) : (
         /* Warehouse Details */
         <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => setSelectedWarehouse(null)}>
-              ← Назад
-            </Button>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">{selectedWarehouse.name}</h2>
-              {selectedWarehouse.address && (
-                <p className="text-sm text-slate-500">{selectedWarehouse.address}</p>
-              )}
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={() => setSelectedWarehouse(null)}>← Назад</Button>
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <WarehouseIconComp iconKey={selectedWarehouse.icon} className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">{selectedWarehouse.name}</h2>
+                  {selectedWarehouse.address && <p className="text-sm text-slate-500">{selectedWarehouse.address}</p>}
+                </div>
+              </div>
             </div>
+            <Button
+              onClick={() => setMoveDialogOpen(true)}
+              variant="outline"
+              className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+            >
+              <ArrowRightLeft className="w-4 h-4" />
+              Переместить товары
+            </Button>
           </div>
 
           {/* Stats */}
@@ -378,6 +389,17 @@ export default function Warehouses() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Move Products Dialog */}
+      {moveDialogOpen && selectedWarehouse && (
+        <MoveProductsDialog
+          products={warehouseProducts}
+          warehouses={warehouses}
+          currentWarehouse={selectedWarehouse}
+          onClose={() => setMoveDialogOpen(false)}
+          onMoved={loadData}
+        />
       )}
 
       {filteredWarehouses.length === 0 && !selectedWarehouse && (
