@@ -839,15 +839,29 @@ export default function Settings() {
                     <p className="text-sm text-amber-700 mb-3">
                       Скачать все данные бизнеса в формате JSON (продажи, товары, клиенты и т.д.)
                     </p>
-                    <Button
-                      onClick={handleBackup}
-                      disabled={backupLoading}
-                      variant="outline"
-                      className="text-amber-700 border-amber-300 hover:bg-amber-100 gap-2"
-                    >
-                      {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                      Скачать резервную копию
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        onClick={handleBackup}
+                        disabled={backupLoading}
+                        variant="outline"
+                        className="text-amber-700 border-amber-300 hover:bg-amber-100 gap-2"
+                      >
+                        {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                        Скачать на устройство
+                      </Button>
+                      <Button
+                        onClick={handleDriveBackup}
+                        disabled={driveBackupLoading}
+                        variant="outline"
+                        className="text-green-700 border-green-300 hover:bg-green-100 gap-2"
+                      >
+                        {driveBackupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        Сохранить в Google Drive
+                      </Button>
+                    </div>
+                    {driveBackupMsg && (
+                      <p className="text-sm mt-2 text-slate-700">{driveBackupMsg}</p>
+                    )}
                   </div>
                 </div>
               </div>
