@@ -181,18 +181,18 @@ export default function Layout({ children, currentPageName }) {
       )} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
+          <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
                 <Package className="w-6 h-6 text-white" />
               </div>
               <div>
-                  <span className="font-bold text-slate-900 text-lg">BarakatCRM</span>
-                  <p className="text-xs text-slate-500">{t(lang, 'app_subtitle')}</p>
+                  <span className="font-bold text-slate-900 dark:text-white text-lg">BarakatCRM</span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t(lang, 'app_subtitle')}</p>
                 </div>
             </div>
-            <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2">
-              <X className="w-5 h-5 text-slate-500" />
+            <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+              <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
             </button>
           </div>
 
