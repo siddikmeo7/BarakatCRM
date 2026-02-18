@@ -124,7 +124,7 @@ export default function AIAssistant() {
     try {
       const newChat = await base44.entities.AIChat.create({
         business_id: business.id,
-        title: 'Новый чат',
+        title: t(lang, 'ai_new_chat'),
         messages: []
       });
       setChats([newChat, ...chats]);
