@@ -490,9 +490,6 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
                         <p className="text-sm leading-relaxed">{msg.content}</p>
                       )}
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-1 px-1">
-                      {msg.timestamp ? format(new Date(msg.timestamp), 'HH:mm') : ''}
-                    </p>
                   </div>
                   {msg.role === 'user' && (
                     <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
