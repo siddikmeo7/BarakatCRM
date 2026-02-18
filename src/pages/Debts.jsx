@@ -128,6 +128,38 @@ export default function Debts() {
     }
   };
 
+  const openWhatsApp = async (customer, remainingDebt, type = 'reminder') => {
+    if (!customer?.phone) return alert('У клиента нет номера телефона');
+    setSendingMsg(customer.id);
+    try {
+      const res = await base44.functions.invoke('sendWhatsAppDebtMessage', {
+        phone: customer.phone,
+        customer_name: customer.name,
+        remaining_debt: remainingDebt,
+        business_name: business?.name,
+        type
+      });
+      if (res.data?.wa_url) window.open(res.data.wa_url, '_blank');
+    } finally {
+      setSendingMsg(null);
+    }
+  };
+
+  const sendToAllDebtors = async () => {
+    const debtors = customers.filter(c => (c.total_debt || 0) > 0);
+    for (const c of debtors) {
+      const res = await base44.functions.invoke('sendWhatsAppDebtMessage', {
+        phone: c.phone,
+        customer_name: c.name,
+        remaining_debt: c.total_debt,
+        business_name: business?.name,
+        type: 'reminder'
+      });
+      if (res.data?.wa_url) window.open(res.data.wa_url, '_blank');
+      await new Promise(r => setTimeout(r, 400));
+    }
+  };
+
   // Фильтрация
   const filteredSales = sales.filter(sale => {
     const customer = customers.find(c => c.id === sale.customer_id);
