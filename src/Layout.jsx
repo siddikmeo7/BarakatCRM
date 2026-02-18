@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
+import { t } from '@/components/i18n/translations';
 import { 
   LayoutDashboard, 
   Package, 
@@ -16,7 +17,8 @@ import {
   Building2,
   RotateCcw,
   TrendingUp,
-  History
+  History,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
