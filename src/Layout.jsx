@@ -262,7 +262,7 @@ export default function Layout({ children, currentPageName }) {
        </div>
 
        {/* Page Content */}
-       <div className="flex-1 overflow-auto pt-16 lg:pt-0 lg:pl-0">
+        <div className="flex-1 overflow-auto pt-16 lg:pt-0 lg:pl-72">
          <motion.div
            key={currentPageName}
            initial={{ opacity: 0, x: 100 }}
