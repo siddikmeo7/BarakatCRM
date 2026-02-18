@@ -174,12 +174,12 @@ export default function Dashboard() {
         {(widgets.length === 0 ? ['sales', 'profit', 'boxes', 'stock'] : widgets.filter(w => ['sales', 'profit', 'boxes', 'pairs', 'stock', 'debt', 'customers'].includes(w.widget_type))).map((widget) => {
           const widgetType = typeof widget === 'string' ? widget : widget.widget_type;
           const widgetConfigs = {
-            sales: { title: 'Продажи', value: totalRevenue.toLocaleString(), subtitle: 'сомони', icon: ShoppingCart, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
-            profit: { title: 'Прибыль', value: totalProfit.toLocaleString(), subtitle: 'сомони', icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
-            boxes: { title: 'Коробок продано', value: totalBoxes, icon: Box, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
-            pairs: { title: 'Пар продано', value: totalPairs, icon: Layers, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
-            stock: { title: 'Товаров на складе', value: `${totalStock} коробок`, subtitle: `Закупка: ${totalPurchaseValue.toLocaleString()} с.`, icon: Warehouse, iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
-            debt: { title: 'Долги клиентов', value: totalDebt.toLocaleString(), subtitle: 'сомони', icon: Users, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
+            sales: { title: 'Продажи', value: hideData ? masked : totalRevenue.toLocaleString(), subtitle: 'сомони', icon: ShoppingCart, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
+            profit: { title: 'Прибыль', value: hideData ? masked : totalProfit.toLocaleString(), subtitle: 'сомони', icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+            boxes: { title: 'Коробок продано', value: hideData ? masked : totalBoxes, icon: Box, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
+            pairs: { title: 'Пар продано', value: hideData ? masked : totalPairs, icon: Layers, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+            stock: { title: 'Товаров на складе', value: hideData ? masked : `${totalStock} коробок`, subtitle: hideData ? masked : `Закупка: ${totalPurchaseValue.toLocaleString()} с.`, icon: Warehouse, iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
+            debt: { title: 'Долги клиентов', value: hideData ? masked : totalDebt.toLocaleString(), subtitle: 'сомони', icon: Users, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
             customers: { title: 'Всего клиентов', value: customers.length, icon: Users, iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' }
           };
           const config = widgetConfigs[widgetType];
