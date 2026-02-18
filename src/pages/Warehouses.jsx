@@ -295,7 +295,7 @@ export default function Warehouses() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {(() => {
               const stats = getWarehouseStats(selectedWarehouse.id);
               return (
@@ -309,7 +309,11 @@ export default function Warehouses() {
                     <p className="text-2xl font-bold text-purple-600">{stats.totalBoxes}</p>
                   </div>
                   <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-                    <p className="text-sm text-slate-500">Стоимость</p>
+                    <p className="text-sm text-slate-500">Опт. стоимость</p>
+                    <p className="text-2xl font-bold text-orange-600">{stats.totalWholesaleValue.toLocaleString()} с.</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                    <p className="text-sm text-slate-500">Розн. стоимость</p>
                     <p className="text-2xl font-bold text-emerald-600">{stats.totalValue.toLocaleString()} с.</p>
                   </div>
                   <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
