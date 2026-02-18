@@ -38,6 +38,7 @@ export default function Analytics() {
   const [exchangeRates, setExchangeRates] = useState(DEFAULT_RATES);
   const [ratesLoading, setRatesLoading] = useState(false);
   const [ratesDate, setRatesDate] = useState(null);
+  const [hideData, setHideData] = useState(false);
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
@@ -66,32 +67,21 @@ export default function Analytics() {
 
     setRatesLoading(true);
     try {
-      // TJS base rates via exchangerate-api (free tier)
-      const res = await fetch('https://open.er-api.com/v6/latest/TJS');
+      // Fetch rates based on USD (most reliable base), then convert to TJS base
+      // 1 TJS = X foreign currency
+      // We use: rates relative to USD, then: 1 TJS = (1/USD_TJS) * foreign_per_USD
+      const res = await fetch('https://open.er-api.com/v6/latest/USD');
       const data = await res.json();
       if (data.result === 'success') {
-        const rates = {
-          TJS: 1,
-          USD: 1 / data.rates.USD,   // TJS per USD
-          RUB: 1 / data.rates.RUB,
-          EUR: 1 / data.rates.EUR,
-          CNY: 1 / data.rates.CNY
-        };
-        // We want: how many USD does 1 TJS = ? → 1/rates.USD
-        const converted = {
-          TJS: 1,
-          USD: data.rates.USD ? parseFloat((1 / data.rates.USD).toFixed(6)) : DEFAULT_RATES.USD,
-          RUB: data.rates.RUB ? parseFloat((data.rates.RUB / data.rates.USD * 0.011).toFixed(6)) : DEFAULT_RATES.RUB,
-          EUR: data.rates.EUR ? parseFloat((1 / data.rates.EUR).toFixed(6)) : DEFAULT_RATES.EUR,
-          CNY: data.rates.CNY ? parseFloat((data.rates.CNY / data.rates.USD * 0.011).toFixed(6)) : DEFAULT_RATES.CNY
-        };
-        // Simpler: 1 TJS → X foreign
+        const usdToTjs = data.rates.TJS; // e.g. 10.9 (1 USD = 10.9 TJS)
+        // 1 TJS = 1/usdToTjs USD
+        // 1 TJS = data.rates.RUB / usdToTjs RUB, etc.
         const simple = {
           TJS: 1,
-          USD: parseFloat((1 / data.rates.USD).toFixed(5)),
-          RUB: parseFloat((data.rates.RUB / data.rates.USD / (1 / data.rates.USD)).toFixed(4)),
-          EUR: parseFloat((1 / data.rates.EUR).toFixed(5)),
-          CNY: parseFloat((1 / data.rates.CNY).toFixed(5))
+          USD: parseFloat((1 / usdToTjs).toFixed(5)),                              // ~0.0917
+          RUB: parseFloat((data.rates.RUB / usdToTjs).toFixed(4)),                 // ~8.5
+          EUR: parseFloat((data.rates.EUR / usdToTjs).toFixed(5)),                 // ~0.084
+          CNY: parseFloat((data.rates.CNY / usdToTjs).toFixed(5)),                 // ~0.66
         };
         setExchangeRates(simple);
         localStorage.setItem(RATES_CACHE_KEY, JSON.stringify(simple));
@@ -99,7 +89,6 @@ export default function Analytics() {
         setRatesDate(today);
       }
     } catch (e) {
-      // fallback to defaults
       setExchangeRates(DEFAULT_RATES);
     } finally {
       setRatesLoading(false);
