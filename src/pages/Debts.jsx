@@ -342,15 +342,15 @@ export default function Debts() {
                         {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy', { locale: ru })}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
+                        <button onClick={() => customer && openCustomerDetail(customer)} className="flex items-center gap-2 hover:opacity-75 transition-opacity text-left">
                           <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
                             <span className="text-sm font-bold text-indigo-600">{customer?.name?.charAt(0)?.toUpperCase()}</span>
                           </div>
                           <div>
-                            <p className="font-medium text-slate-900">{customer?.name || 'Неизвестный'}</p>
+                            <p className="font-medium text-slate-900 underline-offset-2 hover:underline">{customer?.name || 'Неизвестный'}</p>
                             <p className="text-xs text-slate-500">{customer?.phone}</p>
                           </div>
-                        </div>
+                        </button>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
