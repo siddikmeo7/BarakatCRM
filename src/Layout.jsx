@@ -65,9 +65,11 @@ export default function Layout({ children, currentPageName }) {
       
       if (currentUser.email !== ADMIN_EMAIL) {
             const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
-            if (businesses.length > 0) {
-              setBusiness(businesses[0]);
-              setLang(businesses[0].language || 'ru');
+              if (businesses.length > 0) {
+                const foundBiz = businesses[0];
+                setBusiness(foundBiz);
+                const bizLang = foundBiz.language || 'ru';
+                setLang(bizLang);
             } else {
               // Автоматически создать бизнес при первом входе
               const newBiz = await base44.entities.Business.create({
