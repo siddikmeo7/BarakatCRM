@@ -160,7 +160,7 @@ export default function ActivityLog() {
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <SearchInput 
             value={search} 
             onChange={setSearch} 
@@ -192,6 +192,36 @@ export default function ActivityLog() {
               <SelectItem value="Employee">Сотрудники</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Sort buttons */}
+          <div className="flex items-center gap-1 ml-auto">
+            <span className="text-xs text-slate-400 mr-1">Сорт:</span>
+            {[{ key: 'date', label: 'Дата' }, { key: 'action', label: 'Действие' }, { key: 'entity', label: 'Тип' }].map(s => (
+              <button
+                key={s.key}
+                onClick={() => toggleSort(s.key)}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border transition-all ${sortField === s.key ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+              >
+                {s.label} <SortIcon field={s.key} />
+              </button>
+            ))}
+          </div>
+
+          {/* View toggle */}
+          <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
