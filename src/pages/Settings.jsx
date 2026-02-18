@@ -930,6 +930,27 @@ export default function Settings() {
                   {t(lang,'settings_sec_delete_btn')}
                   </Button>
                   </div>
+
+                  {/* Delete Account */}
+                  <div className="p-4 border border-orange-200 bg-orange-50 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Zap className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-orange-900 mb-1">Удалить аккаунт</h4>
+                    <p className="text-sm text-orange-700 mb-3">
+                      Это необратимо удалит ваш аккаунт и все связанные данные. Эта операция не может быть отменена.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="text-orange-700 border-orange-300 hover:bg-orange-100 gap-2"
+                      onClick={() => setDeleteAccountDialog(true)}
+                    >
+                      <Zap className="w-4 h-4" />
+                      Удалить аккаунт
+                    </Button>
+                  </div>
+                </div>
+                  </div>
                   </div>
                   </CollapsibleContent>
                   </Collapsible>
