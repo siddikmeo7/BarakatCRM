@@ -293,7 +293,7 @@ export default function Analytics() {
       </div>
 
       {/* Inventory Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-2 lg:grid-cols-3 gap-4 ${hideData ? 'hidden' : ''}`}>
         <StatCard
           title="Стоимость склада"
           value={convertCurrency(totalStockValue)}
@@ -320,7 +320,7 @@ export default function Analytics() {
       </div>
 
       {/* Charts */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className={`grid lg:grid-cols-2 gap-6 ${hideData ? 'hidden' : ''}`}>
         {/* Sales & Profit Chart */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <h3 className="font-semibold text-slate-900 mb-4">Динамика продаж и прибыли</h3>
@@ -357,7 +357,7 @@ export default function Analytics() {
       </div>
 
       {/* Top Products by Revenue */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+      <div className={`bg-white rounded-2xl p-6 shadow-sm border border-slate-100 ${hideData ? 'hidden' : ''}`}>
         <h3 className="font-semibold text-slate-900 mb-4">Топ товары по выручке</h3>
         <div className="space-y-3">
           {(() => {
