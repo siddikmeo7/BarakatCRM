@@ -309,6 +309,14 @@ export default function Analytics() {
           iconColor="text-indigo-600"
         />
         <StatCard
+          title="Потенциальная прибыль"
+          value={convertCurrency(potentialProfit)}
+          subtitle="от склада"
+          icon={DollarSign}
+          iconBg="bg-indigo-100"
+          iconColor="text-indigo-600"
+        />
+        <StatCard
           title="Всего товаров"
           value={products.length}
           icon={Package}
