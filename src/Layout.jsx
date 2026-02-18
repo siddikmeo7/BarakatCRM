@@ -122,10 +122,6 @@ export default function Layout({ children, currentPageName }) {
   const menuItems = getMenuItems(lang);
   const adminMenuItems = getAdminMenuItems(lang);
   const currentMenu = isAdmin && isAdminPage ? adminMenuItems : menuItems;
-  
-  // Bottom nav for mobile (first 5 items)
-  const bottomNavItems = currentMenu.slice(0, 5);
-  const moreMenuItems = currentMenu.slice(5);
 
   const changeLang = async (newLang) => {
     setLang(newLang);
@@ -150,62 +146,21 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col lg:flex-row">
-      {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-40 flex items-center justify-between px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <Package className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-slate-900 dark:text-white text-sm">BarakatCRM</span>
-        </div>
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-          <MoreVertical className="w-5 h-5 text-slate-700 dark:text-slate-200" />
-        </button>
-      </header>
+      {/* Sidebar Overlay (Mobile) */}
+      {sidebarOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      {/* Mobile Menu Overlay */}
-      {sidebarOpen && <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />}
-
-      {/* Mobile Menu Sidebar */}
+      {/* Sidebar */}
       <aside className={cn(
-        "lg:hidden fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 transition-transform duration-300 overflow-y-auto",
+        "fixed lg:relative top-0 left-0 h-screen w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 lg:z-auto transition-transform duration-300 lg:translate-x-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <div className="h-14 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
-          <span className="font-bold text-slate-900 dark:text-white">Меню</span>
-          <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <nav className="py-4 px-3">
-          {currentMenu.map((item) => {
-            const isActive = currentPageName === item.name;
-            return (
-              <Link
-                key={item.name}
-                to={createPageUrl(item.name)}
-                onClick={() => setSidebarOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 mb-1",
-                  isActive 
-                    ? "bg-indigo-600 text-white" 
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                )}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium text-sm">{t(lang, item.labelKey)}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      </aside>
-
-      {/* Desktop Sidebar */}
-      <aside className={cn(
-        "hidden lg:flex flex-col h-screen w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 fixed"
-      )}>
         <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
               <Package className="w-6 h-6 text-white" />
             </div>
@@ -214,6 +169,9 @@ export default function Layout({ children, currentPageName }) {
               <p className="text-xs text-slate-500 dark:text-slate-400">{t(lang, 'app_subtitle')}</p>
             </div>
           </div>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+            <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+          </button>
         </div>
 
         {isAdmin && (
@@ -277,36 +235,34 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col lg:pl-72 pt-14 lg:pt-0 pb-16 lg:pb-0 overflow-hidden">
-        {/* Desktop Header */}
-        <div className="hidden lg:block h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 flex items-center">
-          <div className="flex items-center gap-2">
-            <LayoutDashboard className="w-4 h-4 text-slate-500" />
-            <span className="text-sm text-slate-600 dark:text-slate-400">{t(lang, currentMenu.find(item => item.name === currentPageName)?.labelKey) || currentPageName}</span>
-          </div>
-        </div>
+      <main className="flex-1 flex flex-col overflow-auto">
+       {/* Mobile Header */}
+       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-30 flex items-center px-4 gap-3" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+         <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+           <Menu className="w-6 h-6 text-slate-700 dark:text-slate-200" />
+         </button>
+         <div className="flex items-center gap-2">
+           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+             <Package className="w-4 h-4 text-white" />
+           </div>
+           <span className="font-bold text-slate-900 dark:text-white">BarakatCRM</span>
+         </div>
+       </div>
 
-        {/* Page Content */}
-        <div className="flex-1 overflow-auto">
-          <motion.div
-            key={currentPageName}
-            initial={{ opacity: 0, x: 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.3 }}
-            className="p-4 lg:p-8 min-h-full"
-          >
-            {children}
-          </motion.div>
-        </div>
+       {/* Page Content */}
+       <div className="flex-1 overflow-auto pt-16 lg:pt-0">
+         <motion.div
+           key={currentPageName}
+           initial={{ opacity: 0, x: 100 }}
+           animate={{ opacity: 1, x: 0 }}
+           exit={{ opacity: 0, x: -100 }}
+           transition={{ duration: 0.3 }}
+           className="p-4 lg:p-8 min-h-full"
+         >
+           {children}
+         </motion.div>
+       </div>
       </main>
-
-      {/* Bottom Navigation - Mobile Only */}
-      <BottomNavigation 
-        currentPageName={currentPageName}
-        menuItems={currentMenu}
-        lang={lang}
-      />
     </div>
   );
 }
