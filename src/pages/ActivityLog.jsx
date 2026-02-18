@@ -225,84 +225,107 @@ export default function ActivityLog() {
         </div>
       </div>
 
-      {/* Logs List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="divide-y divide-slate-100">
-          {filteredLogs.map(log => {
-            const Icon = ENTITY_ICONS[log.entity_type] || AlertCircle;
-            
-            return (
-              <div key={log.id} className="p-4 hover:bg-slate-50 transition-colors">
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-slate-100 rounded-lg">
-                    <Icon className="w-5 h-5 text-slate-600" />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`px-2 py-1 rounded-lg text-xs font-medium ${actionColors[log.action_type]}`}>
-                            {actionLabels[log.action_type]}
-                          </span>
-                          <span className="text-sm font-medium text-slate-900">{log.entity_type}</span>
-                          {log.is_restored && (
-                            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium">
-                              Восстановлено
+      {/* Logs */}
+      {filteredLogs.length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 text-center py-12">
+          <History className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <p className="text-slate-500">История действий пуста</p>
+        </div>
+      ) : viewMode === 'list' ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="divide-y divide-slate-100">
+            {filteredLogs.map(log => {
+              const Icon = ENTITY_ICONS[log.entity_type] || AlertCircle;
+              return (
+                <div key={log.id} className="p-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 bg-slate-100 rounded-lg flex-shrink-0">
+                      <Icon className="w-5 h-5 text-slate-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className={`px-2 py-1 rounded-lg text-xs font-medium ${actionColors[log.action_type]}`}>
+                              {actionLabels[log.action_type]}
                             </span>
-                          )}
+                            <span className="text-sm font-medium text-slate-900">{log.entity_type}</span>
+                            {log.is_restored && (
+                              <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium">Восстановлено</span>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-600">{log.description}</p>
+                          <p className="text-xs text-slate-400 mt-1">
+                            {log.user_email} • {format(parseISO(log.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
+                          </p>
                         </div>
-                        <p className="text-sm text-slate-600">{log.description}</p>
-                        <p className="text-xs text-slate-400 mt-1">
-                          {log.user_email} • {format(parseISO(log.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {log.action_type === 'delete' && log.entity_data && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setDetailLog(log)}
-                            className="gap-2"
-                          >
-                            <Eye className="w-4 h-4" />
-                            Просмотр
-                          </Button>
-                        )}
-                        {log.action_type === 'delete' && !log.is_restored && log.entity_data && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleRestore(log)}
-                            className="gap-2"
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                            Восстановить
-                          </Button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteLog(log.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {log.action_type === 'delete' && log.entity_data && (
+                            <Button size="sm" variant="outline" onClick={() => setDetailLog(log)} className="gap-1">
+                              <Eye className="w-4 h-4" /> Просмотр
+                            </Button>
+                          )}
+                          {log.action_type === 'delete' && !log.is_restored && log.entity_data && (
+                            <Button size="sm" variant="outline" onClick={() => handleRestore(log)} className="gap-1">
+                              <RotateCcw className="w-4 h-4" /> Восстановить
+                            </Button>
+                          )}
+                          <button onClick={() => handleDeleteLog(log.id)} className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredLogs.map(log => {
+            const Icon = ENTITY_ICONS[log.entity_type] || AlertCircle;
+            return (
+              <div key={log.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-slate-100 rounded-lg">
+                      <Icon className="w-4 h-4 text-slate-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-slate-800">{log.entity_type}</span>
+                  </div>
+                  <span className={`px-2 py-1 rounded-lg text-xs font-medium ${actionColors[log.action_type]}`}>
+                    {actionLabels[log.action_type]}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-600 flex-1">{log.description}</p>
+                {log.is_restored && (
+                  <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium w-fit">Восстановлено</span>
+                )}
+                <p className="text-xs text-slate-400">
+                  {format(parseISO(log.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
+                </p>
+                <div className="flex items-center gap-2 border-t border-slate-100 pt-3">
+                  {log.action_type === 'delete' && log.entity_data && (
+                    <Button size="sm" variant="outline" onClick={() => setDetailLog(log)} className="gap-1 flex-1">
+                      <Eye className="w-3 h-3" /> Просмотр
+                    </Button>
+                  )}
+                  {log.action_type === 'delete' && !log.is_restored && log.entity_data && (
+                    <Button size="sm" variant="outline" onClick={() => handleRestore(log)} className="gap-1 flex-1">
+                      <RotateCcw className="w-3 h-3" /> Восстановить
+                    </Button>
+                  )}
+                  <button onClick={() => handleDeleteLog(log.id)} className="p-2 hover:bg-red-50 rounded-lg transition-colors ml-auto">
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
-        
-        {filteredLogs.length === 0 && (
-          <div className="text-center py-12">
-            <History className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500">История действий пуста</p>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Detail Dialog */}
       <Dialog open={!!detailLog} onOpenChange={() => setDetailLog(null)}>
