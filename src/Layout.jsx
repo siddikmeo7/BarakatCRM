@@ -96,18 +96,7 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  // Страница регистрации бизнеса
-  if (currentPageName === 'RegisterBusiness') {
-    return <div className="min-h-screen bg-slate-50">{children}</div>;
-  }
 
-  // Если нет бизнеса и не админ - редирект на регистрацию
-  if (!business && !isAdmin && !loading) {
-    if (currentPageName !== 'RegisterBusiness') {
-      window.location.href = createPageUrl('RegisterBusiness');
-      return null;
-    }
-  }
 
   return (
     <div className="min-h-screen bg-slate-50">
