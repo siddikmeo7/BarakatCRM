@@ -235,7 +235,7 @@ export default function Settings() {
   };
 
   const handleClearCache = () => {
-    if (confirm('Очистить кэш приложения? Страница перезагрузится.')) {
+    if (confirm(t(lang, 'settings_sec_cache') + '?')) {
       setClearingCache(true);
       localStorage.clear();
       sessionStorage.clear();
@@ -261,8 +261,8 @@ export default function Settings() {
   };
 
   const handleDeleteAllData = async () => {
-    if (!confirm('⚠️ Вы уверены? Все данные бизнеса будут удалены навсегда!')) return;
-    if (!confirm('Последнее предупреждение! Удалить ВСЕ данные?')) return;
+    if (!confirm(t(lang, 'settings_sec_delete') + ' ' + t(lang, 'confirm_delete'))) return;
+    if (!confirm(t(lang, 'confirm_delete'))) return;
     try {
       const [salesData, productsData, customersData, warehousesData, returnsData, employeesData] = await Promise.all([
         base44.entities.Sale.filter({ business_id: business.id }),
@@ -313,9 +313,9 @@ export default function Settings() {
               </span>
             </div>
             <div>
-              <p className="font-semibold text-slate-900">{user?.full_name || 'Пользователь'}</p>
+              <p className="font-semibold text-slate-900">{user?.full_name || t(lang,'settings_user')}</p>
               <p className="text-sm text-slate-500">{user?.email}</p>
-              <p className="text-xs text-slate-400">{user?.role === 'admin' ? 'Администратор' : 'Пользователь'}</p>
+              <p className="text-xs text-slate-400">{user?.role === 'admin' ? t(lang,'settings_admin_role') : t(lang,'settings_user')}</p>
             </div>
           </div>
           <Button 
@@ -911,10 +911,10 @@ export default function Settings() {
       <Dialog open={editColorDialog} onOpenChange={setEditColorDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Редактировать цвет</DialogTitle>
+            <DialogTitle>{t(lang,'settings_edit_color')}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <Label>Название цвета</Label>
+            <Label>{t(lang,'settings_color_name')}</Label>
             <Input
               value={editingColor?.value || ''}
               onChange={(e) => setEditingColor({ ...editingColor, value: e.target.value })}
@@ -923,7 +923,7 @@ export default function Settings() {
           </div>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setEditColorDialog(false)}>
-              Отмена
+              {t(lang,'cancel')}
             </Button>
             <Button
               onClick={async () => {
@@ -936,7 +936,7 @@ export default function Settings() {
                 }
               }}
             >
-              Сохранить
+              {t(lang,'save')}
             </Button>
           </div>
         </DialogContent>
@@ -946,10 +946,10 @@ export default function Settings() {
       <Dialog open={editTypeDialog} onOpenChange={setEditTypeDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Редактировать тип товара</DialogTitle>
+            <DialogTitle>{t(lang,'settings_edit_type')}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <Label>Название типа</Label>
+            <Label>{t(lang,'settings_type_name')}</Label>
             <Input
               value={editingType?.value || ''}
               onChange={(e) => setEditingType({ ...editingType, value: e.target.value })}
@@ -958,7 +958,7 @@ export default function Settings() {
           </div>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setEditTypeDialog(false)}>
-              Отмена
+              {t(lang,'cancel')}
             </Button>
             <Button
               onClick={async () => {
@@ -971,7 +971,7 @@ export default function Settings() {
                 }
               }}
             >
-              Сохранить
+              {t(lang,'save')}
             </Button>
           </div>
         </DialogContent>
