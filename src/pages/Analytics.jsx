@@ -14,9 +14,7 @@ import {
   Percent,
   Clock,
   Settings2,
-  RefreshCw,
-  Eye,
-  EyeOff
+  RefreshCw
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -69,24 +67,23 @@ export default function Analytics() {
 
     setRatesLoading(true);
     try {
-      // Fetch rates based on USD (most reliable base), then convert to TJS base
-      // 1 TJS = X foreign currency
-      // We use: rates relative to USD, then: 1 TJS = (1/USD_TJS) * foreign_per_USD
+      // Get rates with USD as base, then convert to TJS base
       const res = await fetch('https://open.er-api.com/v6/latest/USD');
       const data = await res.json();
       if (data.result === 'success') {
-        const usdToTjs = data.rates.TJS; // e.g. 10.9 (1 USD = 10.9 TJS)
-        // 1 TJS = 1/usdToTjs USD
-        // 1 TJS = data.rates.RUB / usdToTjs RUB, etc.
-        const simple = {
+        // data.rates[X] = how many X per 1 USD
+        // We need: how many foreign per 1 TJS
+        // 1 TJS = (1/data.rates.TJS) USD = (1/data.rates.TJS) * data.rates[X] foreign
+        const tjsPerUsd = data.rates.TJS; // e.g. ~10.9
+        const rates = {
           TJS: 1,
-          USD: parseFloat((1 / usdToTjs).toFixed(5)),                              // ~0.0917
-          RUB: parseFloat((data.rates.RUB / usdToTjs).toFixed(4)),                 // ~8.5
-          EUR: parseFloat((data.rates.EUR / usdToTjs).toFixed(5)),                 // ~0.084
-          CNY: parseFloat((data.rates.CNY / usdToTjs).toFixed(5)),                 // ~0.66
+          USD: parseFloat((1 / tjsPerUsd).toFixed(5)),                          // 1 TJS in USD
+          RUB: parseFloat((data.rates.RUB / tjsPerUsd).toFixed(4)),             // 1 TJS in RUB
+          EUR: parseFloat((data.rates.EUR / tjsPerUsd).toFixed(5)),             // 1 TJS in EUR
+          CNY: parseFloat((data.rates.CNY / tjsPerUsd).toFixed(5)),             // 1 TJS in CNY
         };
-        setExchangeRates(simple);
-        localStorage.setItem(RATES_CACHE_KEY, JSON.stringify(simple));
+        setExchangeRates(rates);
+        localStorage.setItem(RATES_CACHE_KEY, JSON.stringify(rates));
         localStorage.setItem(RATES_DATE_KEY, today);
         setRatesDate(today);
       }
@@ -191,95 +188,123 @@ export default function Analytics() {
         }
       />
 
-      {/* Filters bar */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-        {/* Row 1: clock + date + hide toggle */}
-        <div className="flex flex-wrap items-center gap-3 justify-between">
-          <div className="flex items-center gap-3">
+      {/* Date Filter & Time */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+        <div className="flex flex-wrap items-center gap-4 justify-between">
+          <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TJS">Сомони (с.)</SelectItem>
+                  <SelectItem value="USD">Доллар ($)</SelectItem>
+                  <SelectItem value="RUB">Рубль (₽)</SelectItem>
+                  <SelectItem value="EUR">Евро (€)</SelectItem>
+                  <SelectItem value="CNY">Юань (¥)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadExchangeRates(true)}
+                disabled={ratesLoading}
+                className="gap-1 text-xs"
+                title="Обновить курс валют"
+              >
+                <RefreshCw className={`w-3 h-3 ${ratesLoading ? 'animate-spin' : ''}`} />
+                {ratesLoading ? 'Загрузка...' : 'Обновить курс'}
+              </Button>
+            </div>
+            {ratesDate && currency !== 'TJS' && (
+              <span className="text-xs text-slate-400">
+                1 с. = {exchangeRates[currency]} {currency} · {ratesDate}
+              </span>
+            )}
+            <Select value={chartType} onValueChange={setChartType}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="line">Линейный</SelectItem>
+                <SelectItem value="bar">Столбчатый</SelectItem>
+                <SelectItem value="area">Областной</SelectItem>
+              </SelectContent>
+            </Select>
             {showTime && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-lg">
+              <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-lg">
                 <Clock className="w-4 h-4 text-indigo-600" />
-                <span className="font-semibold text-indigo-900 text-sm tabular-nums">
-                  {format(currentTime, 'HH:mm:ss')} · {format(currentTime, 'dd MMM yyyy')}
+                <span className="font-semibold text-indigo-900">
+                  {format(currentTime, 'HH:mm:ss')} • {format(currentTime, 'dd MMM yyyy')}
                 </span>
               </div>
             )}
-            <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setHideData(h => !h)}
-            className="gap-1 text-xs"
-          >
-            {hideData ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-            {hideData ? 'Показать данные' : 'Скрыть данные'}
-          </Button>
-        </div>
-        {/* Row 2: currency + refresh + chart type */}
-        <div className="flex flex-wrap items-center gap-3">
-          <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="TJS">Сомони (с.)</SelectItem>
-              <SelectItem value="USD">Доллар ($)</SelectItem>
-              <SelectItem value="RUB">Рубль (₽)</SelectItem>
-              <SelectItem value="EUR">Евро (€)</SelectItem>
-              <SelectItem value="CNY">Юань (¥)</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => loadExchangeRates(true)}
-            disabled={ratesLoading}
-            className="gap-1 text-xs"
-          >
-            <RefreshCw className={`w-3 h-3 ${ratesLoading ? 'animate-spin' : ''}`} />
-            {ratesLoading ? 'Загрузка...' : 'Обновить курс'}
-          </Button>
-          {ratesDate && currency !== 'TJS' && (
-            <span className="text-xs text-slate-400">
-              1 с. = {exchangeRates[currency]} {currency} · {ratesDate}
-            </span>
-          )}
-          <Select value={chartType} onValueChange={setChartType}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="line">Линейный</SelectItem>
-              <SelectItem value="bar">Столбчатый</SelectItem>
-              <SelectItem value="area">Областной</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
       {/* Main Stats */}
-      {!hideData && (
-        <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="Выручка" value={convertCurrency(totalRevenue)} subtitle={getCurrencySymbol()} icon={ShoppingCart} iconBg="bg-blue-100" iconColor="text-blue-600" />
-            <StatCard title="Прибыль" value={convertCurrency(totalProfit)} subtitle={getCurrencySymbol()} icon={TrendingUp} iconBg="bg-emerald-100" iconColor="text-emerald-600" />
-            <StatCard title="Маржа прибыли" value={`${profitMargin}%`} icon={Percent} iconBg="bg-purple-100" iconColor="text-purple-600" />
-            <StatCard title="Коробок продано" value={totalBoxes} icon={Box} iconBg="bg-amber-100" iconColor="text-amber-600" />
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            <StatCard title="Стоимость склада" value={convertCurrency(totalStockValue)} subtitle={getCurrencySymbol()} icon={Package} iconBg="bg-cyan-100" iconColor="text-cyan-600" />
-            <StatCard title="Потенциальная прибыль" value={convertCurrency(potentialProfit)} subtitle="от склада" icon={DollarSign} iconBg="bg-indigo-100" iconColor="text-indigo-600" />
-            <StatCard title="Всего товаров" value={products.length} icon={Package} iconBg="bg-slate-100" iconColor="text-slate-600" />
-          </div>
-        </>
-      )}
-      {hideData && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 text-center text-slate-400">
-          <EyeOff className="w-8 h-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Данные скрыты</p>
-        </div>
-      )}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Выручка"
+          value={convertCurrency(totalRevenue)}
+          subtitle={getCurrencySymbol()}
+          icon={ShoppingCart}
+          iconBg="bg-blue-100"
+          iconColor="text-blue-600"
+        />
+        <StatCard
+          title="Прибыль"
+          value={convertCurrency(totalProfit)}
+          subtitle={getCurrencySymbol()}
+          icon={TrendingUp}
+          iconBg="bg-emerald-100"
+          iconColor="text-emerald-600"
+        />
+        <StatCard
+          title="Маржа прибыли"
+          value={`${profitMargin}%`}
+          icon={Percent}
+          iconBg="bg-purple-100"
+          iconColor="text-purple-600"
+        />
+        <StatCard
+          title="Коробок продано"
+          value={totalBoxes}
+          icon={Box}
+          iconBg="bg-amber-100"
+          iconColor="text-amber-600"
+        />
+      </div>
+
+      {/* Inventory Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <StatCard
+          title="Стоимость склада"
+          value={convertCurrency(totalStockValue)}
+          subtitle={getCurrencySymbol()}
+          icon={Package}
+          iconBg="bg-cyan-100"
+          iconColor="text-cyan-600"
+        />
+        <StatCard
+          title="Потенциальная прибыль"
+          value={convertCurrency(potentialProfit)}
+          subtitle="от склада"
+          icon={DollarSign}
+          iconBg="bg-indigo-100"
+          iconColor="text-indigo-600"
+        />
+        <StatCard
+          title="Всего товаров"
+          value={products.length}
+          icon={Package}
+          iconBg="bg-slate-100"
+          iconColor="text-slate-600"
+        />
+      </div>
 
       {/* Charts */}
       <div className="grid lg:grid-cols-2 gap-6">
