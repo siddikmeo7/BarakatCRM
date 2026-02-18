@@ -18,8 +18,12 @@ import {
   Upload,
   Loader2,
   Box,
-  Filter
+  Filter,
+  Calendar,
+  History
 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
 
 const BASE_PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
