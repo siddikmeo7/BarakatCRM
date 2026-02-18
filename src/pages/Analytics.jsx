@@ -355,7 +355,7 @@ export default function Analytics() {
       </div>
 
       {/* Top Products by Revenue */}
-      <div className={`bg-white rounded-2xl p-6 shadow-sm border border-slate-100 ${hideData ? 'hidden' : ''}`}>
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
         <h3 className="font-semibold text-slate-900 mb-4">Топ товары по выручке</h3>
         <div className="space-y-3">
           {(() => {
