@@ -336,7 +336,7 @@ export default function Sales() {
                           </div>
                         )}
                         <div>
-                          <p className="font-medium text-slate-900 text-sm">{product?.brand || 'Удалён'} {product?.model}</p>
+                          <p className="font-medium text-slate-900 text-sm">{product?.brand || t(lang,'sales_deleted')} {product?.model}</p>
                           {sale.is_cancelled && <span className="text-xs text-red-500">{t(lang,'sales_cancelled')}</span>}
                         </div>
                       </div>

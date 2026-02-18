@@ -191,7 +191,7 @@ export default function Settings() {
   };
 
   const handleDeleteEmployee = async (employeeId) => {
-    if (confirm('Удалить этого сотрудника?')) {
+    if (confirm(t(lang, 'confirm_delete'))) {
       await base44.entities.Employee.delete(employeeId);
       await loadData();
     }
@@ -368,11 +368,11 @@ export default function Settings() {
         {/* Business Settings */}
         <TabsContent value="business">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">Информация о бизнесе</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_biz_info')}</h3>
             
             <div className="grid gap-6 max-w-xl">
               <div>
-                <Label>Название бизнеса</Label>
+                <Label>{t(lang,'settings_biz_name')}</Label>
                 <Input 
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -380,7 +380,7 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <Label>Телефон</Label>
+                <Label>{t(lang,'settings_phone')}</Label>
                 <Input 
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -389,11 +389,11 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <Label>Адрес</Label>
+                <Label>{t(lang,'settings_address')}</Label>
                 <Input 
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Город, улица, дом"
+                  placeholder={t(lang,'settings_address')}
                   className="mt-1.5"
                 />
               </div>
@@ -420,11 +420,11 @@ export default function Settings() {
         {/* Default Settings */}
         <TabsContent value="defaults">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">Настройки по умолчанию для товаров</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_defaults_title')}</h3>
             
             <div className="grid sm:grid-cols-2 gap-6 max-w-2xl">
               <div>
-                <Label>Тип товара</Label>
+                <Label>{t(lang,'settings_product_type')}</Label>
                 <Select value={formData.default_product_type} onValueChange={(v) => setFormData({ ...formData, default_product_type: v })}>
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
@@ -437,7 +437,7 @@ export default function Settings() {
                 </Select>
               </div>
               <div>
-                <Label>Цвет</Label>
+                <Label>{t(lang,'settings_color')}</Label>
                 <Select value={formData.default_color} onValueChange={(v) => setFormData({ ...formData, default_color: v })}>
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
@@ -450,7 +450,7 @@ export default function Settings() {
                 </Select>
               </div>
               <div>
-                <Label>Размер от</Label>
+                <Label>{t(lang,'settings_size_from')}</Label>
                 <Input 
                   type="text"
                   pattern="[0-9]*"
@@ -464,7 +464,7 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <Label>Размер до</Label>
+                <Label>{t(lang,'settings_size_to')}</Label>
                 <Input 
                   type="text"
                   pattern="[0-9]*"
@@ -478,15 +478,15 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <Label>Пар в коробке</Label>
+                <Label>{t(lang,'settings_pairs_per_box')}</Label>
                 <Select value={String(formData.default_pairs_per_box)} onValueChange={(v) => setFormData({ ...formData, default_pairs_per_box: parseInt(v) })}>
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="4">4 пары</SelectItem>
-                    <SelectItem value="6">6 пар</SelectItem>
-                    <SelectItem value="8">8 пар</SelectItem>
+                    <SelectItem value="4">{t(lang,'prod_pairs_4')}</SelectItem>
+                    <SelectItem value="6">{t(lang,'prod_pairs_6')}</SelectItem>
+                    <SelectItem value="8">{t(lang,'prod_pairs_8')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -497,18 +497,18 @@ export default function Settings() {
         {/* Employees */}
         <TabsContent value="employees">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">Сотрудники</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_emp_title')}</h3>
             
             {/* Add Employee Form */}
             <div className="p-4 bg-slate-50 rounded-xl mb-6">
-              <h4 className="font-medium text-slate-900 mb-4">Добавить сотрудника</h4>
+              <h4 className="font-medium text-slate-900 mb-4">{t(lang,'settings_emp_add')}</h4>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <Label>Имя</Label>
+                  <Label>{t(lang,'settings_emp_name')}</Label>
                   <Input 
                     value={newEmployee.name}
                     onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
-                    placeholder="Имя сотрудника"
+                    placeholder={t(lang,'settings_emp_name')}
                     className="mt-1.5"
                   />
                 </div>
@@ -523,7 +523,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <Label>Телефон</Label>
+                  <Label>{t(lang,'settings_phone')}</Label>
                   <Input 
                     value={newEmployee.phone}
                     onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
@@ -532,7 +532,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <Label>Роль</Label>
+                  <Label>{t(lang,'settings_emp_role')}</Label>
                   <Select value={newEmployee.role} onValueChange={(v) => setNewEmployee({ ...newEmployee, role: v })}>
                     <SelectTrigger className="mt-1.5">
                       <SelectValue />
@@ -551,7 +551,7 @@ export default function Settings() {
                 className="mt-4 bg-indigo-600 hover:bg-indigo-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Добавить
+                {t(lang,'add')}
               </Button>
             </div>
 
@@ -585,7 +585,7 @@ export default function Settings() {
               ))}
               {employees.length === 0 && (
                 <p className="text-center text-slate-500 py-8">
-                  Сотрудники пока не добавлены
+                  {t(lang,'settings_emp_empty')}
                 </p>
               )}
             </div>
@@ -595,7 +595,7 @@ export default function Settings() {
         {/* Notifications Settings */}
         <TabsContent value="notifications">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">Настройки уведомлений</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_notif_title')}</h3>
             
             <div className="space-y-6 max-w-xl">
               <div className="flex items-start gap-4 p-4 border border-slate-200 rounded-xl">
@@ -603,9 +603,9 @@ export default function Settings() {
                   <MessageCircle className="w-6 h-6 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-slate-900 mb-1">WhatsApp уведомления</h4>
+                  <h4 className="font-semibold text-slate-900 mb-1">{t(lang,'settings_notif_wa')}</h4>
                   <p className="text-sm text-slate-500 mb-3">
-                    Отправлять уведомления клиентам в WhatsApp при продаже в долг и оплате
+                    {t(lang,'settings_notif_wa_desc')}
                   </p>
                   <div className="flex items-center gap-2">
                     <input 
@@ -619,7 +619,7 @@ export default function Settings() {
                       className="w-4 h-4"
                     />
                     <label htmlFor="whatsapp" className="text-sm text-slate-700">
-                      Включить WhatsApp уведомления
+                      {t(lang,'settings_notif_wa_enable')}
                     </label>
                   </div>
                 </div>
@@ -630,9 +630,9 @@ export default function Settings() {
                   <Mail className="w-6 h-6 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-slate-900 mb-1">Email уведомления</h4>
+                  <h4 className="font-semibold text-slate-900 mb-1">{t(lang,'settings_notif_email')}</h4>
                   <p className="text-sm text-slate-500 mb-3">
-                    Отправлять уведомления клиентам на Email при продаже в долг и оплате
+                    {t(lang,'settings_notif_email_desc')}
                   </p>
                   <div className="flex items-center gap-2">
                     <input 
@@ -646,7 +646,7 @@ export default function Settings() {
                       className="w-4 h-4"
                     />
                     <label htmlFor="email" className="text-sm text-slate-700">
-                      Включить Email уведомления
+                      {t(lang,'settings_notif_email_enable')}
                     </label>
                   </div>
                 </div>
@@ -656,7 +656,7 @@ export default function Settings() {
                 <div className="flex items-start gap-3">
                   <Bell className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-semibold text-amber-900 mb-1">Когда отправляются уведомления</h4>
+                    <h4 className="font-semibold text-amber-900 mb-1">{t(lang,'settings_notif_when')}</h4>
                     <ul className="text-sm text-amber-700 space-y-1">
                       <li>• При продаже товара в долг клиенту</li>
                       <li>• При частичной оплате долга</li>
@@ -667,7 +667,7 @@ export default function Settings() {
               </div>
 
               <div className="p-4 bg-slate-50 rounded-xl">
-                <h4 className="font-medium text-slate-900 mb-2">Язык уведомлений</h4>
+                <h4 className="font-medium text-slate-900 mb-2">{t(lang,'settings_notif_lang')}</h4>
                 <Select 
                   value={user?.language || formData.language} 
                   onValueChange={async (v) => {
@@ -693,12 +693,12 @@ export default function Settings() {
         {/* Custom Fields */}
         <TabsContent value="custom">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">Кастомные поля</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_custom_title')}</h3>
             
             <div className="space-y-6 max-w-2xl">
               {/* Custom Colors */}
               <div>
-                <h4 className="font-medium text-slate-900 mb-3">Дополнительные цвета</h4>
+                <h4 className="font-medium text-slate-900 mb-3">{t(lang,'settings_custom_colors')}</h4>
                 <div className="flex gap-2 mb-3">
                   <Input
                     value={newColor}
@@ -749,7 +749,7 @@ export default function Settings() {
 
               {/* Custom Product Types */}
               <div>
-                <h4 className="font-medium text-slate-900 mb-3">Дополнительные типы товара</h4>
+                <h4 className="font-medium text-slate-900 mb-3">{t(lang,'settings_custom_types')}</h4>
                 <div className="flex gap-2 mb-3">
                   <Input
                     value={newProductType}
@@ -804,9 +804,9 @@ export default function Settings() {
         {/* History Tab */}
         <TabsContent value="history">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">История действий</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">{t(lang,'settings_history_title')}</h3>
             <p className="text-slate-600 mb-4">
-              Здесь отображается история всех действий в системе. Вы можете восстановить удалённые данные.
+              {t(lang,'settings_history_desc')}
             </p>
             <Button
               onClick={() => {
@@ -816,7 +816,7 @@ export default function Settings() {
               className="bg-indigo-600 hover:bg-indigo-700"
             >
               <History className="w-4 h-4 mr-2" />
-              Перейти к истории
+              {t(lang,'settings_history_btn')}
             </Button>
           </div>
         </TabsContent>
@@ -824,11 +824,11 @@ export default function Settings() {
         {/* Security Tab */}
         <TabsContent value="security">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">Безопасность и аккаунт</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_sec_title')}</h3>
             
             <div className="space-y-6 max-w-xl">
               <div className="p-4 border border-slate-200 rounded-xl">
-                <h4 className="font-medium text-slate-900 mb-2">Информация аккаунта</h4>
+                <h4 className="font-medium text-slate-900 mb-2">{t(lang,'settings_sec_account')}</h4>
                 <div className="space-y-2 text-sm">
                   <p className="text-slate-600">Email: <span className="font-medium text-slate-900">{user?.email}</span></p>
                   <p className="text-slate-600">Имя: <span className="font-medium text-slate-900">{user?.full_name || 'Не указано'}</span></p>
@@ -838,7 +838,7 @@ export default function Settings() {
 
               {/* Резервное копирование и Экспорт */}
               <div>
-                <h4 className="font-semibold text-slate-900 mb-3">Резервное копирование и экспорт</h4>
+                <h4 className="font-semibold text-slate-900 mb-3">{t(lang,'settings_sec_backup')}</h4>
                 <BackupExportPanel business={business} onBackupJSON={handleBackup} />
               </div>
 
@@ -847,9 +847,9 @@ export default function Settings() {
                 <div className="flex items-start gap-3">
                   <RefreshCw className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <h4 className="font-semibold text-blue-900 mb-1">Очистить кэш</h4>
+                    <h4 className="font-semibold text-blue-900 mb-1">{t(lang,'settings_sec_cache')}</h4>
                     <p className="text-sm text-blue-700 mb-3">
-                      Удалить временные данные приложения (курсы валют, сессии). Данные бизнеса не затрагиваются.
+                      {t(lang,'settings_sec_cache_desc')}
                     </p>
                     <Button
                       onClick={handleClearCache}
@@ -858,7 +858,7 @@ export default function Settings() {
                       className="text-blue-700 border-blue-300 hover:bg-blue-100 gap-2"
                     >
                       {clearingCache ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                      Очистить кэш
+                      {t(lang,'settings_sec_cache')}
                     </Button>
                   </div>
                 </div>
@@ -866,9 +866,9 @@ export default function Settings() {
 
               {/* Удаление всех данных */}
               <div className="p-4 border border-red-200 bg-red-50 rounded-xl">
-                <h4 className="font-semibold text-red-900 mb-2">⚠️ Удаление всех данных</h4>
+                <h4 className="font-semibold text-red-900 mb-2">{t(lang,'settings_sec_delete')}</h4>
                 <p className="text-sm text-red-700 mb-3">
-                  Безвозвратно удалить все продажи, товары, клиентов, склады бизнеса. Перед этим создайте резервную копию!
+                  {t(lang,'settings_sec_delete_desc')}
                 </p>
                 <Button
                   variant="outline"
@@ -876,7 +876,7 @@ export default function Settings() {
                   onClick={handleDeleteAllData}
                 >
                   <Trash2 className="w-4 h-4" />
-                  Удалить все данные бизнеса
+                  {t(lang,'settings_sec_delete_btn')}
                 </Button>
               </div>
             </div>
