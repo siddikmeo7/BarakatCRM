@@ -326,7 +326,7 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] lg:h-[calc(100vh-2rem)] flex overflow-hidden -m-4 lg:-m-8">
+    <div className="h-screen lg:h-[calc(100vh-2rem)] flex overflow-hidden -m-4 lg:-m-8 flex-col lg:flex-row">
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
@@ -336,8 +336,8 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
       {/* SIDEBAR */}
       <div className={`
         fixed lg:relative z-50 lg:z-auto
-        h-full w-72 bg-slate-900 flex flex-col
-        transition-transform duration-300
+        h-screen lg:h-full w-72 bg-slate-900 flex flex-col
+        transition-transform duration-300 overflow-y-auto
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Sidebar Header */}
@@ -410,7 +410,7 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
       </div>
 
       {/* MAIN CHAT */}
-      <div className="flex-1 flex flex-col bg-white min-w-0">
+      <div className="flex-1 flex flex-col bg-white min-w-0 overflow-hidden">
 
         {/* Chat Top Bar */}
         <div className="h-14 border-b border-slate-200 flex items-center px-4 gap-3 flex-shrink-0">
