@@ -238,7 +238,8 @@ export default function Customers() {
           </table>
         </div>
       )}
-      {view === 'grid' && <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {view === 'grid' && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredCustomers.map(customer => {
           const whatsappNum = customer.use_phone_for_all ? customer.phone : (customer.whatsapp || customer.phone);
           const telegramNum = customer.use_phone_for_all ? customer.phone : (customer.telegram || customer.phone);
