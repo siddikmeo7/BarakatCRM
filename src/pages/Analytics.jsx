@@ -444,8 +444,8 @@ export default function Analytics() {
                     <p className="text-xs text-slate-500">{stats.boxes} кор.</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-semibold text-slate-900 text-xs md:text-sm">{hideData ? masked : `${(stats.revenue / 1000).toFixed(1)}K`}</p>
-                    <p className="text-xs md:text-sm text-emerald-600 font-medium">+{hideData ? masked : `${(stats.profit / 1000).toFixed(1)}K`}</p>
+                    <p className="font-semibold text-slate-900 text-xs md:text-sm">{hideData ? masked : `${Math.round(stats.revenue)} с.`}</p>
+                    <p className="text-xs md:text-sm text-emerald-600 font-medium">+{hideData ? masked : `${Math.round(stats.profit)} с.`}</p>
                   </div>
                 </div>
               );
