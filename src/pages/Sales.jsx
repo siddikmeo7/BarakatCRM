@@ -24,6 +24,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
+import { t } from '@/components/i18n/translations';
 import { ru } from 'date-fns/locale';
 
 export default function Sales() {

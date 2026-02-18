@@ -19,6 +19,7 @@ import {
   Box,
   Filter
 } from 'lucide-react';
+import { t } from '@/components/i18n/translations';
 
 const BASE_PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
 const BASE_COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый', 'Другой'];

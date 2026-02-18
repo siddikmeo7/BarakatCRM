@@ -24,6 +24,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
+import { t } from '@/components/i18n/translations';
 
 export default function Dashboard() {
   const [business, setBusiness] = useState(null);
