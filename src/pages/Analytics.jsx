@@ -34,6 +34,7 @@ export default function Analytics() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lang, setLang] = useState('ru');
   const [currency, setCurrency] = useState('TJS');
   const [showTime, setShowTime] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -105,6 +106,7 @@ export default function Analytics() {
       if (businesses.length > 0) {
         const biz = businesses[0];
         setBusiness(biz);
+        setLang(biz.language || 'ru');
         
         const [salesData, productsData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
@@ -182,13 +184,13 @@ export default function Analytics() {
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Аналитика и статистика"
-        subtitle="Визуализация данных вашего бизнеса"
+        title={t(lang,'analytics_title')}
+        subtitle={t(lang,'analytics_subtitle')}
         actions={
           <Link to={createPageUrl('ChartSettings')}>
             <Button variant="outline" className="gap-2">
               <Settings2 className="w-4 h-4" />
-              Настройка графиков
+              {t(lang,'analytics_chart_settings')}
             </Button>
           </Link>
         }
@@ -211,7 +213,7 @@ export default function Analytics() {
             className="gap-2"
           >
             {hideData ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            {hideData ? 'Показать данные' : 'Скрыть данные'}
+            {hideData ? t(lang,'analytics_show') : t(lang,'analytics_hide')}
           </Button>
         </div>
         {/* Bottom row: filters */}
@@ -222,11 +224,11 @@ export default function Analytics() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="TJS">Сомони (с.)</SelectItem>
-              <SelectItem value="USD">Доллар ($)</SelectItem>
-              <SelectItem value="RUB">Рубль (₽)</SelectItem>
-              <SelectItem value="EUR">Евро (€)</SelectItem>
-              <SelectItem value="CNY">Юань (¥)</SelectItem>
+              <SelectItem value="TJS">{t(lang,'analytics_somoni')}</SelectItem>
+              <SelectItem value="USD">{t(lang,'analytics_usd')}</SelectItem>
+              <SelectItem value="RUB">{t(lang,'analytics_rub')}</SelectItem>
+              <SelectItem value="EUR">{t(lang,'analytics_eur')}</SelectItem>
+              <SelectItem value="CNY">{t(lang,'analytics_cny')}</SelectItem>
             </SelectContent>
           </Select>
           <Button
@@ -237,7 +239,7 @@ export default function Analytics() {
             className="gap-1 text-xs"
           >
             <RefreshCw className={`w-3 h-3 ${ratesLoading ? 'animate-spin' : ''}`} />
-            {ratesLoading ? 'Загрузка...' : 'Обновить курс'}
+            {ratesLoading ? t(lang,'analytics_loading_rate') : t(lang,'analytics_refresh_rate')}
           </Button>
           {ratesDate && currency !== 'TJS' && (
             <span className="text-xs text-slate-400">
@@ -249,9 +251,9 @@ export default function Analytics() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="line">Линейный</SelectItem>
-              <SelectItem value="bar">Столбчатый</SelectItem>
-              <SelectItem value="area">Областной</SelectItem>
+              <SelectItem value="line">{t(lang,'analytics_chart_line')}</SelectItem>
+              <SelectItem value="bar">{t(lang,'analytics_chart_bar')}</SelectItem>
+              <SelectItem value="area">{t(lang,'analytics_chart_area')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -260,7 +262,7 @@ export default function Analytics() {
       {/* Main Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Выручка"
+          title={t(lang,'analytics_revenue')}
           value={convertCurrency(totalRevenue)}
           subtitle={getCurrencySymbol()}
           icon={ShoppingCart}
@@ -268,7 +270,7 @@ export default function Analytics() {
           iconColor="text-blue-600"
         />
         <StatCard
-          title="Прибыль"
+          title={t(lang,'analytics_profit')}
           value={convertCurrency(totalProfit)}
           subtitle={getCurrencySymbol()}
           icon={TrendingUp}
@@ -276,14 +278,14 @@ export default function Analytics() {
           iconColor="text-emerald-600"
         />
         <StatCard
-          title="Маржа прибыли"
+          title={t(lang,'analytics_margin')}
           value={hideData ? masked : `${profitMargin}%`}
           icon={Percent}
           iconBg="bg-purple-100"
           iconColor="text-purple-600"
         />
         <StatCard
-          title="Коробок продано"
+          title={t(lang,'analytics_boxes_sold')}
           value={totalBoxes}
           icon={Box}
           iconBg="bg-amber-100"
@@ -294,7 +296,7 @@ export default function Analytics() {
       {/* Inventory Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
-          title="Стоимость склада"
+          title={t(lang,'analytics_stock_value')}
           value={convertCurrency(totalStockValue)}
           subtitle={getCurrencySymbol()}
           icon={Package}
@@ -302,15 +304,15 @@ export default function Analytics() {
           iconColor="text-cyan-600"
         />
         <StatCard
-          title="Потенциальная прибыль"
+          title={t(lang,'analytics_potential_profit')}
           value={convertCurrency(potentialProfit)}
-          subtitle="от склада"
+          subtitle={t(lang,'analytics_from_stock')}
           icon={DollarSign}
           iconBg="bg-indigo-100"
           iconColor="text-indigo-600"
         />
         <StatCard
-          title="Всего товаров"
+          title={t(lang,'analytics_total_products')}
           value={products.length}
           icon={Package}
           iconBg="bg-slate-100"
@@ -322,13 +324,13 @@ export default function Analytics() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Sales & Profit Chart */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 mb-4">Динамика продаж и прибыли</h3>
+          <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'analytics_dynamics')}</h3>
           <SalesChart sales={filteredSales} days={14} chartType={chartType} />
         </div>
 
         {/* Sales Type Chart */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 mb-4">Наличные vs В долг</h3>
+          <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'analytics_cash_vs_debt')}</h3>
           <div className="h-64">
             <SalesTypeChart sales={filteredSales} />
           </div>
@@ -336,19 +338,19 @@ export default function Analytics() {
             <div className="text-center p-4 bg-emerald-50 rounded-xl">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                <p className="text-sm font-medium text-slate-600">Наличные</p>
+                <p className="text-sm font-medium text-slate-600">{t(lang,'analytics_cash')}</p>
               </div>
               <p className="text-3xl font-bold text-emerald-600">{hideData ? masked : `${cashPercent}%`}</p>
-              <p className="text-sm text-slate-500 mt-1">{cashSales.length} продаж</p>
+              <p className="text-sm text-slate-500 mt-1">{cashSales.length} {t(lang,'dash_sales_count')}</p>
               <p className="text-lg font-semibold text-slate-900 mt-2">{hideData ? masked : `${cashAmount.toLocaleString()} с.`}</p>
             </div>
             <div className="text-center p-4 bg-amber-50 rounded-xl">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <div className="w-3 h-3 rounded-full bg-amber-500" />
-                <p className="text-sm font-medium text-slate-600">В долг</p>
+                <p className="text-sm font-medium text-slate-600">{t(lang,'analytics_in_debt')}</p>
               </div>
               <p className="text-3xl font-bold text-amber-600">{hideData ? masked : `${debtPercent}%`}</p>
-              <p className="text-sm text-slate-500 mt-1">{debtSales.length} продаж</p>
+              <p className="text-sm text-slate-500 mt-1">{debtSales.length} {t(lang,'dash_sales_count')}</p>
               <p className="text-lg font-semibold text-slate-900 mt-2">{hideData ? masked : `${debtAmount.toLocaleString()} с.`}</p>
             </div>
           </div>
@@ -357,7 +359,7 @@ export default function Analytics() {
 
       {/* Top Products by Revenue */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-        <h3 className="font-semibold text-slate-900 mb-4">Топ товары по выручке</h3>
+        <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'analytics_top_products')}</h3>
         <div className="space-y-3">
           {(() => {
             const productStats = {};
@@ -391,7 +393,7 @@ export default function Analytics() {
                     )}
                     <div className="flex-1">
                       <p className="font-medium text-slate-900">{product.brand} {product.model}</p>
-                      <p className="text-sm text-slate-500">{stats.boxes} коробок продано</p>
+                      <p className="text-sm text-slate-500">{stats.boxes} {t(lang,'analytics_boxes_sold_label')}</p>
                     </div>
                     <div className="text-right">
                        <p className="font-semibold text-slate-900">{hideData ? masked : stats.revenue.toLocaleString()} с.</p>
