@@ -383,7 +383,16 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
         </div>
 
         {/* Sidebar footer */}
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800">
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+          <Button
+            onClick={() => setHistoryModalOpen(true)}
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2 text-xs"
+          >
+            <History className="w-3.5 h-3.5" />
+            История чатов
+          </Button>
           <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs">
             <History className="w-3.5 h-3.5" />
             <span>{dataStats?.logsCount || 0} {lang === 'ru' ? 'действий' : 'actions'}</span>
