@@ -24,6 +24,7 @@ export default function AIAssistant() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [businessData, setBusinessData] = useState(null);
+  const [lang, setLang] = useState('ru');
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
