@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import { t } from '@/components/i18n/translations';
+import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, 
   Package, 
@@ -18,9 +19,11 @@ import {
   RotateCcw,
   TrendingUp,
   History,
-  Globe
+  Globe,
+  ChevronLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import BottomNavigation from '@/components/ui/BottomNavigation';
 import { cn } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
