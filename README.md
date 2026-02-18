@@ -1,206 +1,204 @@
-Barakat CRM
+# 🚀 Barakat CRM
 
-Barakat CRM is a professional web and mobile platform designed for wholesale shoe businesses. The system helps business owners manage products, box-based sales, warehouses, client debts, profits, and analytics in one simple and powerful application.
+### Smart Wholesale Business Platform for Shoe Distributors
 
-The main goal of Barakat CRM is to make wholesale business faster, easier, and more profitable.
+**Barakat CRM** is a powerful web and mobile system designed for wholesale shoe businesses that sell products in boxes. It automates sales tracking, warehouse management, profit calculations, and client debt management — all in one modern platform.
 
-Key Features
-1. Box-Based Product Management
+> Built to save time. Built to increase profit. Built for real wholesalers.
 
-Most wholesale shoe businesses sell shoes in boxes. Barakat CRM is built specifically for this workflow.
+---
 
-Add products by brand, model, type, color, and size range
+# ✨ Why Barakat CRM?
 
-Set how many pairs are inside one box (4, 6, 8, or custom)
+Wholesale shoe businesses are complex. Products are sold in boxes, prices change, clients buy on credit, and warehouses must be tracked carefully.
 
-Add product photos
+Barakat CRM simplifies everything with automation, analytics, and AI.
 
-Track purchase price and selling price
+✔ Track products by boxes, pairs, and individual shoes
+✔ Automatically calculate profit
+✔ Manage warehouses and stock
+✔ Track client debts and payments
+✔ Get AI business insights
+✔ Use web and mobile from anywhere
+
+---
+
+# 📦 Box‑Based Business System
+
+Barakat CRM is built specifically for wholesalers who sell shoes in boxes.
+
+Example:
+
+2 boxes × 6 pairs = 12 pairs = 24 shoes
 
 The system automatically calculates:
 
-Number of pairs
+* number of pairs
+* number of individual shoes
+* profit
+* remaining stock
 
-Number of individual shoes
+No manual counting. No mistakes.
 
-Total profit
+---
 
-Example: 2 boxes x 6 pairs = 12 pairs = 24 shoes
+# 🛍️ Product Management
 
-2. Sales Management
+Add products with:
 
-When selling products, the business owner can:
+* Brand and Model
+* Type (default: Shoes)
+* Color (default: Black)
+* Size Range (example 39–44)
+* Pairs per Box (4, 6, 8, or custom)
+* Purchase Price
+* Selling Price
+* Product Photos
 
-Search product quickly
+You can also edit or delete product types and colors anytime.
 
-Choose number of boxes sold
+---
 
-Enter custom selling price
+# 💰 Smart Sales System
 
-Automatically calculate profit
+When selling:
 
-Sales records can be edited up to 5 times, and the system logs edit history.
+* Search product instantly
+* Enter number of boxes
+* Set custom selling price
+* System calculates profit automatically
 
-Filters are available by:
+Sales can be edited up to 5 times, and edit history is saved.
 
-Date and time
+Advanced filters available for all data.
 
-Product
+---
 
-Warehouse
+# 💳 Client Credit Tracking
 
-Client
+Wholesale clients often buy on credit.
+Barakat CRM tracks everything automatically.
 
-Profit
+✔ Add client with phone, address, optional email
+✔ Client auto‑created during sale
+✔ Track partial payments
+✔ Track fully paid debts
+✔ View payment history
 
-Number of boxes
+Clients receive automatic notifications via WhatsApp and Email.
 
-3. Client Debt Tracking
+---
 
-Many wholesale clients buy on credit. Barakat CRM tracks this automatically.
+# 🏬 Warehouse Management
 
-Add client name, phone number, address, optional email
+Manage multiple warehouses easily.
 
-Automatically create client during sale if not registered
+✔ Add warehouses
+✔ Assign products to warehouses
+✔ Track stock in boxes and pairs
+✔ View stock value
+✔ Track returns automatically
 
-Track full debt history
+Click any product to open detailed product information instantly.
 
-Track partial payments
+---
 
-Track fully paid debts with date and time
-
-Notifications can be sent to clients via WhatsApp or Email when:
-
-They take products on credit
-
-They make a payment
-
-4. Warehouse Management
-
-Businesses can manage multiple warehouses.
-
-Add warehouses
-
-Assign products to warehouses
-
-Track stock in boxes, pairs, and items
-
-View total value of stock in each warehouse
-
-Open product details directly from warehouse list
-
-Returned goods are automatically added back to warehouse stock.
-
-5. AI Business Assistant
-
-Barakat CRM includes an AI assistant that helps analyze business data.
-
-The AI can:
-
-Answer business questions
-
-Analyze sales and profits
-
-Show best-selling products
-
-Detect slow-moving stock
-
-Calculate income for any period
-
-Analyze client debts
-
-Chat history is saved, and new chats can be created anytime.
-
-6. Dashboard and Analytics
+# 📊 Powerful Dashboard & Analytics
 
 The main dashboard shows:
 
-Total sales
+* Total sales
+* Total profit
+* Boxes sold
+* Pairs sold
+* Items sold
+* Debts and payments
+* Warehouse stock
 
-Total profit
+Custom filters by date and time.
+Custom chart design and layout options.
 
-Boxes sold
+---
 
-Pairs sold
+# 🤖 AI Business Assistant
 
-Individual shoes sold
+Barakat CRM includes a built‑in AI assistant.
 
-Debts and payments
+Ask questions like:
 
-Warehouse stock
+* Which products sell best?
+* How much profit this month?
+* Which warehouse has slow stock?
+* Who owes the most money?
 
-Advanced filters allow custom time ranges with date and time.
+Chat history is saved for future reference.
 
-Business owners can customize chart styles and layout on the dashboard.
+---
 
-7. Team Management
+# 👥 Team Management
 
-Business owners can add employees with different roles:
+Add employees with custom roles:
 
-Warehouse manager
+* Warehouse Manager
+* Sales Manager
+* Delivery Staff
 
-Sales manager
+Each role has specific permissions.
 
-Delivery staff
+---
 
-Each role has custom permissions.
+# 🌍 Multi‑Language Support
 
-8. Multi-Language Support
+Supports:
 
-The system supports:
+* English
+* Russian
+* Tajik
 
-English
+Change language in settings and the whole app updates instantly.
 
-Russian
+---
 
-Tajik
+# ☁️ Secure Cloud Storage
 
-Language can be changed in settings, and all sections update automatically.
+All business data is stored securely with backups.
+Access your data from any device without risk of loss.
 
-9. Secure Cloud Data Storage
+---
 
-All business data is stored securely in the cloud with backups. Business owners can access their data from any device without risk of losing information.
-
-10. Multi-Business Platform
-
-Each business owner has a private account and manages only their own business. A main system administrator can monitor businesses, block accounts, or review statistics.
-
-Technologies
+# 🧠 Technology Stack
 
 Backend:
 
-Python
-
-Django
-
-Django REST Framework
+* Python
+* Django
+* Django REST Framework
 
 Frontend:
 
-Modern JavaScript framework
+* Modern JavaScript framework
+* Mobile‑ready responsive design
 
-Responsive design for mobile and desktop
+Built as a scalable SaaS platform.
 
-The platform is built as a scalable SaaS system.
+---
 
-Mission
+# 🚀 Future Roadmap
 
-Barakat CRM is created to help wholesale shoe sellers work smarter, save time, reduce mistakes, and grow their profits using modern technology.
+* Android & iOS apps
+* AI forecasting
+* Financial reports export
+* Payment integrations
+* Advanced automation tools
 
-Future Plans
+---
 
-Mobile apps for Android and iOS
+# 👤 Author
 
-Advanced AI forecasting
+Created by **Abubakr Khusainov**.
 
-Financial reports and export
+---
 
-Integration with payment systems
+# ⭐ Barakat CRM
 
-More automation tools
-
-Author
-
-Project created by Mirzozoda Abubakr.
-
-Barakat CRM — Smart Wholesale Business Management Platform.
+**Modern Technology for Wholesale Shoe Business Success**
