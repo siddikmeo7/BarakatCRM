@@ -299,7 +299,7 @@ export default function Analytics() {
       </div>
 
       {/* Inventory Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <StatCard
           title={t(lang,'analytics_stock_value')}
           value={convertCurrency(totalStockValue)}
@@ -324,6 +324,14 @@ export default function Analytics() {
           icon={Package}
           iconBg="bg-slate-100"
           iconColor="text-slate-600"
+          className="text-sm md:text-base"
+        />
+        <StatCard
+          title="Коробок на складе"
+          value={hideData ? masked : totalBoxesInStock}
+          icon={Box}
+          iconBg="bg-orange-100"
+          iconColor="text-orange-600"
           className="text-sm md:text-base"
         />
       </div>
