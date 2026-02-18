@@ -385,7 +385,7 @@ export default function Debts() {
                       <td className="px-4 py-3 text-center">
                         {!isPaid && customer && (
                           <button
-                            onClick={() => openWhatsApp(customer, remaining, 'reminder')}
+                            onClick={() => openWhatsApp(customer, remaining, 'reminder', sale)}
                             disabled={sendingMsg === customer.id}
                             className="p-1.5 bg-green-50 hover:bg-green-100 rounded-lg text-green-700"
                           >
