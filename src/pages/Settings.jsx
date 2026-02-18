@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import BackupExportPanel from '@/components/settings/BackupExportPanel';
 import { 
   Settings as SettingsIcon, 
   Building2, 
@@ -28,7 +29,6 @@ import {
   Shield,
   RotateCcw,
   AlertCircle,
-  DatabaseBackup,
   RefreshCw
 } from 'lucide-react';
 
