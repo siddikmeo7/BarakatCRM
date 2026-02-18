@@ -263,6 +263,7 @@ export default function Products() {
               ))}
             </SelectContent>
           </Select>
+          <ViewToggle view={view} onChange={setView} />
         </div>
       </div>
 
