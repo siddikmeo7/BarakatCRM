@@ -30,6 +30,9 @@ export default function ActivityLog() {
     to: endOfMonth(new Date())
   });
   const [detailLog, setDetailLog] = useState(null);
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
+  const [sortField, setSortField] = useState('date'); // 'date' | 'action' | 'entity'
+  const [sortDir, setSortDir] = useState('desc'); // 'asc' | 'desc'
 
   useEffect(() => {
     loadData();
