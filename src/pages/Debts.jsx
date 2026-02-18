@@ -572,7 +572,7 @@ export default function Debts() {
           })()}
 
           <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={() => { setDialogOpen(false); setSelectedSale(null); setPaymentAmount(''); setMessageChannel('telegram'); }}>
               {t(lang,'cancel')}
             </Button>
             <Button 
