@@ -257,12 +257,7 @@ export default function Analytics() {
       </div>
 
       {/* Main Stats */}
-      {hideData && (
-        <div className="bg-slate-100 rounded-2xl p-6 text-center text-slate-500 font-medium">
-          🙈 Данные скрыты — нажмите «Показать данные» чтобы увидеть цифры
-        </div>
-      )}
-      <div className={`grid grid-cols-2 lg:grid-cols-4 gap-4 ${hideData ? 'hidden' : ''}`}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Выручка"
           value={convertCurrency(totalRevenue)}
