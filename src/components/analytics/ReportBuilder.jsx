@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, FileText, Loader2, FileSpreadsheet } from 'lucide-react';
+import { Download, FileText, Loader2, FileSpreadsheet, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
 
@@ -17,6 +17,7 @@ export default function ReportBuilder({ sales, customers, products, business, la
   const [generating, setGenerating] = useState(false);
   const [reportName, setReportName] = useState(`Отчёт ${format(new Date(), 'dd.MM.yyyy')}`);
   const [exportFormat, setExportFormat] = useState('xlsx'); // 'xlsx' or 'md'
+  const [sectionsOpen, setSectionsOpen] = useState(false);
 
   const metrics = {
     summary: { label: 'Общая статистика', desc: 'Выручка, прибыль, количество продаж' },
@@ -301,19 +302,30 @@ export default function ReportBuilder({ sales, customers, products, business, la
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm font-medium text-slate-700">Выберите разделы:</p>
-        {Object.entries(metrics).map(([key, { label, desc }]) => (
-            <label key={key} className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
-              <Checkbox
-                checked={selectedMetrics[key]}
-                onCheckedChange={(checked) => setSelectedMetrics(p => ({ ...p, [key]: checked }))}
-              />
-            <div className="flex-1">
-              <p className="font-medium text-slate-900">{label}</p>
-              <p className="text-sm text-slate-500">{desc}</p>
-            </div>
-          </label>
-        ))}
+        <button
+          onClick={() => setSectionsOpen(!sectionsOpen)}
+          className="w-full flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+        >
+          <p className="text-sm font-medium text-slate-700">Выберите разделы отчёта</p>
+          {sectionsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {sectionsOpen && (
+          <div className="space-y-3 pt-3 border-t border-slate-200">
+            {Object.entries(metrics).map(([key, { label, desc }]) => (
+              <label key={key} className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
+                <Checkbox
+                  checked={selectedMetrics[key]}
+                  onCheckedChange={(checked) => setSelectedMetrics(p => ({ ...p, [key]: checked }))}
+                />
+                <div className="flex-1">
+                  <p className="font-medium text-slate-900">{label}</p>
+                  <p className="text-sm text-slate-500">{desc}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
 
       <Button
