@@ -28,8 +28,8 @@ import {
   Shield,
   RotateCcw,
   AlertCircle,
-  DatabaseBackup,
-  RefreshCw
+  RefreshCw,
+  HardDrive
 } from 'lucide-react';
 
 const LANGUAGES = [
@@ -227,6 +227,22 @@ export default function Settings() {
       console.error(e);
     } finally {
       setBackupLoading(false);
+    }
+  };
+
+  const handleDriveBackup = async () => {
+    setDriveBackupLoading(true);
+    try {
+      const res = await base44.functions.invoke('backupToGoogleDrive');
+      if (res.data?.success) {
+        alert(`✅ Резервная копия сохранена в Google Drive!\nФайл: ${res.data.file_name}`);
+      } else {
+        alert('Ошибка: ' + (res.data?.error || 'Неизвестная ошибка'));
+      }
+    } catch (e) {
+      alert('Ошибка при сохранении в Google Drive: ' + e.message);
+    } finally {
+      setDriveBackupLoading(false);
     }
   };
 
