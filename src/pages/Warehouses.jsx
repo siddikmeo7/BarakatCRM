@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import MoveProductsDialog from '@/components/warehouses/MoveProductsDialog';
 import { 
   Plus, 
   Warehouse as WarehouseIcon, 
@@ -16,9 +17,27 @@ import {
   MapPin,
   Package,
   Box,
+  Home,
+  Building,
+  Store,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  ArrowRightLeft
 } from 'lucide-react';
+
+const WAREHOUSE_ICONS = [
+  { key: 'Warehouse', icon: WarehouseIcon, label: 'Склад' },
+  { key: 'Home', icon: Home, label: 'Дом' },
+  { key: 'Building', icon: Building, label: 'Здание' },
+  { key: 'Store', icon: Store, label: 'Магазин' },
+  { key: 'Package', icon: Package, label: 'Коробка' },
+];
+
+function WarehouseIconComp({ iconKey, className }) {
+  const found = WAREHOUSE_ICONS.find(i => i.key === iconKey);
+  const Icon = found ? found.icon : WarehouseIcon;
+  return <Icon className={className} />;
+}
 
 export default function Warehouses() {
   const [business, setBusiness] = useState(null);
@@ -32,10 +51,12 @@ export default function Warehouses() {
   const [search, setSearch] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
   
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
-    manager_email: ''
+    manager_email: '',
+    icon: 'Warehouse'
   });
 
   useEffect(() => {
@@ -74,11 +95,12 @@ export default function Warehouses() {
       setFormData({
         name: warehouse.name || '',
         address: warehouse.address || '',
-        manager_email: warehouse.manager_email || ''
+        manager_email: warehouse.manager_email || '',
+        icon: warehouse.icon || 'Warehouse'
       });
     } else {
       setEditingWarehouse(null);
-      setFormData({ name: '', address: '', manager_email: '' });
+      setFormData({ name: '', address: '', manager_email: '', icon: 'Warehouse' });
     }
     setDialogOpen(true);
   };
