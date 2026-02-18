@@ -19,7 +19,9 @@ import {
   ArrowRight,
   Warehouse,
   Users,
-  LayoutDashboard
+  LayoutDashboard,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 

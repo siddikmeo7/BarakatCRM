@@ -6,7 +6,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { BarChart3, LineChart, PieChart, Activity, Save, Loader2 } from 'lucide-react';
+import { BarChart3, LineChart, PieChart, Activity, Save, Loader2, ArrowLeft } from 'lucide-react';
 
 const CHART_TYPES = [
   { value: 'line', label: 'Линейный', icon: LineChart },
