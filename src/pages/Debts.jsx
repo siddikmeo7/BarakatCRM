@@ -130,8 +130,8 @@ export default function Debts() {
           total_paid: (customer.total_paid || 0) + amount
         });
         
-        // Отправить Telegram сообщение при погашении
-        if (customer.telegram) {
+        // Отправить сообщение в выбранный канал
+        if (messageChannel === 'telegram' && customer.telegram) {
           try {
             await base44.functions.invoke('sendTelegramMessage', {
               telegram_id: customer.telegram,
@@ -142,8 +142,22 @@ export default function Debts() {
               business_name: business?.name,
               type: 'payment'
             });
-          } catch (telegramErr) {
-            console.error('Failed to send Telegram message:', telegramErr);
+          } catch (err) {
+            console.error('Failed to send Telegram message:', err);
+          }
+        } else if (messageChannel === 'whatsapp' && customer.phone) {
+          try {
+            await base44.functions.invoke('sendWhatsAppDebtMessage', {
+              phone: customer.phone,
+              customer_name: customer.name,
+              product_name: product ? `${product.brand} ${product.model}` : undefined,
+              paid_amount: amount,
+              remaining_debt: newDebt,
+              business_name: business?.name,
+              type: 'payment'
+            });
+          } catch (err) {
+            console.error('Failed to send WhatsApp message:', err);
           }
         }
       }
