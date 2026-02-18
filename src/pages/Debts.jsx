@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { t } from '@/components/i18n/translations';
 
 export default function Debts() {
   const [business, setBusiness] = useState(null);
@@ -52,6 +53,7 @@ export default function Debts() {
   const [sendingMsg, setSendingMsg] = useState(null);
   const [selectedCustomerDetail, setSelectedCustomerDetail] = useState(null);
   const [customerDetailOpen, setCustomerDetailOpen] = useState(false);
+  const [lang, setLang] = useState('ru');
 
   useEffect(() => {
     loadData();
@@ -65,6 +67,7 @@ export default function Debts() {
       if (businesses.length > 0) {
         const biz = businesses[0];
         setBusiness(biz);
+        setLang(biz.language || 'ru');
         
         const [salesData, productsData, customersData, paymentsData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id, is_debt: true }),
@@ -149,7 +152,7 @@ export default function Debts() {
   };
 
   const openWhatsApp = async (customer, remainingDebt, type = 'reminder') => {
-    if (!customer?.phone) return alert('У клиента нет номера телефона');
+    if (!customer?.phone) return alert(t(lang, 'debts_no_phone'));
     setSendingMsg(customer.id);
     try {
       const res = await base44.functions.invoke('sendWhatsAppDebtMessage', {
@@ -221,12 +224,12 @@ export default function Debts() {
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Долги"
-        subtitle="Управление долгами клиентов"
+        title={t(lang, 'debts_title')}
+        subtitle={t(lang, 'debts_subtitle')}
         actions={
           <Button onClick={sendToAllDebtors} variant="outline" className="gap-2 text-green-700 border-green-300 hover:bg-green-50">
             <MessageCircle className="w-4 h-4" />
-            Отправить всем должникам
+            {t(lang, 'debts_send_all')}
           </Button>
         }
       />
@@ -236,30 +239,30 @@ export default function Debts() {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-2 mb-2">
             <CreditCard className="w-5 h-5 text-orange-600" />
-            <span className="text-sm text-slate-500">Общий долг</span>
+            <span className="text-sm text-slate-500">{t(lang, 'debts_total')}</span>
           </div>
           <p className="text-2xl font-bold text-orange-600">{totalDebt.toLocaleString()} с.</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="w-5 h-5 text-emerald-600" />
-            <span className="text-sm text-slate-500">Всего оплачено</span>
+            <span className="text-sm text-slate-500">{t(lang, 'cust_total_paid')}</span>
           </div>
           <p className="text-2xl font-bold text-emerald-600">{totalPaid.toLocaleString()} с.</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-2 mb-2">
             <User className="w-5 h-5 text-indigo-600" />
-            <span className="text-sm text-slate-500">Продаж в долг</span>
+            <span className="text-sm text-slate-500">{t(lang, 'debts_debt_sales')}</span>
           </div>
           <p className="text-2xl font-bold text-slate-900">{sales.length}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="w-5 h-5 text-emerald-600" />
-            <span className="text-sm text-slate-500">Погашено</span>
+            <span className="text-sm text-slate-500">{t(lang, 'debts_paid_off')}</span>
           </div>
-          <p className="text-2xl font-bold text-emerald-600">{fullyPaidCount} клиентов</p>
+          <p className="text-2xl font-bold text-emerald-600">{fullyPaidCount} {t(lang, 'debts_clients')}</p>
         </div>
       </div>
 
@@ -270,15 +273,15 @@ export default function Debts() {
           <SearchInput 
             value={search} 
             onChange={setSearch} 
-            placeholder="Поиск по клиенту или товару..."
+            placeholder={t(lang, 'debts_search')}
             className="w-full sm:w-64"
           />
           <Select value={filterCustomer} onValueChange={setFilterCustomer}>
             <SelectTrigger className="w-48">
-              <SelectValue placeholder="Клиент" />
+              <SelectValue placeholder={t(lang, 'cust_name')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Все клиенты</SelectItem>
+              <SelectItem value="all">{t(lang, 'debts_all_customers')}</SelectItem>
               {customers.map(customer => (
                 <SelectItem key={customer.id} value={customer.id}>{customer.name}</SelectItem>
               ))}
@@ -286,12 +289,12 @@ export default function Debts() {
           </Select>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="Статус" />
+              <SelectValue placeholder={t(lang, 'debts_status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Все</SelectItem>
-              <SelectItem value="unpaid">Активные</SelectItem>
-              <SelectItem value="paid">Погашенные</SelectItem>
+              <SelectItem value="all">{t(lang, 'all')}</SelectItem>
+              <SelectItem value="unpaid">{t(lang, 'debts_active')}</SelectItem>
+              <SelectItem value="paid">{t(lang, 'debts_paid_off')}</SelectItem>
             </SelectContent>
           </Select>
           <div className="flex-1">
@@ -299,7 +302,7 @@ export default function Debts() {
               type="text"
               pattern="[0-9.]*"
               inputMode="decimal"
-              placeholder="Фильтр по сумме долга..."
+              placeholder={t(lang, 'debts_filter_amount')}
               value={filterAmount}
               onChange={(e) => {
                 const val = e.target.value.replace(/[^0-9.]/g, '');
@@ -318,15 +321,15 @@ export default function Debts() {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Дата</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Клиент</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Кор.</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Сумма</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Оплачено</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Остаток</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_date')}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'cust_name')}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_product')}</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">{t(lang,'sales_boxes_short')}</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'sales_amount')}</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'cust_paid')}</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'debts_remaining')}</th>
                   <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">WA</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Действие</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">{t(lang,'debts_action')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -347,7 +350,7 @@ export default function Debts() {
                             <span className="text-sm font-bold text-indigo-600">{customer?.name?.charAt(0)?.toUpperCase()}</span>
                           </div>
                           <div>
-                            <p className="font-medium text-slate-900 underline-offset-2 hover:underline">{customer?.name || 'Неизвестный'}</p>
+                            <p className="font-medium text-slate-900 underline-offset-2 hover:underline">{customer?.name || t(lang,'sales_unknown')}</p>
                             <p className="text-xs text-slate-500">{customer?.phone}</p>
                           </div>
                         </button>
@@ -388,10 +391,10 @@ export default function Debts() {
                             <History className="w-4 h-4" />
                           </Button>
                           {isPaid ? (
-                            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium">Оплачено</span>
+                            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium">{t(lang,'debts_paid_off')}</span>
                           ) : (
                             <Button size="sm" onClick={() => handleOpenPayment(sale)} className="bg-indigo-600 hover:bg-indigo-700">
-                              <DollarSign className="w-3 h-3 mr-1" />Оплата
+                              <DollarSign className="w-3 h-3 mr-1" />{t(lang,'debts_pay')}
                             </Button>
                           )}
                         </div>
@@ -405,7 +408,7 @@ export default function Debts() {
           {filteredSales.length === 0 && (
             <div className="text-center py-12 text-slate-500">
               <CreditCard className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-              <p>Нет продаж в долг</p>
+              <p>{t(lang,'debts_not_found')}</p>
             </div>
           )}
         </div>
@@ -425,12 +428,12 @@ export default function Debts() {
                       <span className="text-sm font-bold text-indigo-600">{customer?.name?.charAt(0)?.toUpperCase()}</span>
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900 hover:underline underline-offset-2">{customer?.name || 'Неизвестный'}</p>
+                      <p className="font-semibold text-slate-900 hover:underline underline-offset-2">{customer?.name || t(lang,'sales_unknown')}</p>
                       <p className="text-xs text-slate-500">{customer?.phone}</p>
                     </div>
                   </button>
                   <span className={`text-xs px-2 py-1 rounded-lg font-medium ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
-                    {isPaid ? 'Оплачено' : 'Активный'}
+                    {isPaid ? t(lang,'debts_paid_off') : t(lang,'debts_active')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -441,19 +444,19 @@ export default function Debts() {
                       <Package className="w-4 h-4 text-slate-300" />
                     </div>
                   )}
-                  <span>{product?.brand} {product?.model} · {sale.boxes_sold} кор.</span>
+                  <span>{product?.brand} {product?.model} · {sale.boxes_sold} {t(lang,'sales_boxes_short')}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-center">
                   <div>
-                    <p className="text-xs text-slate-400">Сумма</p>
+                    <p className="text-xs text-slate-400">{t(lang,'sales_amount')}</p>
                     <p className="font-semibold text-slate-900 text-sm">{sale.total_amount?.toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400">Оплачено</p>
+                    <p className="text-xs text-slate-400">{t(lang,'cust_paid')}</p>
                     <p className="font-semibold text-emerald-600 text-sm">{paidAmount.toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400">Остаток</p>
+                    <p className="text-xs text-slate-400">{t(lang,'debts_remaining')}</p>
                     <p className={`font-bold text-sm ${isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>{remaining.toLocaleString()}</p>
                   </div>
                 </div>
@@ -469,7 +472,7 @@ export default function Debts() {
                   </Button>
                   {!isPaid && (
                     <Button size="sm" onClick={() => handleOpenPayment(sale)} className="bg-indigo-600 hover:bg-indigo-700 flex-1">
-                      <DollarSign className="w-3 h-3 mr-1" />Оплата
+                      <DollarSign className="w-3 h-3 mr-1" />{t(lang,'debts_pay')}
                     </Button>
                   )}
                 </div>
@@ -479,7 +482,7 @@ export default function Debts() {
           {filteredSales.length === 0 && (
             <div className="col-span-3 text-center py-12 text-slate-500">
               <CreditCard className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-              <p>Нет продаж в долг</p>
+              <p>{t(lang,'debts_not_found')}</p>
             </div>
           )}
         </div>
@@ -489,7 +492,7 @@ export default function Debts() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Принять оплату</DialogTitle>
+            <DialogTitle>{t(lang,'debts_pay_title')}</DialogTitle>
           </DialogHeader>
 
           {selectedSale && (() => {
@@ -501,16 +504,16 @@ export default function Debts() {
             return (
               <div className="space-y-4 py-4">
                 <div className="p-4 bg-slate-50 rounded-xl space-y-2">
-                  <p className="text-sm text-slate-500">Клиент: <span className="font-medium text-slate-900">{customer?.name}</span></p>
-                  <p className="text-sm text-slate-500">Товар: <span className="font-medium text-slate-900">{product?.brand} {product?.model}</span></p>
-                  <p className="text-sm text-slate-500">Сумма долга: <span className="font-medium text-slate-900">{selectedSale.total_amount?.toLocaleString()} с.</span></p>
-                  <p className="text-sm text-slate-500">Уже оплачено: <span className="font-medium text-emerald-600">{paidAmount.toLocaleString()} с.</span></p>
-                  <p className="text-sm text-slate-500">Остаток: <span className="font-bold text-orange-600">{remaining.toLocaleString()} с.</span></p>
+                  <p className="text-sm text-slate-500">{t(lang,'cust_name')}: <span className="font-medium text-slate-900">{customer?.name}</span></p>
+                  <p className="text-sm text-slate-500">{t(lang,'sales_product')}: <span className="font-medium text-slate-900">{product?.brand} {product?.model}</span></p>
+                  <p className="text-sm text-slate-500">{t(lang,'debts_total')}: <span className="font-medium text-slate-900">{selectedSale.total_amount?.toLocaleString()} с.</span></p>
+                  <p className="text-sm text-slate-500">{t(lang,'cust_paid')}: <span className="font-medium text-emerald-600">{paidAmount.toLocaleString()} с.</span></p>
+                  <p className="text-sm text-slate-500">{t(lang,'debts_remaining')}: <span className="font-bold text-orange-600">{remaining.toLocaleString()} с.</span></p>
                 </div>
 
                 <div>
-                  <Label>Сумма оплаты *</Label>
-                  <Input 
+                   <Label>{t(lang,'debts_pay_amount')} *</Label>
+                   <Input 
                     type="text"
                     pattern="[0-9.]*"
                     inputMode="decimal"
@@ -519,7 +522,7 @@ export default function Debts() {
                       const val = e.target.value.replace(/[^0-9.]/g, '');
                       setPaymentAmount(val);
                     }}
-                    placeholder="Введите сумму"
+                    placeholder={t(lang,'debts_pay_amount')}
                     className="mt-1.5"
                   />
                 </div>
@@ -529,14 +532,14 @@ export default function Debts() {
 
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Отмена
+              {t(lang,'cancel')}
             </Button>
             <Button 
               onClick={handlePayment} 
               disabled={saving || !paymentAmount || parseFloat(paymentAmount) <= 0}
               className="bg-emerald-600 hover:bg-emerald-700"
             >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Принять оплату'}
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t(lang,'debts_pay_btn')}
             </Button>
           </div>
         </DialogContent>
@@ -546,7 +549,7 @@ export default function Debts() {
       <Dialog open={customerDetailOpen} onOpenChange={setCustomerDetailOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Информация о клиенте</DialogTitle>
+            <DialogTitle>{t(lang,'debts_customer_info')}</DialogTitle>
           </DialogHeader>
           {selectedCustomerDetail && (() => {
             const c = selectedCustomerDetail;
@@ -588,11 +591,11 @@ export default function Debts() {
                 {/* Debt Summary */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-orange-50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-orange-500 mb-1">Текущий долг</p>
+                    <p className="text-xs text-orange-500 mb-1">{t(lang,'cust_debt')}</p>
                     <p className="text-lg font-bold text-orange-600">{(c.total_debt || 0).toLocaleString()} с.</p>
                   </div>
                   <div className="bg-emerald-50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-emerald-500 mb-1">Всего оплачено</p>
+                    <p className="text-xs text-emerald-500 mb-1">{t(lang,'cust_total_paid')}</p>
                     <p className="text-lg font-bold text-emerald-600">{(c.total_paid || 0).toLocaleString()} с.</p>
                   </div>
                 </div>
@@ -623,7 +626,7 @@ export default function Debts() {
                   onClick={() => setCustomerDetailOpen(false)}
                   className="flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-colors"
                 >
-                  <ExternalLink className="w-4 h-4" /> Изменить данные клиента
+                  <ExternalLink className="w-4 h-4" /> {t(lang,'debts_edit_customer')}
                 </Link>
               </div>
             );
@@ -635,7 +638,7 @@ export default function Debts() {
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>История платежей - {selectedCustomerHistory?.customerName}</DialogTitle>
+            <DialogTitle>{t(lang,'debts_history')} - {selectedCustomerHistory?.customerName}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3 py-4 max-h-96 overflow-y-auto">
@@ -649,7 +652,7 @@ export default function Debts() {
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-slate-900">
-                      Оплачено: {payment.amount?.toLocaleString()} сомони
+                      {t(lang,'debts_paid_label')}: {payment.amount?.toLocaleString()} {t(lang,'dash_somoni')}
                     </p>
                     <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
                       <span className="flex items-center gap-1">
@@ -664,7 +667,7 @@ export default function Debts() {
                 </div>
               ))}
             {selectedCustomerHistory && payments.filter(p => p.customer_id === selectedCustomerHistory.customerId).length === 0 && (
-              <p className="text-center text-slate-500 py-8">История платежей пуста</p>
+              <p className="text-center text-slate-500 py-8">{t(lang,'debts_no_payments')}</p>
             )}
           </div>
         </DialogContent>
