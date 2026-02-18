@@ -133,18 +133,25 @@ export default function Products() {
 
   const handleSave = async () => {
     setSaving(true);
-    try {
-      const data = {
-        ...formData,
-        business_id: business.id,
-        purchase_price: parseFloat(formData.purchase_price) || 0,
-        sale_price: parseFloat(formData.sale_price) || 0,
-        boxes_in_stock: parseInt(formData.boxes_in_stock) || 0,
-        size_from: parseInt(formData.size_from) || 39,
-        size_to: parseInt(formData.size_to) || 44,
-        pairs_per_box: parseInt(formData.pairs_per_box) || 6
-      };
+    const data = {
+      ...formData,
+      business_id: business.id,
+      purchase_price: parseFloat(formData.purchase_price) || 0,
+      sale_price: parseFloat(formData.sale_price) || 0,
+      boxes_in_stock: parseInt(formData.boxes_in_stock) || 0,
+      size_from: parseInt(formData.size_from) || 39,
+      size_to: parseInt(formData.size_to) || 44,
+      pairs_per_box: parseInt(formData.pairs_per_box) || 6
+    };
 
+    // Optimistic UI update
+    const optimisticProduct = { ...data, id: editingProduct?.id || 'temp_' + Date.now() };
+    setProducts(prev => editingProduct 
+      ? prev.map(p => p.id === editingProduct.id ? optimisticProduct : p)
+      : [optimisticProduct, ...prev]
+    );
+
+    try {
       if (editingProduct) {
         await base44.entities.Product.update(editingProduct.id, data);
       } else {
@@ -155,6 +162,7 @@ export default function Products() {
       setDialogOpen(false);
     } catch (error) {
       console.error('Error saving product:', error);
+      await loadData();
     } finally {
       setSaving(false);
     }
