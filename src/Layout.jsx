@@ -217,15 +217,15 @@ export default function Layout({ children, currentPageName }) {
                     to={createPageUrl(item.name)}
                     onClick={() => setSidebarOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                      isActive 
-                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    )}
-                  >
-                    <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-400")} />
-                    <span className="font-medium">{item.label}</span>
-                  </Link>
+                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                            isActive 
+                              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
+                              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                          )}
+                        >
+                          <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-400")} />
+                          <span className="font-medium">{t(lang, item.labelKey)}</span>
+                        </Link>
                 );
               })}
             </div>
