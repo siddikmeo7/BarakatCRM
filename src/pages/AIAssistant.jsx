@@ -399,7 +399,7 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
         {/* Chat Top Bar */}
         <div className="h-16 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 gap-3 flex-shrink-0 bg-white dark:bg-slate-900">
           <button
-            onClick={() => setSidebarOpen(true)}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
             title={t(lang, 'ai_new_chat')}
           >
