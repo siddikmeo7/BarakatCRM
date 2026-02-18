@@ -426,6 +426,15 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
                 </p>
               )}
             </div>
+          ) : messages.length === 1 && !sending ? (
+            // После первого вопроса пока ждем ответ - показываем примеры
+            <div className="h-full flex flex-col items-center justify-center text-center px-6 py-12">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
+                <Sparkles className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t(lang, 'ai_thinking')}</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">{t(lang, 'ai_greeting_sub')}</p>
+            </div>
           ) : (
             <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
               {messages.map((msg, i) => (
