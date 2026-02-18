@@ -155,13 +155,18 @@ export default function Debts() {
     }
   };
 
-  const openWhatsApp = async (customer, remainingDebt, type = 'reminder') => {
+  const openWhatsApp = async (customer, remainingDebt, type = 'reminder', sale = null) => {
     if (!customer?.phone) return alert(t(lang, 'debts_no_phone'));
     setSendingMsg(customer.id);
     try {
+      const product = sale ? products.find(p => p.id === sale.product_id) : null;
+      const paidAmount = sale ? getSalePaidAmount(sale.id) : 0;
       const res = await base44.functions.invoke('sendWhatsAppDebtMessage', {
         phone: customer.phone,
         customer_name: customer.name,
+        product_name: product ? `${product.brand} ${product.model}` : undefined,
+        total_debt: sale ? sale.total_amount : customer.total_debt,
+        paid_amount: paidAmount,
         remaining_debt: remainingDebt,
         business_name: business?.name,
         type
