@@ -336,13 +336,13 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
 
       {/* SIDEBAR - Hidden by default, toggle with small button */}
       <div className={`
-        fixed z-50
-        h-screen w-72 bg-white dark:bg-slate-900 flex flex-col
+        fixed z-50 left-0 top-0
+        h-screen w-80 bg-white dark:bg-slate-900 flex flex-col
         transition-transform duration-300 overflow-hidden border-r border-slate-200 dark:border-slate-800
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-72'}
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        {/* Sidebar Header + New Chat Button */}
-        <div className="p-2 border-b border-slate-200 dark:border-slate-800 flex items-center gap-1">
+        {/* Sidebar Header */}
+        <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <Button
             onClick={createNewChat}
             className="flex-1 bg-indigo-600 hover:bg-indigo-700 gap-1 justify-center rounded-lg text-xs py-1 h-8"
@@ -352,14 +352,14 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
           </Button>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+            className="ml-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto py-1 px-1 space-y-0.5">
+        <div className="flex-1 overflow-y-auto py-2 px-2 space-y-1">
           {chats.length === 0 && (
             <p className="text-slate-500 dark:text-slate-400 text-xs text-center py-8">{t(lang, 'ai_create_chat')}</p>
           )}
@@ -367,21 +367,21 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
             <div
               key={chat.id}
               onClick={() => selectChat(chat)}
-              className={`group flex items-center gap-1 px-2 py-1 rounded cursor-pointer transition-colors text-xs ${
+              className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors text-sm ${
                 activeChat?.id === chat.id
                   ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-100'
                   : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
-              <MessageSquare className={`w-3 h-3 flex-shrink-0 ${activeChat?.id === chat.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
+              <MessageSquare className={`w-4 h-4 flex-shrink-0 ${activeChat?.id === chat.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
               <span className="flex-1 truncate">
                 {chat.title || t(lang, 'ai_new_chat')}
               </span>
               <button
                 onClick={(e) => deleteChat(e, chat.id)}
-                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-red-500/20 rounded transition-opacity flex-shrink-0"
+                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-opacity flex-shrink-0"
               >
-                <Trash2 className="w-3 h-3 text-red-500" />
+                <Trash2 className="w-4 h-4 text-red-500" />
               </button>
             </div>
           ))}
