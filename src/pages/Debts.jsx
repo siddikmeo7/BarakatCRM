@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ViewToggle from '@/components/ui/ViewToggle';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { 
   CreditCard, 
   DollarSign,
@@ -19,7 +21,12 @@ import {
   History,
   Clock,
   MessageCircle,
-  Send
+  Send,
+  Phone,
+  MapPin,
+  Mail,
+  ExternalLink,
+  X
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
