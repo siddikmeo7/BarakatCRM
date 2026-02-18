@@ -86,7 +86,7 @@ export default function Layout({ children, currentPageName }) {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
-      
+
       if (currentUser.email !== ADMIN_EMAIL) {
             const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
               if (businesses.length > 0) {
@@ -110,6 +110,8 @@ export default function Layout({ children, currentPageName }) {
               setBusiness(newBiz);
             }
           }
+      // Редирект на Dashboard при входе
+      navigate(createPageUrl('Dashboard'));
     } catch (error) {
       console.error('Error loading user:', error);
     } finally {
