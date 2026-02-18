@@ -25,23 +25,26 @@ import { cn } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
-const menuItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, label: 'Главная' },
-  { name: 'Analytics', icon: TrendingUp, label: 'Аналитика' },
-  { name: 'Products', icon: Package, label: 'Товары' },
-  { name: 'Warehouses', icon: Warehouse, label: 'Склады' },
-  { name: 'Sales', icon: ShoppingCart, label: 'Продажи' },
-  { name: 'Returns', icon: RotateCcw, label: 'Возвраты' },
-  { name: 'Customers', icon: Users, label: 'Клиенты' },
-  { name: 'Debts', icon: CreditCard, label: 'Долги' },
-  { name: 'AIAssistant', icon: Bot, label: 'AI Ассистент' },
-  { name: 'Settings', icon: Settings, label: 'Настройки' },
+const getMenuItems = (lang) => [
+  { name: 'Dashboard', icon: LayoutDashboard, labelKey: 'nav_dashboard' },
+  { name: 'Analytics', icon: TrendingUp, labelKey: 'nav_analytics' },
+  { name: 'Products', icon: Package, labelKey: 'nav_products' },
+  { name: 'Warehouses', icon: Warehouse, labelKey: 'nav_warehouses' },
+  { name: 'Sales', icon: ShoppingCart, labelKey: 'nav_sales' },
+  { name: 'Returns', icon: RotateCcw, labelKey: 'nav_returns' },
+  { name: 'Customers', icon: Users, labelKey: 'nav_customers' },
+  { name: 'Debts', icon: CreditCard, labelKey: 'nav_debts' },
+  { name: 'AIAssistant', icon: Bot, labelKey: 'nav_ai' },
+  { name: 'Settings', icon: Settings, labelKey: 'nav_settings' },
 ];
 
-const adminMenuItems = [
-  { name: 'AdminDashboard', icon: LayoutDashboard, label: 'Панель админа' },
-  { name: 'AdminBusinesses', icon: Building2, label: 'Бизнесы' },
+const getAdminMenuItems = (lang) => [
+  { name: 'AdminDashboard', icon: LayoutDashboard, labelKey: 'nav_admin' },
+  { name: 'AdminBusinesses', icon: Building2, labelKey: 'nav_businesses' },
 ];
+
+const LANG_FLAGS = { ru: '🇷🇺', tj: '🇹🇯', en: '🇬🇧' };
+const LANG_LABELS = { ru: 'RU', tj: 'TJ', en: 'EN' };
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
