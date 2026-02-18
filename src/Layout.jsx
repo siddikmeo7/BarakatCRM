@@ -163,23 +163,7 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Business name removed — shown in Settings */}
 
-          {/* Admin Toggle */}
-          {/* Language Switcher */}
-          <div className="px-4 py-2 border-b border-slate-100 flex gap-1 justify-center">
-            {['ru', 'tj', 'en'].map(l => (
-              <button
-                key={l}
-                onClick={() => changeLang(l)}
-                className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all",
-                  lang === l ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                )}
-              >
-                <span>{LANG_FLAGS[l]}</span>
-                <span>{LANG_LABELS[l]}</span>
-              </button>
-            ))}
-          </div>
+          {/* Language indicator removed - change language in Settings */}
 
           {isAdmin && (
             <div className="px-4 py-3 border-b border-slate-100">
