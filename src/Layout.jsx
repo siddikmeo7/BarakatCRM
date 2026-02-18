@@ -174,23 +174,20 @@ export default function Layout({ children, currentPageName }) {
       <aside className={cn(
         "hidden lg:flex relative flex-col h-screen w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800"
       )}>
-        <div className="h-16 lg:h-16 flex items-center justify-between px-2 lg:px-6 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2 lg:gap-3 flex-1 lg:flex-initial">
-            <div className="w-8 lg:w-10 h-8 lg:h-10 rounded-lg lg:rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
-              <Package className="w-4 lg:w-6 h-4 lg:h-6 text-white" />
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
+              <Package className="w-6 h-6 text-white" />
             </div>
-            <div className="hidden lg:block">
-              <span className="font-bold text-slate-900 dark:text-white text-lg">BarakatCRM</span>
+            <div>
+              <span className="font-bold text-slate-900 dark:text-white text-base">BarakatCRM</span>
               <p className="text-xs text-slate-500 dark:text-slate-400">{t(lang, 'app_subtitle')}</p>
             </div>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-            <X className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-          </button>
         </div>
 
         {isAdmin && (
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
             <div className="flex gap-2">
               <Link to={createPageUrl('Dashboard')} className="flex-1">
                 <Button 
@@ -214,8 +211,8 @@ export default function Layout({ children, currentPageName }) {
           </div>
         )}
 
-        <nav className="flex-1 overflow-y-auto py-2 px-1.5 lg:py-4 lg:px-3">
-          <div className="space-y-0.5 lg:space-y-1">
+        <nav className="flex-1 overflow-y-auto py-4 px-3">
+          <div className="space-y-1">
             {currentMenu.map((item) => {
               const isActive = currentPageName === item.name;
               return (
@@ -223,28 +220,31 @@ export default function Layout({ children, currentPageName }) {
                   key={item.name}
                   to={createPageUrl(item.name)}
                   className={cn(
-                    "flex items-center gap-2 lg:gap-3 px-2 lg:px-4 py-1.5 lg:py-3 text-xs lg:text-sm rounded-lg transition-all duration-200 user-select-none",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 user-select-none group",
                     isActive 
-                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
-                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30" 
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   )}
                 >
-                  <item.icon className={cn("w-3.5 h-3.5 lg:w-5 lg:h-5 flex-shrink-0", isActive ? "text-white" : "text-slate-400 dark:text-slate-500")} />
-                  <span className="font-medium truncate hidden lg:block">{t(lang, item.labelKey)}</span>
+                  <item.icon className={cn("w-5 h-5 flex-shrink-0 transition-colors", isActive ? "text-white" : "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200")} />
+                  <span className="font-medium text-sm">{t(lang, item.labelKey)}</span>
                 </Link>
               );
             })}
           </div>
         </nav>
 
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center flex-shrink-0">
-              <span className="text-indigo-600 dark:text-indigo-400 font-semibold text-sm">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center flex-shrink-0">
+              <span className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
                 {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
               </span>
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{user?.full_name || user?.email}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{user?.full_name || 'User'}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
+            </div>
           </div>
         </div>
       </aside>
