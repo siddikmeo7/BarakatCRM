@@ -399,9 +399,12 @@ export default function Settings() {
               </div>
               <div>
                 <Label>{t(lang, 'settings_language')}</Label>
-                <Select value={formData.language} onValueChange={(v) => {
+                <Select value={formData.language} onValueChange={async (v) => {
                   setFormData({ ...formData, language: v });
                   setLang(v);
+                  if (business) {
+                    await base44.entities.Business.update(business.id, { language: v });
+                  }
                 }}>
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
