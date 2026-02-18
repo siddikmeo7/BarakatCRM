@@ -13,8 +13,6 @@ import {
   Settings,
   Menu,
   X,
-  LogOut,
-  ChevronDown,
   Building2,
   RotateCcw,
   TrendingUp,
@@ -69,12 +67,6 @@ export default function Layout({ children, currentPageName }) {
       console.error('Error loading user:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    if (confirm('Вы уверены, что хотите выйти?')) {
-      base44.auth.logout();
     }
   };
 
@@ -211,27 +203,15 @@ export default function Layout({ children, currentPageName }) {
             </div>
           </nav>
 
-          {/* User Info & Logout */}
+          {/* Bottom spacer */}
           <div className="p-4 border-t border-slate-100">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
-                  <span className="text-indigo-600 font-semibold">
-                    {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 truncate text-sm">{user?.full_name || 'Пользователь'}</p>
-                  <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-indigo-600 font-semibold text-sm">
+                  {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
+                </span>
               </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
-                title="Выйти"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+              <p className="text-sm text-slate-500 truncate">{user?.full_name || user?.email}</p>
             </div>
           </div>
         </div>
