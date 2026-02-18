@@ -192,6 +192,80 @@ export default function Settings() {
     }
   };
 
+  const handleBackup = async () => {
+    setBackupLoading(true);
+    try {
+      const [salesData, productsData, customersData, warehousesData, returnsData, employeesData] = await Promise.all([
+        base44.entities.Sale.filter({ business_id: business.id }),
+        base44.entities.Product.filter({ business_id: business.id }),
+        base44.entities.Customer.filter({ business_id: business.id }),
+        base44.entities.Warehouse.filter({ business_id: business.id }),
+        base44.entities.Return.filter({ business_id: business.id }),
+        base44.entities.Employee.filter({ business_id: business.id }),
+      ]);
+      const backup = {
+        exported_at: new Date().toISOString(),
+        business,
+        sales: salesData,
+        products: productsData,
+        customers: customersData,
+        warehouses: warehousesData,
+        returns: returnsData,
+        employees: employeesData,
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup_${business.name}_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      a.remove();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleClearCache = () => {
+    if (confirm('Очистить кэш приложения? Страница перезагрузится.')) {
+      setClearingCache(true);
+      localStorage.clear();
+      sessionStorage.clear();
+      setTimeout(() => window.location.reload(), 500);
+    }
+  };
+
+  const handleDeleteAllData = async () => {
+    if (!confirm('⚠️ Вы уверены? Все данные бизнеса будут удалены навсегда!')) return;
+    if (!confirm('Последнее предупреждение! Удалить ВСЕ данные?')) return;
+    try {
+      const [salesData, productsData, customersData, warehousesData, returnsData, employeesData] = await Promise.all([
+        base44.entities.Sale.filter({ business_id: business.id }),
+        base44.entities.Product.filter({ business_id: business.id }),
+        base44.entities.Customer.filter({ business_id: business.id }),
+        base44.entities.Warehouse.filter({ business_id: business.id }),
+        base44.entities.Return.filter({ business_id: business.id }),
+        base44.entities.Employee.filter({ business_id: business.id }),
+      ]);
+      await Promise.all([
+        ...salesData.map(r => base44.entities.Sale.delete(r.id)),
+        ...productsData.map(r => base44.entities.Product.delete(r.id)),
+        ...customersData.map(r => base44.entities.Customer.delete(r.id)),
+        ...warehousesData.map(r => base44.entities.Warehouse.delete(r.id)),
+        ...returnsData.map(r => base44.entities.Return.delete(r.id)),
+        ...employeesData.map(r => base44.entities.Employee.delete(r.id)),
+      ]);
+      alert('Все данные удалены.');
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      alert('Ошибка при удалении данных.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
