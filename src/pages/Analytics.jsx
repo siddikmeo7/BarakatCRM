@@ -36,6 +36,7 @@ export default function Analytics() {
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
   const [currency, setCurrency] = useState('TJS');
