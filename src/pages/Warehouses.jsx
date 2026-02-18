@@ -230,12 +230,16 @@ export default function Warehouses() {
                   </div>
 
                   <h3 className="text-lg font-semibold text-slate-900 mb-1">{warehouse.name}</h3>
-                  {warehouse.address && (
-                    <p className="text-sm text-slate-500 flex items-center gap-1 mb-4">
-                      <MapPin className="w-4 h-4" />
-                      {warehouse.address}
-                    </p>
-                  )}
+                   {warehouse.address && (
+                     <p className="text-sm text-slate-500 flex items-center gap-1 mb-2">
+                       <MapPin className="w-4 h-4" />
+                       {warehouse.address}
+                     </p>
+                   )}
+                   <p className="text-xs text-slate-400 flex items-center gap-1 mb-4">
+                     <Calendar className="w-3 h-3" />
+                     {warehouse.created_date ? format(parseISO(warehouse.created_date), 'dd MMM yyyy') : ''}
+                   </p>
 
                   <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
                     <div>
