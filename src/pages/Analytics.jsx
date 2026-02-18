@@ -12,7 +12,6 @@ import {
   DollarSign,
   Package,
   Percent,
-  Clock,
   Settings2,
   RefreshCw,
   Eye,
@@ -40,8 +39,7 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
   const [currency, setCurrency] = useState('TJS');
-  const [showTime, setShowTime] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
+
   const [chartType, setChartType] = useState('line');
   const [exchangeRates, setExchangeRates] = useState(DEFAULT_RATES);
   const [ratesLoading, setRatesLoading] = useState(false);
@@ -53,10 +51,7 @@ export default function Analytics() {
   });
   const [topProductsSort, setTopProductsSort] = useState('revenue'); // revenue, profit, boxes
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+
 
   useEffect(() => {
     loadData();
