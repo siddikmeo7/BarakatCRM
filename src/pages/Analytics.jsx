@@ -409,6 +409,15 @@ export default function Analytics() {
           })()}
         </div>
       </div>
+
+      {/* Advanced Analytics Section */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-slate-900">Расширенная аналитика</h2>
+        
+        <SalesForecast sales={filteredSales} days={30} />
+        <CustomerSegmentation customers={customers} sales={filteredSales} />
+        <ReportBuilder sales={filteredSales} customers={customers} products={products} business={business} lang={lang} />
+      </div>
     </div>
   );
 }
