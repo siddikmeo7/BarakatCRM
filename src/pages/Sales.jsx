@@ -110,36 +110,40 @@ export default function Sales() {
     if (!formData.product_id || formData.boxes_sold < 1) return;
     
     setSaving(true);
+    const partialPay = formData.is_debt ? parseFloat(formData.partial_payment) || 0 : 0;
+    const remainingDebt = totalAmount - partialPay;
+    
+    const saleData = {
+      business_id: business.id,
+      product_id: formData.product_id,
+      warehouse_id: selectedProduct?.warehouse_id || '',
+      boxes_sold: parseInt(formData.boxes_sold),
+      pairs_sold: pairsSold,
+      items_sold: itemsSold,
+      sale_price: actualSalePrice,
+      purchase_price: selectedProduct?.purchase_price || 0,
+      total_amount: totalAmount,
+      profit: profit,
+      sale_date: new Date().toISOString(),
+      is_debt: formData.is_debt,
+      customer_id: formData.is_debt ? formData.customer_id : '',
+      customer_name: formData.customer_name || 'Неизвестный',
+      customer_address: formData.customer_address || '',
+      partial_payment: partialPay
+    };
+
+    // Optimistic UI update
+    const optimisticSale = { ...saleData, id: 'temp_' + Date.now() };
+    setSales(prev => [optimisticSale, ...prev]);
+
     try {
-      const partialPay = formData.is_debt ? parseFloat(formData.partial_payment) || 0 : 0;
-      const remainingDebt = totalAmount - partialPay;
-      
-      const saleData = {
-        business_id: business.id,
-        product_id: formData.product_id,
-        warehouse_id: selectedProduct?.warehouse_id || '',
-        boxes_sold: parseInt(formData.boxes_sold),
-        pairs_sold: pairsSold,
-        items_sold: itemsSold,
-        sale_price: actualSalePrice,
-        purchase_price: selectedProduct?.purchase_price || 0,
-        total_amount: totalAmount,
-        profit: profit,
-        sale_date: new Date().toISOString(),
-        is_debt: formData.is_debt,
-        customer_id: formData.is_debt ? formData.customer_id : '',
-        customer_name: formData.customer_name || 'Неизвестный',
-        customer_address: formData.customer_address || '',
-        partial_payment: partialPay
-      };
+      const createdSale = await base44.entities.Sale.create(saleData);
 
-      await base44.entities.Sale.create(saleData);
-
-      // Обновляем остаток товара
+      // Update product stock
       const newStock = Math.max(0, (selectedProduct.boxes_in_stock || 0) - parseInt(formData.boxes_sold));
       await base44.entities.Product.update(formData.product_id, { boxes_in_stock: newStock });
 
-      // Если продажа в долг, обновляем долг клиента
+      // Update customer debt
       if (formData.is_debt && formData.customer_id) {
         const customer = customers.find(c => c.id === formData.customer_id);
         if (customer) {
@@ -147,7 +151,7 @@ export default function Sales() {
             total_debt: (customer.total_debt || 0) + remainingDebt,
             total_paid: (customer.total_paid || 0) + partialPay
           });
-          // Отправить сообщение в WhatsApp автоматически
+          
           if (remainingDebt > 0 && customer.phone) {
             const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
               phone: customer.phone,
@@ -170,6 +174,7 @@ export default function Sales() {
       setProductSearch('');
     } catch (error) {
       console.error('Error saving sale:', error);
+      setSales(prev => prev.filter(s => !s.id.startsWith('temp_')));
     } finally {
       setSaving(false);
     }
