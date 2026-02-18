@@ -142,6 +142,7 @@ export default function Customers() {
   }
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="space-y-6">
       <PageHeader 
         title="Клиенты"
