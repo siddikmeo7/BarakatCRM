@@ -152,9 +152,9 @@ export default function Layout({ children, currentPageName }) {
                 <Package className="w-6 h-6 text-white" />
               </div>
               <div>
-                <span className="font-bold text-slate-900 text-lg">BarakatCRM</span>
-                <p className="text-xs text-slate-500">Управление бизнесом</p>
-              </div>
+                  <span className="font-bold text-slate-900 text-lg">BarakatCRM</span>
+                  <p className="text-xs text-slate-500">{t(lang, 'app_subtitle')}</p>
+                </div>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2">
               <X className="w-5 h-5 text-slate-500" />
