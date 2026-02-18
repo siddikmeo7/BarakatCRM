@@ -43,6 +43,7 @@ export default function AIAssistant() {
       if (businesses.length > 0) {
         const biz = businesses[0];
         setBusiness(biz);
+        setLang(biz.language || 'ru');
         
         // Загружаем все данные для AI
         const [products, sales, customers, warehouses, chatsData] = await Promise.all([
