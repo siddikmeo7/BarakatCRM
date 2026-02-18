@@ -203,10 +203,10 @@ export default function Dashboard() {
                     <p className="text-sm font-medium text-slate-600">Наличные</p>
                   </div>
                   <p className="text-3xl font-bold text-emerald-600">
-                    {totalSalesValue ? ((cashAmount / totalSalesValue) * 100).toFixed(1) : 0}%
+                    {hideData ? masked : `${totalSalesValue ? ((cashAmount / totalSalesValue) * 100).toFixed(1) : 0}%`}
                   </p>
                   <p className="text-sm text-slate-500 mt-1">{cashSales.length} продаж</p>
-                  <p className="text-lg font-semibold text-slate-900 mt-2">{cashAmount.toLocaleString()} с.</p>
+                  <p className="text-lg font-semibold text-slate-900 mt-2">{hideData ? masked : `${cashAmount.toLocaleString()} с.`}</p>
                 </div>
                 <div className="text-center p-4 bg-amber-50 rounded-xl">
                   <div className="flex items-center justify-center gap-2 mb-2">
