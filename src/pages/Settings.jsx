@@ -107,6 +107,7 @@ export default function Settings() {
       if (businesses.length > 0) {
         const biz = businesses[0];
         setBusiness(biz);
+        setLang(biz.language || 'ru');
         setFormData({
           name: biz.name || '',
           phone: biz.phone || '',
