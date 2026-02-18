@@ -198,6 +198,12 @@ export default function Debts() {
       <PageHeader 
         title="Долги"
         subtitle="Управление долгами клиентов"
+        actions={
+          <Button onClick={sendToAllDebtors} variant="outline" className="gap-2 text-green-700 border-green-300 hover:bg-green-50">
+            <MessageCircle className="w-4 h-4" />
+            Отправить всем должникам
+          </Button>
+        }
       />
 
       {/* Stats */}
