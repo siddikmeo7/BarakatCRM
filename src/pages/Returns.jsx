@@ -325,7 +325,7 @@ export default function Returns() {
 
             <div>
               <Label>Товар *</Label>
-              <Select value={formData.product_id} onValueChange={(v) => setFormData({ ...formData, product_id: v, sale_id: '', boxes_returned: 1 }); setReturnWarning('')}>
+              <Select value={formData.product_id} onValueChange={(v) => { setFormData({ ...formData, product_id: v, sale_id: '', boxes_returned: 1 }); setReturnWarning(''); }}>
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Выберите товар" />
                 </SelectTrigger>
