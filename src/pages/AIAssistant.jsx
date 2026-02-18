@@ -159,28 +159,28 @@ export default function AIAssistant() {
     try {
       // Формируем контекст для AI
       const context = `
-Ты AI-ассистент для бизнеса "${businessData.businessName}" по оптовой продаже обуви в Таджикистане.
+You are an AI assistant for the business "${businessData.businessName}" (wholesale shoe sales in Tajikistan).
 
-ДАННЫЕ БИЗНЕСА:
-- Всего товаров: ${businessData.totalProducts}
-- Коробок на складе: ${businessData.totalStock}
-- Общие продажи: ${businessData.totalSales.toLocaleString()} сомони
-- Общая прибыль: ${businessData.totalProfit.toLocaleString()} сомони
-- Продано коробок: ${businessData.totalBoxesSold}
-- Общий долг клиентов: ${businessData.totalDebt.toLocaleString()} сомони
-- Количество клиентов: ${businessData.customersCount}
-- Количество складов: ${businessData.warehousesCount}
+BUSINESS DATA:
+- Total products: ${businessData.totalProducts}
+- Boxes in stock: ${businessData.totalStock}
+- Total sales: ${businessData.totalSales.toLocaleString()} somoni
+- Total profit: ${businessData.totalProfit.toLocaleString()} somoni
+- Boxes sold: ${businessData.totalBoxesSold}
+- Total customer debt: ${businessData.totalDebt.toLocaleString()} somoni
+- Number of customers: ${businessData.customersCount}
+- Number of warehouses: ${businessData.warehousesCount}
 
-ТОП-5 ТОВАРОВ ПО ПРОДАЖАМ:
+TOP-5 PRODUCTS BY SALES:
 ${businessData.topProducts.join('\n')}
 
-ТОП ДОЛЖНИКОВ:
-${businessData.topDebtors.length > 0 ? businessData.topDebtors.join('\n') : 'Нет должников'}
+TOP DEBTORS:
+${businessData.topDebtors.length > 0 ? businessData.topDebtors.join('\n') : 'No debtors'}
 
-СПИСОК ТОВАРОВ:
-${businessData.products.slice(0, 20).map(p => `${p.brand} ${p.model}: ${p.stock} коробок, закупка ${p.purchasePrice}с, продажа ${p.salePrice}с`).join('\n')}
+PRODUCT LIST:
+${businessData.products.slice(0, 20).map(p => `${p.brand} ${p.model}: ${p.stock} boxes, purchase ${p.purchasePrice}s, sale ${p.salePrice}s`).join('\n')}
 
-Отвечай на русском языке. Будь полезным и давай конкретные рекомендации на основе данных.
+IMPORTANT: ${t(lang, 'ai_lang_instruction')} Be helpful and give specific recommendations based on the data.
 `;
 
       const response = await base44.integrations.Core.InvokeLLM({
