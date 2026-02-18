@@ -241,6 +241,7 @@ export default function Debts() {
       {/* Filters */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
         <div className="flex flex-wrap items-center gap-4">
+          <ViewToggle view={view} onChange={setView} />
           <SearchInput 
             value={search} 
             onChange={setSearch} 
