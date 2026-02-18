@@ -37,6 +37,7 @@ export default function Products() {
   const [filterType, setFilterType] = useState('all');
   const [filterWarehouse, setFilterWarehouse] = useState('all');
   const [view, setView] = useState('grid');
+  const [sortBy, setSortBy] = useState('name'); // name, stock, price, value
   
   const [formData, setFormData] = useState({
     brand: '',
@@ -200,13 +201,30 @@ export default function Products() {
   const allColors = [...BASE_COLORS, ...(business?.custom_colors || [])];
 
   // Фильтрация
-  const filteredProducts = products.filter(product => {
+  let filteredProducts = products.filter(product => {
     const matchesSearch = 
       product.brand?.toLowerCase().includes(search.toLowerCase()) ||
       product.model?.toLowerCase().includes(search.toLowerCase());
     const matchesType = filterType === 'all' || product.product_type === filterType;
     const matchesWarehouse = filterWarehouse === 'all' || product.warehouse_id === filterWarehouse;
     return matchesSearch && matchesType && matchesWarehouse;
+  });
+
+  // Сортировка
+  filteredProducts = [...filteredProducts].sort((a, b) => {
+    switch(sortBy) {
+      case 'stock':
+        return (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0);
+      case 'price':
+        return (b.sale_price || 0) - (a.sale_price || 0);
+      case 'value':
+        const valA = (a.boxes_in_stock || 0) * (a.sale_price || 0);
+        const valB = (b.boxes_in_stock || 0) * (b.sale_price || 0);
+        return valB - valA;
+      case 'name':
+      default:
+        return (a.brand + a.model).localeCompare(b.brand + b.model);
+    }
   });
 
   // Расчёт общей стоимости
@@ -264,6 +282,17 @@ export default function Products() {
               {warehouses.map(wh => (
                 <SelectItem key={wh.id} value={wh.id}>{wh.name}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Сортировка" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">По названию</SelectItem>
+              <SelectItem value="stock">По складу</SelectItem>
+              <SelectItem value="price">По цене</SelectItem>
+              <SelectItem value="value">По стоимости</SelectItem>
             </SelectContent>
           </Select>
           <ViewToggle view={view} onChange={setView} />
