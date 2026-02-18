@@ -896,12 +896,12 @@ export default function Settings() {
           ) : saved ? (
             <>
               <CheckCircle className="w-4 h-4" />
-              Сохранено
+              {t(lang, 'settings_saved')}
             </>
           ) : (
             <>
               <Save className="w-4 h-4" />
-              Сохранить изменения
+              {t(lang, 'settings_save')}
             </>
           )}
         </Button>
