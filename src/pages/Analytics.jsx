@@ -393,9 +393,9 @@ export default function Analytics() {
                       <p className="text-sm text-slate-500">{stats.boxes} коробок продано</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-slate-900">{stats.revenue.toLocaleString()} с.</p>
-                      <p className="text-sm text-emerald-600">+{stats.profit.toLocaleString()} с.</p>
-                    </div>
+                       <p className="font-semibold text-slate-900">{hideData ? masked : stats.revenue.toLocaleString()} с.</p>
+                       <p className="text-sm text-emerald-600">+{hideData ? masked : stats.profit.toLocaleString()} с.</p>
+                     </div>
                   </div>
                 );
               })
