@@ -386,15 +386,13 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
 
         {/* Sidebar footer */}
         <div className="p-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
-          <Button
-            onClick={() => setHistoryModalOpen(true)}
-            variant="outline"
-            size="sm"
-            className="w-full justify-start gap-2 text-xs"
+          <button
+            onClick={() => setShowChatHistory(!showChatHistory)}
+            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors flex items-center justify-center"
+            title="История чатов"
           >
-            <History className="w-3.5 h-3.5" />
-            История чатов
-          </Button>
+            <History className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+          </button>
           <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs">
             <History className="w-3.5 h-3.5" />
             <span>{dataStats?.logsCount || 0} {lang === 'ru' ? 'действий' : 'actions'}</span>
