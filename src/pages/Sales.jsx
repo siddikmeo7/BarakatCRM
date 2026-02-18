@@ -237,6 +237,7 @@ export default function Sales() {
   }
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="space-y-6">
       <PageHeader 
         title={t(lang,'sales_title')}
