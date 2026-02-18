@@ -25,8 +25,10 @@ import {
 } from 'lucide-react';
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { t } from '@/components/i18n/translations';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -42,8 +44,12 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
+    // Редирект на Analytics в мобильной версии
+    if (window.innerWidth < 768) {
+      navigate(createPageUrl('Analytics'));
+    }
     loadData();
-  }, []);
+  }, [navigate]);
 
   const loadData = async () => {
     try {
