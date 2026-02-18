@@ -224,11 +224,11 @@ IMPORTANT: ${t(lang, 'ai_lang_instruction')} Be helpful and give specific recomm
   };
 
   const suggestions = [
-    'Сколько я заработал за последний месяц?',
-    'Какие товары продаются лучше всего?',
-    'Кто из клиентов имеет большие долги?',
-    'Какие товары нужно закупить?',
-    'Дай анализ моего бизнеса'
+    t(lang, 'ai_q1'),
+    t(lang, 'ai_q2'),
+    t(lang, 'ai_q3'),
+    t(lang, 'ai_q4'),
+    t(lang, 'ai_q5'),
   ];
 
   if (loading) {
