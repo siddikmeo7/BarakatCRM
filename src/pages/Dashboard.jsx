@@ -33,11 +33,11 @@ export default function Dashboard() {
   const [customers, setCustomers] = useState([]);
   const [widgets, setWidgets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hideData, setHideData] = useState(false);
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
   });
-  const [hideData, setHideData] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -150,15 +150,10 @@ export default function Dashboard() {
 
       {/* Date Filter */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex flex-wrap items-center gap-3 justify-between">
           <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setHideData(h => !h)}
-            className="gap-2"
-          >
-            {hideData ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+          <Button variant="outline" size="sm" onClick={() => setHideData(h => !h)} className="gap-1 text-xs">
+            {hideData ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
             {hideData ? 'Показать данные' : 'Скрыть данные'}
           </Button>
         </div>
@@ -166,14 +161,16 @@ export default function Dashboard() {
 
       {/* Dynamic Widgets */}
       {hideData && (
-        <div className="bg-slate-100 rounded-2xl p-6 text-center text-slate-500 font-medium">
-          🙈 Данные скрыты — нажмите «Показать данные»
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 text-center text-slate-400">
+          <EyeOff className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          <p className="text-sm">Данные скрыты</p>
         </div>
       )}
-      <div className={`grid grid-cols-2 lg:grid-cols-4 gap-4 ${hideData ? 'hidden' : ''}`}>
+      {!hideData && (
+      <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {(widgets.length === 0 ? ['sales', 'profit', 'boxes', 'stock'] : widgets.filter(w => ['sales', 'profit', 'boxes', 'pairs', 'stock', 'debt', 'customers'].includes(w.widget_type))).map((widget) => {
           const widgetType = typeof widget === 'string' ? widget : widget.widget_type;
-          
           const widgetConfigs = {
             sales: { title: 'Продажи', value: totalRevenue.toLocaleString(), subtitle: 'сомони', icon: ShoppingCart, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
             profit: { title: 'Прибыль', value: totalProfit.toLocaleString(), subtitle: 'сомони', icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
@@ -183,15 +180,14 @@ export default function Dashboard() {
             debt: { title: 'Долги клиентов', value: totalDebt.toLocaleString(), subtitle: 'сомони', icon: Users, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
             customers: { title: 'Всего клиентов', value: customers.length, icon: Users, iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' }
           };
-          
           const config = widgetConfigs[widgetType];
           if (!config) return null;
-          
           return <StatCard key={widgetType} {...config} />;
         })}
       </div>
 
-      {!hideData && (widgets.length === 0 || widgets.some(w => ['chart_sales', 'sales_type'].includes(w.widget_type))) && (
+      {/* Charts & Analytics */}
+      {(widgets.length === 0 || widgets.some(w => ['chart_sales', 'sales_type'].includes(w.widget_type))) && (
         <div className="grid lg:grid-cols-2 gap-6">
           {(widgets.length === 0 || widgets.some(w => w.widget_type === 'chart_sales')) && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
@@ -235,8 +231,10 @@ export default function Dashboard() {
         </div>
       )}
 
-      {!hideData && (widgets.length === 0 || widgets.some(w => w.widget_type === 'top_products')) && (
+      {/* Top Products & Quick Actions */}
+      {(widgets.length === 0 || widgets.some(w => w.widget_type === 'top_products')) && (
       <div className="grid lg:grid-cols-2 gap-6">
+
         {/* Top Products */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-4">
@@ -306,6 +304,7 @@ export default function Dashboard() {
         </div>
       </div>
       )}
+      </>}
     </div>
   );
 }
