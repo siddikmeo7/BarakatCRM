@@ -161,7 +161,10 @@ export default function Analytics() {
     );
   }
 
+  const masked = '•••••';
+
   const convertCurrency = (amount) => {
+    if (hideData) return masked;
     return (amount * (exchangeRates[currency] || DEFAULT_RATES[currency] || 1)).toFixed(2);
   };
 
