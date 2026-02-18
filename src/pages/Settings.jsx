@@ -299,8 +299,8 @@ export default function Settings() {
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Настройки"
-        subtitle="Управление настройками бизнеса"
+        title={t(lang, 'settings_title')}
+        subtitle={t(lang, 'settings_subtitle')}
       />
 
       {/* Аккаунт карточка */}
