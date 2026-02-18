@@ -47,6 +47,7 @@ export default function Returns() {
     refund_amount: '',
     reason: ''
   });
+  const [returnWarning, setReturnWarning] = useState('');
   const [warehouses, setWarehouses] = useState([]);
 
   useEffect(() => {
