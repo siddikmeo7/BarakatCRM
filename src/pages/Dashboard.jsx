@@ -33,6 +33,7 @@ export default function Dashboard() {
   const [customers, setCustomers] = useState([]);
   const [widgets, setWidgets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hideData, setHideData] = useState(false);
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
