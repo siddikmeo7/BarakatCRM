@@ -1048,6 +1048,47 @@ export default function Settings() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Account Dialog */}
+      <Dialog open={deleteAccountDialog} onOpenChange={setDeleteAccountDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Подтвердить удаление аккаунта</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">
+                ⚠️ Это действие необратимо. Все ваши данные будут удалены безвозвратно.
+              </p>
+            </div>
+            <div>
+              <Label className="text-red-700">Введите ваш email для подтверждения</Label>
+              <Input
+                type="email"
+                placeholder={user?.email}
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                className="mt-1.5"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => {
+              setDeleteAccountDialog(false);
+              setDeleteConfirmation('');
+            }}>
+              Отмена
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={deleteConfirmation !== user?.email}
+            >
+              Удалить аккаунт
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
