@@ -6,7 +6,7 @@ import DateFilter from '@/components/filters/DateFilter';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { History, RotateCcw, Trash2, Package, ShoppingCart, Users, AlertCircle, Eye, ArrowLeft } from 'lucide-react';
+import { History, RotateCcw, Trash2, Package, ShoppingCart, Users, AlertCircle, Eye, ArrowLeft, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
