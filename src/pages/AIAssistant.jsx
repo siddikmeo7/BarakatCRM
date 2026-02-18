@@ -326,14 +326,14 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
   }
 
   return (
-    <div className="h-screen flex overflow-hidden flex-col lg:flex-row bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
+    <div className="h-screen flex overflow-hidden flex-col lg:flex-row bg-white dark:bg-slate-950">
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* SIDEBAR - Desktop Fixed, Mobile Modal */}
+      {/* SIDEBAR - Telegram Style */}
       <div className={`
         fixed lg:relative z-50 lg:z-auto
         h-screen lg:h-full w-80 bg-white dark:bg-slate-900 flex flex-col
@@ -341,166 +341,123 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-80 lg:translate-x-0'}
       `}>
         {/* Sidebar Header */}
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800">
-          <Button
-            onClick={createNewChat}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 gap-2 justify-start rounded-xl shadow-lg shadow-indigo-500/20"
-          >
-            <Plus className="w-4 h-4" />
-            {t(lang, 'ai_new_chat')}
-          </Button>
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">BarakatCRM</h2>
+            <button
+              onClick={createNewChat}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              title="Новый чат"
+            >
+              <Plus className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            </button>
+          </div>
+          <Input
+            placeholder="Поиск чата..."
+            className="h-9 text-sm rounded-full bg-slate-100 dark:bg-slate-800 border-0 placeholder:text-slate-500 dark:placeholder:text-slate-500"
+          />
         </div>
 
-        {/* Stats mini panel */}
-        {dataStats && (
-          <div className="px-4 py-4 border-b border-slate-200 dark:border-slate-800">
-            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-3 uppercase tracking-wider">Статистика</p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { icon: Package, label: 'Товаров', val: dataStats.totalProducts },
-                { icon: Users, label: 'Клиентов', val: dataStats.customersCount },
-                { icon: AlertTriangle, label: 'Должников', val: dataStats.debtorsCount },
-                { icon: TrendingUp, label: 'Продаж', val: dataStats.debtSalesCount },
-              ].map(({ icon: Icon, label, val }) => (
-                <div key={label} className="bg-slate-100 dark:bg-slate-800 rounded-lg p-3 text-center">
-                  <div className="flex items-center justify-center mb-1">
-                    <Icon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <div className="text-lg font-bold text-slate-900 dark:text-white">{val}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto py-3 px-3 space-y-2">
+        <div className="flex-1 overflow-y-auto py-1 px-2">
           {chats.length === 0 && (
-            <div className="text-center py-12 text-slate-500 text-sm">
-              <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              {t(lang, 'ai_create_chat')}
+            <div className="text-center py-12 text-slate-400 text-sm">
+              <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
+              <p>{t(lang, 'ai_create_chat')}</p>
             </div>
           )}
           {chats.map(chat => (
             <div
               key={chat.id}
               onClick={() => selectChat(chat)}
-              className={`group flex items-start gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors duration-150 group ${
                 activeChat?.id === chat.id
-                  ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-900 dark:text-indigo-100 shadow-sm'
-                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  ? 'bg-slate-200 dark:bg-slate-800'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/50'
               }`}
             >
-              <MessageSquare className={`w-4 h-4 flex-shrink-0 mt-1 ${
-                activeChat?.id === chat.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'
-              }`} />
-              <span className="flex-1 truncate text-sm font-medium">
-                {chat.title || t(lang, 'ai_new_chat')}
-              </span>
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0">
+                <Bot className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                  {chat.title || 'Новый чат'}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                  {chat.messages && chat.messages.length > 0
+                    ? chat.messages[chat.messages.length - 1].content.slice(0, 40)
+                    : 'Нет сообщений'}
+                </p>
+              </div>
               <button
                 onClick={(e) => deleteChat(e, chat.id)}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/10 rounded-lg transition-opacity flex-shrink-0"
+                className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-500/10 rounded-lg transition-opacity flex-shrink-0"
               >
-                <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                <Trash2 className="w-4 h-4 text-red-500" />
               </button>
             </div>
           ))}
         </div>
-
-        {/* Sidebar footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs">
-            <History className="w-3.5 h-3.5" />
-            <span>{dataStats?.logsCount || 0} {lang === 'ru' ? 'действий в системе' : 'actions'}</span>
-          </div>
-        </div>
       </div>
 
-      {/* MAIN CHAT */}
+      {/* MAIN CHAT - Telegram Style */}
       <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 min-w-0 overflow-hidden lg:ml-0">
 
         {/* Chat Top Bar */}
-        <div className="h-16 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 lg:px-6 gap-4 flex-shrink-0 bg-white dark:bg-slate-900">
+        <div className="h-14 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 gap-3 flex-shrink-0 bg-white dark:bg-slate-900">
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
           >
             <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
           </button>
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/30">
-            <Bot className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">
-              {activeChat?.title || t(lang, 'ai_title')}
+          <div className="flex-1">
+            <p className="font-semibold text-slate-900 dark:text-white text-sm">
+              {activeChat?.title || 'BarakatCRM AI'}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{t(lang, 'ai_subtitle')}</p>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 px-4">
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center px-6 py-12">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-6 shadow-lg shadow-indigo-500/30">
-                <Sparkles className="w-10 h-10 text-white" />
+            <div className="h-full flex flex-col items-center justify-center text-center py-12">
+              <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center mb-6">
+                <Sparkles className="w-12 h-12 text-slate-400" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t(lang, 'ai_greeting')}</h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-3 max-w-md text-sm">{t(lang, 'ai_greeting_sub')}</p>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{t(lang, 'ai_greeting')}</h3>
+              <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-sm text-sm">{t(lang, 'ai_greeting_sub')}</p>
               {businessData && (
-                <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-xl text-xs font-medium mb-6 inline-block">
-                  {lang === 'ru' ? `✓ ${dataStats?.totalProducts} товаров • ${dataStats?.customersCount} клиентов` :
-                   lang === 'tj' ? `✓ ${dataStats?.totalProducts} мол • ${dataStats?.customersCount} муштарӣ` :
-                   `✓ ${dataStats?.totalProducts} products • ${dataStats?.customersCount} customers`}
+                <div className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-lg text-xs font-medium mb-6">
+                  {lang === 'ru' ? `${dataStats?.totalProducts} товаров • ${dataStats?.customersCount} клиентов • ${dataStats?.logsCount} действий` : 'Data loaded'}
                 </div>
               )}
-              <div className="flex flex-wrap justify-center gap-2 max-w-2xl">
-                {suggestions.map((s, i) => (
-                   <button
-                     key={i}
-                     onClick={() => { setInput(s); inputRef.current?.focus(); }}
-                     className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-xl text-sm text-slate-700 dark:text-slate-300 transition-all text-left font-medium"
-                   >
-                     {s}
-                   </button>
-                 ))}
-              </div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+            <div className="py-4 space-y-3">
               {messages.map((msg, i) => (
-                 <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                   {msg.role === 'assistant' && (
-                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-lg shadow-indigo-500/30">
-                       <Bot className="w-4 h-4 text-white" />
-                     </div>
-                   )}
-                   <div className={`max-w-[85%] ${msg.role === 'user' ? 'order-1' : ''}`}>
-                     <div className={`rounded-2xl px-4 py-3 shadow-sm ${
+                 <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                   <div className={`max-w-xs lg:max-w-md xl:max-w-lg ${msg.role === 'user' ? '' : ''}`}>
+                     <div className={`rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                        msg.role === 'user'
-                         ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-br-sm'
-                         : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-bl-sm border border-slate-200 dark:border-slate-700'
+                         ? 'bg-blue-500 text-white rounded-br-none'
+                         : 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white rounded-bl-none'
                      }`}>
                        {msg.role === 'assistant' ? (
-                         <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:my-2">
+                         <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none prose-p:m-0 prose-ul:my-1 prose-li:my-0 prose-headings:my-1 prose-headings:text-sm prose-a:text-blue-600 dark:prose-a:text-blue-400">
                            {msg.content}
                          </ReactMarkdown>
                        ) : (
-                         <p className="text-sm leading-relaxed">{msg.content}</p>
+                         <p className="break-words">{msg.content}</p>
                        )}
                      </div>
                    </div>
                  </div>
                ))}
               {sending && (
-                <div className="flex gap-3 justify-start">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/30">
-                    <Bot className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2 border border-slate-200 dark:border-slate-700">
-                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-400" />
-                    <span className="text-slate-600 dark:text-slate-400 text-sm">{t(lang, 'ai_thinking')}</span>
+                <div className="flex gap-2 justify-start">
+                  <div className="bg-slate-200 dark:bg-slate-800 rounded-2xl rounded-bl-none px-3 py-2 flex items-center gap-2">
+                    <Loader2 className="w-3 h-3 animate-spin text-slate-600 dark:text-slate-400" />
                   </div>
                 </div>
               )}
@@ -510,31 +467,26 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
         </div>
 
         {/* Input */}
-        <div className="border-t border-slate-200 dark:border-slate-800 p-4 bg-white dark:bg-slate-900">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex gap-3 items-end">
-              <div className="flex-1 relative">
-                <Input
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder={t(lang, 'ai_placeholder')}
-                  disabled={sending || !businessData}
-                  className="pr-4 py-3 text-sm rounded-xl border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 focus:border-indigo-400 dark:focus:border-indigo-500"
-                />
-              </div>
-              <Button
-                onClick={sendMessage}
-                disabled={sending || !input.trim() || !businessData}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl h-10 w-10 p-0 flex-shrink-0 shadow-lg shadow-indigo-500/30"
-              >
-                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </Button>
+        <div className="border-t border-slate-200 dark:border-slate-800 p-3 bg-white dark:bg-slate-900">
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder="Сообщение..."
+                disabled={sending || !businessData}
+                className="h-9 text-sm rounded-full bg-slate-100 dark:bg-slate-800 border-0 px-4 placeholder:text-slate-500 dark:placeholder:text-slate-500 dark:text-white"
+              />
             </div>
-            {!businessData && (
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 text-center">{t(lang, 'ai_loading_biz')}</p>
-            )}
+            <Button
+              onClick={sendMessage}
+              disabled={sending || !input.trim() || !businessData}
+              className="bg-blue-500 hover:bg-blue-600 rounded-full h-9 w-9 p-0 flex-shrink-0"
+            >
+              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            </Button>
           </div>
         </div>
       </div>
