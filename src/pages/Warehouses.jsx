@@ -448,6 +448,22 @@ export default function Warehouses() {
                 className="mt-1.5"
               />
             </div>
+            <div>
+              <Label>Значок склада</Label>
+              <div className="flex gap-2 mt-1.5">
+                {WAREHOUSE_ICONS.map(({ key, icon: Icon, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, icon: key })}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all flex-1 ${formData.icon === key ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300'}`}
+                  >
+                    <Icon className={`w-5 h-5 ${formData.icon === key ? 'text-indigo-600' : 'text-slate-500'}`} />
+                    <span className="text-xs text-slate-500">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3">
