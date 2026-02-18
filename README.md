@@ -195,7 +195,7 @@ Built as a scalable SaaS platform.
 
 # 👤 Author
 
-Created by **Abubakr Khusainov**.
+Created by **Mirzozoda Abubakr**.
 
 ---
 
