@@ -146,19 +146,34 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col lg:flex-row">
-      {/* Sidebar Overlay (Mobile) */}
-      {sidebarOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {/* Mobile Fixed Menu */}
+      <nav className="lg:hidden fixed left-0 top-16 bottom-0 w-20 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-40 flex flex-col overflow-y-auto py-2 px-1.5">
+        <div className="space-y-1">
+          {currentMenu.map((item) => {
+            const isActive = currentPageName === item.name;
+            return (
+              <Link
+                key={item.name}
+                to={createPageUrl(item.name)}
+                className={cn(
+                  "flex items-center justify-center p-3 rounded-lg transition-all duration-200 user-select-none",
+                  isActive 
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                )}
+                title={t(lang, item.labelKey)}
+              >
+                <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-400 dark:text-slate-500")} />
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
 
-      {/* Sidebar */}
+      {/* Desktop Sidebar */}
       <aside className={cn(
-        "fixed lg:relative top-0 left-0 h-screen w-20 lg:w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 lg:z-auto transition-transform duration-300 lg:translate-x-0 flex flex-col",
-        sidebarOpen ? "translate-x-0" : "-translate-x-20"
-      )} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        "hidden lg:flex relative flex-col h-screen w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800"
+      )}>
         <div className="h-16 lg:h-16 flex items-center justify-between px-2 lg:px-6 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2 lg:gap-3 flex-1 lg:flex-initial">
             <div className="w-8 lg:w-10 h-8 lg:h-10 rounded-lg lg:rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
@@ -235,22 +250,19 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-auto">
+      <main className="flex-1 flex flex-col overflow-auto lg:pl-0">
        {/* Mobile Header */}
-       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-30 flex items-center px-4 gap-3" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-         <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-           <Menu className="w-6 h-6 text-slate-700 dark:text-slate-200" />
-         </button>
+       <div className="lg:hidden fixed top-0 left-20 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-30 flex items-center px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
          <div className="flex items-center gap-2">
            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
              <Package className="w-4 h-4 text-white" />
            </div>
-           <span className="font-bold text-slate-900 dark:text-white">BarakatCRM</span>
+           <span className="font-bold text-slate-900 dark:text-white text-sm">BarakatCRM</span>
          </div>
        </div>
 
        {/* Page Content */}
-       <div className="flex-1 overflow-auto pt-16 lg:pt-0">
+       <div className="flex-1 overflow-auto pt-16 lg:pt-0 lg:pl-0">
          <motion.div
            key={currentPageName}
            initial={{ opacity: 0, x: 100 }}
