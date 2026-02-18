@@ -28,8 +28,8 @@ import {
   Shield,
   RotateCcw,
   AlertCircle,
-  RefreshCw,
-  HardDrive
+  DatabaseBackup,
+  RefreshCw
 } from 'lucide-react';
 
 const LANGUAGES = [
@@ -50,6 +50,7 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
   const [driveBackupLoading, setDriveBackupLoading] = useState(false);
+  const [driveBackupMsg, setDriveBackupMsg] = useState('');
   const [clearingCache, setClearingCache] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -230,28 +231,29 @@ export default function Settings() {
     }
   };
 
-  const handleDriveBackup = async () => {
-    setDriveBackupLoading(true);
-    try {
-      const res = await base44.functions.invoke('backupToGoogleDrive');
-      if (res.data?.success) {
-        alert(`✅ Резервная копия сохранена в Google Drive!\nФайл: ${res.data.file_name}`);
-      } else {
-        alert('Ошибка: ' + (res.data?.error || 'Неизвестная ошибка'));
-      }
-    } catch (e) {
-      alert('Ошибка при сохранении в Google Drive: ' + e.message);
-    } finally {
-      setDriveBackupLoading(false);
-    }
-  };
-
   const handleClearCache = () => {
     if (confirm('Очистить кэш приложения? Страница перезагрузится.')) {
       setClearingCache(true);
       localStorage.clear();
       sessionStorage.clear();
       setTimeout(() => window.location.reload(), 500);
+    }
+  };
+
+  const handleDriveBackup = async () => {
+    setDriveBackupLoading(true);
+    setDriveBackupMsg('');
+    try {
+      const res = await base44.functions.invoke('backupToGoogleDrive');
+      if (res.data?.success) {
+        setDriveBackupMsg(`✅ Сохранено: ${res.data.file_name}`);
+      } else {
+        setDriveBackupMsg(`❌ Ошибка: ${res.data?.error || 'Неизвестная ошибка'}`);
+      }
+    } catch (e) {
+      setDriveBackupMsg(`❌ Ошибка: ${e.message}`);
+    } finally {
+      setDriveBackupLoading(false);
     }
   };
 
@@ -835,28 +837,17 @@ export default function Settings() {
                   <div className="flex-1">
                     <h4 className="font-semibold text-amber-900 mb-1">Резервное копирование</h4>
                     <p className="text-sm text-amber-700 mb-3">
-                      Скачать все данные бизнеса в формате JSON или сохранить в Google Drive
+                      Скачать все данные бизнеса в формате JSON (продажи, товары, клиенты и т.д.)
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        onClick={handleBackup}
-                        disabled={backupLoading}
-                        variant="outline"
-                        className="text-amber-700 border-amber-300 hover:bg-amber-100 gap-2"
-                      >
-                        {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                        Скачать на устройство
-                      </Button>
-                      <Button
-                        onClick={handleDriveBackup}
-                        disabled={driveBackupLoading}
-                        variant="outline"
-                        className="text-blue-700 border-blue-300 hover:bg-blue-50 gap-2"
-                      >
-                        {driveBackupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <HardDrive className="w-4 h-4" />}
-                        Сохранить в Google Drive
-                      </Button>
-                    </div>
+                    <Button
+                      onClick={handleBackup}
+                      disabled={backupLoading}
+                      variant="outline"
+                      className="text-amber-700 border-amber-300 hover:bg-amber-100 gap-2"
+                    >
+                      {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                      Скачать резервную копию
+                    </Button>
                   </div>
                 </div>
               </div>
