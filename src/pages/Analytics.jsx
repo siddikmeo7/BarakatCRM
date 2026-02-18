@@ -147,6 +147,11 @@ export default function Analytics() {
     sum + ((p.boxes_in_stock || 0) * ((p.sale_price || 0) - (p.purchase_price || 0))), 0
   );
 
+  // Общее количество коробок на всех складах
+  const totalBoxesInStock = products.reduce((sum, p) => 
+    sum + (p.boxes_in_stock || 0), 0
+  );
+
   // Наличные vs Долг
   const cashSales = filteredSales.filter(s => !s.is_debt);
   const debtSales = filteredSales.filter(s => s.is_debt);
