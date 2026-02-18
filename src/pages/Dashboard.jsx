@@ -166,10 +166,10 @@ export default function Dashboard() {
           <p className="text-sm">Данные скрыты</p>
         </div>
       )}
-      {!hideData && <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {!hideData && <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {(widgets.length === 0 ? ['sales', 'profit', 'boxes', 'stock'] : widgets.filter(w => ['sales', 'profit', 'boxes', 'pairs', 'stock', 'debt', 'customers'].includes(w.widget_type))).map((widget) => {
           const widgetType = typeof widget === 'string' ? widget : widget.widget_type;
-          
           const widgetConfigs = {
             sales: { title: 'Продажи', value: totalRevenue.toLocaleString(), subtitle: 'сомони', icon: ShoppingCart, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
             profit: { title: 'Прибыль', value: totalProfit.toLocaleString(), subtitle: 'сомони', icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
@@ -179,10 +179,8 @@ export default function Dashboard() {
             debt: { title: 'Долги клиентов', value: totalDebt.toLocaleString(), subtitle: 'сомони', icon: Users, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
             customers: { title: 'Всего клиентов', value: customers.length, icon: Users, iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' }
           };
-          
           const config = widgetConfigs[widgetType];
           if (!config) return null;
-          
           return <StatCard key={widgetType} {...config} />;
         })}
       </div>
@@ -235,6 +233,7 @@ export default function Dashboard() {
       {/* Top Products & Quick Actions */}
       {(widgets.length === 0 || widgets.some(w => w.widget_type === 'top_products')) && (
       <div className="grid lg:grid-cols-2 gap-6">
+
         {/* Top Products */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-4">
