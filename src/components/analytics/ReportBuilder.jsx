@@ -2,8 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, FileText, Loader2 } from 'lucide-react';
+import { Download, FileText, Loader2, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
 
 export default function ReportBuilder({ sales, customers, products, business, lang = 'ru' }) {
   const [selectedMetrics, setSelectedMetrics] = useState({
@@ -15,6 +16,7 @@ export default function ReportBuilder({ sales, customers, products, business, la
   });
   const [generating, setGenerating] = useState(false);
   const [reportName, setReportName] = useState(`Отчёт ${format(new Date(), 'dd.MM.yyyy')}`);
+  const [exportFormat, setExportFormat] = useState('xlsx'); // 'xlsx' or 'md'
 
   const metrics = {
     summary: { label: 'Общая статистика', desc: 'Выручка, прибыль, количество продаж' },
@@ -27,106 +29,229 @@ export default function ReportBuilder({ sales, customers, products, business, la
   const generateReport = async () => {
     setGenerating(true);
     try {
-      const reportLines = [];
-      reportLines.push(`# ${reportName}`);
-      reportLines.push(`Дата: ${format(new Date(), 'dd.MM.yyyy HH:mm')}`);
-      reportLines.push(`Бизнес: ${business?.name || 'N/A'}`);
-      reportLines.push('');
-
-      if (selectedMetrics.summary) {
-        const totalRevenue = sales.reduce((s, x) => s + (x.total_amount || 0), 0);
-        const totalProfit = sales.reduce((s, x) => s + (x.profit || 0), 0);
-        const totalBoxes = sales.reduce((s, x) => s + (x.boxes_sold || 0), 0);
-        const totalDebt = customers.reduce((s, c) => s + (c.total_debt || 0), 0);
-
-        reportLines.push('## Общая статистика');
-        reportLines.push(`- Всего продаж: ${sales.length}`);
-        reportLines.push(`- Выручка: ${totalRevenue.toLocaleString()} сомони`);
-        reportLines.push(`- Прибыль: ${totalProfit.toLocaleString()} сомони`);
-        reportLines.push(`- Коробок продано: ${totalBoxes}`);
-        reportLines.push(`- Общий долг: ${totalDebt.toLocaleString()} сомони`);
-        reportLines.push(`- Маржа: ${totalRevenue ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0}%`);
-        reportLines.push('');
+      if (exportFormat === 'xlsx') {
+        generateExcelReport();
+      } else {
+        generateMarkdownReport();
       }
-
-      if (selectedMetrics.topProducts) {
-        const productStats = {};
-        sales.forEach(s => {
-          if (!productStats[s.product_id]) productStats[s.product_id] = { boxes: 0, revenue: 0 };
-          productStats[s.product_id].boxes += s.boxes_sold || 0;
-          productStats[s.product_id].revenue += s.total_amount || 0;
-        });
-
-        reportLines.push('## ТОП-10 Товаров');
-        const topProds = Object.entries(productStats)
-          .sort((a, b) => b[1].revenue - a[1].revenue)
-          .slice(0, 10);
-
-        topProds.forEach((item, i) => {
-          const prod = products.find(p => p.id === item[0]);
-          if (prod) {
-            reportLines.push(`${i + 1}. ${prod.brand} ${prod.model} - ${item[1].revenue.toLocaleString()} с. (${item[1].boxes} кор.)`);
-          }
-        });
-        reportLines.push('');
-      }
-
-      if (selectedMetrics.topCustomers) {
-        reportLines.push('## ТОП-10 Клиентов');
-        const topCusts = customers
-          .filter(c => (c.total_debt || 0) > 0 || (c.total_paid || 0) > 0)
-          .sort((a, b) => (b.total_debt || 0) + (b.total_paid || 0) - ((a.total_debt || 0) + (a.total_paid || 0)))
-          .slice(0, 10);
-
-        topCusts.forEach((c, i) => {
-          reportLines.push(`${i + 1}. ${c.name} - Куплено: ${(c.total_paid || 0).toLocaleString()} с., Долг: ${(c.total_debt || 0).toLocaleString()} с.`);
-        });
-        reportLines.push('');
-      }
-
-      if (selectedMetrics.debtAnalysis) {
-        const debtors = customers.filter(c => (c.total_debt || 0) > 0);
-        const totalDebt = debtors.reduce((s, c) => s + (c.total_debt || 0), 0);
-
-        reportLines.push('## Анализ Долгов');
-        reportLines.push(`- Должников: ${debtors.length} из ${customers.length}`);
-        reportLines.push(`- Общий долг: ${totalDebt.toLocaleString()} сомони`);
-        reportLines.push(`- Средний долг: ${debtors.length > 0 ? Math.round(totalDebt / debtors.length).toLocaleString() : 0} сомони`);
-        reportLines.push(`- Макс долг: ${debtors.length > 0 ? Math.max(...debtors.map(c => c.total_debt || 0)).toLocaleString() : 0} сомони`);
-        reportLines.push('');
-      }
-
-      if (selectedMetrics.forecast) {
-        const dailySales = {};
-        sales.forEach(s => {
-          const d = format(new Date(s.sale_date || s.created_date), 'yyyy-MM-dd');
-          dailySales[d] = (dailySales[d] || 0) + (s.total_amount || 0);
-        });
-
-        const values = Object.values(dailySales).slice(-30);
-        const avgDaily = values.length > 0 ? values.reduce((a, b) => a + b) / values.length : 0;
-
-        reportLines.push('## Прогноз на месяц');
-        reportLines.push(`- Среднее в день: ${Math.round(avgDaily).toLocaleString()} сомони`);
-        reportLines.push(`- Прогноз на неделю: ${Math.round(avgDaily * 7).toLocaleString()} сомони`);
-        reportLines.push(`- Прогноз на месяц: ${Math.round(avgDaily * 30).toLocaleString()} сомони`);
-        reportLines.push('');
-      }
-
-      // Generate CSV
-      const csv = reportLines.join('\n');
-      const blob = new Blob([csv], { type: 'text/markdown' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${reportName.replace(/\s+/g, '_')}.md`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
     } finally {
       setGenerating(false);
     }
+  };
+
+  const generateMarkdownReport = () => {
+    const reportLines = [];
+    reportLines.push(`# ${reportName}`);
+    reportLines.push(`Дата: ${format(new Date(), 'dd.MM.yyyy HH:mm')}`);
+    reportLines.push(`Бизнес: ${business?.name || 'N/A'}`);
+    reportLines.push('');
+
+    if (selectedMetrics.summary) {
+      const totalRevenue = sales.reduce((s, x) => s + (x.total_amount || 0), 0);
+      const totalProfit = sales.reduce((s, x) => s + (x.profit || 0), 0);
+      const totalBoxes = sales.reduce((s, x) => s + (x.boxes_sold || 0), 0);
+      const totalDebt = customers.reduce((s, c) => s + (c.total_debt || 0), 0);
+
+      reportLines.push('## Общая статистика');
+      reportLines.push(`- Всего продаж: ${sales.length}`);
+      reportLines.push(`- Выручка: ${totalRevenue.toLocaleString()} сомони`);
+      reportLines.push(`- Прибыль: ${totalProfit.toLocaleString()} сомони`);
+      reportLines.push(`- Коробок продано: ${totalBoxes}`);
+      reportLines.push(`- Общий долг: ${totalDebt.toLocaleString()} сомони`);
+      reportLines.push(`- Маржа: ${totalRevenue ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0}%`);
+      reportLines.push('');
+    }
+
+    if (selectedMetrics.topProducts) {
+      const productStats = {};
+      sales.forEach(s => {
+        if (!productStats[s.product_id]) productStats[s.product_id] = { boxes: 0, revenue: 0 };
+        productStats[s.product_id].boxes += s.boxes_sold || 0;
+        productStats[s.product_id].revenue += s.total_amount || 0;
+      });
+
+      reportLines.push('## ТОП-10 Товаров');
+      const topProds = Object.entries(productStats)
+        .sort((a, b) => b[1].revenue - a[1].revenue)
+        .slice(0, 10);
+
+      topProds.forEach((item, i) => {
+        const prod = products.find(p => p.id === item[0]);
+        if (prod) {
+          reportLines.push(`${i + 1}. ${prod.brand} ${prod.model} - ${item[1].revenue.toLocaleString()} с. (${item[1].boxes} кор.)`);
+        }
+      });
+      reportLines.push('');
+    }
+
+    if (selectedMetrics.topCustomers) {
+      reportLines.push('## ТОП-10 Клиентов');
+      const topCusts = customers
+        .filter(c => (c.total_debt || 0) > 0 || (c.total_paid || 0) > 0)
+        .sort((a, b) => (b.total_debt || 0) + (b.total_paid || 0) - ((a.total_debt || 0) + (a.total_paid || 0)))
+        .slice(0, 10);
+
+      topCusts.forEach((c, i) => {
+        reportLines.push(`${i + 1}. ${c.name} - Куплено: ${(c.total_paid || 0).toLocaleString()} с., Долг: ${(c.total_debt || 0).toLocaleString()} с.`);
+      });
+      reportLines.push('');
+    }
+
+    if (selectedMetrics.debtAnalysis) {
+      const debtors = customers.filter(c => (c.total_debt || 0) > 0);
+      const totalDebt = debtors.reduce((s, c) => s + (c.total_debt || 0), 0);
+
+      reportLines.push('## Анализ Долгов');
+      reportLines.push(`- Должников: ${debtors.length} из ${customers.length}`);
+      reportLines.push(`- Общий долг: ${totalDebt.toLocaleString()} сомони`);
+      reportLines.push(`- Средний долг: ${debtors.length > 0 ? Math.round(totalDebt / debtors.length).toLocaleString() : 0} сомони`);
+      reportLines.push(`- Макс долг: ${debtors.length > 0 ? Math.max(...debtors.map(c => c.total_debt || 0)).toLocaleString() : 0} сомони`);
+      reportLines.push('');
+    }
+
+    if (selectedMetrics.forecast) {
+      const dailySales = {};
+      sales.forEach(s => {
+        const d = format(new Date(s.sale_date || s.created_date), 'yyyy-MM-dd');
+        dailySales[d] = (dailySales[d] || 0) + (s.total_amount || 0);
+      });
+
+      const values = Object.values(dailySales).slice(-30);
+      const avgDaily = values.length > 0 ? values.reduce((a, b) => a + b) / values.length : 0;
+
+      reportLines.push('## Прогноз на месяц');
+      reportLines.push(`- Среднее в день: ${Math.round(avgDaily).toLocaleString()} сомони`);
+      reportLines.push(`- Прогноз на неделю: ${Math.round(avgDaily * 7).toLocaleString()} сомони`);
+      reportLines.push(`- Прогноз на месяц: ${Math.round(avgDaily * 30).toLocaleString()} сомони`);
+      reportLines.push('');
+    }
+
+    const markdown = reportLines.join('\n');
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${reportName.replace(/\s+/g, '_')}.md`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const generateExcelReport = () => {
+    const wb = XLSX.utils.book_new();
+    const sheetsData = {};
+
+    // Summary
+    if (selectedMetrics.summary) {
+      const totalRevenue = sales.reduce((s, x) => s + (x.total_amount || 0), 0);
+      const totalProfit = sales.reduce((s, x) => s + (x.profit || 0), 0);
+      const totalBoxes = sales.reduce((s, x) => s + (x.boxes_sold || 0), 0);
+      const totalDebt = customers.reduce((s, c) => s + (c.total_debt || 0), 0);
+
+      const summaryData = [
+        ['Метрика', 'Значение'],
+        ['Всего продаж', sales.length],
+        ['Выручка (с.)', totalRevenue.toLocaleString()],
+        ['Прибыль (с.)', totalProfit.toLocaleString()],
+        ['Коробок продано', totalBoxes],
+        ['Общий долг (с.)', totalDebt.toLocaleString()],
+        ['Маржа (%)', totalRevenue ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0]
+      ];
+      sheetsData['Общая статистика'] = summaryData;
+    }
+
+    // Top Products
+    if (selectedMetrics.topProducts) {
+      const productStats = {};
+      sales.forEach(s => {
+        if (!productStats[s.product_id]) productStats[s.product_id] = { boxes: 0, revenue: 0, profit: 0 };
+        productStats[s.product_id].boxes += s.boxes_sold || 0;
+        productStats[s.product_id].revenue += s.total_amount || 0;
+        productStats[s.product_id].profit += s.profit || 0;
+      });
+
+      const topProds = Object.entries(productStats)
+        .sort((a, b) => b[1].revenue - a[1].revenue)
+        .slice(0, 10);
+
+      const productsData = [['Место', 'Товар', 'Коробок', 'Выручка (с.)', 'Прибыль (с.)']];
+      topProds.forEach((item, i) => {
+        const prod = products.find(p => p.id === item[0]);
+        if (prod) {
+          productsData.push([
+            i + 1,
+            `${prod.brand} ${prod.model}`,
+            item[1].boxes,
+            item[1].revenue,
+            item[1].profit
+          ]);
+        }
+      });
+      sheetsData['Топ Товаров'] = productsData;
+    }
+
+    // Top Customers
+    if (selectedMetrics.topCustomers) {
+      const topCusts = customers
+        .filter(c => (c.total_debt || 0) > 0 || (c.total_paid || 0) > 0)
+        .sort((a, b) => (b.total_debt || 0) + (b.total_paid || 0) - ((a.total_debt || 0) + (a.total_paid || 0)))
+        .slice(0, 10);
+
+      const customersData = [['Место', 'Имя', 'Куплено (с.)', 'Долг (с.)']];
+      topCusts.forEach((c, i) => {
+        customersData.push([
+          i + 1,
+          c.name,
+          c.total_paid || 0,
+          c.total_debt || 0
+        ]);
+      });
+      sheetsData['Лучшие Клиенты'] = customersData;
+    }
+
+    // Debt Analysis
+    if (selectedMetrics.debtAnalysis) {
+      const debtors = customers.filter(c => (c.total_debt || 0) > 0);
+      const totalDebt = debtors.reduce((s, c) => s + (c.total_debt || 0), 0);
+
+      const debtData = [
+        ['Метрика', 'Значение'],
+        ['Должников', `${debtors.length} из ${customers.length}`],
+        ['Общий долг (с.)', totalDebt],
+        ['Средний долг (с.)', debtors.length > 0 ? Math.round(totalDebt / debtors.length) : 0],
+        ['Макс долг (с.)', debtors.length > 0 ? Math.max(...debtors.map(c => c.total_debt || 0)) : 0]
+      ];
+      sheetsData['Анализ Долгов'] = debtData;
+    }
+
+    // Forecast
+    if (selectedMetrics.forecast) {
+      const dailySales = {};
+      sales.forEach(s => {
+        const d = format(new Date(s.sale_date || s.created_date), 'yyyy-MM-dd');
+        dailySales[d] = (dailySales[d] || 0) + (s.total_amount || 0);
+      });
+
+      const values = Object.values(dailySales).slice(-30);
+      const avgDaily = values.length > 0 ? values.reduce((a, b) => a + b) / values.length : 0;
+
+      const forecastData = [
+        ['Период', 'Прогноз (с.)'],
+        ['Среднее в день', Math.round(avgDaily)],
+        ['Прогноз на неделю', Math.round(avgDaily * 7)],
+        ['Прогноз на месяц', Math.round(avgDaily * 30)]
+      ];
+      sheetsData['Прогноз'] = forecastData;
+    }
+
+    // Add sheets to workbook
+    Object.entries(sheetsData).forEach(([sheetName, data]) => {
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+
+    XLSX.writeFile(wb, `${reportName.replace(/\s+/g, '_')}.xlsx`);
   };
 
   return (
@@ -136,14 +261,43 @@ export default function ReportBuilder({ sales, customers, products, business, la
         <h3 className="font-semibold text-slate-900">Генератор отчётов</h3>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-2">Название отчёта</label>
-        <Input
-          value={reportName}
-          onChange={(e) => setReportName(e.target.value)}
-          placeholder="Название отчёта"
-          className="mb-4"
-        />
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">Название отчёта</label>
+          <Input
+            value={reportName}
+            onChange={(e) => setReportName(e.target.value)}
+            placeholder="Название отчёта"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">Формат</label>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setExportFormat('xlsx')}
+              className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                exportFormat === 'xlsx'
+                  ? 'border-blue-600 bg-blue-50'
+                  : 'border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              <FileSpreadsheet className="w-5 h-5 mx-auto mb-1" />
+              <span className="text-sm font-medium">Excel (XLSX)</span>
+            </button>
+            <button
+              onClick={() => setExportFormat('md')}
+              className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                exportFormat === 'md'
+                  ? 'border-blue-600 bg-blue-50'
+                  : 'border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              <FileText className="w-5 h-5 mx-auto mb-1" />
+              <span className="text-sm font-medium">Markdown</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -175,7 +329,7 @@ export default function ReportBuilder({ sales, customers, products, business, la
         ) : (
           <>
             <Download className="w-4 h-4" />
-            Скачать отчёт (Markdown)
+            Скачать отчёт ({exportFormat === 'xlsx' ? 'Excel' : 'Markdown'})
           </>
         )}
       </Button>

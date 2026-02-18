@@ -265,8 +265,8 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Main Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Main Stats - Responsive sizing */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <StatCard
           title={t(lang,'analytics_revenue')}
           value={convertCurrency(totalRevenue)}
@@ -274,6 +274,7 @@ export default function Analytics() {
           icon={ShoppingCart}
           iconBg="bg-blue-100"
           iconColor="text-blue-600"
+          className="text-sm md:text-base"
         />
         <StatCard
           title={t(lang,'analytics_profit')}
@@ -282,6 +283,7 @@ export default function Analytics() {
           icon={TrendingUp}
           iconBg="bg-emerald-100"
           iconColor="text-emerald-600"
+          className="text-sm md:text-base"
         />
         <StatCard
           title={t(lang,'analytics_margin')}
@@ -289,6 +291,7 @@ export default function Analytics() {
           icon={Percent}
           iconBg="bg-purple-100"
           iconColor="text-purple-600"
+          className="text-sm md:text-base"
         />
         <StatCard
           title={t(lang,'analytics_boxes_sold')}
@@ -296,11 +299,12 @@ export default function Analytics() {
           icon={Box}
           iconBg="bg-amber-100"
           iconColor="text-amber-600"
+          className="text-sm md:text-base"
         />
       </div>
 
       {/* Inventory Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         <StatCard
           title={t(lang,'analytics_stock_value')}
           value={convertCurrency(totalStockValue)}
@@ -308,6 +312,7 @@ export default function Analytics() {
           icon={Package}
           iconBg="bg-cyan-100"
           iconColor="text-cyan-600"
+          className="text-sm md:text-base"
         />
         <StatCard
           title={t(lang,'analytics_potential_profit')}
@@ -316,6 +321,7 @@ export default function Analytics() {
           icon={DollarSign}
           iconBg="bg-indigo-100"
           iconColor="text-indigo-600"
+          className="text-sm md:text-base"
         />
         <StatCard
           title={t(lang,'analytics_total_products')}
@@ -323,50 +329,63 @@ export default function Analytics() {
           icon={Package}
           iconBg="bg-slate-100"
           iconColor="text-slate-600"
+          className="text-sm md:text-base"
         />
       </div>
 
-      {/* Charts */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Sales & Profit Chart */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'analytics_dynamics')}</h3>
-          <SalesChart sales={filteredSales} days={14} chartType={chartType} />
-        </div>
-
-        {/* Sales Type Chart */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'analytics_cash_vs_debt')}</h3>
-          <div className="h-64">
-            <SalesTypeChart sales={filteredSales} />
+      {/* All Charts Together */}
+      <div className="space-y-6">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-900">Графики</h2>
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Sales & Profit Chart */}
+          <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
+            <h3 className="font-semibold text-slate-900 text-sm md:text-base mb-4">{t(lang,'analytics_dynamics')}</h3>
+            <SalesChart sales={filteredSales} days={14} chartType={chartType} />
           </div>
-          <div className="grid grid-cols-2 gap-6 mt-6 pt-6 border-t border-slate-100">
-            <div className="text-center p-4 bg-emerald-50 rounded-xl">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                <p className="text-sm font-medium text-slate-600">{t(lang,'analytics_cash')}</p>
-              </div>
-              <p className="text-3xl font-bold text-emerald-600">{hideData ? masked : `${cashPercent}%`}</p>
-              <p className="text-sm text-slate-500 mt-1">{cashSales.length} {t(lang,'dash_sales_count')}</p>
-              <p className="text-lg font-semibold text-slate-900 mt-2">{hideData ? masked : `${cashAmount.toLocaleString()} с.`}</p>
+
+          {/* Sales Type Chart */}
+          <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
+            <h3 className="font-semibold text-slate-900 text-sm md:text-base mb-4">{t(lang,'analytics_cash_vs_debt')}</h3>
+            <div className="h-64">
+              <SalesTypeChart sales={filteredSales} />
             </div>
-            <div className="text-center p-4 bg-amber-50 rounded-xl">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <div className="w-3 h-3 rounded-full bg-amber-500" />
-                <p className="text-sm font-medium text-slate-600">{t(lang,'analytics_in_debt')}</p>
+            <div className="grid grid-cols-2 gap-3 md:gap-6 mt-6 pt-6 border-t border-slate-100">
+              <div className="text-center p-3 md:p-4 bg-emerald-50 rounded-xl">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="w-2 md:w-3 h-2 md:h-3 rounded-full bg-emerald-500" />
+                  <p className="text-xs md:text-sm font-medium text-slate-600">{t(lang,'analytics_cash')}</p>
+                </div>
+                <p className="text-xl md:text-3xl font-bold text-emerald-600">{hideData ? masked : `${cashPercent}%`}</p>
+                <p className="text-xs md:text-sm text-slate-500 mt-1">{cashSales.length}</p>
+                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{hideData ? masked : `${(cashAmount / 1000).toFixed(1)}K с.`}</p>
               </div>
-              <p className="text-3xl font-bold text-amber-600">{hideData ? masked : `${debtPercent}%`}</p>
-              <p className="text-sm text-slate-500 mt-1">{debtSales.length} {t(lang,'dash_sales_count')}</p>
-              <p className="text-lg font-semibold text-slate-900 mt-2">{hideData ? masked : `${debtAmount.toLocaleString()} с.`}</p>
+              <div className="text-center p-3 md:p-4 bg-amber-50 rounded-xl">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="w-2 md:w-3 h-2 md:h-3 rounded-full bg-amber-500" />
+                  <p className="text-xs md:text-sm font-medium text-slate-600">{t(lang,'analytics_in_debt')}</p>
+                </div>
+                <p className="text-xl md:text-3xl font-bold text-amber-600">{hideData ? masked : `${debtPercent}%`}</p>
+                <p className="text-xs md:text-sm text-slate-500 mt-1">{debtSales.length}</p>
+                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{hideData ? masked : `${(debtAmount / 1000).toFixed(1)}K с.`}</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Top Products by Revenue */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-        <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'analytics_top_products')}</h3>
-        <div className="space-y-3">
+      {/* Advanced Analytics Section */}
+      <div className="space-y-6">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-900">Расширенная аналитика</h2>
+
+        <SalesForecast sales={filteredSales} days={30} />
+        <CustomerSegmentation customers={customers} sales={filteredSales} />
+        <ReportBuilder sales={filteredSales} customers={customers} products={products} business={business} lang={lang} />
+      </div>
+
+      {/* Top Products by Revenue - Moved to End */}
+      <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
+        <h3 className="font-semibold text-slate-900 text-sm md:text-base mb-4">{t(lang,'analytics_top_products')}</h3>
+        <div className="space-y-2 md:space-y-3">
           {(() => {
             const productStats = {};
             filteredSales.forEach(sale => {
@@ -386,40 +405,31 @@ export default function Analytics() {
                 if (!product) return null;
 
                 return (
-                  <div key={productId} className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold">
+                  <div key={productId} className="flex items-center gap-2 md:gap-4 p-2 md:p-4 bg-slate-50 rounded-xl">
+                    <div className="w-6 md:w-8 h-6 md:h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-xs md:text-base">
                       {index + 1}
                     </div>
                     {product.photo_url ? (
-                      <img src={product.photo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                      <img src={product.photo_url} alt="" className="w-8 md:w-12 h-8 md:h-12 rounded-lg object-cover flex-shrink-0" />
                     ) : (
-                      <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center">
-                        <Package className="w-6 h-6 text-slate-400" />
+                      <div className="w-8 md:w-12 h-8 md:h-12 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0">
+                        <Package className="w-4 md:w-6 h-4 md:h-6 text-slate-400" />
                       </div>
                     )}
-                    <div className="flex-1">
-                      <p className="font-medium text-slate-900">{product.brand} {product.model}</p>
-                      <p className="text-sm text-slate-500">{stats.boxes} {t(lang,'analytics_boxes_sold_label')}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-900 text-xs md:text-base truncate">{product.brand} {product.model}</p>
+                      <p className="text-xs text-slate-500">{stats.boxes} кор.</p>
                     </div>
-                    <div className="text-right">
-                       <p className="font-semibold text-slate-900">{hideData ? masked : stats.revenue.toLocaleString()} с.</p>
-                       <p className="text-sm text-emerald-600">+{hideData ? masked : stats.profit.toLocaleString()} с.</p>
-                     </div>
+                    <div className="text-right flex-shrink-0">
+                       <p className="font-semibold text-slate-900 text-xs md:text-base">{hideData ? masked : `${(stats.revenue / 1000).toFixed(0)}K`}</p>
+                       <p className="text-xs text-emerald-600">+{hideData ? masked : `${(stats.profit / 1000).toFixed(0)}K`}</p>
+                      </div>
                   </div>
                 );
               })
               .filter(Boolean);
           })()}
         </div>
-      </div>
-
-      {/* Advanced Analytics Section */}
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-slate-900">Расширенная аналитика</h2>
-        
-        <SalesForecast sales={filteredSales} days={30} />
-        <CustomerSegmentation customers={customers} sales={filteredSales} />
-        <ReportBuilder sales={filteredSales} customers={customers} products={products} business={business} lang={lang} />
       </div>
     </div>
   );
