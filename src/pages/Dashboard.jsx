@@ -150,11 +150,23 @@ export default function Dashboard() {
 
       {/* Date Filter */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+        <div className="flex flex-wrap items-center gap-3 justify-between">
+          <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+          <Button variant="outline" size="sm" onClick={() => setHideData(h => !h)} className="gap-1 text-xs">
+            {hideData ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+            {hideData ? 'Показать данные' : 'Скрыть данные'}
+          </Button>
+        </div>
       </div>
 
       {/* Dynamic Widgets */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {hideData && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 text-center text-slate-400">
+          <EyeOff className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          <p className="text-sm">Данные скрыты</p>
+        </div>
+      )}
+      {!hideData && <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {(widgets.length === 0 ? ['sales', 'profit', 'boxes', 'stock'] : widgets.filter(w => ['sales', 'profit', 'boxes', 'pairs', 'stock', 'debt', 'customers'].includes(w.widget_type))).map((widget) => {
           const widgetType = typeof widget === 'string' ? widget : widget.widget_type;
           
