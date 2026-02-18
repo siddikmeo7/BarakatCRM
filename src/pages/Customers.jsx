@@ -171,16 +171,74 @@ export default function Customers() {
 
       {/* Search */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <SearchInput 
-          value={search} 
-          onChange={setSearch} 
-          placeholder="Поиск по имени или телефону..."
-          className="max-w-md"
-        />
+        <div className="flex items-center gap-3">
+          <SearchInput 
+            value={search} 
+            onChange={setSearch} 
+            placeholder="Поиск по имени или телефону..."
+            className="max-w-md flex-1"
+          />
+          <ViewToggle view={view} onChange={setView} />
+        </div>
       </div>
 
-      {/* Customers Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Customers Grid/List */}
+      {view === 'list' && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Клиент</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Телефон</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Долг</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Оплачено</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">WhatsApp</th>
+                <th className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredCustomers.map(customer => {
+                const whatsappNum = customer.use_phone_for_all ? customer.phone : (customer.whatsapp || customer.phone);
+                return (
+                  <tr key={customer.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                          <span className="text-sm font-bold text-indigo-600">{customer.name?.charAt(0)?.toUpperCase()}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900">{customer.name}</p>
+                          {customer.address && <p className="text-xs text-slate-400">{customer.address}</p>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{customer.phone}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-orange-600">{(customer.total_debt || 0).toLocaleString()} с.</td>
+                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">{(customer.total_paid || 0).toLocaleString()} с.</td>
+                    <td className="px-4 py-3 text-center">
+                      <a href={`https://wa.me/${whatsappNum.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 hover:bg-green-100 rounded-lg text-green-700 text-xs">
+                        <MessageCircle className="w-3 h-3" /> WA
+                      </a>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1 justify-end">
+                        <button onClick={() => handleOpenDialog(customer)} className="p-1.5 hover:bg-slate-100 rounded-lg">
+                          <Edit2 className="w-4 h-4 text-slate-500" />
+                        </button>
+                        <button onClick={() => handleDelete(customer.id)} className="p-1.5 hover:bg-red-50 rounded-lg">
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {view === 'grid' && <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredCustomers.map(customer => {
           const whatsappNum = customer.use_phone_for_all ? customer.phone : (customer.whatsapp || customer.phone);
           const telegramNum = customer.use_phone_for_all ? customer.phone : (customer.telegram || customer.phone);
