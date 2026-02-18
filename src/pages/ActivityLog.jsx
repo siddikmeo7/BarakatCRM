@@ -252,6 +252,60 @@ export default function ActivityLog() {
           </div>
         )}
       </div>
+
+      {/* Detail Dialog */}
+      <Dialog open={!!detailLog} onOpenChange={() => setDetailLog(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Детали удалённого товара</DialogTitle>
+          </DialogHeader>
+          {detailLog?.entity_data && (() => {
+            const d = detailLog.entity_data;
+            const fields = [
+              { label: 'Бренд', value: d.brand },
+              { label: 'Модель', value: d.model },
+              { label: 'Тип товара', value: d.product_type },
+              { label: 'Цвет', value: d.color },
+              { label: 'Размер', value: d.size_from && d.size_to ? `${d.size_from} – ${d.size_to}` : null },
+              { label: 'Пар в коробке', value: d.pairs_per_box },
+              { label: 'Коробок на складе', value: d.boxes_in_stock },
+              { label: 'Цена закупки', value: d.purchase_price != null ? `${d.purchase_price.toLocaleString()} с.` : null },
+              { label: 'Цена продажи', value: d.sale_price != null ? `${d.sale_price.toLocaleString()} с.` : null },
+            ].filter(f => f.value != null && f.value !== '');
+            return (
+              <div className="space-y-4 py-2">
+                {d.photo_url && (
+                  <img src={d.photo_url} alt="" className="w-full h-48 object-cover rounded-xl" />
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  {fields.map(f => (
+                    <div key={f.label} className="bg-slate-50 rounded-xl p-3">
+                      <p className="text-xs text-slate-400 mb-1">{f.label}</p>
+                      <p className="font-semibold text-slate-800">{f.value}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-400 text-center">
+                  Удалено: {format(parseISO(detailLog.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })} • {detailLog.user_email}
+                </p>
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" className="flex-1 gap-2" onClick={() => setDetailLog(null)}>
+                    <ArrowLeft className="w-4 h-4" /> Назад
+                  </Button>
+                  {!detailLog.is_restored && (
+                    <Button
+                      className="flex-1 gap-2 bg-indigo-600 hover:bg-indigo-700"
+                      onClick={() => { handleRestore(detailLog); setDetailLog(null); }}
+                    >
+                      <RotateCcw className="w-4 h-4" /> Восстановить
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
