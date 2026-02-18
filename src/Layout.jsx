@@ -201,13 +201,13 @@ export default function Layout({ children, currentPageName }) {
           {/* Language indicator removed - change language in Settings */}
 
           {isAdmin && (
-            <div className="px-4 py-3 border-b border-slate-100">
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex gap-2">
                 <Link to={createPageUrl('Dashboard')} className="flex-1">
                   <Button 
                     variant={!isAdminPage ? "default" : "outline"} 
                     size="sm" 
-                    className={cn("w-full", !isAdminPage && "bg-indigo-600")}
+                    className={cn("w-full dark:bg-indigo-600 dark:hover:bg-indigo-700", !isAdminPage && "bg-indigo-600")}
                   >
                     {t(lang, 'nav_business')}
                   </Button>
@@ -216,7 +216,7 @@ export default function Layout({ children, currentPageName }) {
                   <Button 
                     variant={isAdminPage ? "default" : "outline"} 
                     size="sm" 
-                    className={cn("w-full", isAdminPage && "bg-indigo-600")}
+                    className={cn("w-full dark:bg-indigo-600 dark:hover:bg-indigo-700", isAdminPage && "bg-indigo-600")}
                   >
                     {t(lang, 'nav_admin_btn')}
                   </Button>
