@@ -265,18 +265,32 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       {/* Main Content */}
-      <main className="lg:pl-72 pt-16 lg:pt-0 min-h-screen">
-        <div className="p-4 lg:p-8">
+      <main className="lg:pl-72 pt-16 lg:pt-0 flex-1 overflow-auto pb-20 lg:pb-0" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <motion.div
+          key={currentPageName}
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -100 }}
+          transition={{ duration: 0.3 }}
+          className="p-4 lg:p-8 min-h-full"
+        >
           {/* Current Page Indicator */}
           {currentPageName && !['RegisterBusiness', 'AdminDashboard', 'AdminBusinesses'].includes(currentPageName) && (
-            <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
+            <div className="mb-4 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
               <LayoutDashboard className="w-4 h-4" />
               <span>{t(lang, currentMenu.find(item => item.name === currentPageName)?.labelKey) || currentPageName}</span>
             </div>
           )}
           {children}
-        </div>
+        </motion.div>
       </main>
+
+      {/* Bottom Navigation - Mobile Only */}
+      <BottomNavigation 
+        currentPageName={currentPageName}
+        menuItems={currentMenu}
+        lang={lang}
+      />
     </div>
   );
 }
