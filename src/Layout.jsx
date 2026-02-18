@@ -20,7 +20,8 @@ import {
   TrendingUp,
   History,
   Globe,
-  ChevronLeft
+  ChevronLeft,
+  MoreVertical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BottomNavigation from '@/components/ui/BottomNavigation';
@@ -121,6 +122,10 @@ export default function Layout({ children, currentPageName }) {
   const menuItems = getMenuItems(lang);
   const adminMenuItems = getAdminMenuItems(lang);
   const currentMenu = isAdmin && isAdminPage ? adminMenuItems : menuItems;
+  
+  // Bottom nav for mobile (first 5 items)
+  const bottomNavItems = currentMenu.slice(0, 5);
+  const moreMenuItems = currentMenu.slice(5);
 
   const changeLang = async (newLang) => {
     setLang(newLang);
@@ -145,6 +150,56 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col lg:flex-row">
+      {/* Mobile Header */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-40 flex items-center justify-between px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <Package className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-slate-900 dark:text-white text-sm">BarakatCRM</span>
+        </div>
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+          <MoreVertical className="w-5 h-5 text-slate-700 dark:text-slate-200" />
+        </button>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {sidebarOpen && <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />}
+
+      {/* Mobile Menu Sidebar */}
+      <aside className={cn(
+        "lg:hidden fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 transition-transform duration-300 overflow-y-auto",
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="h-14 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
+          <span className="font-bold text-slate-900 dark:text-white">Меню</span>
+          <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <nav className="py-4 px-3">
+          {currentMenu.map((item) => {
+            const isActive = currentPageName === item.name;
+            return (
+              <Link
+                key={item.name}
+                to={createPageUrl(item.name)}
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 mb-1",
+                  isActive 
+                    ? "bg-indigo-600 text-white" 
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                )}
+              >
+                <item.icon className="w-5 h-5" />
+                <span className="font-medium text-sm">{t(lang, item.labelKey)}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+
       {/* Desktop Sidebar */}
       <aside className={cn(
         "hidden lg:flex flex-col h-screen w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 fixed"
@@ -222,7 +277,7 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col lg:pl-72 pb-20 lg:pb-0 overflow-hidden">
+      <main className="flex-1 flex flex-col lg:pl-72 pt-14 lg:pt-0 pb-16 lg:pb-0 overflow-hidden">
         {/* Desktop Header */}
         <div className="hidden lg:block h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 flex items-center">
           <div className="flex items-center gap-2">
