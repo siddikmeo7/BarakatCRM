@@ -138,6 +138,17 @@ export default function Sales() {
             total_debt: (customer.total_debt || 0) + remainingDebt,
             total_paid: (customer.total_paid || 0) + partialPay
           });
+          // Отправить сообщение в WhatsApp автоматически
+          if (remainingDebt > 0 && customer.phone) {
+            const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
+              phone: customer.phone,
+              customer_name: customer.name,
+              remaining_debt: (customer.total_debt || 0) + remainingDebt,
+              business_name: business.name,
+              type: 'new_debt'
+            });
+            if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
+          }
         }
       }
       
