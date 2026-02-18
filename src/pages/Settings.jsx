@@ -716,6 +716,7 @@ export default function Settings() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
             </div>
           </CollapsibleContent>
         </Collapsible>
