@@ -139,10 +139,11 @@ export default function Warehouses() {
     
     const totalBoxes = warehouseProducts.reduce((sum, p) => sum + (p.boxes_in_stock || 0), 0);
     const totalValue = warehouseProducts.reduce((sum, p) => sum + ((p.boxes_in_stock || 0) * (p.sale_price || 0)), 0);
+    const totalWholesaleValue = warehouseProducts.reduce((sum, p) => sum + ((p.boxes_in_stock || 0) * (p.purchase_price || 0)), 0);
     const soldBoxes = warehouseSales.reduce((sum, s) => sum + (s.boxes_sold || 0), 0);
     const revenue = warehouseSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
     
-    return { totalBoxes, totalValue, soldBoxes, revenue, productsCount: warehouseProducts.length };
+    return { totalBoxes, totalValue, totalWholesaleValue, soldBoxes, revenue, productsCount: warehouseProducts.length };
   };
 
   const filteredWarehouses = warehouses.filter(wh =>
