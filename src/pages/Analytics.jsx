@@ -112,13 +112,15 @@ export default function Analytics() {
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
-        const [salesData, productsData] = await Promise.all([
+        const [salesData, productsData, customersData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
-          base44.entities.Product.filter({ business_id: biz.id })
+          base44.entities.Product.filter({ business_id: biz.id }),
+          base44.entities.Customer.filter({ business_id: biz.id })
         ]);
         
         setSales(salesData);
         setProducts(productsData);
+        setCustomers(customersData);
       }
     } catch (error) {
       console.error('Error loading data:', error);
