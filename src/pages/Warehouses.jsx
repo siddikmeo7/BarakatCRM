@@ -352,8 +352,12 @@ export default function Warehouses() {
                   <WarehouseIconComp iconKey={selectedWarehouse.icon} className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">{selectedWarehouse.name}</h2>
-                  {selectedWarehouse.address && <p className="text-sm text-slate-500">{selectedWarehouse.address}</p>}
+                   <h2 className="text-xl font-bold text-slate-900">{selectedWarehouse.name}</h2>
+                   {selectedWarehouse.address && <p className="text-sm text-slate-500">{selectedWarehouse.address}</p>}
+                   <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
+                     <Calendar className="w-3 h-3" />
+                     {selectedWarehouse.created_date ? format(parseISO(selectedWarehouse.created_date), 'dd MMM yyyy') : ''}
+                   </p>
                 </div>
               </div>
             </div>
