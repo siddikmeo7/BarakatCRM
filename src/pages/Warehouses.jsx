@@ -306,9 +306,12 @@ export default function Warehouses() {
                           <WarehouseIconComp iconKey={warehouse.icon} className="w-4 h-4 text-purple-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900">{warehouse.name}</p>
-                          {warehouse.address && <p className="text-xs text-slate-500">{warehouse.address}</p>}
-                        </div>
+                           <p className="font-medium text-slate-900">{warehouse.name}</p>
+                           {warehouse.address && <p className="text-xs text-slate-500">{warehouse.address}</p>}
+                           <p className="text-[11px] text-slate-400 mt-0.5">
+                             {warehouse.created_date ? format(parseISO(warehouse.created_date), 'dd MMM yyyy') : ''}
+                           </p>
+                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-900">{stats.productsCount}</td>
