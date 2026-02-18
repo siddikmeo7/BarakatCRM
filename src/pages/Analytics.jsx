@@ -276,7 +276,7 @@ export default function Analytics() {
         />
         <StatCard
           title="Маржа прибыли"
-          value={`${profitMargin}%`}
+          value={hideData ? masked : `${profitMargin}%`}
           icon={Percent}
           iconBg="bg-purple-100"
           iconColor="text-purple-600"
