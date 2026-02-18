@@ -201,7 +201,23 @@ export default function Settings() {
       <PageHeader 
         title="Настройки"
         subtitle="Управление настройками бизнеса"
-        actions={
+      />
+
+      {/* Аккаунт карточка */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
+              <span className="text-white font-bold text-lg">
+                {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
+              </span>
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">{user?.full_name || 'Пользователь'}</p>
+              <p className="text-sm text-slate-500">{user?.email}</p>
+              <p className="text-xs text-slate-400">{user?.role === 'admin' ? 'Администратор' : 'Пользователь'}</p>
+            </div>
+          </div>
           <Button 
             variant="outline" 
             className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
@@ -214,8 +230,8 @@ export default function Settings() {
             <LogOut className="w-4 h-4" />
             Выйти
           </Button>
-        }
-      />
+        </div>
+      </div>
 
       <Tabs defaultValue="business" className="space-y-6">
         <TabsList className="bg-white border border-slate-200 p-1 flex-wrap">
