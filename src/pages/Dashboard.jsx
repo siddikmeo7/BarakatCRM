@@ -191,7 +191,6 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Charts & Analytics */}
       {!hideData && (widgets.length === 0 || widgets.some(w => ['chart_sales', 'sales_type'].includes(w.widget_type))) && (
         <div className="grid lg:grid-cols-2 gap-6">
           {(widgets.length === 0 || widgets.some(w => w.widget_type === 'chart_sales')) && (
@@ -236,7 +235,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Top Products & Quick Actions */}
       {!hideData && (widgets.length === 0 || widgets.some(w => w.widget_type === 'top_products')) && (
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Top Products */}
