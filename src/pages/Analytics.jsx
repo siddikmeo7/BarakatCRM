@@ -13,7 +13,8 @@ import {
   Package,
   Percent,
   Clock,
-  Settings2
+  Settings2,
+  RefreshCw
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -21,13 +22,9 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format } from 'date-fns';
 
-const EXCHANGE_RATES = {
-  TJS: 1,
-  USD: 0.091,
-  RUB: 8.5,
-  EUR: 0.084,
-  CNY: 0.66
-};
+const DEFAULT_RATES = { TJS: 1, USD: 0.091, RUB: 8.5, EUR: 0.084, CNY: 0.66 };
+const RATES_CACHE_KEY = 'exchange_rates_cache';
+const RATES_DATE_KEY = 'exchange_rates_date';
 
 export default function Analytics() {
   const [business, setBusiness] = useState(null);
@@ -37,7 +34,10 @@ export default function Analytics() {
   const [currency, setCurrency] = useState('TJS');
   const [showTime, setShowTime] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [chartType, setChartType] = useState('line'); // line, bar, area
+  const [chartType, setChartType] = useState('line');
+  const [exchangeRates, setExchangeRates] = useState(DEFAULT_RATES);
+  const [ratesLoading, setRatesLoading] = useState(false);
+  const [ratesDate, setRatesDate] = useState(null);
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
@@ -50,7 +50,61 @@ export default function Analytics() {
 
   useEffect(() => {
     loadData();
+    loadExchangeRates(false);
   }, []);
+
+  const loadExchangeRates = async (forceRefresh = false) => {
+    const today = new Date().toDateString();
+    const cached = localStorage.getItem(RATES_CACHE_KEY);
+    const cachedDate = localStorage.getItem(RATES_DATE_KEY);
+
+    if (!forceRefresh && cached && cachedDate === today) {
+      setExchangeRates(JSON.parse(cached));
+      setRatesDate(cachedDate);
+      return;
+    }
+
+    setRatesLoading(true);
+    try {
+      // TJS base rates via exchangerate-api (free tier)
+      const res = await fetch('https://open.er-api.com/v6/latest/TJS');
+      const data = await res.json();
+      if (data.result === 'success') {
+        const rates = {
+          TJS: 1,
+          USD: 1 / data.rates.USD,   // TJS per USD
+          RUB: 1 / data.rates.RUB,
+          EUR: 1 / data.rates.EUR,
+          CNY: 1 / data.rates.CNY
+        };
+        // We want: how many USD does 1 TJS = ? → 1/rates.USD
+        const converted = {
+          TJS: 1,
+          USD: data.rates.USD ? parseFloat((1 / data.rates.USD).toFixed(6)) : DEFAULT_RATES.USD,
+          RUB: data.rates.RUB ? parseFloat((data.rates.RUB / data.rates.USD * 0.011).toFixed(6)) : DEFAULT_RATES.RUB,
+          EUR: data.rates.EUR ? parseFloat((1 / data.rates.EUR).toFixed(6)) : DEFAULT_RATES.EUR,
+          CNY: data.rates.CNY ? parseFloat((data.rates.CNY / data.rates.USD * 0.011).toFixed(6)) : DEFAULT_RATES.CNY
+        };
+        // Simpler: 1 TJS → X foreign
+        const simple = {
+          TJS: 1,
+          USD: parseFloat((1 / data.rates.USD).toFixed(5)),
+          RUB: parseFloat((data.rates.RUB / data.rates.USD / (1 / data.rates.USD)).toFixed(4)),
+          EUR: parseFloat((1 / data.rates.EUR).toFixed(5)),
+          CNY: parseFloat((1 / data.rates.CNY).toFixed(5))
+        };
+        setExchangeRates(simple);
+        localStorage.setItem(RATES_CACHE_KEY, JSON.stringify(simple));
+        localStorage.setItem(RATES_DATE_KEY, today);
+        setRatesDate(today);
+      }
+    } catch (e) {
+      // fallback to defaults
+      setExchangeRates(DEFAULT_RATES);
+    } finally {
+      setRatesLoading(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -118,7 +172,7 @@ export default function Analytics() {
   }
 
   const convertCurrency = (amount) => {
-    return (amount * EXCHANGE_RATES[currency]).toFixed(2);
+    return (amount * (exchangeRates[currency] || DEFAULT_RATES[currency] || 1)).toFixed(2);
   };
 
   const getCurrencySymbol = () => {
@@ -151,18 +205,36 @@ export default function Analytics() {
         <div className="flex flex-wrap items-center gap-4 justify-between">
           <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
           <div className="flex items-center gap-4">
-            <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="TJS">Сомони (с.)</SelectItem>
-                <SelectItem value="USD">Доллар ($)</SelectItem>
-                <SelectItem value="RUB">Рубль (₽)</SelectItem>
-                <SelectItem value="EUR">Евро (€)</SelectItem>
-                <SelectItem value="CNY">Юань (¥)</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TJS">Сомони (с.)</SelectItem>
+                  <SelectItem value="USD">Доллар ($)</SelectItem>
+                  <SelectItem value="RUB">Рубль (₽)</SelectItem>
+                  <SelectItem value="EUR">Евро (€)</SelectItem>
+                  <SelectItem value="CNY">Юань (¥)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadExchangeRates(true)}
+                disabled={ratesLoading}
+                className="gap-1 text-xs"
+                title="Обновить курс валют"
+              >
+                <RefreshCw className={`w-3 h-3 ${ratesLoading ? 'animate-spin' : ''}`} />
+                {ratesLoading ? 'Загрузка...' : 'Обновить курс'}
+              </Button>
+            </div>
+            {ratesDate && currency !== 'TJS' && (
+              <span className="text-xs text-slate-400">
+                1 с. = {exchangeRates[currency]} {currency} · {ratesDate}
+              </span>
+            )}
             <Select value={chartType} onValueChange={setChartType}>
               <SelectTrigger className="w-32">
                 <SelectValue />
