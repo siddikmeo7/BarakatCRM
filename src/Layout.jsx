@@ -238,7 +238,7 @@ export default function Layout({ children, currentPageName }) {
           {currentPageName && !['RegisterBusiness', 'AdminDashboard', 'AdminBusinesses'].includes(currentPageName) && (
             <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
               <LayoutDashboard className="w-4 h-4" />
-              <span>{currentMenu.find(item => item.name === currentPageName)?.label || currentPageName}</span>
+              <span>{t(lang, currentMenu.find(item => item.name === currentPageName)?.labelKey) || currentPageName}</span>
             </div>
           )}
           {children}
