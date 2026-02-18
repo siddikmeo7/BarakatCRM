@@ -296,46 +296,55 @@ export default function Warehouses() {
                     <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Коробок</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Пар</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Штук</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Стоимость</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Оптовая стоимость</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Потенц. прибыль</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Стоимость продажи</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {warehouseProducts.map(product => {
-                    const pairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);
-                    const items = pairs * 2;
-                    const value = (product.boxes_in_stock || 0) * (product.sale_price || 0);
-                    
-                    return (
-                      <tr 
-                        key={product.id} 
-                        className="hover:bg-slate-50 cursor-pointer"
-                        onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + product.id}
-                      >
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            {product.photo_url ? (
-                              <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                            ) : (
-                              <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                                <Package className="w-5 h-5 text-slate-400" />
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-medium text-slate-900">{product.brand}</p>
-                              <p className="text-sm text-slate-500">{product.model}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center font-semibold text-indigo-600">
-                          {product.boxes_in_stock || 0}
-                        </td>
-                        <td className="px-4 py-3 text-center text-slate-600">{pairs}</td>
-                        <td className="px-4 py-3 text-center text-slate-600">{items}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-emerald-600">
-                          {value.toLocaleString()} с.
-                        </td>
-                      </tr>
-                    );
+                   const boxes = product.boxes_in_stock || 0;
+                   const pairs = boxes * (product.pairs_per_box || 6);
+                   const items = pairs * 2;
+                   const wholesaleValue = boxes * (product.purchase_price || 0);
+                   const saleValue = boxes * (product.sale_price || 0);
+                   const potentialProfit = saleValue - wholesaleValue;
+
+                   return (
+                     <tr 
+                       key={product.id} 
+                       className="hover:bg-slate-50 cursor-pointer"
+                       onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + product.id}
+                     >
+                       <td className="px-4 py-3">
+                         <div className="flex items-center gap-3">
+                           {product.photo_url ? (
+                             <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                           ) : (
+                             <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                               <Package className="w-5 h-5 text-slate-400" />
+                             </div>
+                           )}
+                           <div>
+                             <p className="font-medium text-slate-900">{product.brand}</p>
+                             <p className="text-sm text-slate-500">{product.model}</p>
+                           </div>
+                         </div>
+                       </td>
+                       <td className="px-4 py-3 text-center font-semibold text-indigo-600">{boxes}</td>
+                       <td className="px-4 py-3 text-center text-slate-600">{pairs}</td>
+                       <td className="px-4 py-3 text-center text-slate-600">{items}</td>
+                       <td className="px-4 py-3 text-right font-semibold text-slate-700">
+                         {wholesaleValue.toLocaleString()} с.
+                       </td>
+                       <td className="px-4 py-3 text-right font-semibold text-emerald-600">
+                         +{potentialProfit.toLocaleString()} с.
+                       </td>
+                       <td className="px-4 py-3 text-right font-semibold text-blue-600">
+                         {saleValue.toLocaleString()} с.
+                       </td>
+                     </tr>
+                   );
                   })}
                 </tbody>
               </table>
