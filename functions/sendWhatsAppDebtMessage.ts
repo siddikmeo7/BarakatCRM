@@ -24,24 +24,36 @@ Deno.serve(async (req) => {
     const debtAmount = Number(remaining_debt) || 0;
     const bizName = business_name || 'Магазин';
 
+    const totalDebt = Number(total_debt) || 0;
+    const paidAmt = Number(paid_amount) || 0;
+
     let message = '';
     if (type === 'new_debt') {
       message = `Ассалому алайкум, ${customer_name}! 👋\n\n` +
         `${bizName} хабар медиҳад:\n` +
         `Шумо қарздор шудед.\n` +
-        `Қарзи умумии шумо: *${debtAmount.toLocaleString()} с.*\n\n` +
+        (product_name ? `Товор: ${product_name}\n` : '') +
+        `Умумии қарз: *${totalDebt.toLocaleString()} с.*\n` +
+        `Адо кардаед: *${paidAmt.toLocaleString()} с.*\n` +
+        `Боқимонда: *${debtAmount.toLocaleString()} с.*\n\n` +
         `Барои саволҳо бо мо тамос гиред. Раҳмат! 🙏`;
     } else if (type === 'payment') {
       message = `Ассалому алайкум, ${customer_name}! 👋\n\n` +
         `${bizName} хабар медиҳад:\n` +
         `Пардохти шумо қабул шуд ✅\n` +
-        `Боқимондаи қарз: *${debtAmount.toLocaleString()} с.*\n\n` +
+        (product_name ? `Товор: ${product_name}\n` : '') +
+        `Умумии қарз: *${totalDebt.toLocaleString()} с.*\n` +
+        `Адо кардаед: *${paidAmt.toLocaleString()} с.*\n` +
+        `Боқимонда: *${debtAmount.toLocaleString()} с.*\n\n` +
         (debtAmount <= 0 ? `Қарзи шумо пурра адо шуд! Ташаккур! 🎉` : `Ташаккур барои пардохт! 🙏`);
     } else {
       // reminder
       message = `Ассалому алайкум, ${customer_name}! 👋\n\n` +
         `${bizName} ёдоварӣ мекунад:\n` +
-        `Қарзи умумии шумо: *${debtAmount.toLocaleString()} с.*\n\n` +
+        (product_name ? `Товор: ${product_name}\n` : '') +
+        `Умумии қарз: *${totalDebt.toLocaleString()} с.*\n` +
+        `Адо кардаед: *${paidAmt.toLocaleString()} с.*\n` +
+        `Боқимонда: *${debtAmount.toLocaleString()} с.*\n\n` +
         `Лутфан қарзи худро адо кунед. Раҳмат! 🙏`;
     }
 
