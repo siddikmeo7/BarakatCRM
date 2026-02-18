@@ -811,38 +811,63 @@ export default function Settings() {
                 </div>
               </div>
 
+              {/* Резервное копирование */}
               <div className="p-4 border border-amber-200 bg-amber-50 rounded-xl">
                 <div className="flex items-start gap-3">
-                  <Bell className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div>
+                  <Download className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
                     <h4 className="font-semibold text-amber-900 mb-1">Резервное копирование</h4>
                     <p className="text-sm text-amber-700 mb-3">
-                      Рекомендуем регулярно создавать резервные копии ваших данных
+                      Скачать все данные бизнеса в формате JSON (продажи, товары, клиенты и т.д.)
                     </p>
-                    <Button variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
-                      Создать резервную копию
+                    <Button
+                      onClick={handleBackup}
+                      disabled={backupLoading}
+                      variant="outline"
+                      className="text-amber-700 border-amber-300 hover:bg-amber-100 gap-2"
+                    >
+                      {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                      Скачать резервную копию
                     </Button>
                   </div>
                 </div>
               </div>
 
+              {/* Очистить кэш */}
+              <div className="p-4 border border-blue-200 bg-blue-50 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <RefreshCw className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-blue-900 mb-1">Очистить кэш</h4>
+                    <p className="text-sm text-blue-700 mb-3">
+                      Удалить временные данные приложения (курсы валют, сессии). Данные бизнеса не затрагиваются.
+                    </p>
+                    <Button
+                      onClick={handleClearCache}
+                      disabled={clearingCache}
+                      variant="outline"
+                      className="text-blue-700 border-blue-300 hover:bg-blue-100 gap-2"
+                    >
+                      {clearingCache ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                      Очистить кэш
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Удаление всех данных */}
               <div className="p-4 border border-red-200 bg-red-50 rounded-xl">
-                <h4 className="font-semibold text-red-900 mb-2">Удаление данных</h4>
+                <h4 className="font-semibold text-red-900 mb-2">⚠️ Удаление всех данных</h4>
                 <p className="text-sm text-red-700 mb-3">
-                  Удаление всех данных бизнеса. Это действие необратимо!
+                  Безвозвратно удалить все продажи, товары, клиентов, склады бизнеса. Перед этим создайте резервную копию!
                 </p>
-                <Button 
-                  variant="outline" 
-                  className="text-red-700 border-red-300 hover:bg-red-100"
-                  onClick={() => {
-                    if (confirm('Вы уверены? Все данные будут безвозвратно удалены!')) {
-                      if (confirm('Это последнее предупреждение! Вы точно хотите удалить все данные?')) {
-                        alert('Функция удаления временно недоступна. Обратитесь в поддержку.');
-                      }
-                    }
-                  }}
+                <Button
+                  variant="outline"
+                  className="text-red-700 border-red-300 hover:bg-red-100 gap-2"
+                  onClick={handleDeleteAllData}
                 >
-                  Удалить все данные
+                  <Trash2 className="w-4 h-4" />
+                  Удалить все данные бизнеса
                 </Button>
               </div>
             </div>
