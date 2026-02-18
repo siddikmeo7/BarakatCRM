@@ -142,15 +142,7 @@ export default function Layout({ children, currentPageName }) {
             </button>
           </div>
 
-          {/* Business Info */}
-          {business && !isAdminPage && (
-            <div className="px-4 py-4 border-b border-slate-100">
-              <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4">
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Бизнес</p>
-                <p className="font-semibold text-slate-900 truncate">{business.name}</p>
-              </div>
-            </div>
-          )}
+          {/* Business name removed — shown in Settings */}
 
           {/* Admin Toggle */}
           {isAdmin && (

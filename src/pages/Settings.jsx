@@ -27,7 +27,9 @@ import {
   Download,
   Shield,
   RotateCcw,
-  AlertCircle
+  AlertCircle,
+  DatabaseBackup,
+  RefreshCw
 } from 'lucide-react';
 
 const LANGUAGES = [
@@ -46,6 +48,8 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [clearingCache, setClearingCache] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
