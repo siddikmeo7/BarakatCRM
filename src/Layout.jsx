@@ -251,14 +251,14 @@ export default function Layout({ children, currentPageName }) {
           </nav>
 
           {/* Bottom spacer */}
-          <div className="p-4 border-t border-slate-100">
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0">
-                <span className="text-indigo-600 font-semibold text-sm">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center flex-shrink-0">
+                <span className="text-indigo-600 dark:text-indigo-400 font-semibold text-sm">
                   {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
                 </span>
               </div>
-              <p className="text-sm text-slate-500 truncate">{user?.full_name || user?.email}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{user?.full_name || user?.email}</p>
             </div>
           </div>
         </div>
