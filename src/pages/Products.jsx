@@ -664,7 +664,7 @@ export default function Products() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
     </PullToRefresh>
+    </div>
   );
 }

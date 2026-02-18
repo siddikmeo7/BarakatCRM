@@ -754,7 +754,7 @@ export default function Sales() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
     </PullToRefresh>
+    </div>
   );
 }

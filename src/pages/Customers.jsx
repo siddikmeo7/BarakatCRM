@@ -454,7 +454,7 @@ export default function Customers() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
     </PullToRefresh>
+    </div>
   );
 }
