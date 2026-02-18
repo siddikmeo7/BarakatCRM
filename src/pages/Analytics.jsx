@@ -203,26 +203,20 @@ export default function Analytics() {
         }
       />
 
-      {/* Date Filter & Time */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-        {/* Top row: Clock + Hide button */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-lg">
-            <Clock className="w-4 h-4 text-indigo-600" />
-            <span className="font-semibold text-indigo-900 tabular-nums">
-              {format(currentTime, 'HH:mm:ss')} • {format(currentTime, 'dd MMM yyyy')}
-            </span>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setHideData(h => !h)}
-            className="gap-2"
-          >
-            {hideData ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            {hideData ? t(lang,'analytics_show') : t(lang,'analytics_hide')}
-          </Button>
-        </div>
+      {/* Date Filter & Hide button */}
+       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+         {/* Top row: Hide button */}
+         <div className="flex items-center justify-end">
+           <Button
+             variant="outline"
+             size="sm"
+             onClick={() => setHideData(h => !h)}
+             className="gap-2"
+           >
+             {hideData ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+             {hideData ? t(lang,'analytics_show') : t(lang,'analytics_hide')}
+           </Button>
+         </div>
         {/* Bottom row: filters */}
         <div className="flex flex-wrap items-center gap-3">
           <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />

@@ -199,8 +199,8 @@ export default function Layout({ children, currentPageName }) {
           </div>
         )}
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3">
-          <div className="space-y-1">
+        <nav className="flex-1 overflow-y-auto py-2 px-2">
+          <div className="space-y-0.5">
             {currentMenu.map((item) => {
               const isActive = currentPageName === item.name;
               return (
@@ -208,14 +208,14 @@ export default function Layout({ children, currentPageName }) {
                   key={item.name}
                   to={createPageUrl(item.name)}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 user-select-none",
+                    "flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all duration-200 user-select-none",
                     isActive 
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
                       : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                   )}
                 >
-                  <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-400 dark:text-slate-500")} />
-                  <span className="font-medium">{t(lang, item.labelKey)}</span>
+                  <item.icon className={cn("w-4 h-4 flex-shrink-0", isActive ? "text-white" : "text-slate-400 dark:text-slate-500")} />
+                  <span className="font-medium truncate">{t(lang, item.labelKey)}</span>
                 </Link>
               );
             })}

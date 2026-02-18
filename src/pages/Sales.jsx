@@ -341,7 +341,7 @@ export default function Sales() {
       {view === 'list' ? (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {/* Desktop */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-96">
           <table className="w-full">
             <thead className="bg-slate-50">
               <tr>

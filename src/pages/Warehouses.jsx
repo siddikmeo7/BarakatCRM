@@ -277,6 +277,7 @@ export default function Warehouses() {
           </div>
           ) : !selectedWarehouse && view === 'list' ? (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto overflow-y-auto max-h-96">
           <table className="w-full">
             <thead className="bg-slate-50">
               <tr>
@@ -328,9 +329,10 @@ export default function Warehouses() {
                 );
               })}
             </tbody>
-          </table>
-          </div>
-          ) : (
+            </table>
+            </div>
+            </div>
+            ) : (
           /* Warehouse Details */
         <div className="space-y-6">
           <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -392,7 +394,7 @@ export default function Warehouses() {
             <div className="p-4 border-b border-slate-100">
               <h3 className="font-semibold text-slate-900">Товары на складе</h3>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-auto max-h-96">
               <table className="w-full">
                 <thead className="bg-slate-50">
                   <tr>

@@ -367,6 +367,7 @@ export default function Products() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto overflow-y-auto max-h-96">
           <table className="w-full">
             <thead className="bg-slate-50">
               <tr>
@@ -424,9 +425,10 @@ export default function Products() {
                 );
               })}
             </tbody>
-          </table>
-        </div>
-      )}
+            </table>
+            </div>
+            </div>
+            )}
 
       {filteredProducts.length === 0 && (
         <div className="text-center py-12">
