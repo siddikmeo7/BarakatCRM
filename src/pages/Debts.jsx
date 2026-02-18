@@ -111,10 +111,22 @@ export default function Debts() {
 
       // Обновляем данные клиента
       if (customer) {
+        const newDebt = Math.max(0, (customer.total_debt || 0) - amount);
         await base44.entities.Customer.update(customer.id, {
-          total_debt: Math.max(0, (customer.total_debt || 0) - amount),
+          total_debt: newDebt,
           total_paid: (customer.total_paid || 0) + amount
         });
+        // Отправить WhatsApp сообщение при погашении
+        if (customer.phone) {
+          const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
+            phone: customer.phone,
+            customer_name: customer.name,
+            remaining_debt: newDebt,
+            business_name: business?.name,
+            type: 'payment'
+          });
+          if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
+        }
       }
 
       await loadData();
