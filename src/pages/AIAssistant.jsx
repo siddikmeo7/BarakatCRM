@@ -354,33 +354,35 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
         </div>
 
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto py-2 px-2 space-y-1">
-          {chats.length === 0 && (
-            <p className="text-slate-500 dark:text-slate-400 text-xs text-center py-8">{t(lang, 'ai_create_chat')}</p>
-          )}
-          {chats.map(chat => (
-            <div
-              key={chat.id}
-              onClick={() => selectChat(chat)}
-              className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                activeChat?.id === chat.id
-                  ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-100'
-                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <MessageSquare className={`w-4 h-4 flex-shrink-0 ${activeChat?.id === chat.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
-              <span className="flex-1 truncate text-sm">
-                {chat.title || t(lang, 'ai_new_chat')}
-              </span>
-              <button
-                onClick={(e) => deleteChat(e, chat.id)}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-opacity flex-shrink-0"
+        {showChatHistory && (
+          <div className="flex-1 overflow-y-auto py-2 px-2 space-y-1">
+            {chats.length === 0 && (
+              <p className="text-slate-500 dark:text-slate-400 text-xs text-center py-8">{t(lang, 'ai_create_chat')}</p>
+            )}
+            {chats.map(chat => (
+              <div
+                key={chat.id}
+                onClick={() => selectChat(chat)}
+                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                  activeChat?.id === chat.id
+                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-100'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
               >
-                <Trash2 className="w-3.5 h-3.5 text-red-500" />
-              </button>
-            </div>
-          ))}
-        </div>
+                <MessageSquare className={`w-4 h-4 flex-shrink-0 ${activeChat?.id === chat.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
+                <span className="flex-1 truncate text-sm">
+                  {chat.title || t(lang, 'ai_new_chat')}
+                </span>
+                <button
+                  onClick={(e) => deleteChat(e, chat.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-opacity flex-shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Sidebar footer */}
         <div className="p-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
