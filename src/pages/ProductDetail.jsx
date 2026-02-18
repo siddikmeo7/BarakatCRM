@@ -134,7 +134,7 @@ export default function ProductDetail() {
                 <p className="text-sm text-slate-500">Дата добавления</p>
                 <div className="flex items-center gap-2 font-medium text-slate-900">
                   <Calendar className="w-4 h-4 text-slate-400" />
-                  {product.created_date ? format(parseISO(product.created_date), 'dd MMM yyyy', { locale: ru }) : '—'}
+                  {product.created_date ? format(parseISO(product.created_date), 'dd MMM yyyy, HH:mm', { locale: ru }) : '—'}
                 </div>
               </div>
             </div>
