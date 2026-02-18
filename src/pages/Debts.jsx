@@ -165,6 +165,11 @@ export default function Debts() {
     }
   };
 
+  const openCustomerDetail = (customer) => {
+    setSelectedCustomerDetail(customer);
+    setCustomerDetailOpen(true);
+  };
+
   const sendToAllDebtors = async () => {
     const debtors = customers.filter(c => (c.total_debt || 0) > 0);
     for (const c of debtors) {
