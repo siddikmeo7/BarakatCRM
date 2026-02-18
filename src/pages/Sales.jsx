@@ -21,8 +21,11 @@ import {
   TrendingUp,
   Loader2,
   Search,
-  ChevronRight
+  ChevronRight,
+  Grid3x3,
+  List
 } from 'lucide-react';
+import ViewToggle from '@/components/ui/ViewToggle';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { t } from '@/components/i18n/translations';
 import { ru } from 'date-fns/locale';
@@ -46,6 +49,7 @@ export default function Sales() {
   });
   const [displayUnit, setDisplayUnit] = useState('boxes'); // boxes, pairs, items
   const [sortBy, setSortBy] = useState('date'); // date, amount, profit, boxes
+  const [view, setView] = useState('list'); // list, grid
   
   const [formData, setFormData] = useState({
     product_id: '',
@@ -277,7 +281,10 @@ export default function Sales() {
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-4">
-        <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+        <div className="flex items-center justify-between">
+          <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+          <ViewToggle view={view} onChange={setView} />
+        </div>
         <div className="flex flex-wrap items-center gap-4">
           <SearchInput 
             value={search} 
@@ -320,7 +327,8 @@ export default function Sales() {
         </div>
       </div>
 
-      {/* Sales List — Mobile Cards + Desktop Table */}
+      {/* Sales List/Grid */}
+      {view === 'list' ? (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {/* Desktop */}
         <div className="hidden md:block overflow-x-auto">
@@ -448,7 +456,65 @@ export default function Sales() {
             <p>{t(lang,'sales_not_found')}</p>
           </div>
         )}
-      </div>
+        </div>
+        ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredSales.map(sale => {
+          const product = products.find(p => p.id === sale.product_id);
+          const customer = customers.find(c => c.id === sale.customer_id);
+          const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
+                            displayUnit === 'pairs' ? sale.pairs_sold : sale.items_sold;
+          return (
+            <div
+              key={sale.id}
+              onClick={() => setSelectedSale(sale)}
+              className={`p-4 bg-white rounded-xl border border-slate-100 hover:shadow-md transition cursor-pointer ${sale.is_cancelled ? 'opacity-50' : ''}`}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                {product?.photo_url ? (
+                  <img src={product.photo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center">
+                    <Package className="w-6 h-6 text-slate-400" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-slate-900 text-sm truncate">{product?.brand} {product?.model}</p>
+                  <p className="text-xs text-slate-500">
+                    {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy')}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Сумма:</span>
+                  <span className="font-semibold text-slate-900">{sale.total_amount?.toLocaleString()} с.</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Прибыль:</span>
+                  <span className="font-semibold text-emerald-600">+{sale.profit?.toLocaleString()} с.</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">{displayUnit === 'boxes' ? 'Кор.' : displayUnit === 'pairs' ? 'Пар' : 'Шт'}:</span>
+                  <span className="font-semibold text-indigo-600">{displayQty}</span>
+                </div>
+                <div className="pt-2 border-t border-slate-100">
+                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                    {sale.is_debt ? `${t(lang,'sales_in_debt')}${customer?.name ? ` (${customer.name})` : ''}` : t(lang,'sales_cash')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        </div>
+        )}
+        {filteredSales.length === 0 && view === 'grid' && (
+        <div className="text-center py-12 text-slate-500">
+          <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+          <p>{t(lang,'sales_not_found')}</p>
+        </div>
+        )}
 
       {/* Sale Detail Dialog */}
       {selectedSale && (

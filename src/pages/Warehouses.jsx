@@ -22,8 +22,11 @@ import {
   Store,
   Loader2,
   ChevronRight,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Grid3x3,
+  List
 } from 'lucide-react';
+import ViewToggle from '@/components/ui/ViewToggle';
 
 const WAREHOUSE_ICONS = [
   { key: 'Warehouse', icon: WarehouseIcon, label: 'Склад' },
@@ -50,6 +53,7 @@ export default function Warehouses() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
+  const [view, setView] = useState('grid');
   
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -179,16 +183,19 @@ export default function Warehouses() {
 
       {/* Search */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <SearchInput 
-          value={search} 
-          onChange={setSearch} 
-          placeholder="Поиск склада..."
-          className="max-w-md"
-        />
+        <div className="flex items-center justify-between">
+          <SearchInput 
+            value={search} 
+            onChange={setSearch} 
+            placeholder="Поиск склада..."
+            className="max-w-md"
+          />
+          <ViewToggle view={view} onChange={setView} />
+        </div>
       </div>
 
-      {/* Warehouses Grid */}
-      {!selectedWarehouse ? (
+      {/* Warehouses View */}
+      {!selectedWarehouse && view === 'grid' ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredWarehouses.map(warehouse => {
             const stats = getWarehouseStats(warehouse.id);
