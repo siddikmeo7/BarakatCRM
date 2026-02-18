@@ -105,6 +105,8 @@ export default function Settings() {
     custom: false,
     security: false
   });
+  const [deleteAccountDialog, setDeleteAccountDialog] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   useEffect(() => {
     loadData();
