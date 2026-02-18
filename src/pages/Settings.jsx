@@ -398,14 +398,17 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <Label>Язык интерфейса</Label>
-                <Select value={formData.language} onValueChange={(v) => setFormData({ ...formData, language: v })}>
+                <Label>{t(lang, 'settings_language')}</Label>
+                <Select value={formData.language} onValueChange={(v) => {
+                  setFormData({ ...formData, language: v });
+                  setLang(v);
+                }}>
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {LANGUAGES.map(lang => (
-                      <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                    {LANGUAGES.map(l => (
+                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
