@@ -51,6 +51,7 @@ export default function Analytics() {
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
   });
+  const [topProductsSort, setTopProductsSort] = useState('revenue'); // revenue, profit, boxes
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -384,8 +385,20 @@ export default function Analytics() {
 
       {/* Top Products by Revenue - Moved to End */}
       <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
-        <h3 className="font-semibold text-slate-900 text-sm md:text-base mb-4">{t(lang,'analytics_top_products')}</h3>
-        <div className="space-y-2 md:space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h3 className="font-semibold text-slate-900 text-sm md:text-base">{t(lang,'analytics_top_products')}</h3>
+          <Select value={topProductsSort} onValueChange={setTopProductsSort}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Сортировка" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="revenue">По выручке</SelectItem>
+              <SelectItem value="profit">По прибыли</SelectItem>
+              <SelectItem value="boxes">По коробкам</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2 md:space-y-3 max-h-96 overflow-y-auto">
           {(() => {
             const productStats = {};
             filteredSales.forEach(sale => {
@@ -397,37 +410,47 @@ export default function Analytics() {
               productStats[sale.product_id].profit += sale.profit || 0;
             });
 
-            return Object.entries(productStats)
-              .sort((a, b) => b[1].revenue - a[1].revenue)
-              .slice(0, 10)
-              .map(([productId, stats], index) => {
-                const product = products.find(p => p.id === productId);
-                if (!product) return null;
+            let sorted = Object.entries(productStats);
+            switch(topProductsSort) {
+              case 'profit':
+                sorted = sorted.sort((a, b) => b[1].profit - a[1].profit);
+                break;
+              case 'boxes':
+                sorted = sorted.sort((a, b) => b[1].boxes - a[1].boxes);
+                break;
+              case 'revenue':
+              default:
+                sorted = sorted.sort((a, b) => b[1].revenue - a[1].revenue);
+            }
 
-                return (
-                  <div key={productId} className="flex items-center gap-2 md:gap-4 p-2 md:p-4 bg-slate-50 rounded-xl">
-                    <div className="w-6 md:w-8 h-6 md:h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-xs md:text-base">
-                      {index + 1}
-                    </div>
-                    {product.photo_url ? (
-                      <img src={product.photo_url} alt="" className="w-8 md:w-12 h-8 md:h-12 rounded-lg object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-8 md:w-12 h-8 md:h-12 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0">
-                        <Package className="w-4 md:w-6 h-4 md:h-6 text-slate-400" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-900 text-xs md:text-base truncate">{product.brand} {product.model}</p>
-                      <p className="text-xs text-slate-500">{stats.boxes} кор.</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                       <p className="font-semibold text-slate-900 text-xs md:text-base">{hideData ? masked : `${(stats.revenue / 1000).toFixed(0)}K`}</p>
-                       <p className="text-xs text-emerald-600">+{hideData ? masked : `${(stats.profit / 1000).toFixed(0)}K`}</p>
-                      </div>
+            return sorted.slice(0, 10).map(([productId, stats], index) => {
+              const product = products.find(p => p.id === productId);
+              if (!product) return null;
+
+              return (
+                <div key={productId} className="flex items-center gap-2 md:gap-4 p-2 md:p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
+                  <div className="w-5 md:w-8 h-5 md:h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-xs md:text-sm flex-shrink-0">
+                    {index + 1}
                   </div>
-                );
-              })
-              .filter(Boolean);
+                  {product.photo_url ? (
+                    <img src={product.photo_url} alt="" className="w-7 md:w-12 h-7 md:h-12 rounded-lg object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-7 md:w-12 h-7 md:h-12 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-3 md:w-6 h-3 md:h-6 text-slate-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900 text-xs md:text-sm truncate">{product.brand} {product.model}</p>
+                    <p className="text-xs text-slate-500">{stats.boxes} кор.</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-semibold text-slate-900 text-xs md:text-sm">{hideData ? masked : `${(stats.revenue / 1000).toFixed(1)}K`}</p>
+                    <p className="text-xs md:text-sm text-emerald-600 font-medium">+{hideData ? masked : `${(stats.profit / 1000).toFixed(1)}K`}</p>
+                  </div>
+                </div>
+              );
+            })
+            .filter(Boolean);
           })()}
         </div>
       </div>
