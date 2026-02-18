@@ -125,6 +125,8 @@ export default function Dashboard() {
     );
   }
 
+  const masked = '•••••';
+
   return (
     <div className="space-y-6">
       <PageHeader 
