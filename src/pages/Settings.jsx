@@ -155,7 +155,7 @@ export default function Settings() {
         await base44.integrations.Core.SendEmail({
           to: newEmployee.user_email,
           subject: `Приглашение в бизнес ${business.name}`,
-          body: `Здравствуйте, ${newEmployee.name}!\n\nВы были добавлены как ${newEmployee.role} в бизнес "${business.name}".\n\nВойдите в систему ShoeWholesale используя эту почту: ${newEmployee.user_email}\n\nС уважением,\n${business.name}`
+          body: `Здравствуйте, ${newEmployee.name}!\n\nВы были добавлены как ${newEmployee.role} в бизнес "${business.name}".\n\nВойдите в систему BarakatCRM используя эту почту: ${newEmployee.user_email}\n\nС уважением,\n${business.name}`
         });
       } catch (emailError) {
         console.error('Error sending email:', emailError);
