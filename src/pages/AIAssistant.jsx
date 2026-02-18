@@ -341,9 +341,15 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
         transition-transform duration-300 overflow-hidden border-r border-slate-200 dark:border-slate-800
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-72'}
       `}>
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">{t(lang, 'ai_new_chat')}</h3>
+        {/* Sidebar Header + New Chat Button */}
+        <div className="p-2 border-b border-slate-200 dark:border-slate-800 flex items-center gap-1">
+          <Button
+            onClick={createNewChat}
+            className="flex-1 bg-indigo-600 hover:bg-indigo-700 gap-1 justify-center rounded-lg text-xs py-1 h-8"
+          >
+            <Plus className="w-3 h-3" />
+            {t(lang, 'ai_new_chat')}
+          </Button>
           <button
             onClick={() => setSidebarOpen(false)}
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
@@ -352,19 +358,8 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
           </button>
         </div>
 
-        {/* New Chat Button */}
-        <div className="px-3 py-2">
-          <Button
-            onClick={createNewChat}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2 justify-center rounded-lg text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            {t(lang, 'ai_new_chat')}
-          </Button>
-        </div>
-
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto py-2 px-2 space-y-1">
+        <div className="flex-1 overflow-y-auto py-1 px-1 space-y-0.5">
           {chats.length === 0 && (
             <p className="text-slate-500 dark:text-slate-400 text-xs text-center py-8">{t(lang, 'ai_create_chat')}</p>
           )}
