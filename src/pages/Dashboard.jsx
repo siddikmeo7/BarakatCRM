@@ -133,20 +133,20 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Главная"
-        subtitle={`Добро пожаловать, ${business?.name}`}
+        title={t(lang, 'dash_title')}
+        subtitle={`${t(lang, 'dash_welcome')}, ${business?.name}`}
         actions={
           <div className="flex gap-2">
             <Link to={createPageUrl('CustomizeDashboard')}>
               <Button variant="outline" className="gap-2">
                 <LayoutDashboard className="w-4 h-4" />
-                Настроить
+                {t(lang, 'dash_customize')}
               </Button>
             </Link>
             <Link to={createPageUrl('Sales')}>
               <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
                 <Plus className="w-4 h-4" />
-                Новая продажа
+                {t(lang, 'dash_new_sale')}
               </Button>
             </Link>
           </div>
@@ -159,7 +159,7 @@ export default function Dashboard() {
           <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
           <Button variant="outline" size="sm" onClick={() => setHideData(h => !h)} className="gap-1 text-xs">
             {hideData ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-            {hideData ? 'Показать данные' : 'Скрыть данные'}
+            {hideData ? t(lang, 'dash_show') : t(lang, 'dash_hide')}
           </Button>
         </div>
       </div>
@@ -169,13 +169,13 @@ export default function Dashboard() {
         {(widgets.length === 0 ? ['sales', 'profit', 'boxes', 'stock'] : widgets.filter(w => ['sales', 'profit', 'boxes', 'pairs', 'stock', 'debt', 'customers'].includes(w.widget_type))).map((widget) => {
           const widgetType = typeof widget === 'string' ? widget : widget.widget_type;
           const widgetConfigs = {
-            sales: { title: 'Продажи', value: hideData ? masked : totalRevenue.toLocaleString(), subtitle: 'сомони', icon: ShoppingCart, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
-            profit: { title: 'Прибыль', value: hideData ? masked : totalProfit.toLocaleString(), subtitle: 'сомони', icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
-            boxes: { title: 'Коробок продано', value: hideData ? masked : totalBoxes, icon: Box, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
-            pairs: { title: 'Пар продано', value: hideData ? masked : totalPairs, icon: Layers, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
-            stock: { title: 'Товаров на складе', value: hideData ? masked : `${totalStock} коробок`, subtitle: hideData ? masked : `Закупка: ${totalPurchaseValue.toLocaleString()} с.`, icon: Warehouse, iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
-            debt: { title: 'Долги клиентов', value: hideData ? masked : totalDebt.toLocaleString(), subtitle: 'сомони', icon: Users, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
-            customers: { title: 'Всего клиентов', value: customers.length, icon: Users, iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' }
+            sales: { title: t(lang,'dash_sales'), value: hideData ? masked : totalRevenue.toLocaleString(), subtitle: t(lang,'dash_somoni'), icon: ShoppingCart, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
+            profit: { title: t(lang,'dash_profit'), value: hideData ? masked : totalProfit.toLocaleString(), subtitle: t(lang,'dash_somoni'), icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+            boxes: { title: t(lang,'dash_boxes_sold'), value: hideData ? masked : totalBoxes, icon: Box, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
+            pairs: { title: t(lang,'dash_pairs_sold'), value: hideData ? masked : totalPairs, icon: Layers, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+            stock: { title: t(lang,'dash_stock'), value: hideData ? masked : `${totalStock} ${t(lang,'dash_boxes')}`, subtitle: hideData ? masked : `${t(lang,'dash_purchase')}: ${totalPurchaseValue.toLocaleString()} с.`, icon: Warehouse, iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
+            debt: { title: t(lang,'dash_debt'), value: hideData ? masked : totalDebt.toLocaleString(), subtitle: t(lang,'dash_somoni'), icon: Users, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
+            customers: { title: t(lang,'dash_customers'), value: customers.length, icon: Users, iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' }
           };
           const config = widgetConfigs[widgetType];
           if (!config) return null;
@@ -188,14 +188,14 @@ export default function Dashboard() {
         <div className="grid lg:grid-cols-2 gap-6">
           {(widgets.length === 0 || widgets.some(w => w.widget_type === 'chart_sales')) && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-              <h3 className="font-semibold text-slate-900 mb-4">Динамика продаж</h3>
+              <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'dash_dynamics')}</h3>
               <SalesChart sales={filteredSales} days={7} />
             </div>
           )}
           
           {(widgets.length === 0 || widgets.some(w => w.widget_type === 'sales_type')) && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-              <h3 className="font-semibold text-slate-900 mb-4">Наличные vs В долг</h3>
+              <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'dash_cash_vs_debt')}</h3>
               <div className="h-64">
                 <SalesTypeChart sales={filteredSales} />
               </div>
@@ -203,23 +203,23 @@ export default function Dashboard() {
                 <div className="text-center p-4 bg-emerald-50 rounded-xl">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                    <p className="text-sm font-medium text-slate-600">Наличные</p>
+                    <p className="text-sm font-medium text-slate-600">{t(lang,'dash_cash')}</p>
                   </div>
                   <p className="text-3xl font-bold text-emerald-600">
                     {hideData ? masked : `${totalSalesValue ? ((cashAmount / totalSalesValue) * 100).toFixed(1) : 0}%`}
                   </p>
-                  <p className="text-sm text-slate-500 mt-1">{cashSales.length} продаж</p>
+                  <p className="text-sm text-slate-500 mt-1">{cashSales.length} {t(lang,'dash_sales_count')}</p>
                   <p className="text-lg font-semibold text-slate-900 mt-2">{hideData ? masked : `${cashAmount.toLocaleString()} с.`}</p>
                 </div>
                 <div className="text-center p-4 bg-amber-50 rounded-xl">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <div className="w-3 h-3 rounded-full bg-amber-500" />
-                    <p className="text-sm font-medium text-slate-600">В долг</p>
+                    <p className="text-sm font-medium text-slate-600">{t(lang,'dash_in_debt')}</p>
                   </div>
                   <p className="text-3xl font-bold text-amber-600">
                     {hideData ? masked : `${totalSalesValue ? ((debtAmount / totalSalesValue) * 100).toFixed(1) : 0}%`}
                   </p>
-                  <p className="text-sm text-slate-500 mt-1">{debtSales.length} продаж</p>
+                  <p className="text-sm text-slate-500 mt-1">{debtSales.length} {t(lang,'dash_sales_count')}</p>
                   <p className="text-lg font-semibold text-slate-900 mt-2">{hideData ? masked : `${debtAmount.toLocaleString()} с.`}</p>
                 </div>
               </div>
@@ -235,9 +235,9 @@ export default function Dashboard() {
         {/* Top Products */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-900">Топ товары</h3>
+            <h3 className="font-semibold text-slate-900">{t(lang,'dash_top_products')}</h3>
             <Link to={createPageUrl('Products')} className="text-sm text-indigo-600 hover:text-indigo-700">
-              Все товары →
+              {t(lang,'dash_all_products')}
             </Link>
           </div>
           <div className="space-y-3">
@@ -255,45 +255,45 @@ export default function Dashboard() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-900 truncate">{item.product.brand} {item.product.model}</p>
-                  <p className="text-sm text-slate-500">{item.boxes} коробок</p>
+                  <p className="text-sm text-slate-500">{item.boxes} {t(lang,'dash_boxes')}</p>
                 </div>
                 <p className="font-semibold text-slate-900">{hideData ? masked : `${item.revenue.toLocaleString()} с.`}</p>
               </div>
             )) : (
-              <p className="text-center text-slate-500 py-8">Нет данных о продажах</p>
+              <p className="text-center text-slate-500 py-8">{t(lang,'dash_no_sales')}</p>
             )}
           </div>
         </div>
 
         {/* Quick Actions */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 mb-4">Быстрые действия</h3>
+          <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'dash_quick_actions')}</h3>
           <div className="grid grid-cols-2 gap-3">
             <Link to={createPageUrl('Products')}>
               <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
                 <Package className="w-8 h-8 text-indigo-600 mb-2" />
-                <p className="font-medium text-slate-900">Добавить товар</p>
+                <p className="font-medium text-slate-900">{t(lang,'dash_add_product')}</p>
                 <ArrowRight className="w-4 h-4 text-indigo-600 mt-2 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
             <Link to={createPageUrl('Sales')}>
               <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
                 <ShoppingCart className="w-8 h-8 text-emerald-600 mb-2" />
-                <p className="font-medium text-slate-900">Новая продажа</p>
+                <p className="font-medium text-slate-900">{t(lang,'dash_new_sale')}</p>
                 <ArrowRight className="w-4 h-4 text-emerald-600 mt-2 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
             <Link to={createPageUrl('Warehouses')}>
               <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
                 <Warehouse className="w-8 h-8 text-purple-600 mb-2" />
-                <p className="font-medium text-slate-900">Склады</p>
+                <p className="font-medium text-slate-900">{t(lang,'dash_warehouses')}</p>
                 <ArrowRight className="w-4 h-4 text-purple-600 mt-2 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
             <Link to={createPageUrl('Customers')}>
               <div className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
                 <Users className="w-8 h-8 text-amber-600 mb-2" />
-                <p className="font-medium text-slate-900">Клиенты</p>
+                <p className="font-medium text-slate-900">{t(lang,'dash_clients')}</p>
                 <ArrowRight className="w-4 h-4 text-amber-600 mt-2 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
