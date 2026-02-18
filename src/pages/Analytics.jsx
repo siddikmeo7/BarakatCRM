@@ -291,7 +291,7 @@ export default function Analytics() {
       </div>
 
       {/* Inventory Stats */}
-      <div className={`grid grid-cols-2 lg:grid-cols-3 gap-4 ${hideData ? 'hidden' : ''}`}>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           title="Стоимость склада"
           value={convertCurrency(totalStockValue)}
