@@ -55,7 +55,16 @@ export default function Layout({ children, currentPageName }) {
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
+  const [darkMode, setDarkMode] = useState(false);
   const navigate = useNavigate();
+  
+  // Check for system dark mode preference
+  useEffect(() => {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setDarkMode(true);
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
 
   useEffect(() => {
     loadUserAndBusiness();
