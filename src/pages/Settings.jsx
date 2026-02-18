@@ -830,40 +830,10 @@ export default function Settings() {
                 </div>
               </div>
 
-              {/* Резервное копирование */}
-              <div className="p-4 border border-amber-200 bg-amber-50 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <Download className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-amber-900 mb-1">Резервное копирование</h4>
-                    <p className="text-sm text-amber-700 mb-3">
-                      Скачать все данные бизнеса в формате JSON (продажи, товары, клиенты и т.д.)
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        onClick={handleBackup}
-                        disabled={backupLoading}
-                        variant="outline"
-                        className="text-amber-700 border-amber-300 hover:bg-amber-100 gap-2"
-                      >
-                        {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                        Скачать на устройство
-                      </Button>
-                      <Button
-                        onClick={handleDriveBackup}
-                        disabled={driveBackupLoading}
-                        variant="outline"
-                        className="text-green-700 border-green-300 hover:bg-green-100 gap-2"
-                      >
-                        {driveBackupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                        Сохранить в Google Drive
-                      </Button>
-                    </div>
-                    {driveBackupMsg && (
-                      <p className="text-sm mt-2 text-slate-700">{driveBackupMsg}</p>
-                    )}
-                  </div>
-                </div>
+              {/* Резервное копирование и Экспорт */}
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-3">Резервное копирование и экспорт</h4>
+                <BackupExportPanel business={business} onBackupJSON={handleBackup} />
               </div>
 
               {/* Очистить кэш */}
