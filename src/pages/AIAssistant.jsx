@@ -136,7 +136,7 @@ export default function AIAssistant() {
   };
 
   const deleteChat = async (chatId) => {
-    if (confirm('Удалить этот чат?')) {
+    if (confirm(t(lang, 'ai_delete_chat'))) {
       await base44.entities.AIChat.delete(chatId);
       const updatedChats = chats.filter(c => c.id !== chatId);
       setChats(updatedChats);
