@@ -208,6 +208,17 @@ export default function ActivityLog() {
                       </div>
                       
                       <div className="flex items-center gap-2">
+                        {log.action_type === 'delete' && log.entity_data && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setDetailLog(log)}
+                            className="gap-2"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Просмотр
+                          </Button>
+                        )}
                         {log.action_type === 'delete' && !log.is_restored && log.entity_data && (
                           <Button
                             size="sm"
