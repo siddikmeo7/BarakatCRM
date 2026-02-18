@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import BackupExportPanel from '@/components/settings/BackupExportPanel';
 import { 
@@ -30,8 +29,12 @@ import {
   Shield,
   RotateCcw,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  ChevronDown,
+  Lock,
+  Database
 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const LANGUAGES = [
   { value: 'ru', label: 'Русский' },
@@ -93,6 +96,14 @@ export default function Settings() {
   const [editingType, setEditingType] = useState(null);
   const [editColorDialog, setEditColorDialog] = useState(false);
   const [editTypeDialog, setEditTypeDialog] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({
+    business: true,
+    defaults: false,
+    employees: false,
+    notifications: false,
+    custom: false,
+    security: false
+  });
 
   useEffect(() => {
     loadData();
@@ -333,44 +344,25 @@ export default function Settings() {
         </div>
       </div>
 
-      <Tabs defaultValue="business" className="space-y-6">
-        <TabsList className="bg-white border border-slate-200 p-1 flex-wrap">
-          <TabsTrigger value="business" className="gap-2">
-            <Building2 className="w-4 h-4" />
-            {t(lang, 'settings_business')}
-          </TabsTrigger>
-          <TabsTrigger value="defaults" className="gap-2">
-            <Palette className="w-4 h-4" />
-            {t(lang, 'settings_defaults')}
-          </TabsTrigger>
-          <TabsTrigger value="employees" className="gap-2">
-            <Users className="w-4 h-4" />
-            {t(lang, 'settings_employees')}
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
-            <Bell className="w-4 h-4" />
-            {t(lang, 'settings_notifications')}
-          </TabsTrigger>
-          <TabsTrigger value="custom" className="gap-2">
-            <Palette className="w-4 h-4" />
-            {t(lang, 'settings_custom')}
-          </TabsTrigger>
-          <TabsTrigger value="security" className="gap-2">
-            <SettingsIcon className="w-4 h-4" />
-            {t(lang, 'settings_security')}
-          </TabsTrigger>
-          <TabsTrigger value="history" className="gap-2">
-            <History className="w-4 h-4" />
-            {t(lang, 'settings_history')}
-          </TabsTrigger>
-        </TabsList>
-
+      <div className="space-y-2">
         {/* Business Settings */}
-        <TabsContent value="business">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_biz_info')}</h3>
-            
-            <div className="grid gap-6 max-w-xl">
+        <Collapsible open={expandedSections.business} onOpenChange={(open) => setExpandedSections({...expandedSections, business: open})}>
+          <CollapsibleTrigger asChild>
+            <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Building2 className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">{t(lang,'settings_biz_info')}</h3>
+                  <p className="text-xs text-slate-500">Основные параметры бизнеса</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-slate-500 transition ${expandedSections.business ? 'rotate-180' : ''}`} />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6 space-y-4">
+            <div className="grid gap-4 max-w-2xl">
               <div>
                 <Label>{t(lang,'settings_biz_name')}</Label>
                 <Input 
@@ -417,15 +409,27 @@ export default function Settings() {
                 </Select>
               </div>
             </div>
-          </div>
-        </TabsContent>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Default Settings */}
-        <TabsContent value="defaults">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_defaults_title')}</h3>
-            
-            <div className="grid sm:grid-cols-2 gap-6 max-w-2xl">
+        <Collapsible open={expandedSections.defaults} onOpenChange={(open) => setExpandedSections({...expandedSections, defaults: open})}>
+          <CollapsibleTrigger asChild>
+            <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Palette className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">{t(lang,'settings_defaults_title')}</h3>
+                  <p className="text-xs text-slate-500">Размеры, цвета и типы товаров по умолчанию</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-slate-500 transition ${expandedSections.defaults ? 'rotate-180' : ''}`} />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <Label>{t(lang,'settings_product_type')}</Label>
                 <Select value={formData.default_product_type} onValueChange={(v) => setFormData({ ...formData, default_product_type: v })}>
@@ -494,18 +498,30 @@ export default function Settings() {
                 </Select>
               </div>
             </div>
-          </div>
-        </TabsContent>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Employees */}
-        <TabsContent value="employees">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_emp_title')}</h3>
-            
+        <Collapsible open={expandedSections.employees} onOpenChange={(open) => setExpandedSections({...expandedSections, employees: open})}>
+          <CollapsibleTrigger asChild>
+            <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Users className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">{t(lang,'settings_employees')}</h3>
+                  <p className="text-xs text-slate-500">{employees.length} сотрудник(ов)</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-slate-500 transition ${expandedSections.employees ? 'rotate-180' : ''}`} />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6">
             {/* Add Employee Form */}
-            <div className="p-4 bg-slate-50 rounded-xl mb-6">
-              <h4 className="font-medium text-slate-900 mb-4">{t(lang,'settings_emp_add')}</h4>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg p-4 border border-slate-200 mb-4">
+              <h4 className="font-medium text-slate-900 mb-3">{t(lang,'settings_emp_add')}</h4>
+              <div className="grid sm:grid-cols-2 gap-3">
                 <div>
                   <Label>{t(lang,'settings_emp_name')}</Label>
                   <Input 
@@ -592,18 +608,30 @@ export default function Settings() {
                 </p>
               )}
             </div>
-          </div>
-        </TabsContent>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Notifications Settings */}
-        <TabsContent value="notifications">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_notif_title')}</h3>
-            
-            <div className="space-y-6 max-w-xl">
+        <Collapsible open={expandedSections.notifications} onOpenChange={(open) => setExpandedSections({...expandedSections, notifications: open})}>
+          <CollapsibleTrigger asChild>
+            <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Bell className="w-5 h-5 text-yellow-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">{t(lang,'settings_notif_title')}</h3>
+                  <p className="text-xs text-slate-500">Уведомления и язык</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-slate-500 transition ${expandedSections.notifications ? 'rotate-180' : ''}`} />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6">
+            <div className="space-y-4">
               <div className="flex items-start gap-4 p-4 border border-slate-200 rounded-xl">
-                <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-                  <MessageCircle className="w-6 h-6 text-green-600" />
+                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="w-5 h-5 text-green-600" />
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-slate-900 mb-1">{t(lang,'settings_notif_wa')}</h4>
@@ -629,8 +657,8 @@ export default function Settings() {
               </div>
 
               <div className="flex items-start gap-4 p-4 border border-slate-200 rounded-xl">
-                <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-6 h-6 text-blue-600" />
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-5 h-5 text-blue-600" />
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-slate-900 mb-1">{t(lang,'settings_notif_email')}</h4>
@@ -655,7 +683,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
                 <div className="flex items-start gap-3">
                   <Bell className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
@@ -669,8 +697,8 @@ export default function Settings() {
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-50 rounded-xl">
-                <h4 className="font-medium text-slate-900 mb-2">{t(lang,'settings_notif_lang')}</h4>
+              <div className="p-3 bg-white border border-slate-200 rounded-lg">
+               <h4 className="font-medium text-slate-900 mb-2">{t(lang,'settings_notif_lang')}</h4>
                 <Select 
                   value={user?.language || formData.language} 
                   onValueChange={async (v) => {
@@ -679,7 +707,7 @@ export default function Settings() {
                     await loadData();
                   }}
                 >
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-full sm:w-48">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -688,19 +716,30 @@ export default function Settings() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
             </div>
-          </div>
-        </TabsContent>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Custom Fields */}
-        <TabsContent value="custom">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_custom_title')}</h3>
-            
-            <div className="space-y-6 max-w-2xl">
+        <Collapsible open={expandedSections.custom} onOpenChange={(open) => setExpandedSections({...expandedSections, custom: open})}>
+          <CollapsibleTrigger asChild>
+            <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-pink-100 rounded-lg">
+                  <Palette className="w-5 h-5 text-pink-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">{t(lang,'settings_custom_title')}</h3>
+                  <p className="text-xs text-slate-500">Пользовательские цвета и типы товаров</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-slate-500 transition ${expandedSections.custom ? 'rotate-180' : ''}`} />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6">
+            <div className="space-y-4">
               {/* Custom Colors */}
-              <div>
+              <div className="p-4 bg-white rounded-lg border border-slate-200">
                 <h4 className="font-medium text-slate-900 mb-3">{t(lang,'settings_custom_colors')}</h4>
                 <div className="flex gap-2 mb-3">
                   <Input
@@ -751,7 +790,7 @@ export default function Settings() {
               </div>
 
               {/* Custom Product Types */}
-              <div>
+              <div className="p-4 bg-white rounded-lg border border-slate-200">
                 <h4 className="font-medium text-slate-900 mb-3">{t(lang,'settings_custom_types')}</h4>
                 <div className="flex gap-2 mb-3">
                   <Input
@@ -801,36 +840,28 @@ export default function Settings() {
                 </div>
               </div>
             </div>
-          </div>
-        </TabsContent>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* History Tab */}
-        <TabsContent value="history">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">{t(lang,'settings_history_title')}</h3>
-            <p className="text-slate-600 mb-4">
-              {t(lang,'settings_history_desc')}
-            </p>
-            <Button
-              onClick={() => {
-                const pageUrl = createPageUrl('ActivityLog');
-                window.location.href = pageUrl;
-              }}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              <History className="w-4 h-4 mr-2" />
-              {t(lang,'settings_history_btn')}
-            </Button>
-          </div>
-        </TabsContent>
-
-        {/* Security Tab */}
-        <TabsContent value="security">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-6">{t(lang,'settings_sec_title')}</h3>
-            
-            <div className="space-y-6 max-w-xl">
-              <div className="p-4 border border-slate-200 rounded-xl">
+        <Collapsible open={expandedSections.security} onOpenChange={(open) => setExpandedSections({...expandedSections, security: open})}>
+          <CollapsibleTrigger asChild>
+            <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <Lock className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">{t(lang,'settings_security')}</h3>
+                  <p className="text-xs text-slate-500">Резервные копии и безопасность</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-slate-500 transition ${expandedSections.security ? 'rotate-180' : ''}`} />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6">
+            <div className="space-y-4">
+              <div className="p-4 bg-white border border-slate-200 rounded-lg">
                 <h4 className="font-medium text-slate-900 mb-2">{t(lang,'settings_sec_account')}</h4>
                 <div className="space-y-2 text-sm">
                   <p className="text-slate-600">Email: <span className="font-medium text-slate-900">{user?.email}</span></p>
@@ -840,13 +871,10 @@ export default function Settings() {
               </div>
 
               {/* Резервное копирование и Экспорт */}
-              <div>
-                <h4 className="font-semibold text-slate-900 mb-3">{t(lang,'settings_sec_backup')}</h4>
-                <BackupExportPanel business={business} onBackupJSON={handleBackup} />
-              </div>
+              <BackupExportPanel business={business} onBackupJSON={handleBackup} />
 
               {/* Очистить кэш */}
-              <div className="p-4 border border-blue-200 bg-blue-50 rounded-xl">
+              <div className="p-4 border border-blue-200 bg-blue-50 rounded-lg">
                 <div className="flex items-start gap-3">
                   <RefreshCw className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
@@ -868,7 +896,7 @@ export default function Settings() {
               </div>
 
               {/* Удаление всех данных */}
-              <div className="p-4 border border-red-200 bg-red-50 rounded-xl">
+              <div className="p-4 border border-red-200 bg-red-50 rounded-lg">
                 <h4 className="font-semibold text-red-900 mb-2">{t(lang,'settings_sec_delete')}</h4>
                 <p className="text-sm text-red-700 mb-3">
                   {t(lang,'settings_sec_delete_desc')}
