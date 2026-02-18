@@ -54,6 +54,7 @@ export default function Debts() {
   const [selectedCustomerDetail, setSelectedCustomerDetail] = useState(null);
   const [customerDetailOpen, setCustomerDetailOpen] = useState(false);
   const [lang, setLang] = useState('ru');
+  const [messageChannel, setMessageChannel] = useState('telegram'); // 'telegram', 'whatsapp'
 
   useEffect(() => {
     loadData();
