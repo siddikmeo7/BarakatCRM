@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import ViewToggle from '@/components/ui/ViewToggle';
 import { 
   Plus, 
   Users, 
@@ -28,6 +29,7 @@ export default function Customers() {
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
+  const [view, setView] = useState('grid');
   
   const [formData, setFormData] = useState({
     name: '',
