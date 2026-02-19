@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import { t } from '@/components/i18n/translations';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
   Package, 
@@ -18,51 +18,40 @@ import {
   Building2,
   RotateCcw,
   TrendingUp,
-  History,
-  Globe,
-  ChevronLeft,
-  MoreVertical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import BottomNavigation from '@/components/ui/BottomNavigation';
 import { cn } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
-const getMenuItems = (lang) => [
-  { name: 'Dashboard', icon: LayoutDashboard, labelKey: 'nav_dashboard', color: 'text-indigo-500', activeBg: 'bg-indigo-500' },
-  { name: 'Analytics', icon: TrendingUp, labelKey: 'nav_analytics', color: 'text-emerald-500', activeBg: 'bg-emerald-500' },
-  { name: 'Products', icon: Package, labelKey: 'nav_products', color: 'text-blue-500', activeBg: 'bg-blue-500' },
-  { name: 'Warehouses', icon: Warehouse, labelKey: 'nav_warehouses', color: 'text-orange-500', activeBg: 'bg-orange-500' },
-  { name: 'Sales', icon: ShoppingCart, labelKey: 'nav_sales', color: 'text-green-500', activeBg: 'bg-green-500' },
-  { name: 'Returns', icon: RotateCcw, labelKey: 'nav_returns', color: 'text-yellow-500', activeBg: 'bg-yellow-500' },
-  { name: 'Customers', icon: Users, labelKey: 'nav_customers', color: 'text-pink-500', activeBg: 'bg-pink-500' },
-  { name: 'Debts', icon: CreditCard, labelKey: 'nav_debts', color: 'text-red-500', activeBg: 'bg-red-500' },
-  { name: 'AIAssistant', icon: Bot, labelKey: 'nav_ai', color: 'text-purple-500', activeBg: 'bg-purple-500' },
-  { name: 'Settings', icon: Settings, labelKey: 'nav_settings', color: 'text-slate-500', activeBg: 'bg-slate-500' },
+const MENU_ITEMS = [
+  { name: 'Dashboard',    icon: LayoutDashboard, labelKey: 'nav_dashboard', color: 'text-indigo-500',  activeBg: 'bg-indigo-500',  activeText: 'text-indigo-600' },
+  { name: 'Analytics',   icon: TrendingUp,       labelKey: 'nav_analytics', color: 'text-emerald-500', activeBg: 'bg-emerald-500', activeText: 'text-emerald-600' },
+  { name: 'Products',    icon: Package,          labelKey: 'nav_products',  color: 'text-blue-500',    activeBg: 'bg-blue-500',    activeText: 'text-blue-600' },
+  { name: 'Warehouses',  icon: Warehouse,        labelKey: 'nav_warehouses',color: 'text-orange-500',  activeBg: 'bg-orange-500',  activeText: 'text-orange-600' },
+  { name: 'Sales',       icon: ShoppingCart,     labelKey: 'nav_sales',     color: 'text-green-500',   activeBg: 'bg-green-500',   activeText: 'text-green-600' },
+  { name: 'Returns',     icon: RotateCcw,        labelKey: 'nav_returns',   color: 'text-yellow-500',  activeBg: 'bg-yellow-500',  activeText: 'text-yellow-600' },
+  { name: 'Customers',   icon: Users,            labelKey: 'nav_customers', color: 'text-pink-500',    activeBg: 'bg-pink-500',    activeText: 'text-pink-600' },
+  { name: 'Debts',       icon: CreditCard,       labelKey: 'nav_debts',     color: 'text-red-500',     activeBg: 'bg-red-500',     activeText: 'text-red-600' },
+  { name: 'AIAssistant', icon: Bot,              labelKey: 'nav_ai',        color: 'text-purple-500',  activeBg: 'bg-purple-500',  activeText: 'text-purple-600' },
+  { name: 'Settings',    icon: Settings,         labelKey: 'nav_settings',  color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600' },
 ];
 
-const getAdminMenuItems = (lang) => [
-  { name: 'AdminDashboard', icon: LayoutDashboard, labelKey: 'nav_admin' },
-  { name: 'AdminBusinesses', icon: Building2, labelKey: 'nav_businesses' },
+const ADMIN_MENU_ITEMS = [
+  { name: 'AdminDashboard',  icon: LayoutDashboard, labelKey: 'nav_admin',      color: 'text-indigo-500', activeBg: 'bg-indigo-500' },
+  { name: 'AdminBusinesses', icon: Building2,       labelKey: 'nav_businesses', color: 'text-blue-500',   activeBg: 'bg-blue-500' },
 ];
-
-const LANG_FLAGS = { ru: '🇷🇺', tj: '🇹🇯', en: '🇬🇧' };
-const LANG_LABELS = { ru: 'RU', tj: 'TJ', en: 'EN' };
 
 export default function Layout({ children, currentPageName }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
-  const [darkMode, setDarkMode] = useState(false);
   const navigate = useNavigate();
-  
-  // Check for system dark mode preference
+
   useEffect(() => {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
       document.documentElement.classList.add('dark');
     }
   }, []);
@@ -71,7 +60,6 @@ export default function Layout({ children, currentPageName }) {
     loadUserAndBusiness();
   }, []);
 
-  // Подписка на изменение языка в реальном времени
   useEffect(() => {
     if (!business?.id) return;
     const unsubscribe = base44.entities.Business.subscribe((event) => {
@@ -82,35 +70,38 @@ export default function Layout({ children, currentPageName }) {
     return unsubscribe;
   }, [business?.id]);
 
+  // Close drawer on route change
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [currentPageName]);
+
   const loadUserAndBusiness = async () => {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
       if (currentUser.email !== ADMIN_EMAIL) {
-            const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
-              if (businesses.length > 0) {
-                const foundBiz = businesses[0];
-                setBusiness(foundBiz);
-                const bizLang = foundBiz.language || 'ru';
-                setLang(bizLang);
-            } else {
-              // Автоматически создать бизнес при первом входе
-              const newBiz = await base44.entities.Business.create({
-                name: currentUser.full_name ? `Бизнес ${currentUser.full_name}` : 'Мой бизнес',
-                owner_email: currentUser.email,
-                is_active: true,
-                default_color: 'Чёрный',
-                default_size_from: 39,
-                default_size_to: 44,
-                default_pairs_per_box: 6,
-                default_product_type: 'Туфли',
-                language: 'ru'
-              });
-              setBusiness(newBiz);
-            }
-          }
-      // Редирект на Dashboard только при первом входе (если находимся на корневом пути)
+        const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
+        if (businesses.length > 0) {
+          const foundBiz = businesses[0];
+          setBusiness(foundBiz);
+          setLang(foundBiz.language || 'ru');
+        } else {
+          const newBiz = await base44.entities.Business.create({
+            name: currentUser.full_name ? `Бизнес ${currentUser.full_name}` : 'Мой бизнес',
+            owner_email: currentUser.email,
+            is_active: true,
+            default_color: 'Чёрный',
+            default_size_from: 39,
+            default_size_to: 44,
+            default_pairs_per_box: 6,
+            default_product_type: 'Туфли',
+            language: 'ru'
+          });
+          setBusiness(newBiz);
+        }
+      }
+
       if (window.location.pathname === '/' || window.location.pathname === '') {
         navigate(createPageUrl('Dashboard'));
       }
@@ -121,217 +112,188 @@ export default function Layout({ children, currentPageName }) {
     }
   };
 
-  const isAdmin = user?.email === ADMIN_EMAIL;
-  const isAdminPage = currentPageName?.startsWith('Admin');
-  const menuItems = getMenuItems(lang);
-  const adminMenuItems = getAdminMenuItems(lang);
-  const currentMenu = isAdmin && isAdminPage ? adminMenuItems : menuItems;
-
-  const changeLang = async (newLang) => {
-    setLang(newLang);
-    if (business) {
-      await base44.entities.Business.update(business.id, { language: newLang });
-    }
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
+  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdminPage = currentPageName?.startsWith('Admin');
+  const currentMenu = isAdmin && isAdminPage ? ADMIN_MENU_ITEMS : MENU_ITEMS;
 
+  const DrawerContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Drawer Header */}
+      <div className="h-16 flex items-center justify-between px-5 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <Package className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <span className="font-bold text-slate-900 dark:text-white text-base">BarakatCRM</span>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t(lang, 'app_subtitle')}</p>
+          </div>
+        </div>
+        <button
+          onClick={() => setDrawerOpen(false)}
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          <X className="w-5 h-5 text-slate-500" />
+        </button>
+      </div>
 
-  const handleGoBack = () => {
-    navigate(-1);
-  };
-
-  return (
-    <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col lg:flex-row">
-      {/* Mobile Drawer Overlay */}
-      {sidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-50"
-          onClick={() => setSidebarOpen(false)}
-        />
+      {/* Admin toggle */}
+      {isAdmin && (
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex gap-2">
+            <Link to={createPageUrl('Dashboard')} className="flex-1" onClick={() => setDrawerOpen(false)}>
+              <Button variant={!isAdminPage ? "default" : "outline"} size="sm"
+                className={cn("w-full", !isAdminPage && "bg-indigo-600 hover:bg-indigo-700")}>
+                {t(lang, 'nav_business')}
+              </Button>
+            </Link>
+            <Link to={createPageUrl('AdminDashboard')} className="flex-1" onClick={() => setDrawerOpen(false)}>
+              <Button variant={isAdminPage ? "default" : "outline"} size="sm"
+                className={cn("w-full", isAdminPage && "bg-indigo-600 hover:bg-indigo-700")}>
+                {t(lang, 'nav_admin_btn')}
+              </Button>
+            </Link>
+          </div>
+        </div>
       )}
 
-      {/* Mobile Drawer Menu */}
-      <nav className={cn(
-        "lg:hidden fixed left-0 top-0 bottom-0 w-64 bg-white dark:bg-slate-900 z-50 flex flex-col transition-transform duration-300 ease-in-out",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        {/* Drawer Header */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <Package className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-slate-900 dark:text-white text-sm">BarakatCRM</span>
-          </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <X className="w-4 h-4 text-slate-500" />
-          </button>
-        </div>
-
-        {/* Menu Items */}
-        <div className="flex-1 overflow-y-auto py-3 px-2">
-          <div className="space-y-0.5">
-            {currentMenu.map((item) => {
-              const isActive = currentPageName === item.name;
-              return (
-                <Link
-                  key={item.name}
-                  to={createPageUrl(item.name)}
-                  onClick={() => setSidebarOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                    isActive
-                      ? `${item.activeBg || 'bg-indigo-500'} shadow-md`
-                      : "hover:bg-slate-100 dark:hover:bg-slate-800"
-                  )}
-                >
-                  <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-white" : (item.color || "text-slate-400"))} />
-                  <span className={cn("text-sm font-medium", isActive ? "text-white" : "text-slate-700 dark:text-slate-300")}>
-                    {t(lang, item.labelKey)}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* User Info */}
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center flex-shrink-0">
-              <span className="text-indigo-600 dark:text-indigo-400 font-bold text-xs">
-                {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-900 dark:text-white truncate">{user?.full_name || 'User'}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
-            </div>
-          </div>
+      {/* Menu Items */}
+      <nav className="flex-1 overflow-y-auto py-3 px-3">
+        <div className="space-y-0.5">
+          {currentMenu.map((item) => {
+            const isActive = currentPageName === item.name;
+            return (
+              <Link
+                key={item.name}
+                to={createPageUrl(item.name)}
+                onClick={() => setDrawerOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
+                  isActive
+                    ? `${item.activeBg} shadow-md`
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                )}
+              >
+                {/* Colored icon box when inactive, white when active */}
+                <div className={cn(
+                  "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all",
+                  isActive ? "bg-white/20" : "bg-slate-100 dark:bg-slate-800"
+                )}>
+                  <item.icon className={cn("w-4 h-4", isActive ? "text-white" : item.color)} />
+                </div>
+                <span className={cn("text-sm font-medium", isActive ? "text-white" : "text-slate-700 dark:text-slate-300")}>
+                  {t(lang, item.labelKey)}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </nav>
 
-      {/* Desktop Sidebar */}
-      <aside className={cn(
-        "hidden lg:flex fixed left-0 top-0 bottom-0 flex-col h-screen w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800"
-      )}>
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
-              <Package className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <span className="font-bold text-slate-900 dark:text-white text-base">BarakatCRM</span>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t(lang, 'app_subtitle')}</p>
-            </div>
+      {/* User Info */}
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center flex-shrink-0">
+            <span className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+              {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user?.full_name || 'User'}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
           </div>
         </div>
+      </div>
+    </div>
+  );
 
-        {isAdmin && (
-          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex gap-2">
-              <Link to={createPageUrl('Dashboard')} className="flex-1">
-                <Button 
-                  variant={!isAdminPage ? "default" : "outline"} 
-                  size="sm" 
-                  className={cn("w-full dark:bg-indigo-600 dark:hover:bg-indigo-700", !isAdminPage && "bg-indigo-600")}
-                >
-                  {t(lang, 'nav_business')}
-                </Button>
-              </Link>
-              <Link to={createPageUrl('AdminDashboard')} className="flex-1">
-                <Button 
-                  variant={isAdminPage ? "default" : "outline"} 
-                  size="sm" 
-                  className={cn("w-full dark:bg-indigo-600 dark:hover:bg-indigo-700", isAdminPage && "bg-indigo-600")}
-                >
-                  {t(lang, 'nav_admin_btn')}
-                </Button>
-              </Link>
-            </div>
-          </div>
+  return (
+    <div className="min-h-screen bg-background dark:bg-slate-950">
+      {/* === DRAWER OVERLAY (both mobile & desktop) === */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/50 z-50"
+            onClick={() => setDrawerOpen(false)}
+          />
         )}
+      </AnimatePresence>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3">
-          <div className="space-y-1">
-            {currentMenu.map((item) => {
-              const isActive = currentPageName === item.name;
-              return (
-                <Link
-                  key={item.name}
-                  to={createPageUrl(item.name)}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 user-select-none group",
-                    isActive 
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30" 
-                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                  )}
-                >
-                  <item.icon className={cn("w-5 h-5 flex-shrink-0 transition-colors", isActive ? "text-white" : "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200")} />
-                  <span className="font-medium text-sm">{t(lang, item.labelKey)}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
+      {/* === SLIDE-IN DRAWER (both mobile & desktop) === */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <motion.aside
+            initial={{ x: -320 }}
+            animate={{ x: 0 }}
+            exit={{ x: -320 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="fixed left-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-900 z-50 shadow-2xl"
+          >
+            <DrawerContent />
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center flex-shrink-0">
-              <span className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-                {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{user?.full_name || 'User'}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
-            </div>
+      {/* === TOP HEADER (both mobile & desktop) === */}
+      <header className="fixed top-0 left-0 right-0 h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-40 flex items-center px-4 gap-3">
+        {/* Menu button */}
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
+        >
+          <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+        </button>
+
+        {/* Logo */}
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+            <Package className="w-4 h-4 text-white" />
           </div>
+          <span className="font-bold text-slate-900 dark:text-white text-base">BarakatCRM</span>
         </div>
-      </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-auto lg:pl-0">
-       {/* Mobile Header */}
-       <div className="lg:hidden fixed top-0 left-0 right-0 h-12 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-40 flex items-center px-3 gap-3">
-         <button
-           onClick={() => setSidebarOpen(true)}
-           className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
-         >
-           <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-         </button>
-         <div className="flex items-center gap-1.5">
-           <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-             <Package className="w-3 h-3 text-white" />
-           </div>
-           <span className="font-bold text-slate-900 dark:text-white text-sm">BarakatCRM</span>
-         </div>
-       </div>
+        {/* Current page indicator */}
+        <div className="flex-1 flex items-center justify-center">
+          {(() => {
+            const active = currentMenu.find(i => i.name === currentPageName);
+            if (!active) return null;
+            return (
+              <div className={cn("flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium", active.activeBg, "text-white")}>
+                <active.icon className="w-3 h-3" />
+                {t(lang, active.labelKey)}
+              </div>
+            );
+          })()}
+        </div>
 
-       {/* Page Content */}
-        <div className="flex-1 overflow-auto pt-12 lg:pt-0 lg:pl-72">
-         <motion.div
-           key={currentPageName}
-           initial={{ opacity: 0, x: 100 }}
-           animate={{ opacity: 1, x: 0 }}
-           exit={{ opacity: 0, x: -100 }}
-           transition={{ duration: 0.3 }}
-           className="p-4 lg:p-8 min-h-full"
-         >
-           {children}
-         </motion.div>
-       </div>
+        {/* Spacer for symmetry */}
+        <div className="w-9 h-9 flex-shrink-0" />
+      </header>
+
+      {/* === PAGE CONTENT === */}
+      <main className="pt-14">
+        <motion.div
+          key={currentPageName}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.25 }}
+          className="p-4 lg:p-8 min-h-screen"
+        >
+          {children}
+        </motion.div>
       </main>
     </div>
   );
