@@ -162,12 +162,12 @@ export default function Layout({ children, currentPageName }) {
                 className={cn(
                   "flex items-center justify-center p-1.5 rounded-md transition-all duration-200 user-select-none",
                   isActive 
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30" 
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                    ? `${item.activeBg || 'bg-indigo-500'} shadow-md` 
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800"
                 )}
                 title={t(lang, item.labelKey)}
               >
-                <item.icon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400 dark:text-slate-500")} />
+                <item.icon className={cn("w-4 h-4", isActive ? "text-white" : (item.color || "text-slate-400 dark:text-slate-500"))} />
               </Link>
             );
           })}
