@@ -149,8 +149,8 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen bg-background dark:bg-slate-950 flex flex-col lg:flex-row">
       {/* Mobile Fixed Menu */}
-      <nav className="lg:hidden fixed left-0 top-16 bottom-0 w-20 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-40 flex flex-col overflow-y-auto py-2 px-1.5">
-        <div className="space-y-1">
+      <nav className="lg:hidden fixed left-0 top-11 bottom-0 w-11 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-40 flex flex-col overflow-y-auto py-1 px-0.5">
+        <div className="space-y-0.5">
           {currentMenu.map((item) => {
             const isActive = currentPageName === item.name;
             return (
@@ -158,14 +158,14 @@ export default function Layout({ children, currentPageName }) {
                 key={item.name}
                 to={createPageUrl(item.name)}
                 className={cn(
-                  "flex items-center justify-center p-3 rounded-lg transition-all duration-200 user-select-none",
+                  "flex items-center justify-center p-1.5 rounded-md transition-all duration-200 user-select-none",
                   isActive 
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30" 
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                 )}
                 title={t(lang, item.labelKey)}
               >
-                <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-400 dark:text-slate-500")} />
+                <item.icon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400 dark:text-slate-500")} />
               </Link>
             );
           })}
