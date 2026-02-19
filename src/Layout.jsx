@@ -254,17 +254,17 @@ export default function Layout({ children, currentPageName }) {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-auto lg:pl-0">
        {/* Mobile Header */}
-       <div className="lg:hidden fixed top-0 left-20 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-30 flex items-center px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-         <div className="flex items-center gap-2">
-           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-             <Package className="w-4 h-4 text-white" />
+       <div className="lg:hidden fixed top-0 left-11 right-0 h-11 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-30 flex items-center px-3" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+         <div className="flex items-center gap-1.5">
+           <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+             <Package className="w-3 h-3 text-white" />
            </div>
-           <span className="font-bold text-slate-900 dark:text-white text-sm">BarakatCRM</span>
+           <span className="font-bold text-slate-900 dark:text-white text-xs">BarakatCRM</span>
          </div>
        </div>
 
        {/* Page Content */}
-        <div className="flex-1 overflow-auto pt-16 pl-20 lg:pt-0 lg:pl-72">
+        <div className="flex-1 overflow-auto pt-11 pl-11 lg:pt-0 lg:pl-72">
          <motion.div
            key={currentPageName}
            initial={{ opacity: 0, x: 100 }}
