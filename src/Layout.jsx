@@ -110,8 +110,10 @@ export default function Layout({ children, currentPageName }) {
               setBusiness(newBiz);
             }
           }
-      // Редирект на Dashboard при входе
-      navigate(createPageUrl('Dashboard'));
+      // Редирект на Dashboard только при первом входе (если находимся на корневом пути)
+      if (window.location.pathname === '/' || window.location.pathname === '') {
+        navigate(createPageUrl('Dashboard'));
+      }
     } catch (error) {
       console.error('Error loading user:', error);
     } finally {
