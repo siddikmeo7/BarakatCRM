@@ -30,16 +30,16 @@ import { cn } from '@/lib/utils';
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
 const getMenuItems = (lang) => [
-  { name: 'Dashboard', icon: LayoutDashboard, labelKey: 'nav_dashboard' },
-  { name: 'Analytics', icon: TrendingUp, labelKey: 'nav_analytics' },
-  { name: 'Products', icon: Package, labelKey: 'nav_products' },
-  { name: 'Warehouses', icon: Warehouse, labelKey: 'nav_warehouses' },
-  { name: 'Sales', icon: ShoppingCart, labelKey: 'nav_sales' },
-  { name: 'Returns', icon: RotateCcw, labelKey: 'nav_returns' },
-  { name: 'Customers', icon: Users, labelKey: 'nav_customers' },
-  { name: 'Debts', icon: CreditCard, labelKey: 'nav_debts' },
-  { name: 'AIAssistant', icon: Bot, labelKey: 'nav_ai' },
-  { name: 'Settings', icon: Settings, labelKey: 'nav_settings' },
+  { name: 'Dashboard', icon: LayoutDashboard, labelKey: 'nav_dashboard', color: 'text-indigo-500', activeBg: 'bg-indigo-500' },
+  { name: 'Analytics', icon: TrendingUp, labelKey: 'nav_analytics', color: 'text-emerald-500', activeBg: 'bg-emerald-500' },
+  { name: 'Products', icon: Package, labelKey: 'nav_products', color: 'text-blue-500', activeBg: 'bg-blue-500' },
+  { name: 'Warehouses', icon: Warehouse, labelKey: 'nav_warehouses', color: 'text-orange-500', activeBg: 'bg-orange-500' },
+  { name: 'Sales', icon: ShoppingCart, labelKey: 'nav_sales', color: 'text-green-500', activeBg: 'bg-green-500' },
+  { name: 'Returns', icon: RotateCcw, labelKey: 'nav_returns', color: 'text-yellow-500', activeBg: 'bg-yellow-500' },
+  { name: 'Customers', icon: Users, labelKey: 'nav_customers', color: 'text-pink-500', activeBg: 'bg-pink-500' },
+  { name: 'Debts', icon: CreditCard, labelKey: 'nav_debts', color: 'text-red-500', activeBg: 'bg-red-500' },
+  { name: 'AIAssistant', icon: Bot, labelKey: 'nav_ai', color: 'text-purple-500', activeBg: 'bg-purple-500' },
+  { name: 'Settings', icon: Settings, labelKey: 'nav_settings', color: 'text-slate-500', activeBg: 'bg-slate-500' },
 ];
 
 const getAdminMenuItems = (lang) => [
