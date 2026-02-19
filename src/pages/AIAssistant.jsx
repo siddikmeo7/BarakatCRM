@@ -414,17 +414,30 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
         {/* Messages */}
         <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950">
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center px-6 py-12">
+            <div className="h-full flex flex-col items-center justify-center text-center px-4 py-8">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t(lang, 'ai_greeting')}</h3>
-              <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md text-sm">{t(lang, 'ai_greeting_sub')}</p>
+              <p className="text-slate-500 dark:text-slate-400 mb-4 max-w-md text-sm">{t(lang, 'ai_greeting_sub')}</p>
               {businessData && (
                 <p className="text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full mb-6">
                   {lang === 'ru' ? `✓ ${dataStats?.totalProducts} товаров • ${dataStats?.customersCount} клиентов • ${dataStats?.logsCount} действий` : 'Data loaded'}
                 </p>
               )}
+              {/* Suggestions grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl">
+                {suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setInput(s); setTimeout(() => inputRef.current?.focus(), 50); }}
+                    className="text-left px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-sm text-slate-700 dark:text-slate-300 group"
+                  >
+                    <span className="text-indigo-500 mr-2">✦</span>
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : messages.length === 1 && !sending ? (
             // После первого вопроса пока ждем ответ - показываем примеры
