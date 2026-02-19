@@ -304,17 +304,23 @@ export default function Layout({ children, currentPageName }) {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-auto lg:pl-0">
        {/* Mobile Header */}
-       <div className="lg:hidden fixed top-0 left-11 right-0 h-11 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-30 flex items-center px-3" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+       <div className="lg:hidden fixed top-0 left-0 right-0 h-12 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-40 flex items-center px-3 gap-3">
+         <button
+           onClick={() => setSidebarOpen(true)}
+           className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
+         >
+           <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+         </button>
          <div className="flex items-center gap-1.5">
            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
              <Package className="w-3 h-3 text-white" />
            </div>
-           <span className="font-bold text-slate-900 dark:text-white text-xs">BarakatCRM</span>
+           <span className="font-bold text-slate-900 dark:text-white text-sm">BarakatCRM</span>
          </div>
        </div>
 
        {/* Page Content */}
-        <div className="flex-1 overflow-auto pt-11 pl-11 lg:pt-0 lg:pl-72">
+        <div className="flex-1 overflow-auto pt-12 lg:pt-0 lg:pl-72">
          <motion.div
            key={currentPageName}
            initial={{ opacity: 0, x: 100 }}
