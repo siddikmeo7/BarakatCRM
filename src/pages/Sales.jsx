@@ -159,6 +159,18 @@ export default function Sales() {
             total_debt: (customer.total_debt || 0) + remainingDebt,
             total_paid: (customer.total_paid || 0) + partialPay
           });
+
+          // Если была частичная оплата — создаём запись в DebtPayment для истории
+          if (partialPay > 0) {
+            await base44.entities.DebtPayment.create({
+              business_id: business.id,
+              customer_id: formData.customer_id,
+              sale_id: createdSale.id,
+              amount: partialPay,
+              note: 'Частичная оплата при продаже',
+              payment_date: new Date().toISOString()
+            });
+          }
           
           if (remainingDebt > 0 && customer.phone) {
             const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
