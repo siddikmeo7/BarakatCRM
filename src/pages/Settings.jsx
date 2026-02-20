@@ -696,7 +696,7 @@ export default function Settings() {
                       };
                       return <span key={k} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs">{labels[k]}</span>;
                     })}
-                    {Object.values(newEmployee.permissions).every(v => !v) && <span className="text-xs text-slate-400">Не выбрано</span>}
+                    {/* ... rest of code ... */}
                   </div>
                 </div>
 
