@@ -134,7 +134,18 @@ export default function Customers() {
   };
 
   const handleDelete = async (customerId) => {
-    if (confirm('Удалить этого клиента?')) {
+    if (confirm('Удалить этого клиента? Все его долги и платежи тоже будут удалены.')) {
+      // Удаляем связанные продажи в долг
+      const debtSales = await base44.entities.Sale.filter({ customer_id: customerId, is_debt: true });
+      for (const sale of debtSales) {
+        await base44.entities.Sale.delete(sale.id);
+      }
+      // Удаляем связанные платежи по долгам
+      const payments = await base44.entities.DebtPayment.filter({ customer_id: customerId });
+      for (const payment of payments) {
+        await base44.entities.DebtPayment.delete(payment.id);
+      }
+      // Удаляем самого клиента
       await base44.entities.Customer.delete(customerId);
       await loadData();
     }
