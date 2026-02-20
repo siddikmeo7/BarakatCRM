@@ -474,7 +474,7 @@ export default function Products() {
                 const totalPairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);
                 const stockValue = (product.boxes_in_stock || 0) * (product.sale_price || 0);
                 const warehouse = warehouses.find(w => w.id === product.warehouse_id);
-                const isLowStock = (product.boxes_in_stock || 0) <= 2;
+                const isLowStock = (product.boxes_in_stock || 0) <= lowStockLimit;
                 return (
                   <tr key={product.id} className={`hover:bg-slate-50 transition-colors ${isLowStock ? 'bg-red-50 animate-pulse-border' : ''}`}
                     style={isLowStock ? { animation: 'row-pulse 2s ease-in-out infinite' } : {}}>
