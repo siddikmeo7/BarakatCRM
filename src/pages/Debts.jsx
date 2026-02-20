@@ -30,7 +30,8 @@ import {
   Plus,
   PlusCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  SlidersHorizontal
 } from 'lucide-react';
 
 const DEBT_PAGE_SIZE = 20;
