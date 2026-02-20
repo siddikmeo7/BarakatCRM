@@ -181,9 +181,26 @@ export default function Settings() {
     }
     
     try {
+      // Находим роль по названию
+      const roles = await base44.entities.Role.filter({ 
+        business_id: business.id, 
+        name: newEmployee.role 
+      });
+      
+      if (roles.length === 0) {
+        alert(`Роль "${newEmployee.role}" не найдена`);
+        return;
+      }
+      
+      const roleId = roles[0].id;
+
       // Создаём запись сотрудника
       await base44.entities.Employee.create({
-        ...newEmployee,
+        name: newEmployee.name,
+        user_email: newEmployee.user_email,
+        phone: newEmployee.phone,
+        role_id: roleId,
+        permissions: newEmployee.permissions,
         business_id: business.id,
         is_active: true
       });
