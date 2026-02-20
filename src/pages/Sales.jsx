@@ -353,6 +353,7 @@ export default function Sales() {
           <table className="w-full">
             <thead className="bg-slate-50">
               <tr>
+                <th className="px-3 py-3 text-center text-sm font-medium text-slate-400 w-8">#</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_date')}</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_product')}</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">
@@ -365,7 +366,7 @@ export default function Sales() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredSales.map(sale => {
+              {filteredSales.map((sale, idx) => {
                 const product = products.find(p => p.id === sale.product_id);
                 const customer = customers.find(c => c.id === sale.customer_id);
                 const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
