@@ -39,7 +39,8 @@ export default function Customers() {
     telegram: '',
     email: '',
     address: '',
-    use_phone_for_all: true
+    use_phone_for_all: true,
+    debt_limit: ''
   });
 
   useEffect(() => {
