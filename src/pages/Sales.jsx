@@ -214,7 +214,7 @@ export default function Sales() {
     setSalesPage(1);
   };
 
-  // Фильтрация продаж
+  // Фильтрация продаж (исключаем отменённые из статистики в шапке, но отображаем в списке)
   let filteredSales = sales.filter(sale => {
     const product = products.find(p => p.id === sale.product_id);
     const matchesSearch = 
