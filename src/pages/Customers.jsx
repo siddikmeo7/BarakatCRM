@@ -140,11 +140,29 @@ export default function Customers() {
     }
   };
 
-  // Фильтрация
-  const filteredCustomers = customers.filter(customer =>
-    customer.name?.toLowerCase().includes(search.toLowerCase()) ||
-    customer.phone?.includes(search)
-  );
+  // Фильтрация + сортировка + пагинация
+  let filteredCustomers = customers.filter(customer => {
+    const matchesSearch = !search ||
+      customer.name?.toLowerCase().includes(search.toLowerCase()) ||
+      customer.phone?.includes(search);
+    const matchesDebt =
+      filterDebt === 'all' ||
+      (filterDebt === 'with_debt' && (customer.total_debt || 0) > 0) ||
+      (filterDebt === 'no_debt' && (customer.total_debt || 0) === 0);
+    return matchesSearch && matchesDebt;
+  });
+
+  filteredCustomers = [...filteredCustomers].sort((a, b) => {
+    switch (sortBy) {
+      case 'debt_desc': return (b.total_debt || 0) - (a.total_debt || 0);
+      case 'debt_asc': return (a.total_debt || 0) - (b.total_debt || 0);
+      case 'paid_desc': return (b.total_paid || 0) - (a.total_paid || 0);
+      default: return (a.name || '').localeCompare(b.name || '');
+    }
+  });
+
+  const totalPages = Math.ceil(filteredCustomers.length / PAGE_SIZE);
+  const paginatedCustomers = filteredCustomers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Итоги
   const totalDebt = customers.reduce((sum, c) => sum + (c.total_debt || 0), 0);
@@ -188,16 +206,41 @@ export default function Customers() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <div className="flex items-center gap-3">
+      {/* Search + Filters */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <SearchInput 
             value={search} 
-            onChange={setSearch} 
+            onChange={(v) => { setSearch(v); setPage(1); }}
             placeholder="Поиск по имени или телефону..."
-            className="max-w-md flex-1"
+            className="flex-1 min-w-48"
           />
           <ViewToggle view={view} onChange={setView} />
+        </div>
+        <div className="flex flex-wrap gap-2 items-center">
+          <SlidersHorizontal className="w-4 h-4 text-slate-400" />
+          <Select value={filterDebt} onValueChange={(v) => { setFilterDebt(v); setPage(1); }}>
+            <SelectTrigger className="w-44 h-8 text-sm">
+              <SelectValue placeholder="Долг" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все клиенты</SelectItem>
+              <SelectItem value="with_debt">С долгом</SelectItem>
+              <SelectItem value="no_debt">Без долга</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setPage(1); }}>
+            <SelectTrigger className="w-44 h-8 text-sm">
+              <SelectValue placeholder="Сортировка" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">По имени (А-Я)</SelectItem>
+              <SelectItem value="debt_desc">Долг ↓ (больший)</SelectItem>
+              <SelectItem value="debt_asc">Долг ↑ (меньший)</SelectItem>
+              <SelectItem value="paid_desc">Оплачено ↓</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-slate-400 ml-auto">{filteredCustomers.length} клиентов</span>
         </div>
       </div>
 
