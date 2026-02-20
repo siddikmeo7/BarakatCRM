@@ -19,7 +19,8 @@ import {
   Loader2,
   MapPin,
   MessageCircle,
-  Send
+  Send,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function Customers() {
@@ -77,7 +78,7 @@ export default function Customers() {
         email: customer.email || '',
         address: customer.address || '',
         use_phone_for_all: customer.use_phone_for_all !== false,
-        debt_limit: customer.debt_limit || ''
+        debt_limit: customer.debt_limit != null ? String(customer.debt_limit) : ''
       });
     } else {
       setEditingCustomer(null);
@@ -98,10 +99,10 @@ export default function Customers() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const data = { 
-        ...formData, 
+      const data = {
+        ...formData,
         business_id: business.id,
-        debt_limit: formData.debt_limit ? parseFloat(formData.debt_limit) : null
+        debt_limit: formData.debt_limit !== '' ? parseFloat(formData.debt_limit) : null
       };
       
       if (editingCustomer) {
@@ -222,7 +223,14 @@ export default function Customers() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">{customer.phone}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-orange-600">{(customer.total_debt || 0).toLocaleString()} с.</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="font-semibold text-orange-600">{(customer.total_debt || 0).toLocaleString()} с.</span>
+                      {customer.debt_limit != null && (
+                        <p className={`text-xs mt-0.5 ${(customer.total_debt||0) >= customer.debt_limit ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
+                          лимит: {customer.debt_limit.toLocaleString()} с.
+                        </p>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right font-semibold text-emerald-600">{(customer.total_paid || 0).toLocaleString()} с.</td>
                     <td className="px-4 py-3 text-center">
                       <a href={`https://wa.me/${whatsappNum.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
@@ -297,13 +305,6 @@ export default function Customers() {
                       {customer.address}
                     </p>
                   )}
-                  {customer.debt_limit ? (
-                    <p className={`text-sm flex items-center gap-2 font-medium ${(customer.total_debt || 0) >= customer.debt_limit ? 'text-red-600' : 'text-slate-500'}`}>
-                      <CreditCard className="w-4 h-4" />
-                      Лимит: {customer.debt_limit.toLocaleString()} с.
-                      {(customer.total_debt || 0) >= customer.debt_limit && <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">Превышен!</span>}
-                    </p>
-                  ) : null}
                 </div>
                 
                 {/* Messenger Buttons */}
@@ -455,15 +456,14 @@ export default function Customers() {
             <div>
               <Label>Лимит долга (сомони)</Label>
               <Input 
-                type="text"
+                type="number"
                 inputMode="decimal"
-                pattern="[0-9.]*"
                 value={formData.debt_limit}
-                onChange={(e) => setFormData({ ...formData, debt_limit: e.target.value.replace(/[^0-9.]/g, '') })}
-                placeholder="Не ограничен"
+                onChange={(e) => setFormData({ ...formData, debt_limit: e.target.value })}
+                placeholder="Без лимита"
                 className="mt-1.5"
               />
-              <p className="text-xs text-slate-400 mt-1">Максимальный долг — продажи в долг сверх лимита будут заблокированы</p>
+              <p className="text-xs text-slate-400 mt-1">Продажи в долг сверх лимита будут заблокированы</p>
             </div>
           </div>
 
