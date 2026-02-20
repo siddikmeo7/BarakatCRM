@@ -21,11 +21,15 @@ import {
   Box,
   Filter,
   Calendar,
-  History
+  History,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-import { format, parseISO, startOfDay, subDays, startOfWeek, startOfMonth } from 'date-fns';
+import { format, parseISO, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
+
+const PAGE_SIZE = 20;
 
 const BASE_PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
 const BASE_COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый', 'Другой'];
@@ -48,9 +52,7 @@ export default function Products() {
   const [dateFilter, setDateFilter] = useState('all'); // all, today, week, month, custom
   const [customDateFrom, setCustomDateFrom] = useState('');
   const [customDateTo, setCustomDateTo] = useState('');
-  const [showCustomDate, setShowCustomDate] = useState(false);
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 30;
   
   const [formData, setFormData] = useState({
     brand: '',
@@ -249,18 +251,6 @@ export default function Products() {
   const allColors = [...BASE_COLORS, ...(business?.custom_colors || [])];
   const lowStockLimit = business?.low_stock_limit ?? 2;
 
-  // Фильтрация по дате добавления
-  const getDateFilterStart = () => {
-    const now = new Date();
-    if (dateFilter === 'today') return startOfDay(now);
-    if (dateFilter === 'week') return startOfWeek(now, { weekStartsOn: 1 });
-    if (dateFilter === 'month') return startOfMonth(now);
-    if (dateFilter === 'custom' && customDateFrom) return startOfDay(new Date(customDateFrom));
-    return null;
-  };
-  const dateFilterStart = getDateFilterStart();
-  const dateFilterEnd = dateFilter === 'custom' && customDateTo ? new Date(customDateTo + 'T23:59:59') : null;
-
   // Фильтрация
   let filteredProducts = products.filter(product => {
     const matchesSearch = 
@@ -268,13 +258,7 @@ export default function Products() {
       product.model?.toLowerCase().includes(search.toLowerCase());
     const matchesType = filterType === 'all' || product.product_type === filterType;
     const matchesWarehouse = filterWarehouse === 'all' || product.warehouse_id === filterWarehouse;
-    let matchesDate = true;
-    if (dateFilterStart) {
-      const created = new Date(product.created_date);
-      matchesDate = created >= dateFilterStart;
-      if (dateFilterEnd) matchesDate = matchesDate && created <= dateFilterEnd;
-    }
-    return matchesSearch && matchesType && matchesWarehouse && matchesDate;
+    return matchesSearch && matchesType && matchesWarehouse;
   });
 
   // Сортировка
@@ -296,21 +280,30 @@ export default function Products() {
     }
   });
 
-  // Расчёт общей стоимости
-  const totalStockValue = filteredProducts.reduce((sum, p) => 
-    sum + ((p.boxes_in_stock || 0) * (p.sale_price || 0)), 0
-  );
+  // Фильтр по дате добавления
+  if (dateFilter !== 'all') {
+    filteredProducts = filteredProducts.filter(p => {
+      const d = parseISO(p.created_date);
+      if (dateFilter === 'today') return isToday(d);
+      if (dateFilter === 'week') return isThisWeek(d, { weekStartsOn: 1 });
+      if (dateFilter === 'month') return isThisMonth(d);
+      if (dateFilter === 'custom' && customDateFrom) {
+        const from = startOfDay(new Date(customDateFrom));
+        const to = endOfDay(new Date(customDateTo || customDateFrom));
+        return isWithinInterval(d, { start: from, end: to });
+      }
+      return true;
+    });
+  }
 
   // Пагинация
   const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
   const paginatedProducts = filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleDateFilter = (val) => {
-    setDateFilter(val);
-    setPage(1);
-    if (val === 'custom') setShowCustomDate(true);
-    else setShowCustomDate(false);
-  };
+  // Расчёт общей стоимости
+  const totalStockValue = filteredProducts.reduce((sum, p) => 
+    sum + ((p.boxes_in_stock || 0) * (p.sale_price || 0)), 0
+  );
 
   if (loading) {
     return (
@@ -335,16 +328,41 @@ export default function Products() {
       />
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <div className="flex flex-wrap items-center gap-4">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+        {/* Date filter tabs */}
+        <div className="flex flex-wrap gap-2">
+          {[
+            { key: 'all', label: 'Все' },
+            { key: 'today', label: 'Сегодня' },
+            { key: 'week', label: 'Неделя' },
+            { key: 'month', label: 'Месяц' },
+            { key: 'custom', label: '📅 Период' },
+          ].map(f => (
+            <button
+              key={f.key}
+              onClick={() => { setDateFilter(f.key); setPage(1); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${dateFilter === f.key ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
+            >
+              {f.label}
+            </button>
+          ))}
+          {dateFilter === 'custom' && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Input type="date" value={customDateFrom} onChange={e => { setCustomDateFrom(e.target.value); setPage(1); }} className="h-8 text-xs w-36" />
+              <span className="text-xs text-slate-400">—</span>
+              <Input type="date" value={customDateTo} onChange={e => { setCustomDateTo(e.target.value); setPage(1); }} className="h-8 text-xs w-36" />
+            </div>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
           <SearchInput 
             value={search} 
-            onChange={setSearch} 
+            onChange={v => { setSearch(v); setPage(1); }} 
             placeholder={t(lang,'prod_search')}
             className="w-full sm:w-64"
           />
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-40">
+          <Select value={filterType} onValueChange={v => { setFilterType(v); setPage(1); }}>
+            <SelectTrigger className="w-36">
               <SelectValue placeholder={t(lang,'prod_type')} />
             </SelectTrigger>
             <SelectContent>
@@ -354,8 +372,8 @@ export default function Products() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={filterWarehouse} onValueChange={setFilterWarehouse}>
-            <SelectTrigger className="w-40">
+          <Select value={filterWarehouse} onValueChange={v => { setFilterWarehouse(v); setPage(1); }}>
+            <SelectTrigger className="w-36">
               <SelectValue placeholder={t(lang,'prod_warehouse')} />
             </SelectTrigger>
             <SelectContent>
@@ -366,7 +384,7 @@ export default function Products() {
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-36">
               <SelectValue placeholder="Сортировка" />
             </SelectTrigger>
             <SelectContent>
@@ -385,6 +403,7 @@ export default function Products() {
             <Package className="w-3.5 h-3.5" />
             {hideImages ? 'С фото' : 'Без фото'}
           </button>
+          <span className="text-xs text-slate-400 ml-auto">{filteredProducts.length} товаров</span>
         </div>
       </div>
 
