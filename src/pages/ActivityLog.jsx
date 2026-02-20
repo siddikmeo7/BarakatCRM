@@ -331,10 +331,49 @@ export default function ActivityLog() {
       <Dialog open={!!detailLog} onOpenChange={() => setDetailLog(null)}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Детали удалённого товара</DialogTitle>
+            <DialogTitle>
+              {detailLog?.action_type === 'update' ? 'Что было изменено' : 'Детали записи'}
+            </DialogTitle>
           </DialogHeader>
           {detailLog?.entity_data && (() => {
             const d = detailLog.entity_data;
+            const isUpdate = detailLog.action_type === 'update';
+            const changes = d.changes || {};
+
+            if (isUpdate && Object.keys(changes).length > 0) {
+              // Показываем diff обновления
+              const changeEntries = Object.values(changes);
+              return (
+                <div className="space-y-4 py-2">
+                  <div className="p-3 bg-blue-50 rounded-xl text-sm text-blue-700 font-medium">
+                    {detailLog.entity_type === 'Sale' ? 'Изменения в продаже' : `Изменения в товаре`}
+                  </div>
+                  <div className="space-y-2">
+                    {changeEntries.map((c, i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl">
+                        <span className="text-sm text-slate-500 w-32 flex-shrink-0">{c.label}</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="bg-red-50 text-red-600 px-2 py-1 rounded-lg text-sm line-through">{c.from}</span>
+                          <span className="text-slate-400 text-xs">→</span>
+                          <span className="bg-green-50 text-green-700 px-2 py-1 rounded-lg text-sm font-semibold">{c.to}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {d.note && (
+                    <p className="text-sm text-slate-500 italic px-1">Причина: "{d.note}"</p>
+                  )}
+                  <p className="text-xs text-slate-400 text-center">
+                    {format(parseISO(detailLog.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })} • {detailLog.user_email}
+                  </p>
+                  <Button variant="outline" className="w-full gap-2" onClick={() => setDetailLog(null)}>
+                    <ArrowLeft className="w-4 h-4" /> Закрыть
+                  </Button>
+                </div>
+              );
+            }
+
+            // Для delete — прежний вид
             const fields = [
               { label: 'Бренд', value: d.brand },
               { label: 'Модель', value: d.model },
