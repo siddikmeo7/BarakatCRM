@@ -39,42 +39,6 @@ export default function BusinessAccess() {
     }
   };
 
-  const handleJoinWithAccessCode = async () => {
-    if (!accessCode.trim()) {
-      setError('Введите код доступа');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    try {
-      const businesses = await base44.entities.Business.filter({ access_code: accessCode });
-      if (businesses.length === 0) {
-        setError('Неверный код доступа');
-        setLoading(false);
-        return;
-      }
-
-      const business = businesses[0];
-      const employees = await base44.entities.Employee.filter({ 
-        business_id: business.id, 
-        user_email: user.email 
-      });
-
-      if (employees.length === 0) {
-        setError('Вы не сотрудник этого бизнеса');
-        setLoading(false);
-        return;
-      }
-
-      navigate(createPageUrl('Dashboard'));
-    } catch (err) {
-      setError('Ошибка: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleCreateBusiness = async () => {
     if (!businessName.trim()) {
       setError('Введите название бизнеса');
@@ -124,8 +88,8 @@ export default function BusinessAccess() {
 
       await base44.entities.Business.update(business.id, updateData);
       
-      const updated = await base44.entities.Business.filter({ id: business.id });
-      if (updated.length > 0) setBusiness(updated[0]);
+      const updated = await base44.entities.Business.read(business.id);
+      setBusiness(updated);
       alert(`✅ ${type === 'business' ? 'Код бизнеса' : 'Код доступа'} обновлён`);
     } catch (err) {
       setError('Ошибка: ' + err.message);
@@ -184,20 +148,6 @@ export default function BusinessAccess() {
               </div>
             ) : (
               <div className="space-y-4">
-                <Button
-                  onClick={() => setStep('join')}
-                  variant="outline"
-                  className="w-full h-10"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Войти как сотрудник
-                </Button>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-300"></span></div>
-                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-500">или</span></div>
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Название вашего бизнеса</label>
                   <Input
@@ -225,49 +175,6 @@ export default function BusinessAccess() {
                 </button>
               </div>
             )}
-          </div>
-        )}
-
-        {step === 'join' && (
-          <div className="p-8">
-            <button
-              onClick={() => setStep('main')}
-              className="flex items-center text-indigo-600 hover:text-indigo-700 mb-6"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Назад
-            </button>
-
-            <h2 className="text-2xl font-bold text-slate-900 mb-6">Войти как сотрудник</h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Код доступа</label>
-                <Input
-                  placeholder="Введите код доступа"
-                  value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-
-              {error && <div className="bg-red-100 text-red-700 p-3 rounded text-sm">{error}</div>}
-
-              <Button
-                onClick={handleJoinWithAccessCode}
-                disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 h-10"
-              >
-                {loading ? 'Вход...' : 'Войти'}
-              </Button>
-
-              <button
-                onClick={() => base44.auth.logout()}
-                className="w-full text-sm text-slate-600 hover:text-slate-900 font-medium py-2"
-              >
-                Выход
-              </button>
-            </div>
           </div>
         )}
 
