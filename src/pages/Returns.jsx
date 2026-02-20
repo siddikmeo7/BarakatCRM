@@ -102,18 +102,27 @@ export default function Returns() {
 
       await base44.entities.Return.create(returnData);
 
-      // Возвращаем товар на выбранный склад
-      const warehouseProducts = products.filter(p => 
-        p.warehouse_id === formData.warehouse_id && 
-        p.brand === products.find(pr => pr.id === formData.product_id)?.brand &&
-        p.model === products.find(pr => pr.id === formData.product_id)?.model
-      );
-      
-      if (warehouseProducts.length > 0) {
-        const targetProduct = warehouseProducts[0];
-        await base44.entities.Product.update(targetProduct.id, {
-          boxes_in_stock: (targetProduct.boxes_in_stock || 0) + parseInt(formData.boxes_returned)
+      // Возвращаем товар на склад — приоритет: тот же product_id
+      const returnedProduct = products.find(p => p.id === formData.product_id);
+      if (returnedProduct) {
+        await base44.entities.Product.update(returnedProduct.id, {
+          boxes_in_stock: (returnedProduct.boxes_in_stock || 0) + parseInt(formData.boxes_returned)
         });
+      }
+
+      // Если у продажи был долг — корректируем долг клиента на сумму возврата
+      if (formData.sale_id && formData.customer_id) {
+        const sale = sales.find(s => s.id === formData.sale_id);
+        if (sale?.is_debt && sale.customer_id === formData.customer_id) {
+          const customer = customers.find(c => c.id === formData.customer_id);
+          if (customer) {
+            const refundAmt = parseFloat(formData.refund_amount) || 0;
+            // Уменьшаем долг клиента на сумму возврата
+            await base44.entities.Customer.update(customer.id, {
+              total_debt: Math.max(0, (customer.total_debt || 0) - refundAmt)
+            });
+          }
+        }
       }
 
       await loadData();
