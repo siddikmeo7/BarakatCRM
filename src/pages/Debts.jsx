@@ -123,26 +123,33 @@ export default function Debts() {
     try {
       const amount = parseFloat(paymentAmount);
       const customer = customers.find(c => c.id === selectedSale.customer_id);
+      const product = customer ? products.find(p => p.id === selectedSale.product_id) : null;
+      const newDebt = customer ? Math.max(0, (customer.total_debt || 0) - amount) : 0;
       
-      // Создаём запись об оплате
-      await base44.entities.DebtPayment.create({
-        business_id: business.id,
-        customer_id: selectedSale.customer_id,
-        sale_id: selectedSale.id,
-        amount: amount,
-        payment_date: new Date().toISOString()
-      });
+      // Создаём запись об оплате + обновляем клиента параллельно
+      const tasks = [
+        base44.entities.DebtPayment.create({
+          business_id: business.id,
+          customer_id: selectedSale.customer_id,
+          sale_id: selectedSale.id,
+          amount: amount,
+          payment_date: new Date().toISOString()
+        })
+      ];
 
-      // Обновляем данные клиента
       if (customer) {
-        const newDebt = Math.max(0, (customer.total_debt || 0) - amount);
-        const product = products.find(p => p.id === selectedSale.product_id);
-        await base44.entities.Customer.update(customer.id, {
-          total_debt: newDebt,
-          total_paid: (customer.total_paid || 0) + amount
-        });
-        
-        // Отправить сообщение в выбранный канал
+        tasks.push(
+          base44.entities.Customer.update(customer.id, {
+            total_debt: newDebt,
+            total_paid: (customer.total_paid || 0) + amount
+          })
+        );
+      }
+
+      await Promise.all(tasks);
+
+      // Отправить сообщение в выбранный канал
+      if (customer) {
         if (messageChannel === 'telegram' && customer.telegram) {
           try {
             await base44.functions.invoke('sendTelegramMessage', {
@@ -157,21 +164,25 @@ export default function Debts() {
           } catch (err) {
             console.error('Failed to send Telegram message:', err);
           }
-        } else if (messageChannel === 'whatsapp' && customer.phone) {
-          try {
-            const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
-              phone: customer.phone,
-              customer_name: customer.name,
-              product_name: product ? `${product.brand} ${product.model}` : undefined,
-              total_debt: selectedSale.total_amount,
-              paid_amount: amount,
-              remaining_debt: newDebt,
-              business_name: business?.name,
-              type: 'payment'
-            });
-            if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
-          } catch (err) {
-            console.error('Failed to send WhatsApp message:', err);
+        } else if (messageChannel === 'whatsapp') {
+          const phone = customer.phone;
+          if (phone) {
+            // Строим сообщение прямо здесь, чтобы не зависеть от async
+            let msg = `👋 Здравствуйте, ${customer.name}!\n\n`;
+            msg += `✅ Спасибо за оплату!\n\n`;
+            msg += `💼 Бизнес: ${business?.name || 'Наша компания'}\n`;
+            if (product) msg += `📦 Товар: ${product.brand} ${product.model}\n`;
+            msg += `💰 Оплачено: ${amount.toLocaleString('ru-RU')} сомони\n`;
+            if (newDebt > 0) {
+              msg += `⏳ Остаток долга: ${newDebt.toLocaleString('ru-RU')} сомони\n`;
+            } else {
+              msg += `🎉 Долг полностью погашен!\n`;
+            }
+            msg += `\nСпасибо за доверие!`;
+
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+            window.open(waUrl, '_blank');
           }
         }
       }
