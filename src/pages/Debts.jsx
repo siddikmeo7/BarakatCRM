@@ -442,6 +442,7 @@ export default function Debts() {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
+                  <th className="px-3 py-3 text-center text-sm font-medium text-slate-400 w-8">#</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_date')}</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'cust_name')}</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_product')}</th>
@@ -454,7 +455,7 @@ export default function Debts() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredSales.map(sale => {
+                {filteredSales.map((sale, idx) => {
                   const customer = customers.find(c => c.id === sale.customer_id);
                   const product = products.find(p => p.id === sale.product_id);
                   const paidAmount = getSalePaidAmount(sale.id);
