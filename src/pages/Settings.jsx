@@ -228,13 +228,23 @@ export default function Settings() {
       });
 
       // Приглашаем пользователя в систему
+      let inviteSuccess = false;
       try {
         await base44.users.inviteUser(newEmployee.user_email, 'user');
+        inviteSuccess = true;
       } catch (inviteErr) {
-        console.error('Invite error (user may already exist):', inviteErr);
+        console.error('Invite error:', inviteErr);
       }
       
       await loadData();
+      
+      // Показываем сообщение о результате
+      if (inviteSuccess) {
+        alert(`Приглашение отправлено на ${newEmployee.user_email}. Сотрудник получит письмо с инструкциями для входа.`);
+      } else {
+        alert(`Сотрудник добавлен, но с отправкой приглашения была проблема. Возможно, этот email уже зарегистрирован в системе. Сотрудник сможет войти со своей почтой.`);
+      }
+      
       setNewEmployee({ 
         name: '', 
         user_email: '', 
