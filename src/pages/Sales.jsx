@@ -610,14 +610,32 @@ export default function Sales() {
         </div>
         )}
         {totalSalesPages > 1 && view === 'grid' && (
-          <div className="flex items-center justify-center gap-3 py-3">
+          <div className="flex items-center justify-center gap-1.5 py-3 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => setSalesPage(1)} disabled={salesPage === 1} className="text-xs px-2">«</Button>
             <Button variant="outline" size="sm" onClick={() => setSalesPage(p => Math.max(1, p - 1))} disabled={salesPage === 1}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="text-sm text-slate-600">{salesPage} / {totalSalesPages} ({filteredSales.length} продаж)</span>
+            {Array.from({ length: totalSalesPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalSalesPages || Math.abs(p - salesPage) <= 2)
+              .reduce((acc, p, idx, arr) => {
+                if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) => p === '...' ? (
+                <span key={`ellipsis-grid-${i}`} className="text-slate-400 px-1 text-sm">…</span>
+              ) : (
+                <Button key={p} variant={salesPage === p ? 'default' : 'outline'} size="sm"
+                  onClick={() => setSalesPage(p)}
+                  className={`w-8 text-xs ${salesPage === p ? 'bg-indigo-600 hover:bg-indigo-700' : ''}`}>
+                  {p}
+                </Button>
+              ))
+            }
             <Button variant="outline" size="sm" onClick={() => setSalesPage(p => Math.min(totalSalesPages, p + 1))} disabled={salesPage === totalSalesPages}>
               <ChevronRight className="w-4 h-4" />
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setSalesPage(totalSalesPages)} disabled={salesPage === totalSalesPages} className="text-xs px-2">»</Button>
           </div>
         )}
 
