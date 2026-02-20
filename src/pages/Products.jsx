@@ -315,17 +315,6 @@ export default function Products() {
             </SelectContent>
           </Select>
           <ViewToggle view={view} onChange={setView} />
-          <button
-            onClick={() => setHideImages(h => !h)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-              hideImages
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'
-            }`}
-          >
-            <Package className="w-3.5 h-3.5" />
-            {hideImages ? 'Фото скрыты' : 'Скрыть фото'}
-          </button>
         </div>
       </div>
 
