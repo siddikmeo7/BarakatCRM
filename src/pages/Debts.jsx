@@ -28,8 +28,12 @@ import {
   ExternalLink,
   X,
   Plus,
-  PlusCircle
+  PlusCircle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
+
+const DEBT_PAGE_SIZE = 20;
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
