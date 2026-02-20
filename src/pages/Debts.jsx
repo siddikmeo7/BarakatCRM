@@ -279,17 +279,7 @@ export default function Debts() {
         edit_count: 0
       });
 
-      // Если есть заметка — создаём запись оплаты с нулём как placeholde note
-      if (addDebtData.note) {
-        await base44.entities.DebtPayment.create({
-          business_id: business.id,
-          customer_id: customerId,
-          sale_id: 'note',
-          amount: 0,
-          note: addDebtData.note,
-          payment_date: new Date().toISOString()
-        });
-      }
+      // Заметка сохраняется в примечании продажи, а не как нулевой платёж
 
       await loadData();
       setAddDebtOpen(false);
