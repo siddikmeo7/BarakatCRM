@@ -128,12 +128,21 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
         });
       }
 
-      // Если долг — уменьшаем долг клиента
+      // Если долг — вычитаем из долга клиента только ОСТАВШИЙСЯ непогашенный долг
+      // (все реальные платежи через DebtPayment уже учтены в customer.total_paid/total_debt)
       if (sale.is_debt && customer) {
-        const debtToRemove = sale.total_amount - (sale.partial_payment || 0);
+        // Получаем все фактически совершённые платежи по этой продаже
+        const paymentsForSale = await base44.entities.DebtPayment.filter({ sale_id: sale.id });
+        const alreadyPaid = paymentsForSale.reduce((sum, p) => sum + (p.amount || 0), 0);
+        // Начальный долг = total_amount - partial_payment (уже уплачено при создании продажи)
+        const initialDebt = sale.total_amount - (sale.partial_payment || 0);
+        // Непогашенный остаток = total_amount - all payments - partial_payment
+        const remainingDebt = Math.max(0, initialDebt - alreadyPaid);
+
         await base44.entities.Customer.update(customer.id, {
-          total_debt: Math.max(0, (customer.total_debt || 0) - debtToRemove),
-          total_paid: Math.max(0, (customer.total_paid || 0) - (sale.partial_payment || 0))
+          total_debt: Math.max(0, (customer.total_debt || 0) - remainingDebt),
+          // Возвращаем partial_payment обратно (он был зачислен как total_paid при продаже)
+          total_paid: Math.max(0, (customer.total_paid || 0) - (sale.partial_payment || 0) - alreadyPaid)
         });
       }
 
