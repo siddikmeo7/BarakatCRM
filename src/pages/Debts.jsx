@@ -101,15 +101,21 @@ export default function Debts() {
     }
   };
 
-  // Расчёт оплаченной суммы для каждой продажи (включая partial_payment при создании)
+  // Расчёт оплаченной суммы для каждой продажи
+  // partial_payment при старых продажах не записывался в DebtPayment — учитываем его отдельно,
+  // но только если в payments нет записи с пометкой 'Частичная оплата при продаже'
   const getSalePaidAmount = (saleId) => {
     const sale = sales.find(s => s.id === saleId);
-    const fromPayments = payments
-      .filter(p => p.sale_id === saleId && (p.amount || 0) > 0)
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
-    // partial_payment уже записан в DebtPayment при создании продажи (с note 'Частичная оплата при продаже')
-    // поэтому НЕ суммируем sale.partial_payment отдельно — он уже в payments
-    return fromPayments;
+    const salePayments = payments.filter(p => p.sale_id === saleId && (p.amount || 0) > 0);
+    const fromPayments = salePayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    
+    // Проверяем: есть ли уже запись DebtPayment для partial_payment (новые продажи)
+    const hasPartialPaymentRecord = salePayments.some(p => p.note === 'Частичная оплата при продаже');
+    
+    // Для старых продаж (без записи) — добавляем partial_payment напрямую
+    const partialFromSale = (!hasPartialPaymentRecord && sale?.partial_payment > 0) ? (sale.partial_payment || 0) : 0;
+    
+    return fromPayments + partialFromSale;
   };
 
   const handleOpenPayment = (sale) => {
