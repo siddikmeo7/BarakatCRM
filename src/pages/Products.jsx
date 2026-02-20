@@ -21,15 +21,11 @@ import {
   Box,
   Filter,
   Calendar,
-  History,
-  ChevronLeft,
-  ChevronRight
+  History
 } from 'lucide-react';
-import { format, parseISO, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { format, parseISO, startOfDay, subDays, startOfWeek, startOfMonth } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
-
-const PAGE_SIZE = 20;
 
 const BASE_PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
 const BASE_COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый', 'Другой'];
@@ -49,6 +45,12 @@ export default function Products() {
   const [view, setView] = useState('grid');
   const [sortBy, setSortBy] = useState('name'); // name, stock, price, value
   const [hideImages, setHideImages] = useState(false);
+  const [dateFilter, setDateFilter] = useState('all'); // all, today, week, month, custom
+  const [customDateFrom, setCustomDateFrom] = useState('');
+  const [customDateTo, setCustomDateTo] = useState('');
+  const [showCustomDate, setShowCustomDate] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 30;
   
   const [formData, setFormData] = useState({
     brand: '',
