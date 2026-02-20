@@ -263,6 +263,43 @@ export default function Settings() {
     }
   };
 
+  const loadHistory = async () => {
+    if (!business) return;
+    setHistoryLoading(true);
+    try {
+      const logs = await base44.entities.ActivityLog.filter({ business_id: business.id });
+      setActivityLogs(logs.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleRestoreLog = async (log) => {
+    if (!log.entity_data || log.action_type !== 'delete') return;
+    if (!confirm('Восстановить эту запись?')) return;
+    try {
+      const entityMap = {
+        Product: base44.entities.Product,
+        Sale: base44.entities.Sale,
+        Customer: base44.entities.Customer,
+        Warehouse: base44.entities.Warehouse,
+        Employee: base44.entities.Employee,
+        Return: base44.entities.Return,
+      };
+      const entity = entityMap[log.entity_type];
+      if (entity) {
+        const { id, created_date, updated_date, ...restData } = log.entity_data;
+        await entity.create(restData);
+        await base44.entities.ActivityLog.update(log.id, { is_restored: true });
+        await loadHistory();
+      }
+    } catch (e) {
+      alert('Ошибка при восстановлении');
+    }
+  };
+
   const handleClearCache = () => {
     if (confirm(t(lang, 'settings_sec_cache') + '?')) {
       setClearingCache(true);
