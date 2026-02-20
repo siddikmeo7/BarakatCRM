@@ -161,8 +161,34 @@ export default function Products() {
     );
 
     try {
+      const user = await base44.auth.me();
       if (editingProduct) {
+        // Вычисляем diff — что изменилось
+        const changedFields = {};
+        const oldData = {};
+        const fieldLabels = {
+          brand: 'Бренд', model: 'Модель', product_type: 'Тип', color: 'Цвет',
+          size_from: 'Размер от', size_to: 'Размер до', pairs_per_box: 'Пар в коробке',
+          purchase_price: 'Цена закупки', sale_price: 'Цена продажи', boxes_in_stock: 'Коробок на складе'
+        };
+        Object.keys(fieldLabels).forEach(key => {
+          if (String(editingProduct[key]) !== String(data[key])) {
+            changedFields[key] = { from: editingProduct[key], to: data[key], label: fieldLabels[key] };
+            oldData[key] = editingProduct[key];
+          }
+        });
         await base44.entities.Product.update(editingProduct.id, data);
+        if (Object.keys(changedFields).length > 0) {
+          await base44.entities.ActivityLog.create({
+            business_id: business.id,
+            action_type: 'update',
+            entity_type: 'Product',
+            entity_id: editingProduct.id,
+            entity_data: { old: oldData, new: data, changes: changedFields },
+            user_email: user.email,
+            description: `Обновлён товар: ${data.brand} ${data.model} (${Object.values(changedFields).map(c => c.label).join(', ')})`
+          });
+        }
       } else {
         await base44.entities.Product.create(data);
       }
