@@ -30,8 +30,7 @@ import {
   Plus,
   PlusCircle,
   ChevronLeft,
-  ChevronRight,
-  SlidersHorizontal
+  ChevronRight
 } from 'lucide-react';
 
 const DEBT_PAGE_SIZE = 20;
@@ -53,6 +52,8 @@ export default function Debts() {
   const [filterCustomer, setFilterCustomer] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all'); // all, paid, unpaid
   const [filterAmount, setFilterAmount] = useState('');
+  const [sortBy, setSortBy] = useState('date_desc'); // date_desc, date_asc, remaining_desc, remaining_asc
+  const [debtPage, setDebtPage] = useState(1);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [selectedCustomerHistory, setSelectedCustomerHistory] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -60,8 +61,6 @@ export default function Debts() {
   const [sendingMsg, setSendingMsg] = useState(null);
   const [selectedCustomerDetail, setSelectedCustomerDetail] = useState(null);
   const [customerDetailOpen, setCustomerDetailOpen] = useState(false);
-  const [debtPage, setDebtPage] = useState(1);
-  const [sortBy, setSortBy] = useState('date_desc'); // date_desc, amount_desc, remaining_desc
   const [lang, setLang] = useState('ru');
   const [messageChannel, setMessageChannel] = useState('telegram');
   // Добавление долга вручную
@@ -324,7 +323,7 @@ export default function Debts() {
     }
   };
 
-  // Фильтрация + сортировка + пагинация
+  // Фильтрация
   let filteredSales = sales.filter(sale => {
     const customer = customers.find(c => c.id === sale.customer_id);
     const product = products.find(p => p.id === sale.product_id);
@@ -344,18 +343,22 @@ export default function Debts() {
     return matchesSearch && matchesCustomer && matchesStatus && matchesAmount;
   });
 
+  // Сортировка
   filteredSales = [...filteredSales].sort((a, b) => {
-    if (sortBy === 'amount_desc') return (b.total_amount || 0) - (a.total_amount || 0);
-    if (sortBy === 'remaining_desc') {
-      const ra = (a.total_amount || 0) - getSalePaidAmount(a.id);
-      const rb = (b.total_amount || 0) - getSalePaidAmount(b.id);
-      return rb - ra;
+    const remA = (a.total_amount || 0) - getSalePaidAmount(a.id);
+    const remB = (b.total_amount || 0) - getSalePaidAmount(b.id);
+    switch (sortBy) {
+      case 'date_asc': return new Date(a.sale_date || a.created_date) - new Date(b.sale_date || b.created_date);
+      case 'remaining_desc': return remB - remA;
+      case 'remaining_asc': return remA - remB;
+      case 'date_desc':
+      default: return new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date);
     }
-    return new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date);
   });
 
+  // Пагинация
   const totalDebtPages = Math.ceil(filteredSales.length / DEBT_PAGE_SIZE);
-  const paginatedDebtSales = filteredSales.slice((debtPage - 1) * DEBT_PAGE_SIZE, debtPage * DEBT_PAGE_SIZE);
+  const paginatedSales = filteredSales.slice((debtPage - 1) * DEBT_PAGE_SIZE, debtPage * DEBT_PAGE_SIZE);
 
   // Итоги
   const totalDebt = customers.reduce((sum, c) => sum + (c.total_debt || 0), 0);
@@ -423,16 +426,16 @@ export default function Debts() {
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <ViewToggle view={view} onChange={setView} />
           <SearchInput 
             value={search} 
-            onChange={setSearch} 
+            onChange={(v) => { setSearch(v); setDebtPage(1); }} 
             placeholder={t(lang, 'debts_search')}
-            className="w-full sm:w-64"
+            className="w-full sm:w-56"
           />
-          <Select value={filterCustomer} onValueChange={setFilterCustomer}>
-            <SelectTrigger className="w-48">
+          <Select value={filterCustomer} onValueChange={(v) => { setFilterCustomer(v); setDebtPage(1); }}>
+            <SelectTrigger className="w-44">
               <SelectValue placeholder={t(lang, 'cust_name')} />
             </SelectTrigger>
             <SelectContent>
@@ -442,7 +445,7 @@ export default function Debts() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setDebtPage(1); }}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder={t(lang, 'debts_status')} />
             </SelectTrigger>
