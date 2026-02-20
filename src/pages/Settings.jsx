@@ -74,7 +74,8 @@ export default function Settings() {
     default_size_from: 39,
     default_size_to: 44,
     default_pairs_per_box: 6,
-    default_product_type: 'Туфли'
+    default_product_type: 'Туфли',
+    low_stock_limit: 2
   });
 
   const [newEmployee, setNewEmployee] = useState({
