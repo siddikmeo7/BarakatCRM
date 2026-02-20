@@ -75,14 +75,10 @@ export default function Sales() {
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
-      // Support employee login: get business from global context set by Layout
-      let biz = window.__barakatBusiness;
-      if (!biz) {
-        const businesses = await base44.entities.Business.filter({ owner_email: user.email });
-        if (businesses.length > 0) biz = businesses[0];
-      }
+      const businesses = await base44.entities.Business.filter({ owner_email: user.email });
       
-      if (biz) {
+      if (businesses.length > 0) {
+        const biz = businesses[0];
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
