@@ -33,6 +33,7 @@ const RATES_CACHE_KEY = 'exchange_rates_cache';
 const RATES_DATE_KEY = 'exchange_rates_date';
 
 export default function Analytics() {
+  const { can } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
