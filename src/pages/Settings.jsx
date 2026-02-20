@@ -147,7 +147,8 @@ export default function Settings() {
           default_size_from: biz.default_size_from || 39,
           default_size_to: biz.default_size_to || 44,
           default_pairs_per_box: biz.default_pairs_per_box || 6,
-          default_product_type: biz.default_product_type || 'Туфли'
+          default_product_type: biz.default_product_type || 'Туфли',
+          low_stock_limit: biz.low_stock_limit ?? 2
         });
 
         const employeesData = await base44.entities.Employee.filter({ business_id: biz.id });
