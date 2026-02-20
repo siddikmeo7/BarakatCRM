@@ -39,8 +39,7 @@ import {
   Package,
   ShoppingCart,
   Eye,
-  Search,
-  Check
+  Search
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
@@ -675,6 +674,25 @@ export default function Settings() {
                 </div>
               </div>
 
+              {/* Пользовательские разрешения */}
+              <div className="mt-3 space-y-2">
+                <label className="text-xs font-medium text-slate-700">Дополнительные разрешения:</label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 p-2 border border-slate-200 rounded-lg hover:bg-indigo-50 cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={newEmployee.permissions?.edit_all_data || false}
+                      onChange={(e) => setNewEmployee({
+                        ...newEmployee,
+                        permissions: { ...newEmployee.permissions, edit_all_data: e.target.checked }
+                      })}
+                      className="w-4 h-4 rounded"
+                    />
+                    <span className="text-sm text-slate-700">Редактировать все данные (edit_all_data)</span>
+                  </label>
+                </div>
+              </div>
+
               {/* Краткое описание прав */}
               <div className="mt-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
                 <p className="text-xs font-medium text-indigo-800 mb-1.5">Права для роли «{newEmployee.role}»:</p>
@@ -687,7 +705,8 @@ export default function Settings() {
                       view_warehouses:'Склады', manage_warehouses:'Управление складами',
                       view_customers:'Клиенты', manage_customers:'Управление клиентами',
                       view_debts:'Долги', manage_debts:'Управление долгами',
-                      manage_returns:'Возвраты', view_activity_log:'История'
+                      manage_returns:'Возвраты', view_activity_log:'История',
+                      edit_all_data:'Редактирование всех данных'
                     };
                     return <span key={k} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs">{labels[k]}</span>;
                   })}
