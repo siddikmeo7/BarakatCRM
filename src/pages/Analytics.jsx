@@ -26,6 +26,7 @@ import { t } from '@/components/i18n/translations';
 import SalesForecast from '@/components/analytics/SalesForecast';
 import CustomerSegmentation from '@/components/analytics/CustomerSegmentation';
 import ReportBuilder from '@/components/analytics/ReportBuilder';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 const DEFAULT_RATES = { TJS: 1, USD: 0.091, RUB: 8.5, EUR: 0.084, CNY: 0.66 };
 const RATES_CACHE_KEY = 'exchange_rates_cache';
