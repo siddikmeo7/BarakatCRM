@@ -590,7 +590,6 @@ export default function Sales() {
           <p>{t(lang,'sales_not_found')}</p>
         </div>
         )}
-        {/* Pagination for grid view */}
         {totalSalesPages > 1 && view === 'grid' && (
           <div className="flex items-center justify-center gap-3 py-3">
             <Button variant="outline" size="sm" onClick={() => setSalesPage(p => Math.max(1, p - 1))} disabled={salesPage === 1}>
