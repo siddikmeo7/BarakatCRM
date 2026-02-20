@@ -757,11 +757,10 @@ export default function Settings() {
               <Button 
                 onClick={handleAddEmployee}
                 disabled={!newEmployee.name || !newEmployee.user_email}
-                size="sm"
                 className="mt-4 bg-indigo-600 hover:bg-indigo-700"
               >
-                <Plus className="w-3 h-3 mr-1" />
-                Добавить
+                <Plus className="w-4 h-4 mr-2" />
+                Добавить и отправить приглашение
               </Button>
             </div>
 
