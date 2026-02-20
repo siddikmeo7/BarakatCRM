@@ -90,27 +90,10 @@ export default function Layout({ children, currentPageName }) {
           setLang(foundBiz.language || 'ru');
           setEmployeePermissions(null); // owner
         } else {
-          // Проверяем — может, это сотрудник чужого бизнеса
-          const empRecords = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
-          if (empRecords.length > 0) {
-            const emp = empRecords[0];
-            setEmployeePermissions(emp.permissions || {});
-            // Загружаем бизнес сотрудника по ID
-            try {
-              const bizResults = await base44.entities.Business.filter({ id: emp.business_id });
-              if (bizResults.length > 0) {
-                setBusiness(bizResults[0]);
-                setLang(bizResults[0].language || 'ru');
-              }
-            } catch (err) {
-              console.error('Error loading business:', err);
-            }
-          } else {
-            // Новый пользователь — перенаправляем на страницу доступа
-            navigate(createPageUrl('BusinessAccess'));
-            setLoading(false);
-            return;
-          }
+          // Новый пользователь или сотрудник — перенаправляем на страницу доступа
+          navigate(createPageUrl('BusinessAccess'));
+          setLoading(false);
+          return;
         }
       }
     } catch (error) {
