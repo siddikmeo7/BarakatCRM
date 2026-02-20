@@ -140,29 +140,11 @@ export default function Customers() {
     }
   };
 
-  // Фильтрация + сортировка + пагинация
-  let filteredCustomers = customers.filter(customer => {
-    const matchesSearch = !search ||
-      customer.name?.toLowerCase().includes(search.toLowerCase()) ||
-      customer.phone?.includes(search);
-    const matchesDebt =
-      filterDebt === 'all' ||
-      (filterDebt === 'with_debt' && (customer.total_debt || 0) > 0) ||
-      (filterDebt === 'no_debt' && (customer.total_debt || 0) === 0);
-    return matchesSearch && matchesDebt;
-  });
-
-  filteredCustomers = [...filteredCustomers].sort((a, b) => {
-    switch (sortBy) {
-      case 'debt_desc': return (b.total_debt || 0) - (a.total_debt || 0);
-      case 'debt_asc': return (a.total_debt || 0) - (b.total_debt || 0);
-      case 'paid_desc': return (b.total_paid || 0) - (a.total_paid || 0);
-      default: return (a.name || '').localeCompare(b.name || '');
-    }
-  });
-
-  const totalPages = Math.ceil(filteredCustomers.length / PAGE_SIZE);
-  const paginatedCustomers = filteredCustomers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // Фильтрация
+  const filteredCustomers = customers.filter(customer =>
+    customer.name?.toLowerCase().includes(search.toLowerCase()) ||
+    customer.phone?.includes(search)
+  );
 
   // Итоги
   const totalDebt = customers.reduce((sum, c) => sum + (c.total_debt || 0), 0);
