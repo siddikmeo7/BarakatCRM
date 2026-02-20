@@ -567,7 +567,10 @@ export default function Debts() {
                       <Package className="w-4 h-4 text-slate-300" />
                     </div>
                   )}
-                  <span>{product?.brand} {product?.model} · {sale.boxes_sold} {t(lang,'sales_boxes_short')}</span>
+                  <span>
+                    {product ? `${product.brand} ${product.model}` : <span className="text-slate-400 italic">{t(lang,'sales_unknown')}</span>}
+                    {' · '}{sale.boxes_sold} {t(lang,'sales_boxes_short')}
+                  </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-center">
                   <div>
