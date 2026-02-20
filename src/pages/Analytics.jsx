@@ -274,6 +274,7 @@ export default function Analytics() {
           iconColor="text-blue-600"
           className="text-sm md:text-base"
         />
+        {can('view_profit') && (
         <StatCard
           title={t(lang,'analytics_profit')}
           value={convertCurrency(totalProfit)}
@@ -283,6 +284,7 @@ export default function Analytics() {
           iconColor="text-emerald-600"
           className="text-sm md:text-base"
         />
+        )}
         <StatCard
           title={t(lang,'analytics_margin')}
           value={hideData ? masked : `${profitMargin}%`}
