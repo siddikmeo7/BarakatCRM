@@ -38,6 +38,9 @@ export default function Customers() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [view, setView] = useState('grid');
+  const [filterDebt, setFilterDebt] = useState('all'); // all, with_debt, no_debt
+  const [sortBy, setSortBy] = useState('name'); // name, debt_desc, debt_asc, paid_desc
+  const [page, setPage] = useState(1);
   
   const [formData, setFormData] = useState({
     name: '',
