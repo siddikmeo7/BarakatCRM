@@ -243,6 +243,10 @@ export default function Sales() {
     profit: acc.profit + (sale.profit || 0)
   }), { boxes: 0, pairs: 0, items: 0, revenue: 0, profit: 0 });
 
+  // Пагинация
+  const totalPages = Math.ceil(filteredSales.length / PAGE_SIZE);
+  const paginatedSales = filteredSales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   // Поиск товаров для выбора
   const filteredProducts = products.filter(p => 
     (p.brand?.toLowerCase().includes(productSearch.toLowerCase()) ||
