@@ -95,11 +95,15 @@ export default function Layout({ children, currentPageName }) {
           if (empRecords.length > 0) {
             const emp = empRecords[0];
             setEmployeePermissions(emp.permissions || {});
-            // Загружаем бизнес сотрудника
-            const empBiz = await base44.entities.Business.filter({ id: emp.business_id });
-            if (empBiz.length > 0) {
-              setBusiness(empBiz[0]);
-              setLang(empBiz[0].language || 'ru');
+            // Загружаем бизнес сотрудника по ID
+            try {
+              const bizData = await base44.entities.Business.read(emp.business_id);
+              if (bizData) {
+                setBusiness(bizData);
+                setLang(bizData.language || 'ru');
+              }
+            } catch (err) {
+              console.error('Error loading business:', err);
             }
           } else {
             // Новый владелец — создаём бизнес
