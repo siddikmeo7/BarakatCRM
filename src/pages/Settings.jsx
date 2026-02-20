@@ -102,6 +102,7 @@ export default function Settings() {
   const [editingType, setEditingType] = useState(null);
   const [editColorDialog, setEditColorDialog] = useState(false);
   const [editTypeDialog, setEditTypeDialog] = useState(false);
+  const [newCustomPermission, setNewCustomPermission] = useState('');
   const [expandedSections, setExpandedSections] = useState({
     business: true,
     defaults: false,
