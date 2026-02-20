@@ -590,16 +590,33 @@ export default function Products() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 py-2">
+        <div className="flex items-center justify-center gap-1.5 py-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => setPage(1)} disabled={page === 1} className="text-xs px-2">«</Button>
           <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm text-slate-600">
-            {page} / {totalPages} ({filteredProducts.length} товаров)
-          </span>
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+            .reduce((acc, p, idx, arr) => {
+              if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+              acc.push(p);
+              return acc;
+            }, [])
+            .map((p, i) => p === '...' ? (
+              <span key={`ellipsis-${i}`} className="text-slate-400 px-1 text-sm">…</span>
+            ) : (
+              <Button key={p} variant={page === p ? 'default' : 'outline'} size="sm"
+                onClick={() => setPage(p)}
+                className={`w-8 text-xs ${page === p ? 'bg-indigo-600 hover:bg-indigo-700' : ''}`}>
+                {p}
+              </Button>
+            ))
+          }
           <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
             <ChevronRight className="w-4 h-4" />
           </Button>
+          <Button variant="outline" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} className="text-xs px-2">»</Button>
+          <span className="text-xs text-slate-400 ml-2">{filteredProducts.length} товаров</span>
         </div>
       )}
 
