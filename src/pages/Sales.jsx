@@ -27,7 +27,9 @@ import {
   List
 } from 'lucide-react';
 import ViewToggle from '@/components/ui/ViewToggle';
-import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
+import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
+
+const SALES_PAGE_SIZE = 25;
 import { t } from '@/components/i18n/translations';
 import { ru } from 'date-fns/locale';
 
@@ -51,8 +53,7 @@ export default function Sales() {
   const [displayUnit, setDisplayUnit] = useState('boxes'); // boxes, pairs, items
   const [sortBy, setSortBy] = useState('date'); // date, amount, profit, boxes
   const [view, setView] = useState('list'); // list, grid
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 30;
+  const [salesPage, setSalesPage] = useState(1);
   
   const [formData, setFormData] = useState({
     product_id: '',
@@ -202,6 +203,16 @@ export default function Sales() {
     }
   };
 
+  // Быстрые переключатели периода для продаж
+  const setSalesQuickPeriod = (period) => {
+    const now = new Date();
+    if (period === 'today') setDateRange({ from: startOfDay(now), to: endOfDay(now) });
+    else if (period === 'week') setDateRange({ from: startOfWeek(now, { weekStartsOn: 1 }), to: endOfWeek(now, { weekStartsOn: 1 }) });
+    else if (period === 'month') setDateRange({ from: startOfMonth(now), to: endOfMonth(now) });
+    else if (period === 'all') setDateRange(null);
+    setSalesPage(1);
+  };
+
   // Фильтрация продаж
   let filteredSales = sales.filter(sale => {
     const product = products.find(p => p.id === sale.product_id);
@@ -242,10 +253,6 @@ export default function Sales() {
     revenue: acc.revenue + (sale.total_amount || 0),
     profit: acc.profit + (sale.profit || 0)
   }), { boxes: 0, pairs: 0, items: 0, revenue: 0, profit: 0 });
-
-  // Пагинация
-  const totalPages = Math.ceil(filteredSales.length / PAGE_SIZE);
-  const paginatedSales = filteredSales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Поиск товаров для выбора
   const filteredProducts = products.filter(p => 
@@ -367,9 +374,9 @@ export default function Sales() {
       {view === 'list' ? (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {/* Desktop */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-96">
           <table className="w-full">
-            <thead className="bg-slate-50 sticky top-0 z-10">
+            <thead className="bg-slate-50">
               <tr>
                 <th className="px-3 py-3 text-center text-sm font-medium text-slate-400 w-8">#</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_date')}</th>
@@ -384,7 +391,7 @@ export default function Sales() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {paginatedSales.map((sale, idx) => {
+              {filteredSales.map((sale, idx) => {
                 const product = products.find(p => p.id === sale.product_id);
                 const customer = customers.find(c => c.id === sale.customer_id);
                 const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
@@ -395,7 +402,7 @@ export default function Sales() {
                     className={`hover:bg-slate-50 cursor-pointer ${sale.is_cancelled ? 'opacity-50' : ''}`}
                     onClick={() => setSelectedSale(sale)}
                   >
-                    <td className="px-3 py-3 text-center text-xs font-mono text-slate-400 select-none">{(page-1)*PAGE_SIZE + idx + 1}</td>
+                    <td className="px-3 py-3 text-center text-xs font-mono text-slate-400 select-none">{idx + 1}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
                       {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM, HH:mm', { locale: ru })}
                     </td>
