@@ -365,6 +365,7 @@ export default function Products() {
               <div key={product.id} className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-shadow ${isLowStock ? 'border-red-300 bg-red-50' : 'border-slate-100 shadow-sm'}`}>
                 <div className={`flex items-center justify-between px-3 pt-2.5 pb-1 ${isLowStock ? 'border-b border-red-200' : 'border-b border-slate-100'}`}>
                   <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-mono text-slate-300 select-none">{idx + 1}</span>
                     <p className={`font-bold text-sm truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand}</p>
                     <p className={`text-xs truncate ${isLowStock ? 'text-red-500' : 'text-slate-500'}`}>{product.model}</p>
                   </div>
