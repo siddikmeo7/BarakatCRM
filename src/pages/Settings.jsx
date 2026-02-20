@@ -83,20 +83,15 @@ export default function Settings() {
     name: '',
     user_email: '',
     phone: '',
-    role: 'Менеджер',
+    role: 'Продавец',
     permissions: {
-      view_analytics: false,
-      view_profit: false,
-      add_products: true,
-      edit_products: false,
-      delete_products: false,
-      add_sales: true,
-      view_warehouses: true,
-      manage_warehouses: false,
-      view_customers: true,
-      manage_customers: false,
-      view_debts: false,
-      manage_returns: false
+      view_analytics: false, view_profit: false,
+      view_products: true, add_products: true, edit_products: false, delete_products: false,
+      view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false,
+      view_warehouses: true, manage_warehouses: false,
+      view_customers: true, manage_customers: false,
+      view_debts: false, manage_debts: false,
+      manage_returns: false, view_activity_log: false,
     }
   });
   const [newColor, setNewColor] = useState('');
