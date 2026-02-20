@@ -445,8 +445,9 @@ export default function Products() {
                 const totalPairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);
                 const stockValue = (product.boxes_in_stock || 0) * (product.sale_price || 0);
                 const warehouse = warehouses.find(w => w.id === product.warehouse_id);
+                const isLowStock = (product.boxes_in_stock || 0) <= 2;
                 return (
-                  <tr key={product.id} className="hover:bg-slate-50">
+                  <tr key={product.id} className={`hover:bg-slate-50 ${isLowStock ? 'bg-red-50' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {product.photo_url ? (
@@ -457,15 +458,13 @@ export default function Products() {
                           </div>
                         )}
                         <div>
-                          <p className="font-semibold text-slate-900">{product.brand} {product.model}</p>
+                          <p className={`font-semibold ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand} {product.model}</p>
                           <p className="text-xs text-slate-500">{product.color} • {product.size_from}-{product.size_to}{warehouse ? ` • ${warehouse.name}` : ''}</p>
-                          <p className="text-[11px] text-slate-400 mt-0.5">
-                            {product.created_date ? new Date(product.created_date).toLocaleDateString('ru-RU') : ''}
-                          </p>
+                          {isLowStock && <span className="text-[10px] text-red-500 font-medium">⚠️ Заканчивается</span>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-center font-bold text-indigo-600">{product.boxes_in_stock || 0}</td>
+                    <td className={`px-4 py-3 text-center font-bold ${isLowStock ? 'text-red-600' : 'text-indigo-600'}`}>{product.boxes_in_stock || 0}</td>
                     <td className="px-4 py-3 text-center text-slate-700">{totalPairs}</td>
                     <td className="px-4 py-3 text-right text-slate-700">{product.purchase_price?.toLocaleString()}</td>
                     <td className="px-4 py-3 text-right font-semibold text-emerald-600">{product.sale_price?.toLocaleString()}</td>
