@@ -285,6 +285,7 @@ export default function Analytics() {
           className="text-sm md:text-base"
         />
         )}
+        {can('view_profit') && (
         <StatCard
           title={t(lang,'analytics_margin')}
           value={hideData ? masked : `${profitMargin}%`}
@@ -293,6 +294,7 @@ export default function Analytics() {
           iconColor="text-purple-600"
           className="text-sm md:text-base"
         />
+        )}
         <StatCard
           title={t(lang,'analytics_boxes_sold')}
           value={totalBoxes}
