@@ -159,15 +159,17 @@ export default function Debts() {
           }
         } else if (messageChannel === 'whatsapp' && customer.phone) {
           try {
-            await base44.functions.invoke('sendWhatsAppDebtMessage', {
+            const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
               phone: customer.phone,
               customer_name: customer.name,
               product_name: product ? `${product.brand} ${product.model}` : undefined,
+              total_debt: selectedSale.total_amount,
               paid_amount: amount,
               remaining_debt: newDebt,
               business_name: business?.name,
               type: 'payment'
             });
+            if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
           } catch (err) {
             console.error('Failed to send WhatsApp message:', err);
           }
