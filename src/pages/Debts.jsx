@@ -101,11 +101,15 @@ export default function Debts() {
     }
   };
 
-  // Расчёт оплаченной суммы для каждой продажи
+  // Расчёт оплаченной суммы для каждой продажи (включая partial_payment при создании)
   const getSalePaidAmount = (saleId) => {
-    return payments
-      .filter(p => p.sale_id === saleId)
+    const sale = sales.find(s => s.id === saleId);
+    const fromPayments = payments
+      .filter(p => p.sale_id === saleId && (p.amount || 0) > 0)
       .reduce((sum, p) => sum + (p.amount || 0), 0);
+    // partial_payment уже записан в DebtPayment при создании продажи (с note 'Частичная оплата при продаже')
+    // поэтому НЕ суммируем sale.partial_payment отдельно — он уже в payments
+    return fromPayments;
   };
 
   const handleOpenPayment = (sale) => {
