@@ -30,8 +30,7 @@ import {
   Plus,
   PlusCircle,
   ChevronLeft,
-  ChevronRight,
-  SlidersHorizontal
+  ChevronRight
 } from 'lucide-react';
 
 const DEBT_PAGE_SIZE = 20;
@@ -53,6 +52,8 @@ export default function Debts() {
   const [filterCustomer, setFilterCustomer] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all'); // all, paid, unpaid
   const [filterAmount, setFilterAmount] = useState('');
+  const [sortBy, setSortBy] = useState('date_desc'); // date_desc, date_asc, remaining_desc, remaining_asc
+  const [debtPage, setDebtPage] = useState(1);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [selectedCustomerHistory, setSelectedCustomerHistory] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -60,8 +61,6 @@ export default function Debts() {
   const [sendingMsg, setSendingMsg] = useState(null);
   const [selectedCustomerDetail, setSelectedCustomerDetail] = useState(null);
   const [customerDetailOpen, setCustomerDetailOpen] = useState(false);
-  const [debtPage, setDebtPage] = useState(1);
-  const [sortBy, setSortBy] = useState('date_desc'); // date_desc, amount_desc, remaining_desc
   const [lang, setLang] = useState('ru');
   const [messageChannel, setMessageChannel] = useState('telegram');
   // Добавление долга вручную
@@ -325,14 +324,14 @@ export default function Debts() {
   };
 
   // Фильтрация
-  const filteredSales = sales.filter(sale => {
+  let filteredSales = sales.filter(sale => {
     const customer = customers.find(c => c.id === sale.customer_id);
     const product = products.find(p => p.id === sale.product_id);
     const paidAmount = getSalePaidAmount(sale.id);
     const remaining = (sale.total_amount || 0) - paidAmount;
     const isPaid = remaining <= 0;
     
-    const matchesSearch = 
+    const matchesSearch = !search ||
       customer?.name?.toLowerCase().includes(search.toLowerCase()) ||
       product?.brand?.toLowerCase().includes(search.toLowerCase());
     const matchesCustomer = filterCustomer === 'all' || sale.customer_id === filterCustomer;
@@ -343,6 +342,23 @@ export default function Debts() {
     
     return matchesSearch && matchesCustomer && matchesStatus && matchesAmount;
   });
+
+  // Сортировка
+  filteredSales = [...filteredSales].sort((a, b) => {
+    const remA = (a.total_amount || 0) - getSalePaidAmount(a.id);
+    const remB = (b.total_amount || 0) - getSalePaidAmount(b.id);
+    switch (sortBy) {
+      case 'date_asc': return new Date(a.sale_date || a.created_date) - new Date(b.sale_date || b.created_date);
+      case 'remaining_desc': return remB - remA;
+      case 'remaining_asc': return remA - remB;
+      case 'date_desc':
+      default: return new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date);
+    }
+  });
+
+  // Пагинация
+  const totalDebtPages = Math.ceil(filteredSales.length / DEBT_PAGE_SIZE);
+  const paginatedSales = filteredSales.slice((debtPage - 1) * DEBT_PAGE_SIZE, debtPage * DEBT_PAGE_SIZE);
 
   // Итоги
   const totalDebt = customers.reduce((sum, c) => sum + (c.total_debt || 0), 0);
