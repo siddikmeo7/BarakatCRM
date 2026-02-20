@@ -27,7 +27,9 @@ import {
   List
 } from 'lucide-react';
 import ViewToggle from '@/components/ui/ViewToggle';
-import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
+import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
+
+const SALES_PAGE_SIZE = 25;
 import { t } from '@/components/i18n/translations';
 import { ru } from 'date-fns/locale';
 
@@ -51,8 +53,7 @@ export default function Sales() {
   const [displayUnit, setDisplayUnit] = useState('boxes'); // boxes, pairs, items
   const [sortBy, setSortBy] = useState('date'); // date, amount, profit, boxes
   const [view, setView] = useState('list'); // list, grid
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 30;
+  const [salesPage, setSalesPage] = useState(1);
   
   const [formData, setFormData] = useState({
     product_id: '',
@@ -202,6 +203,16 @@ export default function Sales() {
     }
   };
 
+  // Быстрые переключатели периода для продаж
+  const setSalesQuickPeriod = (period) => {
+    const now = new Date();
+    if (period === 'today') setDateRange({ from: startOfDay(now), to: endOfDay(now) });
+    else if (period === 'week') setDateRange({ from: startOfWeek(now, { weekStartsOn: 1 }), to: endOfWeek(now, { weekStartsOn: 1 }) });
+    else if (period === 'month') setDateRange({ from: startOfMonth(now), to: endOfMonth(now) });
+    else if (period === 'all') setDateRange(null);
+    setSalesPage(1);
+  };
+
   // Фильтрация продаж
   let filteredSales = sales.filter(sale => {
     const product = products.find(p => p.id === sale.product_id);
@@ -219,6 +230,9 @@ export default function Sales() {
     return matchesSearch && matchesWarehouse && matchesDate;
   });
 
+  // Пагинация продаж
+  const totalSalesPages = Math.ceil(filteredSales.length / SALES_PAGE_SIZE);
+
   // Сортировка
   filteredSales = [...filteredSales].sort((a, b) => {
     switch(sortBy) {
@@ -234,6 +248,8 @@ export default function Sales() {
     }
   });
 
+  const paginatedSales = filteredSales.slice((salesPage - 1) * SALES_PAGE_SIZE, salesPage * SALES_PAGE_SIZE);
+
   // Итоги
   const totals = filteredSales.reduce((acc, sale) => ({
     boxes: acc.boxes + (sale.boxes_sold || 0),
@@ -242,10 +258,6 @@ export default function Sales() {
     revenue: acc.revenue + (sale.total_amount || 0),
     profit: acc.profit + (sale.profit || 0)
   }), { boxes: 0, pairs: 0, items: 0, revenue: 0, profit: 0 });
-
-  // Пагинация
-  const totalPages = Math.ceil(filteredSales.length / PAGE_SIZE);
-  const paginatedSales = filteredSales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Поиск товаров для выбора
   const filteredProducts = products.filter(p => 
@@ -316,9 +328,21 @@ export default function Sales() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-4">
-        <div className="flex items-center justify-between">
-          <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+        {/* Quick period buttons */}
+        <div className="flex flex-wrap gap-2 items-center">
+          {[
+            { key: 'today', label: 'Сегодня' },
+            { key: 'week', label: 'Неделя' },
+            { key: 'month', label: 'Месяц' },
+          ].map(f => (
+            <button key={f.key} onClick={() => setSalesQuickPeriod(f.key)}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border bg-white text-slate-600 border-slate-200 hover:border-indigo-400 transition-all">
+              {f.label}
+            </button>
+          ))}
+          <DateFilter dateRange={dateRange} onDateRangeChange={r => { setDateRange(r); setSalesPage(1); }} />
+          <span className="ml-auto text-xs text-slate-400">{filteredSales.length} продаж</span>
           <ViewToggle view={view} onChange={setView} />
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -367,9 +391,9 @@ export default function Sales() {
       {view === 'list' ? (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {/* Desktop */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-96">
           <table className="w-full">
-            <thead className="bg-slate-50 sticky top-0 z-10">
+            <thead className="bg-slate-50">
               <tr>
                 <th className="px-3 py-3 text-center text-sm font-medium text-slate-400 w-8">#</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_date')}</th>
@@ -385,6 +409,7 @@ export default function Sales() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {paginatedSales.map((sale, idx) => {
+                const globalIdx = (salesPage - 1) * SALES_PAGE_SIZE + idx;
                 const product = products.find(p => p.id === sale.product_id);
                 const customer = customers.find(c => c.id === sale.customer_id);
                 const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
@@ -395,7 +420,7 @@ export default function Sales() {
                     className={`hover:bg-slate-50 cursor-pointer ${sale.is_cancelled ? 'opacity-50' : ''}`}
                     onClick={() => setSelectedSale(sale)}
                   >
-                    <td className="px-3 py-3 text-center text-xs font-mono text-slate-400 select-none">{(page-1)*PAGE_SIZE + idx + 1}</td>
+                    <td className="px-3 py-3 text-center text-xs font-mono text-slate-400 select-none">{globalIdx + 1}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
                       {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM, HH:mm', { locale: ru })}
                     </td>
@@ -494,18 +519,10 @@ export default function Sales() {
             <p>{t(lang,'sales_not_found')}</p>
           </div>
         )}
-        {/* Pagination inside list */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 p-4 border-t border-slate-100">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Назад</Button>
-            <span className="text-sm text-slate-500">{page} / {totalPages}</span>
-            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Вперёд →</Button>
-          </div>
-        )}
         </div>
         ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {paginatedSales.map(sale => {
+        {filteredSales.map(sale => {
           const product = products.find(p => p.id === sale.product_id);
           const customer = customers.find(c => c.id === sale.customer_id);
           const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
@@ -560,13 +577,6 @@ export default function Sales() {
           <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-slate-300" />
           <p>{t(lang,'sales_not_found')}</p>
         </div>
-        )}
-        {totalPages > 1 && view === 'grid' && (
-          <div className="flex items-center justify-center gap-2 py-4">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Назад</Button>
-            <span className="text-sm text-slate-500">{page} / {totalPages}</span>
-            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Вперёд →</Button>
-          </div>
         )}
 
       {/* Sale Detail Dialog */}
