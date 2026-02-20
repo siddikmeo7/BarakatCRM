@@ -317,14 +317,10 @@ export default function Products() {
           <ViewToggle view={view} onChange={setView} />
           <button
             onClick={() => setHideImages(h => !h)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-              hideImages
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${hideImages ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
           >
             <Package className="w-3.5 h-3.5" />
-            {hideImages ? 'Фото скрыты' : 'Скрыть фото'}
+            {hideImages ? 'С фото' : 'Без фото'}
           </button>
         </div>
       </div>
@@ -337,25 +333,23 @@ export default function Products() {
             const totalItems = totalPairs * 2;
             return (
               <div key={product.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
-                {!hideImages && (
-                  <div className="aspect-square bg-slate-100 relative">
-                    {product.photo_url ? (
-                      <img src={product.photo_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-16 h-16 text-slate-300" />
-                      </div>
-                    )}
-                    <div className="absolute top-2 right-2 flex gap-1">
-                      <button onClick={() => handleOpenDialog(product)} className="p-2 bg-white rounded-lg shadow-md hover:bg-slate-50">
-                        <Edit2 className="w-4 h-4 text-slate-600" />
-                      </button>
-                      <button onClick={() => handleDelete(product.id)} className="p-2 bg-white rounded-lg shadow-md hover:bg-red-50">
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </button>
+                <div className="aspect-square bg-slate-100 relative">
+                  {product.photo_url ? (
+                    <img src={product.photo_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="w-16 h-16 text-slate-300" />
                     </div>
+                  )}
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <button onClick={() => handleOpenDialog(product)} className="p-2 bg-white rounded-lg shadow-md hover:bg-slate-50">
+                      <Edit2 className="w-4 h-4 text-slate-600" />
+                    </button>
+                    <button onClick={() => handleDelete(product.id)} className="p-2 bg-white rounded-lg shadow-md hover:bg-red-50">
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </button>
                   </div>
-                )}
+                </div>
                 <div className="p-3">
                   <div className="mb-2">
                     <p className="font-semibold text-slate-900 text-sm truncate">{product.brand}</p>
