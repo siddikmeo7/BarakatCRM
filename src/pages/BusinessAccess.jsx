@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 
 export default function BusinessAccess() {
-  const [step, setStep] = useState('main'); // main, manage
+  const [step, setStep] = useState('main'); // main, manage, join
   const [email, setEmail] = useState('');
   const [businessCode, setBusinessCode] = useState('');
   const [accessCode, setAccessCode] = useState('');
@@ -33,6 +33,16 @@ export default function BusinessAccess() {
       const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
       if (businesses.length > 0) {
         setBusiness(businesses[0]);
+      } else {
+        // Проверяем, может быть это сотрудник
+        const empRecords = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
+        if (empRecords.length > 0) {
+          const emp = empRecords[0];
+          const bizResults = await base44.entities.Business.filter({ id: emp.business_id });
+          if (bizResults.length > 0) {
+            setBusiness(bizResults[0]);
+          }
+        }
       }
     } catch (err) {
       console.error('Error loading user:', err);
@@ -88,9 +98,50 @@ export default function BusinessAccess() {
 
       await base44.entities.Business.update(business.id, updateData);
       
-      const updated = await base44.entities.Business.read(business.id);
-      setBusiness(updated);
+      const updated = await base44.entities.Business.filter({ id: business.id });
+      if (updated.length > 0) setBusiness(updated[0]);
       alert(`✅ ${type === 'business' ? 'Код бизнеса' : 'Код доступа'} обновлён`);
+    } catch (err) {
+      setError('Ошибка: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJoinBusiness = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const bCode = businessCode.trim();
+      const aCode = accessCode.trim();
+
+      if (!bCode || !aCode) {
+        setError('Введите коды доступа');
+        setLoading(false);
+        return;
+      }
+
+      const businesses = await base44.entities.Business.filter({ business_code: bCode, access_code: aCode });
+      if (businesses.length === 0) {
+        setError('Неверные коды доступа');
+        setLoading(false);
+        return;
+      }
+
+      const biz = businesses[0];
+      const emp = await base44.entities.Employee.filter({ business_id: biz.id, user_email: email });
+
+      if (emp.length === 0) {
+        setError('У вас нет доступа к этому бизнесу');
+        setLoading(false);
+        return;
+      }
+
+      setBusiness(biz);
+      setBusinessCode('');
+      setAccessCode('');
+      setStep('main');
+      alert('✅ Вы успешно подключились к бизнесу');
     } catch (err) {
       setError('Ошибка: ' + err.message);
     } finally {
@@ -167,6 +218,24 @@ export default function BusinessAccess() {
                   {loading ? 'Создание...' : 'Создать новый бизнес'}
                 </Button>
 
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-slate-500">или</span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => setStep('join')}
+                  variant="outline"
+                  className="w-full h-10"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Войти как сотрудник
+                </Button>
+
                 <button
                   onClick={() => base44.auth.logout()}
                   className="w-full text-sm text-slate-600 hover:text-slate-900 font-medium py-2"
@@ -175,6 +244,50 @@ export default function BusinessAccess() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {step === 'join' && (
+          <div className="p-8">
+            <button
+              onClick={() => setStep('main')}
+              className="flex items-center text-indigo-600 hover:text-indigo-700 mb-6"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Назад
+            </button>
+
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Войти в бизнес</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Код бизнеса</label>
+                <Input
+                  placeholder="XXXXXXXXXXXX"
+                  value={businessCode}
+                  onChange={(e) => setBusinessCode(e.target.value.toUpperCase())}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Код доступа</label>
+                <Input
+                  placeholder="XXXXXXXX"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                />
+              </div>
+
+              {error && <div className="bg-red-100 text-red-700 p-3 rounded text-sm">{error}</div>}
+
+              <Button
+                onClick={handleJoinBusiness}
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 h-10"
+              >
+                {loading ? 'Подключение...' : 'Войти'}
+              </Button>
+            </div>
           </div>
         )}
 
@@ -247,8 +360,7 @@ export default function BusinessAccess() {
                 <p className="font-medium mb-2">📝 Как сотруднику войти в бизнес:</p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>Перейти на страницу входа</li>
-                  <li>Нажать "Войти в бизнес"</li>
-                  <li>Ввести свой email</li>
+                  <li>Нажать "Войти как сотрудник"</li>
                   <li>Ввести код бизнеса и код доступа</li>
                 </ol>
               </div>
