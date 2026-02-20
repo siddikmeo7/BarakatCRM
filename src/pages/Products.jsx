@@ -361,7 +361,7 @@ export default function Products() {
             const isLowStock = (product.boxes_in_stock || 0) <= 2;
             return hideImages ? (
               // Компактная карточка без фото
-              <div key={product.id} className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-shadow ${isLowStock ? 'border-red-300 bg-red-50' : 'border-slate-100 shadow-sm'}`}>
+              <div key={product.id} className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-shadow ${isLowStock ? 'border-red-300 bg-red-50 animate-pulse' : 'border-slate-100 shadow-sm'}`}>
                 <div className={`flex items-center justify-between px-3 pt-2.5 pb-1 ${isLowStock ? 'border-b border-red-200' : 'border-b border-slate-100'}`}>
                   <div className="min-w-0 flex-1">
                     <p className={`font-bold text-sm truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand}</p>
