@@ -28,7 +28,7 @@ import {
   ExternalLink,
   X,
   Plus,
-  AlertTriangle
+  PlusCircle
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -56,10 +56,17 @@ export default function Debts() {
   const [selectedCustomerDetail, setSelectedCustomerDetail] = useState(null);
   const [customerDetailOpen, setCustomerDetailOpen] = useState(false);
   const [lang, setLang] = useState('ru');
-  const [messageChannel, setMessageChannel] = useState('telegram'); // 'telegram', 'whatsapp'
+  const [messageChannel, setMessageChannel] = useState('telegram');
+  // Добавление долга вручную
   const [addDebtOpen, setAddDebtOpen] = useState(false);
-  const [addDebtData, setAddDebtData] = useState({ customer_id: '', new_customer_name: '', new_customer_phone: '', amount: '', note: '' });
-  const [isNewCustomer, setIsNewCustomer] = useState(false);
+  const [addDebtData, setAddDebtData] = useState({
+    customer_id: '',
+    new_customer_name: '',
+    new_customer_phone: '',
+    amount: '',
+    note: '',
+    is_new_customer: false
+  });
 
   useEffect(() => {
     loadData();
@@ -205,6 +212,69 @@ export default function Debts() {
     setCustomerDetailOpen(true);
   };
 
+  const handleAddDebt = async () => {
+    if (!addDebtData.amount || parseFloat(addDebtData.amount) <= 0) return;
+    setSaving(true);
+    try {
+      let customerId = addDebtData.customer_id;
+      let customerName = '';
+
+      if (addDebtData.is_new_customer) {
+        // Создаём нового клиента
+        const newCust = await base44.entities.Customer.create({
+          business_id: business.id,
+          name: addDebtData.new_customer_name,
+          phone: addDebtData.new_customer_phone || '',
+          total_debt: parseFloat(addDebtData.amount),
+          total_paid: 0,
+          use_phone_for_all: true
+        });
+        customerId = newCust.id;
+        customerName = newCust.name;
+      } else {
+        const cust = customers.find(c => c.id === customerId);
+        customerName = cust?.name || '';
+        // Обновляем долг существующего клиента
+        await base44.entities.Customer.update(customerId, {
+          total_debt: (cust?.total_debt || 0) + parseFloat(addDebtData.amount)
+        });
+      }
+
+      // Создаём продажу-долг без привязки к товару
+      await base44.entities.Sale.create({
+        business_id: business.id,
+        product_id: 'manual',
+        customer_id: customerId,
+        boxes_sold: 0,
+        total_amount: parseFloat(addDebtData.amount),
+        profit: 0,
+        sale_date: new Date().toISOString(),
+        is_debt: true,
+        customer_name: customerName,
+        edit_history: [],
+        edit_count: 0
+      });
+
+      // Если есть заметка — создаём запись оплаты с нулём как placeholde note
+      if (addDebtData.note) {
+        await base44.entities.DebtPayment.create({
+          business_id: business.id,
+          customer_id: customerId,
+          sale_id: 'note',
+          amount: 0,
+          note: addDebtData.note,
+          payment_date: new Date().toISOString()
+        });
+      }
+
+      await loadData();
+      setAddDebtOpen(false);
+      setAddDebtData({ customer_id: '', new_customer_name: '', new_customer_phone: '', amount: '', note: '', is_new_customer: false });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const sendToAllDebtors = async () => {
     const debtors = customers.filter(c => (c.total_debt || 0) > 0);
     for (const c of debtors) {
@@ -217,54 +287,6 @@ export default function Debts() {
       });
       if (res.data?.wa_url) window.open(res.data.wa_url, '_blank');
       await new Promise(r => setTimeout(r, 400));
-    }
-  };
-
-  // Добавить долг вручную
-  const handleAddManualDebt = async () => {
-    if (!addDebtData.amount || (!addDebtData.customer_id && !addDebtData.new_customer_name)) return;
-    setSaving(true);
-    try {
-      let customerId = addDebtData.customer_id;
-      // Создаём нового клиента если нужно
-      if (isNewCustomer) {
-        const newCustomer = await base44.entities.Customer.create({
-          business_id: business.id,
-          name: addDebtData.new_customer_name,
-          phone: addDebtData.new_customer_phone || '',
-          total_debt: parseFloat(addDebtData.amount),
-          total_paid: 0
-        });
-        customerId = newCustomer.id;
-      } else {
-        const customer = customers.find(c => c.id === customerId);
-        if (customer) {
-          await base44.entities.Customer.update(customerId, {
-            total_debt: (customer.total_debt || 0) + parseFloat(addDebtData.amount)
-          });
-        }
-      }
-      // Создаём запись о продаже-долге без привязки к товару
-      await base44.entities.Sale.create({
-        business_id: business.id,
-        product_id: 'manual',
-        customer_id: customerId,
-        boxes_sold: 0,
-        total_amount: parseFloat(addDebtData.amount),
-        profit: 0,
-        sale_date: new Date().toISOString(),
-        is_debt: true,
-        customer_name: isNewCustomer ? addDebtData.new_customer_name : customers.find(c=>c.id===customerId)?.name || '',
-        edit_history: [{ edited_at: new Date().toISOString(), note: addDebtData.note || 'Долг добавлен вручную' }]
-      });
-      await loadData();
-      setAddDebtOpen(false);
-      setAddDebtData({ customer_id: '', new_customer_name: '', new_customer_phone: '', amount: '', note: '' });
-      setIsNewCustomer(false);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSaving(false);
     }
   };
 
