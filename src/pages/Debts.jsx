@@ -932,7 +932,7 @@ export default function Debts() {
 
           <div className="space-y-3 py-4 max-h-96 overflow-y-auto">
             {selectedCustomerHistory && payments
-              .filter(p => p.customer_id === selectedCustomerHistory.customerId)
+              .filter(p => p.customer_id === selectedCustomerHistory.customerId && (p.amount || 0) > 0)
               .sort((a, b) => new Date(b.payment_date || b.created_date) - new Date(a.payment_date || a.created_date))
               .map(payment => (
                 <div key={payment.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
