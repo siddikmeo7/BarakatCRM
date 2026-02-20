@@ -733,7 +733,11 @@ export default function Settings() {
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {newEmployee.custom_permissions.map((perm) => (
                         <span key={perm} className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs flex items-center gap-1">
-                          {perm}
+                          {perm === 'edit_all_data' && 'Редактирование всего'}
+                          {perm === 'manage_inventory' && 'Управление складом'}
+                          {perm === 'export_reports' && 'Экспорт отчётов'}
+                          {perm === 'manage_discounts' && 'Управление скидками'}
+                          {perm === 'view_settings' && 'Просмотр настроек'}
                           <button
                             onClick={() => setNewEmployee({
                               ...newEmployee,
