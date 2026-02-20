@@ -578,6 +578,18 @@ export default function Sales() {
           <p>{t(lang,'sales_not_found')}</p>
         </div>
         )}
+        {/* Pagination for grid view */}
+        {totalSalesPages > 1 && view === 'grid' && (
+          <div className="flex items-center justify-center gap-3 py-3">
+            <Button variant="outline" size="sm" onClick={() => setSalesPage(p => Math.max(1, p - 1))} disabled={salesPage === 1}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm text-slate-600">{salesPage} / {totalSalesPages} ({filteredSales.length} продаж)</span>
+            <Button variant="outline" size="sm" onClick={() => setSalesPage(p => Math.min(totalSalesPages, p + 1))} disabled={salesPage === totalSalesPages}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
 
       {/* Sale Detail Dialog */}
       {selectedSale && (
