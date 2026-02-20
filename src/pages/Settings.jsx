@@ -42,6 +42,7 @@ import {
   Search
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
 
 const LANGUAGES = [
   { value: 'ru', label: 'Русский' },
