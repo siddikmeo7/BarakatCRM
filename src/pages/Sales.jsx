@@ -147,6 +147,14 @@ export default function Sales() {
       if (formData.is_debt && formData.customer_id) {
         const customer = customers.find(c => c.id === formData.customer_id);
         if (customer) {
+          // Проверяем лимит долга
+          const newTotalDebt = (customer.total_debt || 0) + remainingDebt;
+          if (customer.debt_limit != null && newTotalDebt > customer.debt_limit) {
+            setSaving(false);
+            setSales(prev => prev.filter(s => !s.id?.startsWith('temp_')));
+            alert(`⚠️ Превышен лимит долга клиента "${customer.name}"!\nЛимит: ${customer.debt_limit.toLocaleString()} с.\nТекущий долг: ${(customer.total_debt||0).toLocaleString()} с.\nНовый долг составит: ${newTotalDebt.toLocaleString()} с.`);
+            return;
+          }
           await base44.entities.Customer.update(formData.customer_id, {
             total_debt: (customer.total_debt || 0) + remainingDebt,
             total_paid: (customer.total_paid || 0) + partialPay
