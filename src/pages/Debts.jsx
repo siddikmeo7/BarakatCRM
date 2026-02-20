@@ -485,7 +485,9 @@ export default function Debts() {
                               <Package className="w-4 h-4 text-slate-400" />
                             </div>
                           )}
-                          <span className="text-sm text-slate-900">{product?.brand} {product?.model}</span>
+                          <span className="text-sm text-slate-900">
+                            {product ? `${product.brand} ${product.model}` : <span className="text-slate-400 italic">{t(lang,'sales_unknown')}</span>}
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center font-medium text-slate-900">{sale.boxes_sold}</td>
