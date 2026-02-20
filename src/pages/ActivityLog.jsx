@@ -307,7 +307,7 @@ export default function ActivityLog() {
                   {format(parseISO(log.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
                 </p>
                 <div className="flex items-center gap-2 border-t border-slate-100 pt-3">
-                  {log.action_type === 'delete' && log.entity_data && (
+                  {log.entity_data && (
                     <Button size="sm" variant="outline" onClick={() => setDetailLog(log)} className="gap-1 flex-1">
                       <Eye className="w-3 h-3" /> Просмотр
                     </Button>
