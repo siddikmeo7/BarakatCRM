@@ -317,14 +317,10 @@ export default function Products() {
           <ViewToggle view={view} onChange={setView} />
           <button
             onClick={() => setHideImages(h => !h)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-              hideImages
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${hideImages ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
           >
             <Package className="w-3.5 h-3.5" />
-            {hideImages ? 'Фото скрыты' : 'Скрыть фото'}
+            {hideImages ? 'С фото' : 'Без фото'}
           </button>
         </div>
       </div>
@@ -356,27 +352,23 @@ export default function Products() {
                     </div>
                   </div>
                 )}
+                {hideImages && (
+                  <div className="flex justify-end gap-1 pt-2 pr-2">
+                    <button onClick={() => handleOpenDialog(product)} className="p-1.5 bg-slate-100 rounded-lg hover:bg-slate-200">
+                      <Edit2 className="w-3.5 h-3.5 text-slate-600" />
+                    </button>
+                    <button onClick={() => handleDelete(product.id)} className="p-1.5 bg-slate-100 rounded-lg hover:bg-red-100">
+                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    </button>
+                  </div>
+                )}
                 <div className="p-3">
                   <div className="mb-2">
-                    <div className="flex items-start justify-between gap-1">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-slate-900 text-sm truncate">{product.brand}</p>
-                        <p className="text-xs text-slate-500 truncate">{product.model}</p>
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          {product.created_date ? new Date(product.created_date).toLocaleDateString('ru-RU') : ''}
-                        </p>
-                      </div>
-                      {hideImages && (
-                        <div className="flex gap-1 flex-shrink-0">
-                          <button onClick={() => handleOpenDialog(product)} className="p-1.5 bg-slate-100 rounded-lg hover:bg-slate-200">
-                            <Edit2 className="w-3.5 h-3.5 text-slate-600" />
-                          </button>
-                          <button onClick={() => handleDelete(product.id)} className="p-1.5 bg-slate-100 rounded-lg hover:bg-red-100">
-                            <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <p className="font-semibold text-slate-900 text-sm truncate">{product.brand}</p>
+                    <p className="text-xs text-slate-500 truncate">{product.model}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      {product.created_date ? new Date(product.created_date).toLocaleDateString('ru-RU') : ''}
+                    </p>
                   </div>
                   <div className="grid grid-cols-3 gap-1 p-2 bg-slate-50 rounded-lg mb-2">
                     <div className="text-center">
