@@ -27,7 +27,9 @@ import {
   List
 } from 'lucide-react';
 import ViewToggle from '@/components/ui/ViewToggle';
-import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
+import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
+
+const SALES_PAGE_SIZE = 25;
 import { t } from '@/components/i18n/translations';
 import { ru } from 'date-fns/locale';
 
@@ -51,8 +53,6 @@ export default function Sales() {
   const [displayUnit, setDisplayUnit] = useState('boxes'); // boxes, pairs, items
   const [sortBy, setSortBy] = useState('date'); // date, amount, profit, boxes
   const [view, setView] = useState('list'); // list, grid
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 30;
   
   const [formData, setFormData] = useState({
     product_id: '',
@@ -243,10 +243,6 @@ export default function Sales() {
     profit: acc.profit + (sale.profit || 0)
   }), { boxes: 0, pairs: 0, items: 0, revenue: 0, profit: 0 });
 
-  // Пагинация
-  const totalPages = Math.ceil(filteredSales.length / PAGE_SIZE);
-  const paginatedSales = filteredSales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
   // Поиск товаров для выбора
   const filteredProducts = products.filter(p => 
     (p.brand?.toLowerCase().includes(productSearch.toLowerCase()) ||
@@ -367,9 +363,9 @@ export default function Sales() {
       {view === 'list' ? (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {/* Desktop */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-96">
           <table className="w-full">
-            <thead className="bg-slate-50 sticky top-0 z-10">
+            <thead className="bg-slate-50">
               <tr>
                 <th className="px-3 py-3 text-center text-sm font-medium text-slate-400 w-8">#</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_date')}</th>
@@ -384,7 +380,7 @@ export default function Sales() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {paginatedSales.map((sale, idx) => {
+              {filteredSales.map((sale, idx) => {
                 const product = products.find(p => p.id === sale.product_id);
                 const customer = customers.find(c => c.id === sale.customer_id);
                 const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
