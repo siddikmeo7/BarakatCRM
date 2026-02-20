@@ -77,7 +77,7 @@ export default function Customers() {
         email: customer.email || '',
         address: customer.address || '',
         use_phone_for_all: customer.use_phone_for_all !== false,
-        debt_limit: customer.debt_limit != null ? String(customer.debt_limit) : ''
+        debt_limit: customer.debt_limit || ''
       });
     } else {
       setEditingCustomer(null);
@@ -98,7 +98,11 @@ export default function Customers() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const data = { ...formData, business_id: business.id };
+      const data = { 
+        ...formData, 
+        business_id: business.id,
+        debt_limit: formData.debt_limit ? parseFloat(formData.debt_limit) : null
+      };
       
       if (editingCustomer) {
         await base44.entities.Customer.update(editingCustomer.id, data);
