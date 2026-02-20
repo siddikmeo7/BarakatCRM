@@ -21,11 +21,15 @@ import {
   Box,
   Filter,
   Calendar,
-  History
+  History,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-import { format, parseISO, startOfDay, subDays, startOfWeek, startOfMonth } from 'date-fns';
+import { format, parseISO, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
+
+const PAGE_SIZE = 20;
 
 const BASE_PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
 const BASE_COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый', 'Другой'];
@@ -48,9 +52,7 @@ export default function Products() {
   const [dateFilter, setDateFilter] = useState('all'); // all, today, week, month, custom
   const [customDateFrom, setCustomDateFrom] = useState('');
   const [customDateTo, setCustomDateTo] = useState('');
-  const [showCustomDate, setShowCustomDate] = useState(false);
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 30;
   
   const [formData, setFormData] = useState({
     brand: '',
@@ -249,18 +251,6 @@ export default function Products() {
   const allColors = [...BASE_COLORS, ...(business?.custom_colors || [])];
   const lowStockLimit = business?.low_stock_limit ?? 2;
 
-  // Фильтрация по дате добавления
-  const getDateFilterStart = () => {
-    const now = new Date();
-    if (dateFilter === 'today') return startOfDay(now);
-    if (dateFilter === 'week') return startOfWeek(now, { weekStartsOn: 1 });
-    if (dateFilter === 'month') return startOfMonth(now);
-    if (dateFilter === 'custom' && customDateFrom) return startOfDay(new Date(customDateFrom));
-    return null;
-  };
-  const dateFilterStart = getDateFilterStart();
-  const dateFilterEnd = dateFilter === 'custom' && customDateTo ? new Date(customDateTo + 'T23:59:59') : null;
-
   // Фильтрация
   let filteredProducts = products.filter(product => {
     const matchesSearch = 
@@ -268,13 +258,7 @@ export default function Products() {
       product.model?.toLowerCase().includes(search.toLowerCase());
     const matchesType = filterType === 'all' || product.product_type === filterType;
     const matchesWarehouse = filterWarehouse === 'all' || product.warehouse_id === filterWarehouse;
-    let matchesDate = true;
-    if (dateFilterStart) {
-      const created = new Date(product.created_date);
-      matchesDate = created >= dateFilterStart;
-      if (dateFilterEnd) matchesDate = matchesDate && created <= dateFilterEnd;
-    }
-    return matchesSearch && matchesType && matchesWarehouse && matchesDate;
+    return matchesSearch && matchesType && matchesWarehouse;
   });
 
   // Сортировка
@@ -295,6 +279,26 @@ export default function Products() {
         return (a.brand + a.model).localeCompare(b.brand + b.model);
     }
   });
+
+  // Фильтр по дате добавления
+  if (dateFilter !== 'all') {
+    filteredProducts = filteredProducts.filter(p => {
+      const d = parseISO(p.created_date);
+      if (dateFilter === 'today') return isToday(d);
+      if (dateFilter === 'week') return isThisWeek(d, { weekStartsOn: 1 });
+      if (dateFilter === 'month') return isThisMonth(d);
+      if (dateFilter === 'custom' && customDateFrom) {
+        const from = startOfDay(new Date(customDateFrom));
+        const to = endOfDay(new Date(customDateTo || customDateFrom));
+        return isWithinInterval(d, { start: from, end: to });
+      }
+      return true;
+    });
+  }
+
+  // Пагинация
+  const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
+  const paginatedProducts = filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Расчёт общей стоимости
   const totalStockValue = filteredProducts.reduce((sum, p) => 
