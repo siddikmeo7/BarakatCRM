@@ -113,10 +113,6 @@ export default function Layout({ children, currentPageName }) {
           }
         }
       }
-
-      if (window.location.pathname === '/' || window.location.pathname === '') {
-        navigate(createPageUrl('Dashboard'));
-      }
     } catch (error) {
       console.error('Error loading user:', error);
     } finally {
