@@ -53,6 +53,7 @@ import AdminBusinesses from './pages/AdminBusinesses';
 import AdminDashboard from './pages/AdminDashboard';
 import AdvancedSettings from './pages/AdvancedSettings';
 import Analytics from './pages/Analytics';
+import BusinessAccess from './pages/BusinessAccess';
 import ChartSettings from './pages/ChartSettings';
 import Customers from './pages/Customers';
 import CustomizeDashboard from './pages/CustomizeDashboard';
@@ -65,7 +66,6 @@ import Sales from './pages/Sales';
 import Settings from './pages/Settings';
 import WarehouseSalesHistory from './pages/WarehouseSalesHistory';
 import Warehouses from './pages/Warehouses';
-import BusinessAccess from './pages/BusinessAccess';
 import __Layout from './Layout.jsx';
 
 
@@ -76,6 +76,7 @@ export const PAGES = {
     "AdminDashboard": AdminDashboard,
     "AdvancedSettings": AdvancedSettings,
     "Analytics": Analytics,
+    "BusinessAccess": BusinessAccess,
     "ChartSettings": ChartSettings,
     "Customers": Customers,
     "CustomizeDashboard": CustomizeDashboard,
@@ -88,7 +89,6 @@ export const PAGES = {
     "Settings": Settings,
     "WarehouseSalesHistory": WarehouseSalesHistory,
     "Warehouses": Warehouses,
-    "BusinessAccess": BusinessAccess,
 }
 
 export const pagesConfig = {
