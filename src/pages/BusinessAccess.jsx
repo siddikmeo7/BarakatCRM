@@ -180,6 +180,24 @@ export default function BusinessAccess() {
                   Управлять кодами доступа
                 </Button>
 
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-slate-500">или</span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => setStep('join')}
+                  variant="outline"
+                  className="w-full h-10"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Войти в другой бизнес
+                </Button>
+
                 <button
                   onClick={() => base44.auth.logout()}
                   className="w-full text-sm text-slate-600 hover:text-slate-900 font-medium py-2"
