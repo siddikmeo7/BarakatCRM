@@ -138,7 +138,7 @@ export default function Debts() {
           business_id: business.id,
           customer_id: selectedSale.customer_id,
           sale_id: selectedSale.id,
-          amount: amount,
+          amount: actualAmount,
           payment_date: new Date().toISOString()
         })
       ];
@@ -147,7 +147,7 @@ export default function Debts() {
         tasks.push(
           base44.entities.Customer.update(customer.id, {
             total_debt: newDebt,
-            total_paid: (customer.total_paid || 0) + amount
+            total_paid: (customer.total_paid || 0) + actualAmount
           })
         );
       }
@@ -160,7 +160,7 @@ export default function Debts() {
       }
       if (customer) {
         setCustomers(prev => prev.map(c =>
-          c.id === customer.id ? { ...c, total_debt: newDebt, total_paid: (c.total_paid || 0) + amount } : c
+          c.id === customer.id ? { ...c, total_debt: newDebt, total_paid: (c.total_paid || 0) + actualAmount } : c
         ));
       }
 
