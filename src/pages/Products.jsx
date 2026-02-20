@@ -456,6 +456,7 @@ export default function Products() {
           <table className="w-full">
             <thead className="bg-slate-50">
               <tr>
+                <th className="px-3 py-3 text-center text-sm font-medium text-slate-400 w-8">#</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_product')}</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">{t(lang,'prod_boxes')}</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">{t(lang,'prod_pairs')}</th>
@@ -467,7 +468,7 @@ export default function Products() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredProducts.map(product => {
+              {filteredProducts.map((product, idx) => {
                 const totalPairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);
                 const stockValue = (product.boxes_in_stock || 0) * (product.sale_price || 0);
                 const warehouse = warehouses.find(w => w.id === product.warehouse_id);
