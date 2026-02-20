@@ -40,26 +40,61 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
     if (!canEdit) return;
     setSaving(true);
     try {
+      const newBoxes = parseInt(editData.boxes_sold) || 0;
+      const newPrice = parseFloat(editData.sale_price) || 0;
+
+      // Строим список изменений
+      const changes = [];
+      if (newBoxes !== sale.boxes_sold) {
+        changes.push({ label: 'Коробок', from: sale.boxes_sold, to: newBoxes });
+      }
+      if (newPrice !== sale.sale_price) {
+        changes.push({ label: 'Цена/кор.', from: `${sale.sale_price?.toLocaleString()} с.`, to: `${newPrice.toLocaleString()} с.` });
+      }
+      if (newTotal !== sale.total_amount) {
+        changes.push({ label: 'Итого', from: `${sale.total_amount?.toLocaleString()} с.`, to: `${newTotal.toLocaleString()} с.` });
+      }
+
       const historyEntry = {
         edited_at: new Date().toISOString(),
         boxes_sold: sale.boxes_sold,
         sale_price: sale.sale_price,
         total_amount: sale.total_amount,
         profit: sale.profit,
-        note: editData.note || 'Без комментария'
+        note: editData.note || 'Без комментария',
+        changes
       };
 
-      const boxDiff = (editData.boxes_sold || 0) - sale.boxes_sold;
+      const boxDiff = newBoxes - sale.boxes_sold;
       await base44.entities.Sale.update(sale.id, {
-        boxes_sold: parseInt(editData.boxes_sold),
+        boxes_sold: newBoxes,
         pairs_sold: newPairs,
         items_sold: newItems,
-        sale_price: parseFloat(editData.sale_price),
+        sale_price: newPrice,
         total_amount: newTotal,
         profit: newProfit,
         edit_count: editCount + 1,
         edit_history: [...editHistory, historyEntry]
       });
+
+      // Логируем в ActivityLog
+      try {
+        const user = await base44.auth.me();
+        await base44.entities.ActivityLog.create({
+          business_id: sale.business_id,
+          action_type: 'update',
+          entity_type: 'Sale',
+          entity_id: sale.id,
+          entity_data: {
+            changes,
+            old: { boxes_sold: sale.boxes_sold, sale_price: sale.sale_price, total_amount: sale.total_amount },
+            new: { boxes_sold: newBoxes, sale_price: newPrice, total_amount: newTotal },
+            note: editData.note
+          },
+          user_email: user.email,
+          description: `Обновлена продажа (${changes.map(c => `${c.label}: ${c.from} → ${c.to}`).join(', ')})`
+        });
+      } catch (_) {}
 
       // Обновляем остаток на складе
       if (boxDiff !== 0 && product) {
