@@ -652,8 +652,14 @@ export default function Debts() {
                       setPaymentAmount(val);
                     }}
                     placeholder={t(lang,'debts_pay_amount')}
-                    className="mt-1.5"
+                    className={`mt-1.5 ${paymentAmount !== '' && (isNaN(parseFloat(paymentAmount)) || parseFloat(paymentAmount) <= 0) ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
                   />
+                  {paymentAmount !== '' && (isNaN(parseFloat(paymentAmount)) || parseFloat(paymentAmount) <= 0) && (
+                    <p className="text-xs text-red-500 mt-1">Сумма должна быть больше 0</p>
+                  )}
+                  {paymentAmount !== '' && parseFloat(paymentAmount) > remaining && remaining > 0 && (
+                    <p className="text-xs text-amber-500 mt-1">Сумма превышает остаток долга ({remaining.toLocaleString()} с.)</p>
+                  )}
                 </div>
 
                 <div>
