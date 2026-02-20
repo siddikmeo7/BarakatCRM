@@ -26,7 +26,9 @@ import {
   MapPin,
   Mail,
   ExternalLink,
-  X
+  X,
+  Plus,
+  AlertTriangle
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -54,17 +56,10 @@ export default function Debts() {
   const [selectedCustomerDetail, setSelectedCustomerDetail] = useState(null);
   const [customerDetailOpen, setCustomerDetailOpen] = useState(false);
   const [lang, setLang] = useState('ru');
-  const [messageChannel, setMessageChannel] = useState('telegram');
-  // Добавление долга вручную
+  const [messageChannel, setMessageChannel] = useState('telegram'); // 'telegram', 'whatsapp'
   const [addDebtOpen, setAddDebtOpen] = useState(false);
-  const [addDebtData, setAddDebtData] = useState({
-    customer_id: '',
-    new_customer_name: '',
-    new_customer_phone: '',
-    amount: '',
-    note: '',
-    is_new_customer: false
-  });
+  const [addDebtData, setAddDebtData] = useState({ customer_id: '', new_customer_name: '', new_customer_phone: '', amount: '', note: '' });
+  const [isNewCustomer, setIsNewCustomer] = useState(false);
 
   useEffect(() => {
     loadData();
