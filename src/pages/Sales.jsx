@@ -521,6 +521,18 @@ export default function Sales() {
           </div>
         )}
         </div>
+        {/* Pagination for list view */}
+        {totalSalesPages > 1 && (
+          <div className="flex items-center justify-center gap-3 py-3">
+            <Button variant="outline" size="sm" onClick={() => setSalesPage(p => Math.max(1, p - 1))} disabled={salesPage === 1}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm text-slate-600">{salesPage} / {totalSalesPages} ({filteredSales.length} продаж)</span>
+            <Button variant="outline" size="sm" onClick={() => setSalesPage(p => Math.min(totalSalesPages, p + 1))} disabled={salesPage === totalSalesPages}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
         ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {paginatedSales.map(sale => {
