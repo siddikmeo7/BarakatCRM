@@ -422,6 +422,33 @@ export default function Settings() {
     }
   };
 
+  const handleRegenerateCode = async (type) => {
+    setSaving(true);
+    try {
+      const codesRes = await base44.functions.invoke('generateBusinessCodes', {});
+      const { businessCode, accessCode } = codesRes.data;
+      
+      const updateData = type === 'business' 
+        ? { business_code: businessCode }
+        : { access_code: accessCode };
+
+      await base44.entities.Business.update(business.id, updateData);
+      
+      const updated = await base44.entities.Business.read(business.id);
+      setBusiness(updated);
+      alert(`✅ ${type === 'business' ? 'Код бизнеса' : 'Код доступа'} успешно изменён`);
+    } catch (err) {
+      alert('Ошибка: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    alert('Скопировано в буфер обмена');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
