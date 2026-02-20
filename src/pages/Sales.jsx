@@ -214,10 +214,10 @@ export default function Sales() {
     setSalesPage(1);
   };
 
-  // Фильтрация продаж (исключаем отменённые из статистики в шапке, но отображаем в списке)
+  // Фильтрация продаж для отображения в списке (все, включая отменённые)
   let filteredSales = sales.filter(sale => {
     const product = products.find(p => p.id === sale.product_id);
-    const matchesSearch = 
+    const matchesSearch = !search ||
       product?.brand?.toLowerCase().includes(search.toLowerCase()) ||
       product?.model?.toLowerCase().includes(search.toLowerCase());
     const matchesWarehouse = filterWarehouse === 'all' || sale.warehouse_id === filterWarehouse;
@@ -230,9 +230,6 @@ export default function Sales() {
     
     return matchesSearch && matchesWarehouse && matchesDate;
   });
-
-  // Пагинация продаж
-  const totalSalesPages = Math.ceil(filteredSales.length / SALES_PAGE_SIZE);
 
   // Сортировка
   filteredSales = [...filteredSales].sort((a, b) => {
@@ -249,10 +246,13 @@ export default function Sales() {
     }
   });
 
+  // Пагинация продаж
+  const totalSalesPages = Math.ceil(filteredSales.length / SALES_PAGE_SIZE);
   const paginatedSales = filteredSales.slice((salesPage - 1) * SALES_PAGE_SIZE, salesPage * SALES_PAGE_SIZE);
 
-  // Итоги
-  const totals = filteredSales.reduce((acc, sale) => ({
+  // Итоги — ТОЛЬКО по НЕ отменённым продажам (для корректной статистики)
+  const activeSales = filteredSales.filter(s => !s.is_cancelled);
+  const totals = activeSales.reduce((acc, sale) => ({
     boxes: acc.boxes + (sale.boxes_sold || 0),
     pairs: acc.pairs + (sale.pairs_sold || 0),
     items: acc.items + (sale.items_sold || 0),
