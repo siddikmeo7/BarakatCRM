@@ -124,6 +124,7 @@ export default function Settings() {
   const [historyDetailLog, setHistoryDetailLog] = useState(null);
   const [deleteAccountDialog, setDeleteAccountDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [editingEmployee, setEditingEmployee] = useState(null);
 
   useEffect(() => {
     loadData();
