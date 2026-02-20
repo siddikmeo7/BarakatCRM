@@ -23,6 +23,7 @@ import {
   Loader2,
   Search,
   ChevronRight,
+  ChevronLeft,
   Grid3x3,
   List
 } from 'lucide-react';
