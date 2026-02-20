@@ -23,7 +23,7 @@ import {
   Calendar,
   History
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfDay, subDays, startOfWeek, startOfMonth } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
 
