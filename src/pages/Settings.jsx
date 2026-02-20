@@ -278,46 +278,6 @@ export default function Settings() {
     }
   };
 
-
-   const generateRandomCode = (length) => {
-     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-     let code = '';
-     for (let i = 0; i < length; i++) {
-       code += chars.charAt(Math.floor(Math.random() * chars.length));
-     }
-     return code;
-   };
-
-   const handleRegenerateCode = async (type) => {
-     if (!confirm(`Вы уверены, что хотите изменить ${type === 'business' ? 'код бизнеса' : 'код доступа'}?`)) {
-       return;
-     }
-
-     setSaving(true);
-     try {
-       const newCode = generateRandomCode(type === 'business' ? 12 : 8);
-       const updateData = type === 'business' 
-         ? { business_code: newCode }
-         : { access_code: newCode };
-
-       await base44.entities.Business.update(business.id, updateData);
-       
-       setBusiness({ ...business, ...updateData });
-       
-       alert(`✅ ${type === 'business' ? 'Код бизнеса' : 'Код доступа'} успешно изменен`);
-     } catch (error) {
-       console.error('Error regenerating code:', error);
-       alert('Ошибка при изменении кода');
-     } finally {
-       setSaving(false);
-     }
-   };
-
-   const copyToClipboard = (text) => {
-     navigator.clipboard.writeText(text || '');
-     alert('✅ Скопировано в буфер обмена');
-   };
-
   const handleBackup = async () => {
     setBackupLoading(true);
     try {
