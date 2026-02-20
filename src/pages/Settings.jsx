@@ -562,6 +562,87 @@ export default function Settings() {
           </CollapsibleContent>
         </Collapsible>
 
+        {/* Access Codes */}
+        <Collapsible open={expandedSections.access} onOpenChange={(open) => setExpandedSections({...expandedSections, access: open})}>
+          <CollapsibleTrigger asChild>
+            <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Lock className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">Коды доступа</h3>
+                  <p className="text-xs text-slate-500">Управление кодами входа в бизнес</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-slate-500 transition ${expandedSections.access ? 'rotate-180' : ''}`} />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6 space-y-6">
+            <div className="bg-white p-4 rounded-lg border border-slate-200">
+              <p className="text-sm font-medium text-slate-700 mb-2">КОД БИЗНЕСА (для входа сотрудников)</p>
+              <div className="flex items-center gap-2 mb-3">
+                <code className="flex-1 bg-slate-50 border border-slate-200 p-3 rounded font-mono font-bold text-lg text-slate-900 break-all select-all">
+                  {business?.business_code || '—'}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(business?.business_code)}
+                  className="p-2 hover:bg-slate-200 rounded transition"
+                  title="Скопировать"
+                >
+                  <Copy className="w-4 h-4 text-slate-600" />
+                </button>
+              </div>
+              <Button
+                onClick={() => handleRegenerateCode('business')}
+                disabled={saving}
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Изменить код бизнеса
+              </Button>
+            </div>
+
+            <div className="bg-white p-4 rounded-lg border border-slate-200">
+              <p className="text-sm font-medium text-slate-700 mb-2">КОД ДОСТУПА (для входа сотрудников)</p>
+              <div className="flex items-center gap-2 mb-3">
+                <code className="flex-1 bg-slate-50 border border-slate-200 p-3 rounded font-mono font-bold text-lg text-slate-900 break-all select-all">
+                  {business?.access_code || '—'}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(business?.access_code)}
+                  className="p-2 hover:bg-slate-200 rounded transition"
+                  title="Скопировать"
+                >
+                  <Copy className="w-4 h-4 text-slate-600" />
+                </button>
+              </div>
+              <Button
+                onClick={() => handleRegenerateCode('access')}
+                disabled={saving}
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Изменить код доступа
+              </Button>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+              <p className="text-sm font-medium text-blue-900 mb-2">📝 Как сотруднику войти в бизнес:</p>
+              <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
+                <li>Перейти на страницу входа</li>
+                <li>Нажать "Войти в бизнес как сотрудник"</li>
+                <li>Ввести свой email</li>
+                <li>Ввести код бизнеса и код доступа</li>
+              </ol>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
         {/* Default Settings */}
         <Collapsible open={expandedSections.defaults} onOpenChange={(open) => setExpandedSections({...expandedSections, defaults: open})}>
           <CollapsibleTrigger asChild>
