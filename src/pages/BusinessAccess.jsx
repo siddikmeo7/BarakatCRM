@@ -88,8 +88,8 @@ export default function BusinessAccess() {
 
       await base44.entities.Business.update(business.id, updateData);
       
-      const updated = await base44.entities.Business.read(business.id);
-      setBusiness(updated);
+      const updated = await base44.entities.Business.filter({ id: business.id });
+      if (updated.length > 0) setBusiness(updated[0]);
       alert(`✅ ${type === 'business' ? 'Код бизнеса' : 'Код доступа'} обновлён`);
     } catch (err) {
       setError('Ошибка: ' + err.message);
