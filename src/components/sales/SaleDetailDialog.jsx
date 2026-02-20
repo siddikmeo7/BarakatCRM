@@ -104,6 +104,21 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
         });
       }
 
+      // Если долговая продажа — корректируем долг клиента на разницу сумм
+      if (sale.is_debt && customer) {
+        // Получаем все платежи по продаже (DebtPayment с sale_id === sale.id)
+        const paymentsForSale = await base44.entities.DebtPayment.filter({ sale_id: sale.id });
+        const totalPaid = paymentsForSale.reduce((sum, p) => sum + (p.amount || 0), 0) + (sale.partial_payment || 0);
+        const oldTotalDebt = sale.total_amount;
+        const newTotalDebt = newTotal;
+        const debtDiff = newTotalDebt - oldTotalDebt; // может быть + или -
+
+        // Корректируем total_debt клиента на debtDiff
+        await base44.entities.Customer.update(customer.id, {
+          total_debt: Math.max(0, (customer.total_debt || 0) + debtDiff)
+        });
+      }
+
       onUpdated();
       setMode('view');
     } catch (e) {
