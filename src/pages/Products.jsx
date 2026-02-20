@@ -361,7 +361,7 @@ export default function Products() {
             const isLowStock = (product.boxes_in_stock || 0) <= 2;
             return hideImages ? (
               // Компактная карточка без фото
-              <div key={product.id} className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-shadow ${isLowStock ? 'border-red-300 bg-red-50 animate-pulse' : 'border-slate-100 shadow-sm'}`}>
+              <div key={product.id} className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-shadow ${isLowStock ? 'border-red-300 bg-red-50' : 'border-slate-100 shadow-sm'}`}>
                 <div className={`flex items-center justify-between px-3 pt-2.5 pb-1 ${isLowStock ? 'border-b border-red-200' : 'border-b border-slate-100'}`}>
                   <div className="min-w-0 flex-1">
                     <p className={`font-bold text-sm truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand}</p>
@@ -393,7 +393,7 @@ export default function Products() {
               </div>
             ) : (
               // Обычная карточка с фото
-              <div key={product.id} className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${isLowStock ? 'border-red-400 shadow-red-100 animate-pulse' : 'border-slate-100'}`}>
+              <div key={product.id} className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${isLowStock ? 'border-red-400 animate-pulse-border' : 'border-slate-100'}`}>
                 <div className="aspect-square bg-slate-100 relative">
                   {product.photo_url ? (
                     <img src={product.photo_url} alt="" className="w-full h-full object-cover" />
@@ -473,7 +473,8 @@ export default function Products() {
                 const warehouse = warehouses.find(w => w.id === product.warehouse_id);
                 const isLowStock = (product.boxes_in_stock || 0) <= 2;
                 return (
-                  <tr key={product.id} className={`hover:bg-slate-50 ${isLowStock ? 'bg-red-50 animate-pulse' : ''}`}>
+                  <tr key={product.id} className={`hover:bg-slate-50 transition-colors ${isLowStock ? 'bg-red-50 animate-pulse-border' : ''}`}
+                    style={isLowStock ? { animation: 'row-pulse 2s ease-in-out infinite' } : {}}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {product.photo_url ? (
