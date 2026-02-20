@@ -93,7 +93,8 @@ export default function Settings() {
       view_customers: true, manage_customers: false,
       view_debts: false, manage_debts: false,
       manage_returns: false, view_activity_log: false,
-    }
+    },
+    custom_permissions: []
   });
   const [newColor, setNewColor] = useState('');
   const [newProductType, setNewProductType] = useState('');
