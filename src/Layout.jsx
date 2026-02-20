@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import { t } from '@/components/i18n/translations';
-import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -43,10 +42,25 @@ const ADMIN_MENU_ITEMS = [
   { name: 'AdminBusinesses', icon: Building2,       labelKey: 'nav_businesses', color: 'text-blue-500',   activeBg: 'bg-blue-500' },
 ];
 
+// Map page names to required permissions (null = always visible for owner)
+const PAGE_PERMISSIONS = {
+  Dashboard:    null,
+  Analytics:    'view_analytics',
+  Products:     'view_products',
+  Warehouses:   'view_warehouses',
+  Sales:        'view_sales',
+  Returns:      'manage_returns',
+  Customers:    'view_customers',
+  Debts:        'view_debts',
+  AIAssistant:  null,
+  Settings:     null,
+};
+
 export default function Layout({ children, currentPageName }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [business, setBusiness] = useState(null);
+  const [employee, setEmployee] = useState(null); // null = owner, object = employee
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
   const navigate = useNavigate();
@@ -82,24 +96,42 @@ export default function Layout({ children, currentPageName }) {
       setUser(currentUser);
 
       if (currentUser.email !== ADMIN_EMAIL) {
+        // Check if owner
         const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
         if (businesses.length > 0) {
           const foundBiz = businesses[0];
           setBusiness(foundBiz);
           setLang(foundBiz.language || 'ru');
+          setEmployee(null); // owner
         } else {
-          const newBiz = await base44.entities.Business.create({
-            name: currentUser.full_name ? `Бизнес ${currentUser.full_name}` : 'Мой бизнес',
-            owner_email: currentUser.email,
-            is_active: true,
-            default_color: 'Чёрный',
-            default_size_from: 39,
-            default_size_to: 44,
-            default_pairs_per_box: 6,
-            default_product_type: 'Туфли',
-            language: 'ru'
-          });
-          setBusiness(newBiz);
+          // Check if employee
+          const employeeRecords = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
+          if (employeeRecords.length > 0) {
+            const emp = employeeRecords[0];
+            setEmployee(emp);
+            const biz = await base44.entities.Business.filter({ });
+            // Find employer's business
+            const empBiz = biz.find(b => b.id === emp.business_id);
+            if (empBiz) {
+              setBusiness(empBiz);
+              setLang(empBiz.language || 'ru');
+            }
+          } else {
+            // New owner - create business
+            const newBiz = await base44.entities.Business.create({
+              name: currentUser.full_name ? `Бизнес ${currentUser.full_name}` : 'Мой бизнес',
+              owner_email: currentUser.email,
+              is_active: true,
+              default_color: 'Чёрный',
+              default_size_from: 39,
+              default_size_to: 44,
+              default_pairs_per_box: 6,
+              default_product_type: 'Туфли',
+              language: 'ru'
+            });
+            setBusiness(newBiz);
+            setEmployee(null);
+          }
         }
       }
 
@@ -121,9 +153,23 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
+  const isOwner = !employee;
   const isAdmin = user?.email === ADMIN_EMAIL;
   const isAdminPage = currentPageName?.startsWith('Admin');
-  const currentMenu = isAdmin && isAdminPage ? ADMIN_MENU_ITEMS : MENU_ITEMS;
+
+  // Filter menu items based on employee permissions
+  const filteredMenuItems = MENU_ITEMS.filter(item => {
+    if (isOwner || isAdmin) return true;
+    const requiredPerm = PAGE_PERMISSIONS[item.name];
+    if (requiredPerm === null || requiredPerm === undefined) {
+      // Settings hidden for employees
+      if (item.name === 'Settings' || item.name === 'AIAssistant') return false;
+      return true;
+    }
+    return !!(employee?.permissions?.[requiredPerm]);
+  });
+
+  const currentMenu = isAdmin && isAdminPage ? ADMIN_MENU_ITEMS : filteredMenuItems;
 
   const DrawerContent = () => (
     <div className="flex flex-col h-full">
