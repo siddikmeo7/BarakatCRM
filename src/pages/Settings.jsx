@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import BackupExportPanel from '@/components/settings/BackupExportPanel';
+import EmployeeManager from '@/components/settings/EmployeeManager';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { 
@@ -42,7 +43,6 @@ import {
   Search
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
 
 const LANGUAGES = [
   { value: 'ru', label: 'Русский' },
@@ -124,7 +124,6 @@ export default function Settings() {
   const [historyDetailLog, setHistoryDetailLog] = useState(null);
   const [deleteAccountDialog, setDeleteAccountDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
-  const [editingEmployee, setEditingEmployee] = useState(null);
 
   useEffect(() => {
     loadData();
