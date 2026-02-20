@@ -677,23 +677,72 @@ export default function Settings() {
                 </div>
               </div>
 
-              {/* Краткое описание прав */}
-              <div className="mt-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                <p className="text-xs font-medium text-indigo-800 mb-1.5">Права для роли «{newEmployee.role}»:</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {Object.entries(newEmployee.permissions).filter(([,v]) => v).map(([k]) => {
-                    const labels = {
-                      view_analytics:'Аналитика', view_profit:'Прибыль', view_products:'Просмотр товаров',
-                      add_products:'Добавление товаров', edit_products:'Редактирование товаров', delete_products:'Удаление товаров',
-                      view_sales:'Просмотр продаж', add_sales:'Продажи', edit_sales:'Редакт. продаж', cancel_sales:'Отмена продаж',
-                      view_warehouses:'Склады', manage_warehouses:'Управление складами',
-                      view_customers:'Клиенты', manage_customers:'Управление клиентами',
-                      view_debts:'Долги', manage_debts:'Управление долгами',
-                      manage_returns:'Возвраты', view_activity_log:'История'
-                    };
-                    return <span key={k} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs">{labels[k]}</span>;
-                  })}
-                  {Object.values(newEmployee.permissions).every(v => !v) && <span className="text-xs text-slate-400">Нет разрешённых действий</span>}
+              {/* Встроенные разрешения */}
+              <div className="mt-4 space-y-3">
+                <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <p className="text-xs font-medium text-indigo-800 mb-2">Встроенные права:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(newEmployee.permissions).filter(([,v]) => v).map(([k]) => {
+                      const labels = {
+                        view_analytics:'Аналитика', view_profit:'Прибыль', view_products:'Просмотр товаров',
+                        add_products:'Добавление товаров', edit_products:'Редактирование товаров', delete_products:'Удаление товаров',
+                        view_sales:'Просмотр продаж', add_sales:'Продажи', edit_sales:'Редакт. продаж', cancel_sales:'Отмена продаж',
+                        view_warehouses:'Склады', manage_warehouses:'Управление складами',
+                        view_customers:'Клиенты', manage_customers:'Управление клиентами',
+                        view_debts:'Долги', manage_debts:'Управление долгами',
+                        manage_returns:'Возвраты', view_activity_log:'История'
+                      };
+                      return <span key={k} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs">{labels[k]}</span>;
+                    })}
+                    {Object.values(newEmployee.permissions).every(v => !v) && <span className="text-xs text-slate-400">Не выбрано</span>}
+                  </div>
+                </div>
+
+                {/* Пользовательские разрешения */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-700">Добавить пользовательское разрешение:</label>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={newCustomPermission}
+                      onChange={(e) => setNewCustomPermission(e.target.value)}
+                      placeholder="Например: edit_all_data, manage_inventory..."
+                      className="text-sm"
+                    />
+                    <Button
+                      onClick={() => {
+                        if (newCustomPermission.trim() && !newEmployee.custom_permissions.includes(newCustomPermission.trim())) {
+                          setNewEmployee({
+                            ...newEmployee,
+                            custom_permissions: [...newEmployee.custom_permissions, newCustomPermission.trim()]
+                          });
+                          setNewCustomPermission('');
+                        }
+                      }}
+                      disabled={!newCustomPermission.trim()}
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {newEmployee.custom_permissions.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {newEmployee.custom_permissions.map((perm) => (
+                        <span key={perm} className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs flex items-center gap-1">
+                          {perm}
+                          <button
+                            onClick={() => setNewEmployee({
+                              ...newEmployee,
+                              custom_permissions: newEmployee.custom_permissions.filter(p => p !== perm)
+                            })}
+                            className="hover:text-blue-900"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
