@@ -97,8 +97,9 @@ export default function Layout({ children, currentPageName }) {
             setEmployeePermissions(emp.permissions || {});
             // Загружаем бизнес сотрудника по ID
             try {
-              const bizData = await base44.entities.Business.read(emp.business_id);
-              if (bizData) {
+              const bizResults = await base44.entities.Business.filter({ id: emp.business_id });
+              if (bizResults.length > 0) {
+                const bizData = bizResults[0];
                 setBusiness(bizData);
                 setLang(bizData.language || 'ru');
               }
