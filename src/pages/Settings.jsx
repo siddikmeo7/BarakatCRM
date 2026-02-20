@@ -39,7 +39,8 @@ import {
   Package,
   ShoppingCart,
   Eye,
-  Search
+  Search,
+  Check
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
