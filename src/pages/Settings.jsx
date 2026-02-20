@@ -702,30 +702,32 @@ export default function Settings() {
 
                 {/* Пользовательские разрешения */}
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-700">Добавить пользовательское разрешение:</label>
-                  <div className="flex gap-2">
-                    <Input 
-                      value={newCustomPermission}
-                      onChange={(e) => setNewCustomPermission(e.target.value)}
-                      placeholder="Например: edit_all_data, manage_inventory..."
-                      className="text-sm"
-                    />
-                    <Button
-                      onClick={() => {
-                        if (newCustomPermission.trim() && !newEmployee.custom_permissions.includes(newCustomPermission.trim())) {
-                          setNewEmployee({
-                            ...newEmployee,
-                            custom_permissions: [...newEmployee.custom_permissions, newCustomPermission.trim()]
-                          });
-                          setNewCustomPermission('');
-                        }
-                      }}
-                      disabled={!newCustomPermission.trim()}
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
+                  <label className="text-xs font-medium text-slate-700 block mb-2">Дополнительные разрешения:</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['edit_all_data', 'manage_inventory', 'export_reports', 'manage_discounts', 'view_settings'].map((perm) => (
+                      <Button
+                        key={perm}
+                        onClick={() => {
+                          if (!newEmployee.custom_permissions.includes(perm)) {
+                            setNewEmployee({
+                              ...newEmployee,
+                              custom_permissions: [...newEmployee.custom_permissions, perm]
+                            });
+                          }
+                        }}
+                        disabled={newEmployee.custom_permissions.includes(perm)}
+                        variant={newEmployee.custom_permissions.includes(perm) ? "default" : "outline"}
+                        size="sm"
+                        className={newEmployee.custom_permissions.includes(perm) ? "bg-blue-600" : ""}
+                      >
+                        {newEmployee.custom_permissions.includes(perm) && <Check className="w-3 h-3 mr-1" />}
+                        {perm === 'edit_all_data' && 'Редактирование всего'}
+                        {perm === 'manage_inventory' && 'Управление складом'}
+                        {perm === 'export_reports' && 'Экспорт отчётов'}
+                        {perm === 'manage_discounts' && 'Управление скидками'}
+                        {perm === 'view_settings' && 'Просмотр настроек'}
+                      </Button>
+                    ))}
                   </div>
                   {newEmployee.custom_permissions.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
