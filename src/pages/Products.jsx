@@ -76,10 +76,13 @@ export default function Products() {
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
-      const businesses = await base44.entities.Business.filter({ owner_email: user.email });
+      let biz = window.__barakatBusiness;
+      if (!biz) {
+        const businesses = await base44.entities.Business.filter({ owner_email: user.email });
+        if (businesses.length > 0) biz = businesses[0];
+      }
       
-      if (businesses.length > 0) {
-        const biz = businesses[0];
+      if (biz) {
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
