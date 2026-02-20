@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import BackupExportPanel from '@/components/settings/BackupExportPanel';
-import EmployeeManager from '@/components/settings/EmployeeManager';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { 
@@ -43,6 +42,7 @@ import {
   Search
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
 
 const LANGUAGES = [
   { value: 'ru', label: 'Русский' },
@@ -124,6 +124,7 @@ export default function Settings() {
   const [historyDetailLog, setHistoryDetailLog] = useState(null);
   const [deleteAccountDialog, setDeleteAccountDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [editingEmployee, setEditingEmployee] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -647,25 +648,71 @@ export default function Settings() {
                 </div>
                 <div>
                   <Label>{t(lang,'settings_emp_role')}</Label>
-                  <Select value={newEmployee.role} onValueChange={(v) => setNewEmployee({ ...newEmployee, role: v })}>
+                  <Select value={newEmployee.role} onValueChange={(v) => {
+                    let permissions = { ...newEmployee.permissions };
+                    if (v === 'Продавец') {
+                      permissions = {
+                        view_analytics: false, view_profit: false,
+                        view_products: true, add_products: true, edit_products: false, delete_products: false,
+                        view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false,
+                        view_warehouses: true, manage_warehouses: false,
+                        view_customers: true, manage_customers: false,
+                        view_debts: false, manage_debts: false,
+                        manage_returns: false, view_activity_log: false,
+                      };
+                    } else if (v === 'Менеджер') {
+                      permissions = {
+                        view_analytics: true, view_profit: false,
+                        view_products: true, add_products: true, edit_products: true, delete_products: false,
+                        view_sales: true, add_sales: true, edit_sales: true, cancel_sales: false,
+                        view_warehouses: true, manage_warehouses: false,
+                        view_customers: true, manage_customers: true,
+                        view_debts: true, manage_debts: true,
+                        manage_returns: true, view_activity_log: false,
+                      };
+                    }
+                    setNewEmployee({ ...newEmployee, role: v, permissions });
+                  }}>
                     <SelectTrigger className="mt-1.5">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Кладовщик">Кладовщик</SelectItem>
-                      <SelectItem value="Менеджер">Менеджер</SelectItem>
-                      <SelectItem value="Доставщик">Доставщик</SelectItem>
+                      <SelectItem value="Продавец">🛍️ Продавец</SelectItem>
+                      <SelectItem value="Менеджер">👔 Менеджер</SelectItem>
+                      <SelectItem value="Кладовщик">📦 Кладовщик</SelectItem>
+                      <SelectItem value="Доставщик">🚚 Доставщик</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+
+              {/* Краткое описание прав */}
+              <div className="mt-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                <p className="text-xs font-medium text-indigo-800 mb-1.5">Права для роли «{newEmployee.role}»:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(newEmployee.permissions).filter(([,v]) => v).map(([k]) => {
+                    const labels = {
+                      view_analytics:'Аналитика', view_profit:'Прибыль', view_products:'Просмотр товаров',
+                      add_products:'Добавление товаров', edit_products:'Редактирование товаров', delete_products:'Удаление товаров',
+                      view_sales:'Просмотр продаж', add_sales:'Продажи', edit_sales:'Редакт. продаж', cancel_sales:'Отмена продаж',
+                      view_warehouses:'Склады', manage_warehouses:'Управление складами',
+                      view_customers:'Клиенты', manage_customers:'Управление клиентами',
+                      view_debts:'Долги', manage_debts:'Управление долгами',
+                      manage_returns:'Возвраты', view_activity_log:'История'
+                    };
+                    return <span key={k} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs">{labels[k]}</span>;
+                  })}
+                  {Object.values(newEmployee.permissions).every(v => !v) && <span className="text-xs text-slate-400">Нет разрешённых действий</span>}
+                </div>
+              </div>
+
               <Button 
                 onClick={handleAddEmployee}
                 disabled={!newEmployee.name || !newEmployee.user_email}
                 className="mt-4 bg-indigo-600 hover:bg-indigo-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                {t(lang,'add')}
+                Добавить и отправить приглашение
               </Button>
             </div>
 
