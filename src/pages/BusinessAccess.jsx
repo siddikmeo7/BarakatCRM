@@ -33,16 +33,6 @@ export default function BusinessAccess() {
       const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
       if (businesses.length > 0) {
         setBusiness(businesses[0]);
-      } else {
-        // Проверяем, может быть это сотрудник
-        const empRecords = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
-        if (empRecords.length > 0) {
-          const emp = empRecords[0];
-          const bizResults = await base44.entities.Business.filter({ id: emp.business_id });
-          if (bizResults.length > 0) {
-            setBusiness(bizResults[0]);
-          }
-        }
       }
     } catch (err) {
       console.error('Error loading user:', err);
