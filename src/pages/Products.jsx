@@ -241,6 +241,7 @@ export default function Products() {
   // Все типы и цвета (базовые + кастомные)
   const allProductTypes = [...BASE_PRODUCT_TYPES, ...(business?.custom_product_types || [])];
   const allColors = [...BASE_COLORS, ...(business?.custom_colors || [])];
+  const lowStockLimit = business?.low_stock_limit ?? 2;
 
   // Фильтрация
   let filteredProducts = products.filter(product => {
