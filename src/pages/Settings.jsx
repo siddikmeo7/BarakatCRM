@@ -80,6 +80,7 @@ export default function Settings() {
     low_stock_limit: 2
   });
 
+  const [roles, setRoles] = useState([]);
   const [newEmployee, setNewEmployee] = useState({
     name: '',
     user_email: '',
