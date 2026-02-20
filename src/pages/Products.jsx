@@ -44,6 +44,7 @@ export default function Products() {
   const [filterWarehouse, setFilterWarehouse] = useState('all');
   const [view, setView] = useState('grid');
   const [sortBy, setSortBy] = useState('name'); // name, stock, price, value
+  const [hideImages, setHideImages] = useState(false);
   
   const [formData, setFormData] = useState({
     brand: '',
