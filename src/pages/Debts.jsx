@@ -172,7 +172,7 @@ export default function Debts() {
               telegram_id: customer.telegram,
               customer_name: customer.name,
               product_name: product ? `${product.brand} ${product.model}` : undefined,
-              paid_amount: amount,
+              paid_amount: actualAmount,
               remaining_debt: newDebt,
               business_name: business?.name,
               type: 'payment'
@@ -183,19 +183,17 @@ export default function Debts() {
         } else if (messageChannel === 'whatsapp') {
           const phone = customer.phone;
           if (phone) {
-            // Строим сообщение прямо здесь, чтобы не зависеть от async
             let msg = `👋 Здравствуйте, ${customer.name}!\n\n`;
             msg += `✅ Спасибо за оплату!\n\n`;
             msg += `💼 Бизнес: ${business?.name || 'Наша компания'}\n`;
             if (product) msg += `📦 Товар: ${product.brand} ${product.model}\n`;
-            msg += `💰 Оплачено: ${amount.toLocaleString('ru-RU')} сомони\n`;
+            msg += `💰 Оплачено: ${actualAmount.toLocaleString('ru-RU')} сомони\n`;
             if (newDebt > 0) {
               msg += `⏳ Остаток долга: ${newDebt.toLocaleString('ru-RU')} сомони\n`;
             } else {
               msg += `🎉 Долг полностью погашен!\n`;
             }
             msg += `\nСпасибо за доверие!`;
-
             const cleanPhone = phone.replace(/[^0-9]/g, '');
             const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
             window.open(waUrl, '_blank');
