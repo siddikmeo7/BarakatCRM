@@ -82,8 +82,9 @@ export default function Dashboard() {
     }
   };
 
-  // Фильтрация продаж по дате
+  // Фильтрация продаж по дате (исключаем отменённые!)
   const filteredSales = sales.filter(sale => {
+    if (sale.is_cancelled) return false; // не считать отменённые
     if (!dateRange?.from) return true;
     const saleDate = parseISO(sale.sale_date || sale.created_date);
     return isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to || dateRange.from });
