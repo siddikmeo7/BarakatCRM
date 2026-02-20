@@ -120,12 +120,17 @@ export default function Debts() {
     if (!selectedSale || !paymentAmount) return;
     const amount = parseFloat(paymentAmount);
     if (!amount || amount <= 0) return;
+
+    // Не позволяем переплатить сверх остатка по этой конкретной продаже
+    const paidSoFar = getSalePaidAmount(selectedSale.id);
+    const saleRemaining = (selectedSale.total_amount || 0) - paidSoFar;
+    const actualAmount = Math.min(amount, saleRemaining); // Ограничиваем остатком продажи
     
     setSaving(true);
     try {
       const customer = customers.find(c => c.id === selectedSale.customer_id);
       const product = customer ? products.find(p => p.id === selectedSale.product_id) : null;
-      const newDebt = customer ? Math.max(0, (customer.total_debt || 0) - amount) : 0;
+      const newDebt = customer ? Math.max(0, (customer.total_debt || 0) - actualAmount) : 0;
       
       // Создаём запись об оплате + обновляем клиента параллельно
       const tasks = [
