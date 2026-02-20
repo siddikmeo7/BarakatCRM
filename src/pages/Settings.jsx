@@ -206,8 +206,10 @@ export default function Settings() {
           view_customers: true, manage_customers: false,
           view_debts: false, manage_debts: false,
           manage_returns: false, view_activity_log: false,
-        }
+        },
+        custom_permissions: []
       });
+      setNewCustomPermission('');
       alert(`✅ Сотрудник ${newEmployee.name} добавлен! Приглашение отправлено на ${newEmployee.user_email}`);
     } catch (error) {
       console.error('Error adding employee:', error);
