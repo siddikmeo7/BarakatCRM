@@ -30,7 +30,8 @@ import {
   Plus,
   PlusCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  SlidersHorizontal
 } from 'lucide-react';
 
 const DEBT_PAGE_SIZE = 20;
@@ -52,8 +53,6 @@ export default function Debts() {
   const [filterCustomer, setFilterCustomer] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all'); // all, paid, unpaid
   const [filterAmount, setFilterAmount] = useState('');
-  const [sortBy, setSortBy] = useState('date_desc'); // date_desc, date_asc, remaining_desc, remaining_asc
-  const [debtPage, setDebtPage] = useState(1);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [selectedCustomerHistory, setSelectedCustomerHistory] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -61,6 +60,8 @@ export default function Debts() {
   const [sendingMsg, setSendingMsg] = useState(null);
   const [selectedCustomerDetail, setSelectedCustomerDetail] = useState(null);
   const [customerDetailOpen, setCustomerDetailOpen] = useState(false);
+  const [debtPage, setDebtPage] = useState(1);
+  const [sortBy, setSortBy] = useState('date_desc'); // date_desc, amount_desc, remaining_desc
   const [lang, setLang] = useState('ru');
   const [messageChannel, setMessageChannel] = useState('telegram');
   // Добавление долга вручную
