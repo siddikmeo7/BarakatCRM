@@ -28,7 +28,7 @@ import {
   ExternalLink,
   X,
   Plus,
-  AlertTriangle
+  PlusCircle
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -56,10 +56,17 @@ export default function Debts() {
   const [selectedCustomerDetail, setSelectedCustomerDetail] = useState(null);
   const [customerDetailOpen, setCustomerDetailOpen] = useState(false);
   const [lang, setLang] = useState('ru');
-  const [messageChannel, setMessageChannel] = useState('telegram'); // 'telegram', 'whatsapp'
+  const [messageChannel, setMessageChannel] = useState('telegram');
+  // Добавление долга вручную
   const [addDebtOpen, setAddDebtOpen] = useState(false);
-  const [addDebtData, setAddDebtData] = useState({ customer_id: '', new_customer_name: '', new_customer_phone: '', amount: '', note: '' });
-  const [isNewCustomer, setIsNewCustomer] = useState(false);
+  const [addDebtData, setAddDebtData] = useState({
+    customer_id: '',
+    new_customer_name: '',
+    new_customer_phone: '',
+    amount: '',
+    note: '',
+    is_new_customer: false
+  });
 
   useEffect(() => {
     loadData();
@@ -205,6 +212,69 @@ export default function Debts() {
     setCustomerDetailOpen(true);
   };
 
+  const handleAddDebt = async () => {
+    if (!addDebtData.amount || parseFloat(addDebtData.amount) <= 0) return;
+    setSaving(true);
+    try {
+      let customerId = addDebtData.customer_id;
+      let customerName = '';
+
+      if (addDebtData.is_new_customer) {
+        // Создаём нового клиента
+        const newCust = await base44.entities.Customer.create({
+          business_id: business.id,
+          name: addDebtData.new_customer_name,
+          phone: addDebtData.new_customer_phone || '',
+          total_debt: parseFloat(addDebtData.amount),
+          total_paid: 0,
+          use_phone_for_all: true
+        });
+        customerId = newCust.id;
+        customerName = newCust.name;
+      } else {
+        const cust = customers.find(c => c.id === customerId);
+        customerName = cust?.name || '';
+        // Обновляем долг существующего клиента
+        await base44.entities.Customer.update(customerId, {
+          total_debt: (cust?.total_debt || 0) + parseFloat(addDebtData.amount)
+        });
+      }
+
+      // Создаём продажу-долг без привязки к товару
+      await base44.entities.Sale.create({
+        business_id: business.id,
+        product_id: 'manual',
+        customer_id: customerId,
+        boxes_sold: 0,
+        total_amount: parseFloat(addDebtData.amount),
+        profit: 0,
+        sale_date: new Date().toISOString(),
+        is_debt: true,
+        customer_name: customerName,
+        edit_history: [],
+        edit_count: 0
+      });
+
+      // Если есть заметка — создаём запись оплаты с нулём как placeholde note
+      if (addDebtData.note) {
+        await base44.entities.DebtPayment.create({
+          business_id: business.id,
+          customer_id: customerId,
+          sale_id: 'note',
+          amount: 0,
+          note: addDebtData.note,
+          payment_date: new Date().toISOString()
+        });
+      }
+
+      await loadData();
+      setAddDebtOpen(false);
+      setAddDebtData({ customer_id: '', new_customer_name: '', new_customer_phone: '', amount: '', note: '', is_new_customer: false });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const sendToAllDebtors = async () => {
     const debtors = customers.filter(c => (c.total_debt || 0) > 0);
     for (const c of debtors) {
@@ -217,54 +287,6 @@ export default function Debts() {
       });
       if (res.data?.wa_url) window.open(res.data.wa_url, '_blank');
       await new Promise(r => setTimeout(r, 400));
-    }
-  };
-
-  // Добавить долг вручную
-  const handleAddManualDebt = async () => {
-    if (!addDebtData.amount || (!addDebtData.customer_id && !addDebtData.new_customer_name)) return;
-    setSaving(true);
-    try {
-      let customerId = addDebtData.customer_id;
-      // Создаём нового клиента если нужно
-      if (isNewCustomer) {
-        const newCustomer = await base44.entities.Customer.create({
-          business_id: business.id,
-          name: addDebtData.new_customer_name,
-          phone: addDebtData.new_customer_phone || '',
-          total_debt: parseFloat(addDebtData.amount),
-          total_paid: 0
-        });
-        customerId = newCustomer.id;
-      } else {
-        const customer = customers.find(c => c.id === customerId);
-        if (customer) {
-          await base44.entities.Customer.update(customerId, {
-            total_debt: (customer.total_debt || 0) + parseFloat(addDebtData.amount)
-          });
-        }
-      }
-      // Создаём запись о продаже-долге без привязки к товару
-      await base44.entities.Sale.create({
-        business_id: business.id,
-        product_id: 'manual',
-        customer_id: customerId,
-        boxes_sold: 0,
-        total_amount: parseFloat(addDebtData.amount),
-        profit: 0,
-        sale_date: new Date().toISOString(),
-        is_debt: true,
-        customer_name: isNewCustomer ? addDebtData.new_customer_name : customers.find(c=>c.id===customerId)?.name || '',
-        edit_history: [{ edited_at: new Date().toISOString(), note: addDebtData.note || 'Долг добавлен вручную' }]
-      });
-      await loadData();
-      setAddDebtOpen(false);
-      setAddDebtData({ customer_id: '', new_customer_name: '', new_customer_phone: '', amount: '', note: '' });
-      setIsNewCustomer(false);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -308,8 +330,8 @@ export default function Debts() {
         subtitle={t(lang, 'debts_subtitle')}
         actions={
           <div className="flex gap-2">
-            <Button onClick={() => { setAddDebtOpen(true); setIsNewCustomer(false); setAddDebtData({ customer_id: '', new_customer_name: '', new_customer_phone: '', amount: '', note: '' }); }} className="gap-2 bg-orange-500 hover:bg-orange-600">
-              <Plus className="w-4 h-4" />
+            <Button onClick={() => setAddDebtOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+              <PlusCircle className="w-4 h-4" />
               Добавить долг
             </Button>
             <Button onClick={sendToAllDebtors} variant="outline" className="gap-2 text-green-700 border-green-300 hover:bg-green-50">
@@ -734,99 +756,90 @@ export default function Debts() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Manual Debt Dialog */}
+      {/* Add Debt Dialog */}
       <Dialog open={addDebtOpen} onOpenChange={setAddDebtOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-orange-500" />
-              Добавить долг
-            </DialogTitle>
+            <DialogTitle>Добавить долг вручную</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             {/* Новый или существующий клиент */}
             <div className="flex gap-2">
               <button
-                onClick={() => setIsNewCustomer(false)}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-all ${!isNewCustomer ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}
+                onClick={() => setAddDebtData(d => ({ ...d, is_new_customer: false, customer_id: '' }))}
+                className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-all ${!addDebtData.is_new_customer ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}
               >
                 Существующий клиент
               </button>
               <button
-                onClick={() => setIsNewCustomer(true)}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-all ${isNewCustomer ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}
+                onClick={() => setAddDebtData(d => ({ ...d, is_new_customer: true, customer_id: '' }))}
+                className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-all ${addDebtData.is_new_customer ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}
               >
                 Новый клиент
               </button>
             </div>
 
-            {!isNewCustomer ? (
-              <div>
-                <Label>Клиент</Label>
-                <select
-                  className="w-full mt-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white"
-                  value={addDebtData.customer_id}
-                  onChange={(e) => setAddDebtData({ ...addDebtData, customer_id: e.target.value })}
-                >
-                  <option value="">Выберите клиента...</option>
-                  {customers.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>
-                  ))}
-                </select>
-              </div>
-            ) : (
+            {addDebtData.is_new_customer ? (
               <>
                 <div>
                   <Label>Имя клиента *</Label>
-                  <Input
-                    value={addDebtData.new_customer_name}
-                    onChange={(e) => setAddDebtData({ ...addDebtData, new_customer_name: e.target.value })}
-                    placeholder="Имя"
-                    className="mt-1.5"
-                  />
+                  <Input className="mt-1.5" placeholder="Введите имя..." value={addDebtData.new_customer_name}
+                    onChange={e => setAddDebtData(d => ({ ...d, new_customer_name: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Телефон</Label>
-                  <Input
-                    value={addDebtData.new_customer_phone}
-                    onChange={(e) => setAddDebtData({ ...addDebtData, new_customer_phone: e.target.value })}
-                    placeholder="+992 XXX XX XX"
-                    className="mt-1.5"
-                  />
+                  <Input className="mt-1.5" placeholder="+992..." value={addDebtData.new_customer_phone}
+                    onChange={e => setAddDebtData(d => ({ ...d, new_customer_phone: e.target.value }))} />
                 </div>
               </>
+            ) : (
+              <div>
+                <Label>Выберите клиента *</Label>
+                <Select value={addDebtData.customer_id} onValueChange={v => setAddDebtData(d => ({ ...d, customer_id: v }))}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue placeholder="Выберите клиента..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map(c => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name} {c.total_debt > 0 ? `(долг: ${c.total_debt.toLocaleString()} с.)` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             <div>
               <Label>Сумма долга (сомони) *</Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={addDebtData.amount}
-                onChange={(e) => setAddDebtData({ ...addDebtData, amount: e.target.value })}
-                placeholder="0"
-                className="mt-1.5"
-              />
+              <Input className="mt-1.5" type="text" inputMode="decimal" pattern="[0-9.]*"
+                placeholder="0" value={addDebtData.amount}
+                onChange={e => setAddDebtData(d => ({ ...d, amount: e.target.value.replace(/[^0-9.]/g, '') }))} />
             </div>
+
             <div>
-              <Label>Примечание</Label>
-              <Input
-                value={addDebtData.note}
-                onChange={(e) => setAddDebtData({ ...addDebtData, note: e.target.value })}
-                placeholder="За что долг..."
-                className="mt-1.5"
-              />
+              <Label>Примечание (необязательно)</Label>
+              <Input className="mt-1.5" placeholder="Причина долга, товар и т.д." value={addDebtData.note}
+                onChange={e => setAddDebtData(d => ({ ...d, note: e.target.value }))} />
             </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="outline" onClick={() => setAddDebtOpen(false)}>Отмена</Button>
-            <Button
-              onClick={handleAddManualDebt}
-              disabled={saving || !addDebtData.amount || (!addDebtData.customer_id && !addDebtData.new_customer_name)}
-              className="bg-orange-500 hover:bg-orange-600"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Добавить долг'}
-            </Button>
+
+            {addDebtData.amount && parseFloat(addDebtData.amount) > 0 && (
+              <div className="p-3 bg-orange-50 rounded-xl text-center">
+                <p className="text-sm text-orange-500">Сумма долга</p>
+                <p className="text-2xl font-bold text-orange-600">{parseFloat(addDebtData.amount || 0).toLocaleString()} с.</p>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setAddDebtOpen(false)}>Отмена</Button>
+              <Button
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                disabled={saving || !addDebtData.amount || parseFloat(addDebtData.amount) <= 0 || (!addDebtData.is_new_customer && !addDebtData.customer_id) || (addDebtData.is_new_customer && !addDebtData.new_customer_name)}
+                onClick={handleAddDebt}
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4" /> Добавить долг</>}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
