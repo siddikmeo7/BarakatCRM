@@ -138,7 +138,10 @@ export default function Products() {
   };
 
   const handleSave = async () => {
+    if (saving) return; // Защита от двойного нажатия
     setSaving(true);
+    setDialogOpen(false); // Закрываем сразу, чтобы нельзя было нажать снова
+    
     const data = {
       ...formData,
       business_id: business.id,
@@ -163,9 +166,7 @@ export default function Products() {
       } else {
         await base44.entities.Product.create(data);
       }
-      
       await loadData();
-      setDialogOpen(false);
     } catch (error) {
       console.error('Error saving product:', error);
       await loadData();
