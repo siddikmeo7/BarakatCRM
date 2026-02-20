@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import { t } from '@/components/i18n/translations';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -24,17 +25,17 @@ import { cn } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
-const MENU_ITEMS = [
-  { name: 'Dashboard',    icon: LayoutDashboard, labelKey: 'nav_dashboard', color: 'text-indigo-500',  activeBg: 'bg-indigo-500',  activeText: 'text-indigo-600' },
-  { name: 'Analytics',   icon: TrendingUp,       labelKey: 'nav_analytics', color: 'text-emerald-500', activeBg: 'bg-emerald-500', activeText: 'text-emerald-600' },
-  { name: 'Products',    icon: Package,          labelKey: 'nav_products',  color: 'text-blue-500',    activeBg: 'bg-blue-500',    activeText: 'text-blue-600' },
-  { name: 'Warehouses',  icon: Warehouse,        labelKey: 'nav_warehouses',color: 'text-orange-500',  activeBg: 'bg-orange-500',  activeText: 'text-orange-600' },
-  { name: 'Sales',       icon: ShoppingCart,     labelKey: 'nav_sales',     color: 'text-green-500',   activeBg: 'bg-green-500',   activeText: 'text-green-600' },
-  { name: 'Returns',     icon: RotateCcw,        labelKey: 'nav_returns',   color: 'text-yellow-500',  activeBg: 'bg-yellow-500',  activeText: 'text-yellow-600' },
-  { name: 'Customers',   icon: Users,            labelKey: 'nav_customers', color: 'text-pink-500',    activeBg: 'bg-pink-500',    activeText: 'text-pink-600' },
-  { name: 'Debts',       icon: CreditCard,       labelKey: 'nav_debts',     color: 'text-red-500',     activeBg: 'bg-red-500',     activeText: 'text-red-600' },
-  { name: 'AIAssistant', icon: Bot,              labelKey: 'nav_ai',        color: 'text-purple-500',  activeBg: 'bg-purple-500',  activeText: 'text-purple-600' },
-  { name: 'Settings',    icon: Settings,         labelKey: 'nav_settings',  color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600' },
+const ALL_MENU_ITEMS = [
+  { name: 'Dashboard',    icon: LayoutDashboard, labelKey: 'nav_dashboard', color: 'text-indigo-500',  activeBg: 'bg-indigo-500',  activeText: 'text-indigo-600', permKey: null },
+  { name: 'Analytics',   icon: TrendingUp,       labelKey: 'nav_analytics', color: 'text-emerald-500', activeBg: 'bg-emerald-500', activeText: 'text-emerald-600', permKey: 'view_analytics' },
+  { name: 'Products',    icon: Package,          labelKey: 'nav_products',  color: 'text-blue-500',    activeBg: 'bg-blue-500',    activeText: 'text-blue-600', permKey: 'view_products' },
+  { name: 'Warehouses',  icon: Warehouse,        labelKey: 'nav_warehouses',color: 'text-orange-500',  activeBg: 'bg-orange-500',  activeText: 'text-orange-600', permKey: 'view_warehouses' },
+  { name: 'Sales',       icon: ShoppingCart,     labelKey: 'nav_sales',     color: 'text-green-500',   activeBg: 'bg-green-500',   activeText: 'text-green-600', permKey: 'view_sales' },
+  { name: 'Returns',     icon: RotateCcw,        labelKey: 'nav_returns',   color: 'text-yellow-500',  activeBg: 'bg-yellow-500',  activeText: 'text-yellow-600', permKey: 'manage_returns' },
+  { name: 'Customers',   icon: Users,            labelKey: 'nav_customers', color: 'text-pink-500',    activeBg: 'bg-pink-500',    activeText: 'text-pink-600', permKey: 'view_customers' },
+  { name: 'Debts',       icon: CreditCard,       labelKey: 'nav_debts',     color: 'text-red-500',     activeBg: 'bg-red-500',     activeText: 'text-red-600', permKey: 'view_debts' },
+  { name: 'AIAssistant', icon: Bot,              labelKey: 'nav_ai',        color: 'text-purple-500',  activeBg: 'bg-purple-500',  activeText: 'text-purple-600', permKey: null },
+  { name: 'Settings',    icon: Settings,         labelKey: 'nav_settings',  color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600', permKey: null },
 ];
 
 const ADMIN_MENU_ITEMS = [
@@ -42,27 +43,13 @@ const ADMIN_MENU_ITEMS = [
   { name: 'AdminBusinesses', icon: Building2,       labelKey: 'nav_businesses', color: 'text-blue-500',   activeBg: 'bg-blue-500' },
 ];
 
-// Map page names to required permissions (null = always visible for owner)
-const PAGE_PERMISSIONS = {
-  Dashboard:    null,
-  Analytics:    'view_analytics',
-  Products:     'view_products',
-  Warehouses:   'view_warehouses',
-  Sales:        'view_sales',
-  Returns:      'manage_returns',
-  Customers:    'view_customers',
-  Debts:        'view_debts',
-  AIAssistant:  null,
-  Settings:     null,
-};
-
 export default function Layout({ children, currentPageName }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [business, setBusiness] = useState(null);
-  const [employee, setEmployee] = useState(null); // null = owner, object = employee
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
+  const [employeePermissions, setEmployeePermissions] = useState(null); // null = owner (full access)
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -96,28 +83,26 @@ export default function Layout({ children, currentPageName }) {
       setUser(currentUser);
 
       if (currentUser.email !== ADMIN_EMAIL) {
-        // Check if owner
         const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
         if (businesses.length > 0) {
           const foundBiz = businesses[0];
           setBusiness(foundBiz);
           setLang(foundBiz.language || 'ru');
-          setEmployee(null); // owner
+          setEmployeePermissions(null); // owner
         } else {
-          // Check if employee
-          const employeeRecords = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
-          if (employeeRecords.length > 0) {
-            const emp = employeeRecords[0];
-            setEmployee(emp);
-            const biz = await base44.entities.Business.filter({ });
-            // Find employer's business
-            const empBiz = biz.find(b => b.id === emp.business_id);
-            if (empBiz) {
-              setBusiness(empBiz);
-              setLang(empBiz.language || 'ru');
+          // Проверяем — может, это сотрудник чужого бизнеса
+          const empRecords = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
+          if (empRecords.length > 0) {
+            const emp = empRecords[0];
+            setEmployeePermissions(emp.permissions || {});
+            // Загружаем бизнес сотрудника
+            const empBiz = await base44.entities.Business.filter({ id: emp.business_id });
+            if (empBiz.length > 0) {
+              setBusiness(empBiz[0]);
+              setLang(empBiz[0].language || 'ru');
             }
           } else {
-            // New owner - create business
+            // Новый владелец — создаём бизнес
             const newBiz = await base44.entities.Business.create({
               name: currentUser.full_name ? `Бизнес ${currentUser.full_name}` : 'Мой бизнес',
               owner_email: currentUser.email,
@@ -130,7 +115,7 @@ export default function Layout({ children, currentPageName }) {
               language: 'ru'
             });
             setBusiness(newBiz);
-            setEmployee(null);
+            setEmployeePermissions(null);
           }
         }
       }
@@ -153,27 +138,22 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  const isOwner = !employee;
   const isAdmin = user?.email === ADMIN_EMAIL;
-
-  // Make employee/business available globally for pages
-  window.__barakatEmployee = employee;
-  window.__barakatBusiness = business;
   const isAdminPage = currentPageName?.startsWith('Admin');
+  const isOwner = employeePermissions === null;
 
-  // Filter menu items based on employee permissions
-  const filteredMenuItems = MENU_ITEMS.filter(item => {
-    if (isOwner || isAdmin) return true;
-    const requiredPerm = PAGE_PERMISSIONS[item.name];
-    if (requiredPerm === null || requiredPerm === undefined) {
-      // Settings hidden for employees
-      if (item.name === 'Settings' || item.name === 'AIAssistant') return false;
-      return true;
-    }
-    return !!(employee?.permissions?.[requiredPerm]);
+  const canAccess = (permKey) => {
+    if (isOwner || !permKey) return true;
+    return !!employeePermissions?.[permKey];
+  };
+
+  const MENU_ITEMS = ALL_MENU_ITEMS.filter(item => {
+    // Settings — только для владельца
+    if (item.name === 'Settings' && !isOwner) return false;
+    return canAccess(item.permKey);
   });
 
-  const currentMenu = isAdmin && isAdminPage ? ADMIN_MENU_ITEMS : filteredMenuItems;
+  const currentMenu = isAdmin && isAdminPage ? ADMIN_MENU_ITEMS : MENU_ITEMS;
 
   const DrawerContent = () => (
     <div className="flex flex-col h-full">
@@ -260,9 +240,6 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user?.full_name || 'User'}</p>
             <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
-            {employee && (
-              <p className="text-xs text-indigo-500 font-medium">{employee.role} · {business?.name}</p>
-            )}
           </div>
         </div>
       </div>
