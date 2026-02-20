@@ -422,21 +422,29 @@ export default function Settings() {
     }
   };
 
+  const generateCodeLocal = (length) => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < length; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
   const handleRegenerateCode = async (type) => {
     setSaving(true);
     try {
-      const codesRes = await base44.functions.invoke('generateBusinessCodes', {});
-      const { businessCode, accessCode } = codesRes.data;
+      const newCode = type === 'business' ? generateCodeLocal(12) : generateCodeLocal(8);
       
       const updateData = type === 'business' 
-        ? { business_code: businessCode }
-        : { access_code: accessCode };
+        ? { business_code: newCode }
+        : { access_code: newCode };
 
       await base44.entities.Business.update(business.id, updateData);
       
       const updated = await base44.entities.Business.read(business.id);
       setBusiness(updated);
-      alert(`✅ ${type === 'business' ? 'Код бизнеса' : 'Код доступа'} успешно изменён`);
+      alert(`✅ ${type === 'business' ? 'Код бизнеса' : 'Код доступа'} успешно изменён: ${newCode}`);
     } catch (err) {
       alert('Ошибка: ' + err.message);
     } finally {
