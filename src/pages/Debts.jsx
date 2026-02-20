@@ -687,9 +687,9 @@ export default function Debts() {
         </DialogContent>
       </Dialog>
 
-      {/* Customer Detail Dialog */}
+      {/* Customer Detail Dialog - Full debt view */}
       <Dialog open={customerDetailOpen} onOpenChange={setCustomerDetailOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t(lang,'debts_customer_info')}</DialogTitle>
           </DialogHeader>
@@ -697,77 +697,126 @@ export default function Debts() {
             const c = selectedCustomerDetail;
             const whatsappNum = c.use_phone_for_all ? c.phone : (c.whatsapp || c.phone);
             const telegramNum = c.use_phone_for_all ? c.phone : (c.telegram || c.phone);
+            const customerSales = sales.filter(s => s.customer_id === c.id);
+            const customerPayments = payments.filter(p => p.customer_id === c.id);
+            
+            // Build a unified timeline of purchases + payments
+            const timeline = [
+              ...customerSales.map(s => ({ type: 'sale', date: new Date(s.sale_date || s.created_date), data: s })),
+              ...customerPayments.filter(p => p.amount > 0).map(p => ({ type: 'payment', date: new Date(p.payment_date || p.created_date), data: p }))
+            ].sort((a, b) => b.date - a.date);
+
             return (
               <div className="space-y-4 py-2">
-                {/* Avatar + Name */}
+                {/* Avatar + Name + Contact */}
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
                     <span className="text-2xl font-bold text-indigo-600">{c.name?.charAt(0)?.toUpperCase()}</span>
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="text-xl font-bold text-slate-900">{c.name}</p>
-                    {c.address && <p className="text-sm text-slate-500">{c.address}</p>}
-                  </div>
-                </div>
-
-                {/* Contact Info */}
-                <div className="bg-slate-50 rounded-xl p-4 space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="w-4 h-4 text-slate-400" />
-                    <span className="text-slate-700">{c.phone}</span>
-                  </div>
-                  {c.email && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-700">{c.email}</span>
+                    <div className="flex flex-wrap gap-3 mt-1">
+                      {c.phone && <span className="flex items-center gap-1 text-sm text-slate-500"><Phone className="w-3 h-3" />{c.phone}</span>}
+                      {c.address && <span className="flex items-center gap-1 text-sm text-slate-500"><MapPin className="w-3 h-3" />{c.address}</span>}
                     </div>
-                  )}
-                  {c.address && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-700">{c.address}</span>
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Debt Summary */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="bg-orange-50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-orange-500 mb-1">{t(lang,'cust_debt')}</p>
+                    <p className="text-xs text-orange-500 mb-1">Текущий долг</p>
                     <p className="text-lg font-bold text-orange-600">{(c.total_debt || 0).toLocaleString()} с.</p>
                   </div>
                   <div className="bg-emerald-50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-emerald-500 mb-1">{t(lang,'cust_total_paid')}</p>
+                    <p className="text-xs text-emerald-500 mb-1">Всего оплачено</p>
                     <p className="text-lg font-bold text-emerald-600">{(c.total_paid || 0).toLocaleString()} с.</p>
+                  </div>
+                  <div className="bg-blue-50 rounded-xl p-3 text-center">
+                    <p className="text-xs text-blue-500 mb-1">Покупок в долг</p>
+                    <p className="text-lg font-bold text-blue-600">{customerSales.length}</p>
                   </div>
                 </div>
 
                 {/* Messenger Buttons */}
                 <div className="flex gap-2">
-                  <a
-                    href={`https://wa.me/${whatsappNum?.replace(/[^0-9]/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-green-50 hover:bg-green-100 rounded-xl text-green-700 text-sm font-medium transition-colors"
-                  >
+                  <a href={`https://wa.me/${whatsappNum?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-green-50 hover:bg-green-100 rounded-xl text-green-700 text-sm font-medium">
                     <MessageCircle className="w-4 h-4" /> WhatsApp
                   </a>
-                  <a
-                    href={`https://t.me/${telegramNum?.replace(/[^0-9]/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 hover:bg-blue-100 rounded-xl text-blue-700 text-sm font-medium transition-colors"
-                  >
+                  <a href={`https://t.me/${telegramNum?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 hover:bg-blue-100 rounded-xl text-blue-700 text-sm font-medium">
                     <Send className="w-4 h-4" /> Telegram
                   </a>
                 </div>
 
-                {/* Edit Button */}
-                <Link
-                  to={createPageUrl('Customers')}
-                  onClick={() => setCustomerDetailOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-colors"
-                >
+                {/* Full Timeline */}
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                    <History className="w-4 h-4 text-indigo-500" />
+                    Полная история операций
+                  </h4>
+                  {timeline.length === 0 ? (
+                    <p className="text-center text-slate-400 py-6 text-sm">Нет данных</p>
+                  ) : (
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {timeline.map((item, i) => {
+                        if (item.type === 'sale') {
+                          const s = item.data;
+                          const prod = products.find(p => p.id === s.product_id);
+                          const paid = getSalePaidAmount(s.id);
+                          const rem = (s.total_amount || 0) - paid;
+                          return (
+                            <div key={`s-${s.id}`} className="flex items-start gap-3 p-3 bg-orange-50 rounded-xl border border-orange-100">
+                              <div className="w-8 h-8 rounded-lg bg-orange-200 flex items-center justify-center flex-shrink-0">
+                                <Package className="w-4 h-4 text-orange-700" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-semibold text-orange-800 text-sm">
+                                    Покупка в долг — {s.total_amount?.toLocaleString()} с.
+                                  </span>
+                                  <span className="text-xs text-orange-600 font-medium flex-shrink-0">
+                                    {rem > 0 ? `Осталось: ${rem.toLocaleString()} с.` : '✅ Погашено'}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-orange-600 mt-0.5">
+                                  {prod ? `${prod.brand} ${prod.model}` : 'Товар не указан'} · {s.boxes_sold} кор.
+                                </p>
+                                <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {format(item.date, 'dd MMMM yyyy, HH:mm', { locale: ru })}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        } else {
+                          const p = item.data;
+                          return (
+                            <div key={`p-${p.id}`} className="flex items-start gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                              <div className="w-8 h-8 rounded-lg bg-emerald-200 flex items-center justify-center flex-shrink-0">
+                                <DollarSign className="w-4 h-4 text-emerald-700" />
+                              </div>
+                              <div className="flex-1">
+                                <span className="font-semibold text-emerald-800 text-sm">
+                                  Оплата — {p.amount?.toLocaleString()} с.
+                                </span>
+                                {p.note && <p className="text-xs text-emerald-600 mt-0.5">{p.note}</p>}
+                                <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {format(item.date, 'dd MMMM yyyy, HH:mm', { locale: ru })}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        }
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <Link to={createPageUrl('Customers')} onClick={() => setCustomerDetailOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-colors">
                   <ExternalLink className="w-4 h-4" /> {t(lang,'debts_edit_customer')}
                 </Link>
               </div>
