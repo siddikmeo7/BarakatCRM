@@ -30,8 +30,7 @@ import {
   Plus,
   PlusCircle,
   ChevronLeft,
-  ChevronRight,
-  SlidersHorizontal
+  ChevronRight
 } from 'lucide-react';
 
 const DEBT_PAGE_SIZE = 20;
@@ -53,6 +52,8 @@ export default function Debts() {
   const [filterCustomer, setFilterCustomer] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all'); // all, paid, unpaid
   const [filterAmount, setFilterAmount] = useState('');
+  const [sortBy, setSortBy] = useState('date_desc'); // date_desc, date_asc, remaining_desc, remaining_asc
+  const [debtPage, setDebtPage] = useState(1);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [selectedCustomerHistory, setSelectedCustomerHistory] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
