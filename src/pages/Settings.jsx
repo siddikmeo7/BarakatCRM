@@ -175,7 +175,10 @@ export default function Settings() {
   };
 
   const handleAddEmployee = async () => {
-    if (!newEmployee.name || !newEmployee.user_email) return;
+    if (!newEmployee.name.trim() || !newEmployee.user_email.trim()) {
+      alert('Заполните имя и email');
+      return;
+    }
     
     try {
       // Создаём запись сотрудника
@@ -213,6 +216,7 @@ export default function Settings() {
       alert(`✅ Сотрудник ${newEmployee.name} добавлен! Приглашение отправлено на ${newEmployee.user_email}`);
     } catch (error) {
       console.error('Error adding employee:', error);
+      alert('Ошибка при добавлении сотрудника');
     }
   };
 
