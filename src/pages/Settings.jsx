@@ -570,6 +570,27 @@ export default function Settings() {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label className="flex items-center gap-2">
+                  🔴 Лимит «Мало на складе» (коробок)
+                </Label>
+                <div className="flex items-center gap-3 mt-1.5">
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={formData.low_stock_limit}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setFormData({ ...formData, low_stock_limit: val ? parseInt(val) : 0 });
+                    }}
+                    className="w-24"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Товары с ≤ <strong>{formData.low_stock_limit}</strong> коробок будут подсвечены красным
+                  </p>
+                </div>
+              </div>
             </div>
           </CollapsibleContent>
         </Collapsible>
