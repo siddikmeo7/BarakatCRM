@@ -109,8 +109,17 @@ export default function Settings() {
     employees: false,
     notifications: false,
     custom: false,
+    history: false,
     security: false
   });
+
+  // History state
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyFilter, setHistoryFilter] = useState('all'); // all, delete, update
+  const [historyEntityFilter, setHistoryEntityFilter] = useState('all');
+  const [historyDetailLog, setHistoryDetailLog] = useState(null);
   const [deleteAccountDialog, setDeleteAccountDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
