@@ -149,14 +149,18 @@ export default function Debts() {
 
       const [newPayment] = await Promise.all(tasks);
 
-      // Обновляем локальное состояние немедленно
-      if (newPayment) {
-        setPayments(prev => [...prev, newPayment]);
-      }
+      // Обновляем локальный state сразу (без полной перезагрузки)
+      setPayments(prev => [...prev, newPayment]);
       if (customer) {
-        setCustomers(prev => prev.map(c =>
-          c.id === customer.id ? { ...c, total_debt: newDebt, total_paid: (c.total_paid || 0) + amount } : c
+        setCustomers(prev => prev.map(c => c.id === customer.id
+          ? { ...c, total_debt: newDebt, total_paid: (c.total_paid || 0) + amount }
+          : c
         ));
+        // обновляем также selectedCustomerDetail если он открыт
+        setSelectedCustomerDetail(prev => prev?.id === customer.id
+          ? { ...prev, total_debt: newDebt, total_paid: (prev.total_paid || 0) + amount }
+          : prev
+        );
       }
 
       // Отправить сообщение в выбранный канал
@@ -198,7 +202,6 @@ export default function Debts() {
         }
       }
 
-      await loadData();
       setDialogOpen(false);
       setSelectedSale(null);
       setPaymentAmount('');
@@ -662,14 +665,8 @@ export default function Debts() {
                       setPaymentAmount(val);
                     }}
                     placeholder={t(lang,'debts_pay_amount')}
-                    className={`mt-1.5 ${paymentAmount !== '' && (isNaN(parseFloat(paymentAmount)) || parseFloat(paymentAmount) <= 0) ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
+                    className="mt-1.5"
                   />
-                  {paymentAmount !== '' && (isNaN(parseFloat(paymentAmount)) || parseFloat(paymentAmount) <= 0) && (
-                    <p className="text-xs text-red-500 mt-1">Сумма должна быть больше 0</p>
-                  )}
-                  {paymentAmount !== '' && parseFloat(paymentAmount) > remaining && remaining > 0 && (
-                    <p className="text-xs text-amber-500 mt-1">Сумма превышает остаток долга ({remaining.toLocaleString()} с.)</p>
-                  )}
                 </div>
 
                 <div>
