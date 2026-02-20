@@ -118,10 +118,11 @@ export default function Debts() {
 
   const handlePayment = async () => {
     if (!selectedSale || !paymentAmount) return;
+    const amount = parseFloat(paymentAmount);
+    if (!amount || amount <= 0) return;
     
     setSaving(true);
     try {
-      const amount = parseFloat(paymentAmount);
       const customer = customers.find(c => c.id === selectedSale.customer_id);
       const product = customer ? products.find(p => p.id === selectedSale.product_id) : null;
       const newDebt = customer ? Math.max(0, (customer.total_debt || 0) - amount) : 0;
