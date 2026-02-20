@@ -356,10 +356,10 @@ export default function Products() {
       {/* Products Grid/List */}
       {view === 'grid' ? (
         <div className={hideImages ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2" : "grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"}>
-          {filteredProducts.map(product => {
+          {filteredProducts.map((product, idx) => {
             const totalPairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);
             const totalItems = totalPairs * 2;
-            const isLowStock = (product.boxes_in_stock || 0) <= 2;
+            const isLowStock = (product.boxes_in_stock || 0) <= lowStockLimit;
             return hideImages ? (
               // Компактная карточка без фото
               <div key={product.id} className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-shadow ${isLowStock ? 'border-red-300 bg-red-50' : 'border-slate-100 shadow-sm'}`}>
