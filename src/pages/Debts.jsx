@@ -463,6 +463,7 @@ export default function Debts() {
                   const isPaid = remaining <= 0;
                   return (
                     <tr key={sale.id} className="hover:bg-slate-50">
+                      <td className="px-3 py-3 text-center text-xs font-mono text-slate-400 select-none">{idx + 1}</td>
                       <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
                         {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy', { locale: ru })}
                       </td>
