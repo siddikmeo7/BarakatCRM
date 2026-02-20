@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '../utils';
@@ -443,8 +442,8 @@ export default function Settings() {
 
       await base44.entities.Business.update(business.id, updateData);
       
-      const updated = await base44.entities.Business.read(business.id);
-      setBusiness(updated);
+      const updated = await base44.entities.Business.filter({ id: business.id });
+      if (updated.length > 0) setBusiness(updated[0]);
       alert(`✅ ${type === 'business' ? 'Код бизнеса' : 'Код доступа'} успешно изменён: ${newCode}`);
     } catch (err) {
       alert('Ошибка: ' + err.message);
