@@ -26,7 +26,9 @@ import {
   MapPin,
   Mail,
   ExternalLink,
-  X
+  X,
+  Plus,
+  AlertTriangle
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
