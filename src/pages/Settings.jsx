@@ -825,11 +825,70 @@ export default function Settings() {
             </div>
 
             {editingEmployee && (
-              <EmployeePermissionsDialog
-                employee={editingEmployee}
-                onClose={() => setEditingEmployee(null)}
-                onSaved={loadData}
-              />
+              <Dialog open={!!editingEmployee} onOpenChange={() => setEditingEmployee(null)}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Разрешения для {editingEmployee.name}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {Object.entries(editingEmployee.permissions || {}).map(([key, value]) => {
+                        const labels = {
+                          view_analytics:'Аналитика', view_profit:'Просмотр прибыли',
+                          view_products:'Просмотр товаров', add_products:'Добавление товаров',
+                          edit_products:'Редактирование товаров', delete_products:'Удаление товаров',
+                          view_sales:'Просмотр продаж', add_sales:'Добавление продаж',
+                          edit_sales:'Редактирование продаж', cancel_sales:'Отмена продаж',
+                          view_warehouses:'Просмотр складов', manage_warehouses:'Управление складами',
+                          view_customers:'Просмотр клиентов', manage_customers:'Управление клиентами',
+                          view_debts:'Просмотр долгов', manage_debts:'Управление долгами',
+                          manage_returns:'Управление возвратами', view_activity_log:'История действий'
+                        };
+                        return (
+                          <label key={key} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={value}
+                              onChange={(e) => {
+                                setEditingEmployee({
+                                  ...editingEmployee,
+                                  permissions: {
+                                    ...editingEmployee.permissions,
+                                    [key]: e.target.checked
+                                  }
+                                });
+                              }}
+                              className="w-4 h-4 rounded border-slate-300"
+                            />
+                            <span className="text-sm text-slate-700">{labels[key]}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <div className="flex gap-2 pt-4 border-t">
+                      <Button
+                        onClick={async () => {
+                          await base44.entities.Employee.update(editingEmployee.id, {
+                            permissions: editingEmployee.permissions
+                          });
+                          setEditingEmployee(null);
+                          await loadData();
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Сохранить
+                      </Button>
+                      <Button
+                        onClick={() => setEditingEmployee(null)}
+                        variant="outline"
+                      >
+                        Отмена
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             )}
           </CollapsibleContent>
         </Collapsible>
