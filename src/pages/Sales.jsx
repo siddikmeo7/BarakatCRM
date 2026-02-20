@@ -33,10 +33,8 @@ import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, 
 const SALES_PAGE_SIZE = 25;
 import { t } from '@/components/i18n/translations';
 import { ru } from 'date-fns/locale';
-import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 export default function Sales() {
-  const { can } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -77,10 +75,14 @@ export default function Sales() {
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
-      const businesses = await base44.entities.Business.filter({ owner_email: user.email });
+      // Support employee login: get business from global context set by Layout
+      let biz = window.__barakatBusiness;
+      if (!biz) {
+        const businesses = await base44.entities.Business.filter({ owner_email: user.email });
+        if (businesses.length > 0) biz = businesses[0];
+      }
       
-      if (businesses.length > 0) {
-        const biz = businesses[0];
+      if (biz) {
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
