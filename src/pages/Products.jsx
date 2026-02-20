@@ -328,52 +328,79 @@ export default function Products() {
 
       {/* Products Grid/List */}
       {view === 'grid' ? (
-        <div className="grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        <div className={hideImages ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2" : "grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"}>
           {filteredProducts.map(product => {
             const totalPairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);
             const totalItems = totalPairs * 2;
-            return (
-              <div key={product.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
-                {!hideImages && (
-                  <div className="aspect-square bg-slate-100 relative">
-                    {product.photo_url ? (
-                      <img src={product.photo_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-16 h-16 text-slate-300" />
-                      </div>
-                    )}
-                    <div className="absolute top-2 right-2 flex gap-1">
-                      <button onClick={() => handleOpenDialog(product)} className="p-2 bg-white rounded-lg shadow-md hover:bg-slate-50">
-                        <Edit2 className="w-4 h-4 text-slate-600" />
-                      </button>
-                      <button onClick={() => handleDelete(product.id)} className="p-2 bg-white rounded-lg shadow-md hover:bg-red-50">
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </button>
+            const isLowStock = (product.boxes_in_stock || 0) <= 2;
+            return hideImages ? (
+              // Компактная карточка без фото
+              <div key={product.id} className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-shadow ${isLowStock ? 'border-red-300 bg-red-50' : 'border-slate-100 shadow-sm'}`}>
+                <div className={`flex items-center justify-between px-3 pt-2.5 pb-1 ${isLowStock ? 'border-b border-red-200' : 'border-b border-slate-100'}`}>
+                  <div className="min-w-0 flex-1">
+                    <p className={`font-bold text-sm truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand}</p>
+                    <p className={`text-xs truncate ${isLowStock ? 'text-red-500' : 'text-slate-500'}`}>{product.model}</p>
+                  </div>
+                  <div className="flex gap-1 ml-1 flex-shrink-0">
+                    <button onClick={() => handleOpenDialog(product)} className="p-1 bg-slate-100 rounded-lg hover:bg-slate-200">
+                      <Edit2 className="w-3 h-3 text-slate-600" />
+                    </button>
+                    <button onClick={() => handleDelete(product.id)} className="p-1 bg-slate-100 rounded-lg hover:bg-red-100">
+                      <Trash2 className="w-3 h-3 text-red-500" />
+                    </button>
+                  </div>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${isLowStock ? 'bg-red-100 text-red-700' : 'bg-indigo-50 text-indigo-700'}`}>
+                      <Box className="w-3 h-3" />
+                      {product.boxes_in_stock || 0} кор.
+                      {isLowStock && <span className="text-[10px]">⚠️</span>}
                     </div>
+                    <span className={`text-xs font-medium ${isLowStock ? 'text-red-500' : 'text-emerald-600'}`}>{product.sale_price?.toLocaleString()} с.</span>
                   </div>
-                )}
-                {hideImages && (
-                  <div className="flex justify-end gap-1 pt-2 pr-2">
-                    <button onClick={() => handleOpenDialog(product)} className="p-1.5 bg-slate-100 rounded-lg hover:bg-slate-200">
-                      <Edit2 className="w-3.5 h-3.5 text-slate-600" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400">{product.color} • {product.size_from}-{product.size_to}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${isLowStock ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'}`}>{product.product_type}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Обычная карточка с фото
+              <div key={product.id} className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow ${isLowStock ? 'border-red-300' : 'border-slate-100'}`}>
+                <div className="aspect-square bg-slate-100 relative">
+                  {product.photo_url ? (
+                    <img src={product.photo_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="w-16 h-16 text-slate-300" />
+                    </div>
+                  )}
+                  {isLowStock && (
+                    <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      ⚠️ Мало
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <button onClick={() => handleOpenDialog(product)} className="p-2 bg-white rounded-lg shadow-md hover:bg-slate-50">
+                      <Edit2 className="w-4 h-4 text-slate-600" />
                     </button>
-                    <button onClick={() => handleDelete(product.id)} className="p-1.5 bg-slate-100 rounded-lg hover:bg-red-100">
-                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    <button onClick={() => handleDelete(product.id)} className="p-2 bg-white rounded-lg shadow-md hover:bg-red-50">
+                      <Trash2 className="w-4 h-4 text-red-500" />
                     </button>
                   </div>
-                )}
+                </div>
                 <div className="p-3">
                   <div className="mb-2">
-                    <p className="font-semibold text-slate-900 text-sm truncate">{product.brand}</p>
-                    <p className="text-xs text-slate-500 truncate">{product.model}</p>
+                    <p className={`font-semibold text-sm truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand}</p>
+                    <p className={`text-xs truncate ${isLowStock ? 'text-red-400' : 'text-slate-500'}`}>{product.model}</p>
                     <p className="text-[10px] text-slate-400 mt-1">
                       {product.created_date ? new Date(product.created_date).toLocaleDateString('ru-RU') : ''}
                     </p>
                   </div>
-                  <div className="grid grid-cols-3 gap-1 p-2 bg-slate-50 rounded-lg mb-2">
+                  <div className={`grid grid-cols-3 gap-1 p-2 rounded-lg mb-2 ${isLowStock ? 'bg-red-50' : 'bg-slate-50'}`}>
                     <div className="text-center">
-                      <p className="text-sm font-bold text-indigo-600">{product.boxes_in_stock || 0}</p>
+                      <p className={`text-sm font-bold ${isLowStock ? 'text-red-600' : 'text-indigo-600'}`}>{product.boxes_in_stock || 0}</p>
                       <p className="text-[10px] text-slate-500">{t(lang,'prod_boxes').toLowerCase()}</p>
                     </div>
                     <div className="text-center border-x border-slate-200">
