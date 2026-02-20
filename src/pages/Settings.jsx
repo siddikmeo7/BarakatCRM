@@ -107,6 +107,7 @@ export default function Settings() {
   const [newCustomPermission, setNewCustomPermission] = useState('');
   const [expandedSections, setExpandedSections] = useState({
     business: true,
+    access: false,
     defaults: false,
     employees: false,
     notifications: false,
