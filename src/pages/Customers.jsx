@@ -6,6 +6,7 @@ import PullToRefresh from '@/components/ui/PullToRefresh';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ViewToggle from '@/components/ui/ViewToggle';
 import { 
@@ -20,8 +21,13 @@ import {
   MapPin,
   MessageCircle,
   Send,
-  AlertTriangle
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal
 } from 'lucide-react';
+
+const PAGE_SIZE = 20;
 
 export default function Customers() {
   const [business, setBusiness] = useState(null);
