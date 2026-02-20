@@ -39,6 +39,42 @@ export default function BusinessAccess() {
     }
   };
 
+  const handleJoinWithAccessCode = async () => {
+    if (!accessCode.trim()) {
+      setError('Введите код доступа');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      const businesses = await base44.entities.Business.filter({ access_code: accessCode });
+      if (businesses.length === 0) {
+        setError('Неверный код доступа');
+        setLoading(false);
+        return;
+      }
+
+      const business = businesses[0];
+      const employees = await base44.entities.Employee.filter({ 
+        business_id: business.id, 
+        user_email: user.email 
+      });
+
+      if (employees.length === 0) {
+        setError('Вы не сотрудник этого бизнеса');
+        setLoading(false);
+        return;
+      }
+
+      navigate(createPageUrl('Dashboard'));
+    } catch (err) {
+      setError('Ошибка: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCreateBusiness = async () => {
     if (!businessName.trim()) {
       setError('Введите название бизнеса');
