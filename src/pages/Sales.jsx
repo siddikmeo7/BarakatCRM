@@ -573,14 +573,13 @@ export default function Sales() {
         })}
         </div>
         )}
-        {filteredSales.length === 0 && view === 'grid' && (
+        {filteredSales.length === 0 && (
         <div className="text-center py-12 text-slate-500">
           <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-slate-300" />
           <p>{t(lang,'sales_not_found')}</p>
         </div>
         )}
-        {/* Pagination for grid view */}
-        {totalSalesPages > 1 && view === 'grid' && (
+        {totalSalesPages > 1 && (
           <div className="flex items-center justify-center gap-3 py-3">
             <Button variant="outline" size="sm" onClick={() => setSalesPage(p => Math.max(1, p - 1))} disabled={salesPage === 1}>
               <ChevronLeft className="w-4 h-4" />
