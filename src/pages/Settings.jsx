@@ -152,6 +152,30 @@ export default function Settings() {
           low_stock_limit: biz.low_stock_limit ?? 2
         });
 
+        // Загружаем роли
+        let rolesData = await base44.entities.Role.filter({ business_id: biz.id });
+        
+        // Если роли "Продавец" нет - создаём
+        const hasSeller = rolesData.some(r => r.name === 'Продавец');
+        if (!hasSeller) {
+          await base44.entities.Role.create({
+            business_id: biz.id,
+            name: 'Продавец',
+            description: 'Продавец товаров',
+            permissions: {
+              view_analytics: false, view_profit: false,
+              view_products: true, add_products: true, edit_products: false, delete_products: false,
+              view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false,
+              view_warehouses: true, manage_warehouses: false,
+              view_customers: true, manage_customers: false,
+              view_debts: false, manage_debts: false,
+              manage_returns: false, view_activity_log: false, manage_employees: false, manage_roles: false,
+            }
+          });
+          rolesData = await base44.entities.Role.filter({ business_id: biz.id });
+        }
+        setRoles(rolesData);
+
         const employeesData = await base44.entities.Employee.filter({ business_id: biz.id });
         setEmployees(employeesData);
       }
