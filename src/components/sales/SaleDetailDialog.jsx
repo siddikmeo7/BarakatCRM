@@ -273,18 +273,29 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
               </button>
               {showHistory && (
                 <div className="divide-y divide-slate-100">
-                  {editHistory.map((h, i) => (
+                  {[...editHistory].reverse().map((h, i) => (
                     <div key={i} className="p-3 text-sm">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium text-slate-700">Изменение #{i + 1}</span>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-medium text-slate-700">Изменение #{editHistory.length - i}</span>
                         <span className="text-xs text-slate-400">
                           {format(parseISO(h.edited_at), 'dd.MM.yyyy HH:mm', { locale: ru })}
                         </span>
                       </div>
-                      <div className="text-slate-600 space-y-0.5">
-                        <p>Было: {h.boxes_sold} коробок × {h.sale_price?.toLocaleString()} с. = {h.total_amount?.toLocaleString()} с.</p>
-                        {h.note && <p className="text-slate-400 italic">"{h.note}"</p>}
-                      </div>
+                      {h.changes && h.changes.length > 0 ? (
+                        <div className="space-y-1">
+                          {h.changes.map((c, ci) => (
+                            <div key={ci} className="flex items-center gap-2 text-xs">
+                              <span className="text-slate-500 w-24 flex-shrink-0">{c.label}:</span>
+                              <span className="bg-red-50 text-red-600 px-1.5 py-0.5 rounded line-through">{c.from}</span>
+                              <span className="text-slate-400">→</span>
+                              <span className="bg-green-50 text-green-700 px-1.5 py-0.5 rounded font-semibold">{c.to}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-slate-600 text-xs">Было: {h.boxes_sold} кор. × {h.sale_price?.toLocaleString()} с. = {h.total_amount?.toLocaleString()} с.</p>
+                      )}
+                      {h.note && <p className="text-slate-400 italic text-xs mt-1">"{h.note}"</p>}
                     </div>
                   ))}
                 </div>
