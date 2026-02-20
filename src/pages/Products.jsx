@@ -476,6 +476,7 @@ export default function Products() {
                 return (
                   <tr key={product.id} className={`hover:bg-slate-50 transition-colors ${isLowStock ? 'bg-red-50 animate-pulse-border' : ''}`}
                     style={isLowStock ? { animation: 'row-pulse 2s ease-in-out infinite' } : {}}>
+                    <td className="px-3 py-3 text-center text-xs font-mono text-slate-400 select-none">{idx + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {product.photo_url ? (
