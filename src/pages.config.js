@@ -62,6 +62,7 @@ import ProductDetail from './pages/ProductDetail';
 import Products from './pages/Products';
 import Returns from './pages/Returns';
 import Sales from './pages/Sales';
+import Settings from './pages/Settings';
 import WarehouseSalesHistory from './pages/WarehouseSalesHistory';
 import Warehouses from './pages/Warehouses';
 import BusinessAccess from './pages/BusinessAccess';
@@ -84,6 +85,7 @@ export const PAGES = {
     "Products": Products,
     "Returns": Returns,
     "Sales": Sales,
+    "Settings": Settings,
     "WarehouseSalesHistory": WarehouseSalesHistory,
     "Warehouses": Warehouses,
     "BusinessAccess": BusinessAccess,
