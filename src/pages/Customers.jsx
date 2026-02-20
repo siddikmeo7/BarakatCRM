@@ -140,7 +140,7 @@ export default function Customers() {
     }
   };
 
-  // Фильтрация
+  // Фильтрация + сортировка + пагинация
   let filteredCustomers = customers.filter(customer => {
     const matchesSearch = !search ||
       customer.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -152,18 +152,15 @@ export default function Customers() {
     return matchesSearch && matchesDebt;
   });
 
-  // Сортировка
   filteredCustomers = [...filteredCustomers].sort((a, b) => {
     switch (sortBy) {
       case 'debt_desc': return (b.total_debt || 0) - (a.total_debt || 0);
       case 'debt_asc': return (a.total_debt || 0) - (b.total_debt || 0);
       case 'paid_desc': return (b.total_paid || 0) - (a.total_paid || 0);
-      case 'name':
       default: return (a.name || '').localeCompare(b.name || '');
     }
   });
 
-  // Пагинация
   const totalPages = Math.ceil(filteredCustomers.length / PAGE_SIZE);
   const paginatedCustomers = filteredCustomers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -209,41 +206,42 @@ export default function Customers() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <div className="flex flex-wrap items-center gap-3">
+      {/* Search + Filters */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <SearchInput 
             value={search} 
-            onChange={(v) => { setSearch(v); setPage(1); }} 
+            onChange={(v) => { setSearch(v); setPage(1); }}
             placeholder="Поиск по имени или телефону..."
-            className="flex-1 min-w-[180px]"
+            className="flex-1 min-w-48"
           />
+          <ViewToggle view={view} onChange={setView} />
+        </div>
+        <div className="flex flex-wrap gap-2 items-center">
+          <SlidersHorizontal className="w-4 h-4 text-slate-400" />
           <Select value={filterDebt} onValueChange={(v) => { setFilterDebt(v); setPage(1); }}>
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="Статус долга" />
+            <SelectTrigger className="w-44 h-8 text-sm">
+              <SelectValue placeholder="Долг" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Все клиенты</SelectItem>
-              <SelectItem value="with_debt">Есть долг</SelectItem>
-              <SelectItem value="no_debt">Нет долга</SelectItem>
+              <SelectItem value="with_debt">С долгом</SelectItem>
+              <SelectItem value="no_debt">Без долга</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setPage(1); }}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="w-44 h-8 text-sm">
               <SelectValue placeholder="Сортировка" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="name">По имени А-Я</SelectItem>
-              <SelectItem value="debt_desc">Долг: больше</SelectItem>
-              <SelectItem value="debt_asc">Долг: меньше</SelectItem>
-              <SelectItem value="paid_desc">Оплачено: больше</SelectItem>
+              <SelectItem value="name">По имени (А-Я)</SelectItem>
+              <SelectItem value="debt_desc">Долг ↓ (больший)</SelectItem>
+              <SelectItem value="debt_asc">Долг ↑ (меньший)</SelectItem>
+              <SelectItem value="paid_desc">Оплачено ↓</SelectItem>
             </SelectContent>
           </Select>
-          <ViewToggle view={view} onChange={setView} />
+          <span className="text-xs text-slate-400 ml-auto">{filteredCustomers.length} клиентов</span>
         </div>
-        {filteredCustomers.length !== customers.length && (
-          <p className="text-xs text-slate-400 mt-2">Показано: {filteredCustomers.length} из {customers.length}</p>
-        )}
       </div>
 
       {/* Customers Grid/List */}
@@ -308,11 +306,27 @@ export default function Customers() {
               })}
             </tbody>
           </table>
+          {/* Pagination list */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1.5 py-3 border-t border-slate-100 flex-wrap">
+              <Button variant="outline" size="sm" onClick={() => setPage(1)} disabled={page === 1} className="text-xs px-2">«</Button>
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}><ChevronLeft className="w-4 h-4" /></Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                .reduce((acc, p, idx, arr) => { if (idx > 0 && p - arr[idx-1] > 1) acc.push('...'); acc.push(p); return acc; }, [])
+                .map((p, i) => p === '...' ? <span key={`e${i}`} className="text-slate-400 px-1 text-sm">…</span> : (
+                  <Button key={p} variant={page === p ? 'default' : 'outline'} size="sm" onClick={() => setPage(p)}
+                    className={`w-8 text-xs ${page === p ? 'bg-indigo-600 hover:bg-indigo-700' : ''}`}>{p}</Button>
+                ))}
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}><ChevronRight className="w-4 h-4" /></Button>
+              <Button variant="outline" size="sm" onClick={() => setPage(totalPages)} disabled={page === totalPages} className="text-xs px-2">»</Button>
+            </div>
+          )}
         </div>
       )}
       {view === 'grid' && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredCustomers.map(customer => {
+        {paginatedCustomers.map(customer => {
           const whatsappNum = customer.use_phone_for_all ? customer.phone : (customer.whatsapp || customer.phone);
           const telegramNum = customer.use_phone_for_all ? customer.phone : (customer.telegram || customer.phone);
           
