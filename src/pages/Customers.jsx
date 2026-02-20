@@ -77,7 +77,7 @@ export default function Customers() {
         email: customer.email || '',
         address: customer.address || '',
         use_phone_for_all: customer.use_phone_for_all !== false,
-        debt_limit: customer.debt_limit || ''
+        debt_limit: customer.debt_limit != null ? String(customer.debt_limit) : ''
       });
     } else {
       setEditingCustomer(null);
