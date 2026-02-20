@@ -367,9 +367,9 @@ export default function Sales() {
       {view === 'list' ? (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {/* Desktop */}
-        <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-96">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-slate-50 sticky top-0 z-10">
               <tr>
                 <th className="px-3 py-3 text-center text-sm font-medium text-slate-400 w-8">#</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_date')}</th>
@@ -384,7 +384,7 @@ export default function Sales() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredSales.map((sale, idx) => {
+              {paginatedSales.map((sale, idx) => {
                 const product = products.find(p => p.id === sale.product_id);
                 const customer = customers.find(c => c.id === sale.customer_id);
                 const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
