@@ -206,18 +206,15 @@ export default function Settings() {
     }
     
     try {
-      // Находим роль по названию
-      const roles = await base44.entities.Role.filter({ 
-        business_id: business.id, 
-        name: newEmployee.role 
-      });
+      // Находим роль по названию из загруженных ролей
+      const foundRole = roles.find(r => r.name === newEmployee.role);
       
-      if (roles.length === 0) {
+      if (!foundRole) {
         alert(`Роль "${newEmployee.role}" не найдена`);
         return;
       }
       
-      const roleId = roles[0].id;
+      const roleId = foundRole.id;
 
       // Создаём запись сотрудника
       await base44.entities.Employee.create({
