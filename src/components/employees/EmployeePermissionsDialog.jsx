@@ -142,6 +142,17 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
         view_debts: true, manage_debts: true,
         manage_returns: true, view_activity_log: false,
       });
+    } else if (preset === 'manager') {
+      setPermissions({
+        view_analytics: true, view_profit: false, view_dashboard: true,
+        view_products: true, add_products: true, edit_products: true, delete_products: false, move_products: true,
+        view_sales: true, add_sales: true, edit_sales: true, cancel_sales: false, manage_discounts: true,
+        view_warehouses: true, manage_warehouses: false,
+        view_customers: true, manage_customers: true,
+        view_debts: true, manage_debts: true,
+        manage_returns: true, view_activity_log: false,
+        view_settings_language: true, manage_employees: false, manage_roles: false, export_reports: false,
+      });
     } else if (preset === 'all') {
       const all = {};
       PERMISSION_GROUPS.forEach(g => g.permissions.forEach(p => { all[p.key] = true; }));
