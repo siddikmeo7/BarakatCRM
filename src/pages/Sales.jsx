@@ -472,7 +472,7 @@ export default function Sales() {
                       {sale.total_amount?.toLocaleString()} с.
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-emerald-600 whitespace-nowrap">
-                      +{sale.profit?.toLocaleString()} с.
+                      {can('view_profit') ? `+${sale.profit?.toLocaleString()} с.` : '••• с.'}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-1 rounded-lg text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
