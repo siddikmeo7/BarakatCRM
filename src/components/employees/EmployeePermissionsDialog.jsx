@@ -14,6 +14,7 @@ const PERMISSION_GROUPS = [
       { key: 'view_dashboard', label: 'Видеть главную страницу', desc: 'Доступ к дашборду с общей статистикой' },
       { key: 'view_analytics', label: 'Видеть аналитику', desc: 'Раздел аналитики и статистики' },
       { key: 'view_profit', label: 'Видеть прибыль', desc: 'Суммы прибыли в продажах и аналитике' },
+      { key: 'view_stock_value', label: 'Видеть стоимость товаров', desc: 'Суммы стоимости склада и цены закупки' },
     ]
   },
   {

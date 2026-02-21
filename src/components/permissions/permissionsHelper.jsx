@@ -34,6 +34,7 @@ export const PERMISSIONS = {
   // Аналитика
   VIEW_ANALYTICS: 'view_analytics',
   VIEW_PROFIT: 'view_profit',
+  VIEW_STOCK_VALUE: 'view_stock_value',
 
   // Товары
   VIEW_PRODUCTS: 'view_products',
