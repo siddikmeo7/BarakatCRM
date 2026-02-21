@@ -34,6 +34,7 @@ import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, 
 const SALES_PAGE_SIZE = 25;
 import { t } from '@/components/i18n/translations';
 import { ru } from 'date-fns/locale';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 export default function Sales() {
   const [business, setBusiness] = useState(null);
