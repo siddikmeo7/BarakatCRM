@@ -28,6 +28,7 @@ import {
   List
 } from 'lucide-react';
 import ViewToggle from '@/components/ui/ViewToggle';
+import MultiSaleDialog from '@/components/sales/MultiSaleDialog';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
 
 const SALES_PAGE_SIZE = 25;
