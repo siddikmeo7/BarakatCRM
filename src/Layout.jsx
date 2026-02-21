@@ -160,8 +160,8 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const MENU_ITEMS = ALL_MENU_ITEMS.filter(item => {
-    // Settings — только для владельца
-    if (item.name === 'Settings' && !isOwner) return false;
+    // Settings — только для владельца или у кого есть view_settings_language
+      if (item.name === 'Settings' && !isOwner && !employeePermissions?.view_settings_language) return false;
     return canAccess(item.permKey);
   });
 
