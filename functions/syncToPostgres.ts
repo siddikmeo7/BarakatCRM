@@ -143,8 +143,8 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, entity: event.entity_name, type: event.type, id: event.entity_id });
 
   } catch (error) {
-    console.error('syncToPostgres error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('syncToPostgres error:', error.message, error.stack);
+    return Response.json({ error: error.message, stack: error.stack }, { status: 500 });
   } finally {
     client.release();
   }
