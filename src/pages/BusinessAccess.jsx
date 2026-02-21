@@ -163,10 +163,10 @@ export default function BusinessAccess() {
                 </div>
 
                 <Button
-                  onClick={() => navigate(createPageUrl('Dashboard'))}
+                  onClick={() => { sessionStorage.removeItem('barakatcrm_mode'); navigate(createPageUrl('Dashboard')); }}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 h-10"
                 >
-                  Войти в бизнес
+                  Войти как владелец
                 </Button>
 
                 <Button
@@ -190,10 +190,10 @@ export default function BusinessAccess() {
                 <Button
                   onClick={() => setStep('join')}
                   variant="outline"
-                  className="w-full h-10"
+                  className="w-full h-10 border-indigo-300 text-indigo-700"
                 >
                   <Users className="w-4 h-4 mr-2" />
-                  Войти как сотрудник
+                  Войти как сотрудник другого бизнеса
                 </Button>
 
                 <button
