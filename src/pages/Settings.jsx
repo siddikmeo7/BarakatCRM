@@ -1021,9 +1021,12 @@ export default function Settings() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 bg-slate-100 rounded-lg text-xs text-slate-700 font-medium">
-                          {employee.role}
-                        </span>
+                      {employee.is_frozen && (
+                        <span className="px-2.5 py-1 bg-blue-100 rounded-lg text-xs text-blue-700 font-medium">🧊 Заморожен</span>
+                      )}
+                      <span className="px-2.5 py-1 bg-slate-100 rounded-lg text-xs text-slate-700 font-medium">
+                        {employee.role}
+                      </span>
                         <button
                           onClick={() => setEditingEmployee(employee)}
                           className="p-2 hover:bg-indigo-50 rounded-lg group"
