@@ -78,8 +78,21 @@ export default function Products() {
       const user = await base44.auth.me();
       let biz = window.__barakatBusiness;
       if (!biz) {
-        const businesses = await base44.entities.Business.filter({ owner_email: user.email });
-        if (businesses.length > 0) biz = businesses[0];
+        // Сначала проверяем режим сотрудника
+        const savedMode = sessionStorage.getItem('barakatcrm_mode');
+        if (savedMode && savedMode.startsWith('employee_')) {
+          const empId = savedMode.replace('employee_', '');
+          const empRecords = await base44.entities.Employee.filter({ user_email: user.email, is_active: true });
+          const emp = empRecords.find(e => e.id === empId) || empRecords[0];
+          if (emp) {
+            const bizList = await base44.entities.Business.filter({ id: emp.business_id });
+            if (bizList.length > 0) biz = bizList[0];
+          }
+        }
+        if (!biz) {
+          const businesses = await base44.entities.Business.filter({ owner_email: user.email });
+          if (businesses.length > 0) biz = businesses[0];
+        }
       }
       
       if (biz) {
