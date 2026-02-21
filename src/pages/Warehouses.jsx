@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import ViewToggle from '@/components/ui/ViewToggle';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 const WAREHOUSE_ICONS = [
   { key: 'Warehouse', icon: WarehouseIcon, label: 'Склад' },
