@@ -139,6 +139,11 @@ export default function Analytics() {
       setLoading(false);
     }
   };
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Фильтрация продаж по дате (исключаем отменённые!)
   const filteredSales = sales.filter(sale => {
