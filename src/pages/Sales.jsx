@@ -44,6 +44,7 @@ export default function Sales() {
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [multiDialogOpen, setMultiDialogOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState(null);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
