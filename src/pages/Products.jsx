@@ -336,7 +336,7 @@ export default function Products() {
     <div className="space-y-6">
       <PageHeader 
         title={t(lang,'prod_title')}
-        subtitle={`${products.length} ${t(lang,'prod_subtitle_count')} ${totalStockValue.toLocaleString()} ${t(lang,'dash_somoni')}`}
+        subtitle={`${products.length} ${t(lang,'prod_subtitle_count')} ${can('view_stock_value') ? `${totalStockValue.toLocaleString()} ${t(lang,'dash_somoni')}` : '••••• с.'}`}
         actions={
           <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
             <Plus className="w-4 h-4" />
@@ -516,7 +516,7 @@ export default function Products() {
                   <div className="flex items-center justify-between text-xs">
                     <div>
                       <p className="text-[10px] text-slate-500">{t(lang,'prod_sale_col')}</p>
-                      <p className="font-semibold text-emerald-600">{product.sale_price?.toLocaleString()}</p>
+                      <p className="font-semibold text-emerald-600">{can('view_stock_value') ? product.sale_price?.toLocaleString() : '•••'}</p>
                     </div>
                     <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] text-slate-600">{product.product_type}</span>
                   </div>
@@ -571,9 +571,9 @@ export default function Products() {
                     </td>
                     <td className={`px-4 py-3 text-center font-bold ${isLowStock ? 'text-red-600' : 'text-indigo-600'}`}>{product.boxes_in_stock || 0}</td>
                     <td className="px-4 py-3 text-center text-slate-700">{totalPairs}</td>
-                    <td className="px-4 py-3 text-right text-slate-700">{product.purchase_price?.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">{product.sale_price?.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">{stockValue.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right text-slate-700">{can('view_stock_value') ? product.purchase_price?.toLocaleString() : '•••'}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">{can('view_stock_value') ? product.sale_price?.toLocaleString() : '•••'}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-900">{can('view_stock_value') ? stockValue.toLocaleString() : '•••••'}</td>
                     <td className="px-4 py-3 text-right">
                       <span className="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600">{product.product_type}</span>
                     </td>
