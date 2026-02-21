@@ -314,18 +314,7 @@ export default function Layout({ children, currentPageName }) {
           })()}
         </div>
 
-        {/* Switch mode button - if user is employee in some business */}
-        <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center">
-          {!isAdmin && (
-            <button
-              onClick={() => navigate(createPageUrl('BusinessAccess'))}
-              title="Сменить режим / войти как сотрудник"
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <Building2 className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-            </button>
-          )}
-        </div>
+        <div className="w-9 h-9 flex-shrink-0"></div>
       </header>
 
       {/* === PAGE CONTENT === */}
