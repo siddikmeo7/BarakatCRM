@@ -57,6 +57,7 @@ const PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сап�
 const COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый'];
 
 export default function Settings() {
+  const navigate = useNavigate();
   const [business, setBusiness] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [user, setUser] = useState(null);
