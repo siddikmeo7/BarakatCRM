@@ -262,11 +262,11 @@ export default function Warehouses() {
                       <p className="text-xs text-slate-500">коробок</p>
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-orange-600">{stats.totalWholesaleValue.toLocaleString()}</p>
+                      <p className="text-lg font-bold text-orange-600">{can('view_stock_value') ? stats.totalWholesaleValue.toLocaleString() : '•••••'}</p>
                       <p className="text-xs text-slate-500">опт. стоимость</p>
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-emerald-600">{stats.totalValue.toLocaleString()}</p>
+                      <p className="text-lg font-bold text-emerald-600">{can('view_stock_value') ? stats.totalValue.toLocaleString() : '•••••'}</p>
                       <p className="text-xs text-slate-500">розн. стоимость</p>
                     </div>
                     <div>
