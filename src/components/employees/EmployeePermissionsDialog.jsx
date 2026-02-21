@@ -6,11 +6,12 @@ import { Save, Shield, Package, ShoppingCart, Warehouse, Users, CreditCard, Rota
 
 const PERMISSION_GROUPS = [
   {
-    label: 'Аналитика и прибыль',
+    label: 'Главная и аналитика',
     icon: TrendingUp,
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
     permissions: [
+      { key: 'view_dashboard', label: 'Видеть главную страницу', desc: 'Доступ к дашборду с общей статистикой' },
       { key: 'view_analytics', label: 'Видеть аналитику', desc: 'Раздел аналитики и статистики' },
       { key: 'view_profit', label: 'Видеть прибыль', desc: 'Суммы прибыли в продажах и аналитике' },
     ]
@@ -25,6 +26,7 @@ const PERMISSION_GROUPS = [
       { key: 'add_products', label: 'Добавлять товары', desc: 'Создавать новые товары' },
       { key: 'edit_products', label: 'Редактировать товары', desc: 'Изменять данные товаров' },
       { key: 'delete_products', label: 'Удалять товары', desc: 'Удалять товары из системы' },
+      { key: 'move_products', label: 'Перемещать товары', desc: 'Перемещать товары между складами' },
     ]
   },
   {
@@ -37,6 +39,7 @@ const PERMISSION_GROUPS = [
       { key: 'add_sales', label: 'Делать продажи', desc: 'Оформлять новые продажи' },
       { key: 'edit_sales', label: 'Редактировать продажи', desc: 'Изменять оформленные продажи' },
       { key: 'cancel_sales', label: 'Отменять продажи', desc: 'Отменять оформленные продажи' },
+      { key: 'manage_discounts', label: 'Давать скидки', desc: 'Изменять цену при продаже' },
     ]
   },
   {
@@ -79,12 +82,24 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    label: 'История и управление',
+    label: 'История и журнал',
     icon: History,
     color: 'text-slate-600',
     bg: 'bg-slate-50',
     permissions: [
       { key: 'view_activity_log', label: 'Видеть историю действий', desc: 'Просматривать лог активности' },
+      { key: 'export_reports', label: 'Экспортировать отчёты', desc: 'Скачивать данные в Excel/PDF' },
+    ]
+  },
+  {
+    label: 'Настройки',
+    icon: Settings,
+    color: 'text-purple-600',
+    bg: 'bg-purple-50',
+    permissions: [
+      { key: 'view_settings_language', label: 'Менять язык интерфейса', desc: 'Изменять язык в настройках' },
+      { key: 'manage_employees', label: 'Управлять сотрудниками', desc: 'Добавлять и удалять сотрудников' },
+      { key: 'manage_roles', label: 'Управлять ролями', desc: 'Создавать и редактировать роли' },
     ]
   },
 ];
