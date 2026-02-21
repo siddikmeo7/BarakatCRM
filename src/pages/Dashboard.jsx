@@ -211,7 +211,7 @@ export default function Dashboard() {
           {(widgets.length === 0 || widgets.some(w => w.widget_type === 'chart_sales')) && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
               <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'dash_dynamics')}</h3>
-              <SalesChart sales={filteredSales} days={7} />
+              <SalesChart sales={filteredSales} days={7} showProfit={can('view_profit')} />
             </div>
           )}
           

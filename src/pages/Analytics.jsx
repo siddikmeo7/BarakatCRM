@@ -389,7 +389,7 @@ export default function Analytics() {
           {/* Sales & Profit Chart */}
           <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
             <h3 className="font-semibold text-slate-900 text-sm md:text-base mb-4">{t(lang,'analytics_dynamics')}</h3>
-            <SalesChart sales={filteredSales} days={14} chartType={chartType} />
+            <SalesChart sales={filteredSales} days={14} chartType={chartType} showProfit={can('view_profit')} />
           </div>
 
           {/* Sales Type Chart */}

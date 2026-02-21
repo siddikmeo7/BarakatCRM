@@ -3,7 +3,7 @@ import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, Cartesia
 import { format, parseISO, startOfDay, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
-export default function SalesChart({ sales, days = 7, chartType = 'line' }) {
+export default function SalesChart({ sales, days = 7, chartType = 'line', showProfit = true }) {
   // Группируем продажи по дням
   const chartData = [];
   for (let i = days - 1; i >= 0; i--) {
