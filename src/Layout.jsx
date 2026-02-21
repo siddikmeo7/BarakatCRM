@@ -83,38 +83,49 @@ export default function Layout({ children, currentPageName }) {
       setUser(currentUser);
 
       if (currentUser.email !== ADMIN_EMAIL) {
-            // Проверяем владельца
-            const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
-            if (businesses.length > 0) {
-              const foundBiz = businesses[0];
-              setBusiness(foundBiz);
-              setLang(foundBiz.language || 'ru');
-              setEmployeePermissions(null); // owner
-            } else {
-              // Проверяем сотрудника
-              const employeeRecords = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
-              if (employeeRecords.length > 0) {
-                const emp = employeeRecords[0];
+            // Проверяем: есть ли выбранный режим (сотрудник или владелец) в sessionStorage
+            const savedMode = sessionStorage.getItem('barakatcrm_mode'); // 'owner' | 'employee_<empId>'
+
+            // Параллельно грузим бизнес и сотрудника
+            const [businesses, employeeRecords] = await Promise.all([
+              base44.entities.Business.filter({ owner_email: currentUser.email }),
+              base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true })
+            ]);
+
+            if (savedMode && savedMode.startsWith('employee_')) {
+              // Режим сотрудника выбран явно
+              const empId = savedMode.replace('employee_', '');
+              const emp = employeeRecords.find(e => e.id === empId) || employeeRecords[0];
+              if (emp) {
                 const bizList = await base44.entities.Business.filter({ id: emp.business_id });
                 if (bizList.length > 0) {
-                  const foundBiz = bizList[0];
-                  setBusiness(foundBiz);
-                  setLang(foundBiz.language || 'ru');
+                  setBusiness(bizList[0]);
+                  setLang(bizList[0].language || 'ru');
                   setEmployeePermissions(emp.permissions || {});
+                  setLoading(false);
+                  return;
                 }
               }
             }
 
-            // Если не нашли ни бизнеса ни сотрудника — перенаправить на страницу доступа
-            const hasBusiness = businesses.length > 0;
-            if (!hasBusiness && currentPageName !== 'BusinessAccess') {
-              // Ещё раз проверяем через employee (уже выше загрузили, смотрим через employeePermissions)
-              const empCheck = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
-              if (empCheck.length === 0) {
-                navigate(createPageUrl('BusinessAccess'));
-                setLoading(false);
-                return;
+            // По умолчанию: если есть свой бизнес — владелец
+            if (businesses.length > 0) {
+              setBusiness(businesses[0]);
+              setLang(businesses[0].language || 'ru');
+              setEmployeePermissions(null);
+            } else if (employeeRecords.length > 0) {
+              // Нет своего бизнеса — входим как сотрудник автоматически
+              const emp = employeeRecords[0];
+              const bizList = await base44.entities.Business.filter({ id: emp.business_id });
+              if (bizList.length > 0) {
+                setBusiness(bizList[0]);
+                setLang(bizList[0].language || 'ru');
+                setEmployeePermissions(emp.permissions || {});
               }
+            } else if (currentPageName !== 'BusinessAccess') {
+              navigate(createPageUrl('BusinessAccess'));
+              setLoading(false);
+              return;
             }
           }
     } catch (error) {
