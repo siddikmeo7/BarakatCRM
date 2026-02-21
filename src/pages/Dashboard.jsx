@@ -192,10 +192,10 @@ export default function Dashboard() {
           const widgetType = typeof widget === 'string' ? widget : widget.widget_type;
           const widgetConfigs = {
             sales: { title: t(lang,'dash_sales'), value: hideData ? masked : totalRevenue.toLocaleString(), subtitle: t(lang,'dash_somoni'), icon: ShoppingCart, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
-            profit: { title: t(lang,'dash_profit'), value: hideData ? masked : totalProfit.toLocaleString(), subtitle: t(lang,'dash_somoni'), icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+            profit: { title: t(lang,'dash_profit'), value: (hideData || !can('view_profit')) ? masked : totalProfit.toLocaleString(), subtitle: t(lang,'dash_somoni'), icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
             boxes: { title: t(lang,'dash_boxes_sold'), value: hideData ? masked : totalBoxes, icon: Box, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
             pairs: { title: t(lang,'dash_pairs_sold'), value: hideData ? masked : totalPairs, icon: Layers, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
-            stock: { title: t(lang,'dash_stock'), value: hideData ? masked : `${totalStock} ${t(lang,'dash_boxes')}`, subtitle: hideData ? masked : `${t(lang,'dash_purchase')}: ${totalPurchaseValue.toLocaleString()} с.`, icon: Warehouse, iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
+            stock: { title: t(lang,'dash_stock'), value: hideData ? masked : `${totalStock} ${t(lang,'dash_boxes')}`, subtitle: (hideData || !can('view_stock_value')) ? masked : `${t(lang,'dash_purchase')}: ${totalPurchaseValue.toLocaleString()} с.`, icon: Warehouse, iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
             debt: { title: t(lang,'dash_debt'), value: hideData ? masked : totalDebt.toLocaleString(), subtitle: t(lang,'dash_somoni'), icon: Users, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
             customers: { title: t(lang,'dash_customers'), value: customers.length, icon: Users, iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' }
           };
