@@ -31,10 +31,25 @@ export default function BusinessAccess() {
       setUser(currentUser);
       setEmail(currentUser.email);
 
-      // Загружаем бизнес владельца
-      const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
+      const [businesses, empRecords] = await Promise.all([
+        base44.entities.Business.filter({ owner_email: currentUser.email }),
+        base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true })
+      ]);
+
       if (businesses.length > 0) {
         setBusiness(businesses[0]);
+      }
+
+      setEmployeeRecords(empRecords);
+
+      // Загружаем бизнесы где пользователь является сотрудником
+      if (empRecords.length > 0) {
+        const bizMap = {};
+        for (const emp of empRecords) {
+          const bizList = await base44.entities.Business.filter({ id: emp.business_id });
+          if (bizList.length > 0) bizMap[emp.id] = bizList[0];
+        }
+        setEmployeeBusinesses(bizMap);
       }
     } catch (err) {
       console.error('Error loading user:', err);
