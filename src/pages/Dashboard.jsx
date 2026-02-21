@@ -26,6 +26,7 @@ import {
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { t } from '@/components/i18n/translations';
 import { useNavigate } from 'react-router-dom';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 export default function Dashboard() {
   const navigate = useNavigate();

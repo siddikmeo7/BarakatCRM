@@ -135,7 +135,6 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
         view_settings_language: true, manage_employees: false, manage_roles: false, export_reports: false,
       });
     } else if (preset === 'manager') {
-    } else if (preset === 'manager') {
       setPermissions({
         view_analytics: true, view_profit: false, view_dashboard: true,
         view_products: true, add_products: true, edit_products: true, delete_products: false, move_products: true,

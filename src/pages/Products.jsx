@@ -28,6 +28,7 @@ import {
 import { format, parseISO, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 const PAGE_SIZE = 20;
 
