@@ -58,6 +58,9 @@ const COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Сини�
 
 export default function Settings() {
   const navigate = useNavigate();
+  // Проверяем режим сотрудника
+  const savedMode = sessionStorage.getItem('barakatcrm_mode');
+  const isEmployeeMode = savedMode && savedMode.startsWith('employee_');
   const [business, setBusiness] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [user, setUser] = useState(null);
