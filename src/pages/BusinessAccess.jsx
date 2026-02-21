@@ -195,23 +195,54 @@ export default function BusinessAccess() {
                   Управлять кодами доступа
                 </Button>
 
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-300"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-slate-500">или</span>
-                  </div>
-                </div>
+                {/* Если пользователь также является сотрудником в других бизнесах */}
+                {employeeRecords.length > 0 && (
+                  <>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-300"></div>
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-slate-500">Вы также сотрудник</span>
+                      </div>
+                    </div>
+                    {employeeRecords.map(emp => {
+                      const empBiz = employeeBusinesses[emp.id];
+                      return (
+                        <Button
+                          key={emp.id}
+                          onClick={() => { sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); navigate(createPageUrl('Dashboard')); }}
+                          variant="outline"
+                          className="w-full h-10 border-purple-300 text-purple-700 hover:bg-purple-50"
+                        >
+                          <Users className="w-4 h-4 mr-2" />
+                          Войти как сотрудник{empBiz ? `: ${empBiz.name}` : ''}
+                        </Button>
+                      );
+                    })}
+                  </>
+                )}
 
-                <Button
-                  onClick={() => setStep('join')}
-                  variant="outline"
-                  className="w-full h-10 border-indigo-300 text-indigo-700"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Войти как сотрудник другого бизнеса
-                </Button>
+                {employeeRecords.length === 0 && (
+                  <>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-300"></div>
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-slate-500">или</span>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => setStep('join')}
+                      variant="outline"
+                      className="w-full h-10 border-indigo-300 text-indigo-700"
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      Войти как сотрудник другого бизнеса
+                    </Button>
+                  </>
+                )}
 
                 <button
                   onClick={() => base44.auth.logout()}
