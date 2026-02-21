@@ -258,16 +258,25 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
         is_active: true,
       });
 
-      // Приглашение по email
+      // Приглашаем пользователя в систему (чтобы мог войти)
       try {
+        await base44.users.inviteUser(form.user_email, 'user');
+      } catch (e) {
+        console.error('Invite error:', e);
+      }
+
+      // Отправляем email с инструкцией
+      try {
+        const appUrl = window.location.origin;
         await base44.integrations.Core.SendEmail({
           to: form.user_email,
-          subject: `Приглашение в бизнес "${business.name}"`,
-          body: `Здравствуйте, ${form.name}!\n\nВы были добавлены как "${form.role}" в бизнес "${business.name}" в системе BarakatCRM.\n\nВойдите в систему по адресу используя эту почту: ${form.user_email}\n\nВаши права доступа настроены владельцем бизнеса.\n\nС уважением,\n${business.name}`
+          subject: `Приглашение в бизнес "${business.name}" — BarakatCRM`,
+          body: `Здравствуйте, ${form.name}!\n\nВас пригласили в бизнес "${business.name}" в системе BarakatCRM как "${form.role}".\n\n📱 Как войти:\n1. Перейдите по ссылке: ${appUrl}\n2. Войдите используя этот email: ${form.user_email}\n3. Система автоматически определит ваш бизнес\n\nЕсли вам не пришло письмо для подтверждения — проверьте папку "Спам".\n\nС уважением,\n${business.name}`
         });
         setInviteSent(true);
       } catch (e) {
         console.error('Email error:', e);
+        setInviteSent(true); // всё равно показываем успех, сотрудник создан
       }
 
       onUpdate();
