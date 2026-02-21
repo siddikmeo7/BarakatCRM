@@ -662,6 +662,17 @@ export default function Sales() {
         />
       )}
 
+      {/* Multi Sale Dialog */}
+      <MultiSaleDialog
+        open={multiDialogOpen}
+        onClose={() => setMultiDialogOpen(false)}
+        products={products}
+        customers={customers}
+        business={business}
+        lang={lang}
+        onSaved={() => { loadData(); setMultiDialogOpen(false); }}
+      />
+
       {/* New Sale Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
