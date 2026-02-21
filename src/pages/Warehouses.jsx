@@ -46,6 +46,7 @@ function WarehouseIconComp({ iconKey, className }) {
 }
 
 export default function Warehouses() {
+  const { can } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [warehouses, setWarehouses] = useState([]);
   const [products, setProducts] = useState([]);
