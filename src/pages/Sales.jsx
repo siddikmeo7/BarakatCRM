@@ -611,10 +611,12 @@ export default function Sales() {
                   <span className="text-slate-600">Сумма:</span>
                   <span className="font-semibold text-slate-900">{sale.total_amount?.toLocaleString()} с.</span>
                 </div>
+                {can('view_profit') && (
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Прибыль:</span>
                   <span className="font-semibold text-emerald-600">+{sale.profit?.toLocaleString()} с.</span>
                 </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">{displayUnit === 'boxes' ? 'Кор.' : displayUnit === 'pairs' ? 'Пар' : 'Шт'}:</span>
                   <span className="font-semibold text-indigo-600">{displayQty}</span>
