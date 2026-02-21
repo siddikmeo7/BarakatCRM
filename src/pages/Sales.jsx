@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Checkbox } from '@/components/ui/checkbox';
 import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
 import SaleDetailDialog from '@/components/sales/SaleDetailDialog';
+import MultiSaleDialog from '@/components/sales/MultiSaleDialog';
 import { 
   Plus, 
   ShoppingCart, 
@@ -28,7 +29,6 @@ import {
   List
 } from 'lucide-react';
 import ViewToggle from '@/components/ui/ViewToggle';
-import MultiSaleDialog from '@/components/sales/MultiSaleDialog';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
 
 const SALES_PAGE_SIZE = 25;
@@ -44,7 +44,6 @@ export default function Sales() {
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [multiDialogOpen, setMultiDialogOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState(null);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
