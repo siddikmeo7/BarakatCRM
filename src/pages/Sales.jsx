@@ -518,7 +518,7 @@ export default function Sales() {
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="font-bold text-slate-900 text-sm">{sale.total_amount?.toLocaleString()} с.</p>
-                        <p className="text-xs text-emerald-600">+{sale.profit?.toLocaleString()} с.</p>
+                        <p className="text-xs text-emerald-600">{can('view_profit') ? `+${sale.profit?.toLocaleString()} с.` : '••• с.'}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-2">
