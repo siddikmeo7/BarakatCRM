@@ -50,17 +50,17 @@ export default function SalesChart({ sales, days = 7, chartType = 'line', showPr
         {chartType === 'bar' ? (
           <>
             <Bar dataKey="revenue" fill="#3b82f6" name="Выручка" />
-            <Bar dataKey="profit" fill="#10b981" name="Прибыль" />
+            {showProfit && <Bar dataKey="profit" fill="#10b981" name="Прибыль" />}
           </>
         ) : chartType === 'area' ? (
           <>
             <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRevenue)" name="Выручка" />
-            <Area type="monotone" dataKey="profit" stroke="#10b981" fillOpacity={1} fill="url(#colorProfit)" name="Прибыль" />
+            {showProfit && <Area type="monotone" dataKey="profit" stroke="#10b981" fillOpacity={1} fill="url(#colorProfit)" name="Прибыль" />}
           </>
         ) : (
           <>
             <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} name="Выручка" />
-            <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2} name="Прибыль" />
+            {showProfit && <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2} name="Прибыль" />}
           </>
         )}
       </ChartComponent>
