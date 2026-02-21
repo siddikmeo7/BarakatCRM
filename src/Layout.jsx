@@ -89,8 +89,10 @@ export default function Layout({ children, currentPageName }) {
           setBusiness(foundBiz);
           setLang(foundBiz.language || 'ru');
           setEmployeePermissions(null); // owner
-        } else {
-          // Новый пользователь или сотрудник — перенаправляем на страницу доступа
+        }
+
+        // Если не на странице доступа и нет бизнеса — перенаправить
+        if (businesses.length === 0 && currentPageName !== 'BusinessAccess') {
           navigate(createPageUrl('BusinessAccess'));
           setLoading(false);
           return;
