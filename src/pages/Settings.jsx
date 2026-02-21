@@ -1429,6 +1429,83 @@ export default function Settings() {
           </DialogContent>
         </Dialog>
 
+        {/* Employee Login Section */}
+        <Collapsible open={expandedSections.employee_login} onOpenChange={(open) => setExpandedSections({...expandedSections, employee_login: open})}>
+          <CollapsibleTrigger asChild>
+            <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Users className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">Войти как сотрудник</h3>
+                  <p className="text-xs text-slate-500">Подключиться к другому бизнесу по кодам</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-slate-500 transition ${expandedSections.employee_login ? 'rotate-180' : ''}`} />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6">
+            <div className="space-y-4">
+              <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                <p className="text-sm text-yellow-800">🔒 Введите коды, полученные от владельца бизнеса. Информация о бизнесах конфиденциальна.</p>
+              </div>
+              <div>
+                <Label>Код бизнеса</Label>
+                <Input
+                  value={empLoginCode}
+                  onChange={(e) => setEmpLoginCode(e.target.value.toUpperCase())}
+                  placeholder="XXXXXXXXXXXX"
+                  className="mt-1.5 font-mono"
+                />
+              </div>
+              <div>
+                <Label>Код доступа</Label>
+                <Input
+                  value={empAccessCode}
+                  onChange={(e) => setEmpAccessCode(e.target.value.toUpperCase())}
+                  placeholder="XXXXXXXX"
+                  className="mt-1.5 font-mono"
+                />
+              </div>
+              {empLoginError && (
+                <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{empLoginError}</div>
+              )}
+              <Button
+                onClick={async () => {
+                  setEmpLoginLoading(true);
+                  setEmpLoginError('');
+                  try {
+                    const businesses = await base44.entities.Business.filter({ business_code: empLoginCode.trim(), access_code: empAccessCode.trim() });
+                    if (businesses.length === 0) {
+                      setEmpLoginError('Неверные коды доступа');
+                      return;
+                    }
+                    const biz = businesses[0];
+                    const currentUser = await base44.auth.me();
+                    const emp = await base44.entities.Employee.filter({ business_id: biz.id, user_email: currentUser.email });
+                    if (emp.length === 0) {
+                      setEmpLoginError('Вы не добавлены как сотрудник этого бизнеса. Попросите владельца добавить вас.');
+                      return;
+                    }
+                    sessionStorage.setItem('barakatcrm_mode', `employee_${emp[0].id}`);
+                    navigate(createPageUrl('Dashboard'));
+                  } catch (e) {
+                    setEmpLoginError('Ошибка: ' + e.message);
+                  } finally {
+                    setEmpLoginLoading(false);
+                  }
+                }}
+                disabled={empLoginLoading || !empLoginCode || !empAccessCode}
+                className="w-full bg-purple-600 hover:bg-purple-700 gap-2"
+              >
+                {empLoginLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+                Войти как сотрудник
+              </Button>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
         {/* Security Section */}
         <Collapsible open={expandedSections.security} onOpenChange={(open) => setExpandedSections({...expandedSections, security: open})}>
           <CollapsibleTrigger asChild>
