@@ -97,6 +97,13 @@ export default function Layout({ children, currentPageName }) {
               const empId = savedMode.replace('employee_', '');
               const emp = employeeRecords.find(e => e.id === empId) || employeeRecords[0];
               if (emp) {
+                if (emp.is_frozen) {
+                  // Аккаунт заморожен — выходим из режима сотрудника
+                  sessionStorage.removeItem('barakatcrm_mode');
+                  alert('Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.');
+                  setLoading(false);
+                  return;
+                }
                 const bizList = await base44.entities.Business.filter({ id: emp.business_id });
                 if (bizList.length > 0) {
                   setBusiness(bizList[0]);
