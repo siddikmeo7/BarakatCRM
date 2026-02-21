@@ -12,7 +12,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Checkbox } from '@/components/ui/checkbox';
 import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
 import SaleDetailDialog from '@/components/sales/SaleDetailDialog';
-import MultiSaleDialog from '@/components/sales/MultiSaleDialog';
 import { 
   Plus, 
   ShoppingCart, 
@@ -29,6 +28,7 @@ import {
   List
 } from 'lucide-react';
 import ViewToggle from '@/components/ui/ViewToggle';
+import MultiSaleDialog from '@/components/sales/MultiSaleDialog';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
 
 const SALES_PAGE_SIZE = 25;
@@ -288,10 +288,16 @@ export default function Sales() {
         title={t(lang,'sales_title')}
         subtitle={`${filteredSales.length} ${t(lang,'dash_sales_count')}`}
         actions={
-          <Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-            <Plus className="w-4 h-4" />
-            {t(lang,'sales_new')}
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setMultiDialogOpen(true)} variant="outline" className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+              <Layers className="w-4 h-4" />
+              Несколько товаров
+            </Button>
+            <Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+              <Plus className="w-4 h-4" />
+              {t(lang,'sales_new')}
+            </Button>
+          </div>
         }
       />
 
@@ -644,6 +650,18 @@ export default function Sales() {
             <Button variant="outline" size="sm" onClick={() => setSalesPage(totalSalesPages)} disabled={salesPage === totalSalesPages} className="text-xs px-2">»</Button>
           </div>
         )}
+
+      {/* Multi Sale Dialog */}
+      <MultiSaleDialog
+        open={multiDialogOpen}
+        onOpenChange={setMultiDialogOpen}
+        products={products}
+        customers={customers}
+        business={business}
+        lang={lang}
+        onSaved={() => loadData()}
+        loadData={loadData}
+      />
 
       {/* Sale Detail Dialog */}
       {selectedSale && (
