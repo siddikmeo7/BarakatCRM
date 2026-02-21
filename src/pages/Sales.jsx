@@ -818,10 +818,12 @@ export default function Sales() {
                   <p className="text-sm text-slate-500">{t(lang,'sales_amount')}</p>
                   <p className="text-lg font-semibold text-slate-900">{totalAmount.toLocaleString()} с.</p>
                 </div>
+                {can('view_profit') && (
                 <div>
                   <p className="text-sm text-slate-500">{t(lang,'sales_profit')}</p>
                   <p className="text-lg font-semibold text-emerald-600">+{profit.toLocaleString()} с.</p>
                 </div>
+                )}
               </div>
             )}
 
