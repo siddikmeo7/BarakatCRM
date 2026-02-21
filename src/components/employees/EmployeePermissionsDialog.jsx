@@ -166,6 +166,24 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
           </DialogTitle>
         </DialogHeader>
 
+        {/* Freeze toggle */}
+        <div className={`flex items-center justify-between p-3 rounded-xl border mb-4 ${isFrozen ? 'bg-blue-50 border-blue-300' : 'bg-slate-50 border-slate-200'}`}>
+          <div>
+            <p className={`text-sm font-semibold ${isFrozen ? 'text-blue-800' : 'text-slate-700'}`}>
+              {isFrozen ? '🧊 Аккаунт заморожен' : '✅ Аккаунт активен'}
+            </p>
+            <p className="text-xs text-slate-500">
+              {isFrozen ? 'Сотрудник не может войти и использовать систему' : 'Сотрудник имеет доступ к системе'}
+            </p>
+          </div>
+          <div
+            onClick={() => setIsFrozen(f => !f)}
+            className={`w-12 h-7 rounded-full transition-all flex items-center px-1 cursor-pointer ${isFrozen ? 'bg-blue-500' : 'bg-slate-300'}`}
+          >
+            <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${isFrozen ? 'translate-x-5' : 'translate-x-0'}`} />
+          </div>
+        </div>
+
         <div className="space-y-2 mb-4">
           <p className="text-sm text-slate-500">Быстрые пресеты:</p>
           <div className="flex flex-wrap gap-2">
