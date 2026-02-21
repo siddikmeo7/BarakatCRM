@@ -29,12 +29,20 @@ async function ensureTables(sql) {
 }
 
 Deno.serve(async (req) => {
-  const sql = postgres(connectionString, { ssl: 'require', max: 5 });
-
+  let sql;
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
 
+    // Test connection
+    if (body.test_connection) {
+      sql = postgres(connectionString, { ssl: { rejectUnauthorized: false }, max: 1, connect_timeout: 10 });
+      const result = await sql`SELECT current_database() as db, NOW() as time`;
+      await sql.end();
+      return Response.json({ success: true, db: result[0].db, time: result[0].time });
+    }
+
+    sql = postgres(connectionString, { ssl: { rejectUnauthorized: false }, max: 5 });
     await ensureTables(sql);
 
     // --- FULL SYNC MODE ---
@@ -48,11 +56,12 @@ Deno.serve(async (req) => {
       for (const [entityName, tableName] of Object.entries(ENTITY_TABLE_MAP)) {
         const records = await base44.asServiceRole.entities[entityName].list();
         for (const record of records) {
-          await sql`
-            INSERT INTO ${sql(tableName)} (id, data, updated_at)
-            VALUES (${record.id}, ${JSON.stringify(record)}, NOW())
-            ON CONFLICT (id) DO UPDATE SET data = ${JSON.stringify(record)}, updated_at = NOW()
-          `;
+          const dataJson = JSON.stringify(record);
+          await sql.unsafe(
+            `INSERT INTO ${tableName} (id, data, updated_at) VALUES ($1, $2::jsonb, NOW())
+             ON CONFLICT (id) DO UPDATE SET data = $2::jsonb, updated_at = NOW()`,
+            [record.id, dataJson]
+          );
         }
         results[entityName] = records.length;
       }
@@ -64,16 +73,18 @@ Deno.serve(async (req) => {
     // --- ENTITY EVENT MODE (called by automations) ---
     const { event, data } = body;
     if (!event) {
+      await sql.end();
       return Response.json({ error: 'No event provided' }, { status: 400 });
     }
 
     const tableName = ENTITY_TABLE_MAP[event.entity_name];
     if (!tableName) {
+      await sql.end();
       return Response.json({ error: `Unknown entity: ${event.entity_name}` }, { status: 400 });
     }
 
     if (event.type === 'delete') {
-      await sql`DELETE FROM ${sql(tableName)} WHERE id = ${event.entity_id}`;
+      await sql.unsafe(`DELETE FROM ${tableName} WHERE id = $1`, [event.entity_id]);
     } else {
       let recordData = data;
       if (!recordData) {
@@ -81,11 +92,12 @@ Deno.serve(async (req) => {
         recordData = rows[0] || null;
       }
       if (recordData) {
-        await sql`
-          INSERT INTO ${sql(tableName)} (id, data, updated_at)
-          VALUES (${event.entity_id}, ${JSON.stringify(recordData)}, NOW())
-          ON CONFLICT (id) DO UPDATE SET data = ${JSON.stringify(recordData)}, updated_at = NOW()
-        `;
+        const dataJson = JSON.stringify(recordData);
+        await sql.unsafe(
+          `INSERT INTO ${tableName} (id, data, updated_at) VALUES ($1, $2::jsonb, NOW())
+           ON CONFLICT (id) DO UPDATE SET data = $2::jsonb, updated_at = NOW()`,
+          [event.entity_id, dataJson]
+        );
       }
     }
 
@@ -93,8 +105,8 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, entity: event.entity_name, type: event.type, id: event.entity_id });
 
   } catch (error) {
-    console.error('syncToPostgres error:', error.message);
-    try { await sql.end(); } catch (_) {}
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('syncToPostgres error:', error.message, JSON.stringify(error));
+    if (sql) { try { await sql.end(); } catch (_) {} }
+    return Response.json({ error: error.message || String(error), detail: JSON.stringify(error) }, { status: 500 });
   }
 });
