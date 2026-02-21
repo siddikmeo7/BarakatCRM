@@ -1,147 +1,170 @@
 import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
-import { Plus, Trash2, Search, Package, ShoppingCart, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Package, Search, Loader2, ShoppingCart } from 'lucide-react';
+import { t } from '@/components/i18n/translations';
 
-export default function MultiSaleDialog({ open, onOpenChange, products, customers, business, lang, onSaved, loadData }) {
-  const [cartItems, setCartItems] = useState([{ id: Date.now(), product_id: '', boxes_sold: 1, custom_sale_price: '', productSearch: '', showDropdown: false }]);
+export default function MultiSaleDialog({ open, onClose, products, customers, business, lang, onSaved }) {
+  const [items, setItems] = useState([{ id: Date.now(), product_id: '', boxes_sold: 1, custom_sale_price: '', productSearch: '' }]);
   const [isDebt, setIsDebt] = useState(false);
   const [customerId, setCustomerId] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
-  const [partialPayment, setPartialPayment] = useState('');
+  const [partialPayment, setPartialPayment] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [activeSearch, setActiveSearch] = useState(null); // item id with open dropdown
 
-  const filteredProducts = (search) => products.filter(p =>
-    (p.brand?.toLowerCase().includes(search.toLowerCase()) ||
-     p.model?.toLowerCase().includes(search.toLowerCase())) &&
-    (p.boxes_in_stock || 0) > 0
-  );
+  const availableProducts = products.filter(p => (p.boxes_in_stock || 0) > 0);
+
+  const getFilteredProducts = (search) =>
+    availableProducts.filter(p =>
+      p.brand?.toLowerCase().includes(search.toLowerCase()) ||
+      p.model?.toLowerCase().includes(search.toLowerCase())
+    );
 
   const updateItem = (id, field, value) => {
-    setCartItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+    setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
   const addItem = () => {
-    setCartItems(prev => [...prev, { id: Date.now(), product_id: '', boxes_sold: 1, custom_sale_price: '', productSearch: '', showDropdown: false }]);
+    setItems(prev => [...prev, { id: Date.now(), product_id: '', boxes_sold: 1, custom_sale_price: '', productSearch: '' }]);
   };
 
   const removeItem = (id) => {
-    if (cartItems.length === 1) return;
-    setCartItems(prev => prev.filter(item => item.id !== id));
+    if (items.length === 1) return;
+    setItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const getProduct = (productId) => products.find(p => p.id === productId);
+  const getProduct = (product_id) => products.find(p => p.id === product_id);
 
   const calcItem = (item) => {
     const product = getProduct(item.product_id);
-    if (!product) return { pairsSold: 0, itemsSold: 0, salePrice: 0, total: 0, profit: 0 };
-    const pairsSold = (item.boxes_sold || 0) * (product.pairs_per_box || 6);
+    if (!product) return { pairsSold: 0, itemsSold: 0, totalAmount: 0, profit: 0 };
+    const boxes = parseInt(item.boxes_sold) || 0;
+    const price = item.custom_sale_price ? parseFloat(item.custom_sale_price) : (product.sale_price || 0);
+    const pairsSold = boxes * (product.pairs_per_box || 6);
     const itemsSold = pairsSold * 2;
-    const salePrice = item.custom_sale_price ? parseFloat(item.custom_sale_price) : (product.sale_price || 0);
-    const total = (item.boxes_sold || 0) * salePrice;
-    const profit = (item.boxes_sold || 0) * (salePrice - (product.purchase_price || 0));
-    return { pairsSold, itemsSold, salePrice, total, profit };
+    const totalAmount = boxes * price;
+    const profit = boxes * (price - (product.purchase_price || 0));
+    return { pairsSold, itemsSold, totalAmount, profit, price };
   };
 
-  const grandTotal = cartItems.reduce((sum, item) => sum + calcItem(item).total, 0);
-  const grandProfit = cartItems.reduce((sum, item) => sum + calcItem(item).profit, 0);
-  const partialPay = isDebt ? (parseFloat(partialPayment) || 0) : 0;
-  const remainingDebt = grandTotal - partialPay;
+  const grandTotal = items.reduce((sum, item) => sum + calcItem(item).totalAmount, 0);
+  const grandProfit = items.reduce((sum, item) => sum + calcItem(item).profit, 0);
+  const remaining = grandTotal - (parseFloat(partialPayment) || 0);
 
-  const validItems = cartItems.filter(item => item.product_id && (item.boxes_sold || 0) >= 1);
-  const canSave = validItems.length > 0 && (!isDebt || customerId);
-
-  const handleClose = () => {
-    setCartItems([{ id: Date.now(), product_id: '', boxes_sold: 1, custom_sale_price: '', productSearch: '', showDropdown: false }]);
-    setIsDebt(false);
-    setCustomerId('');
-    setCustomerName('');
-    setCustomerAddress('');
-    setPartialPayment('');
-    onOpenChange(false);
-  };
+  const canSave = items.some(i => i.product_id && parseInt(i.boxes_sold) >= 1) && (!isDebt || customerId);
 
   const handleSave = async () => {
-    if (!canSave) return;
+    const validItems = items.filter(i => i.product_id && parseInt(i.boxes_sold) >= 1);
+    if (validItems.length === 0) return;
+
     setSaving(true);
-
-    const customer = customers.find(c => c.id === customerId);
-
-    // Проверка лимита долга
-    if (isDebt && customer && customer.debt_limit != null) {
-      const newTotalDebt = (customer.total_debt || 0) + remainingDebt;
-      if (newTotalDebt > customer.debt_limit) {
-        setSaving(false);
-        alert(`⚠️ Превышен лимит долга клиента "${customer.name}"!\nЛимит: ${customer.debt_limit.toLocaleString()} с.\nТекущий долг: ${(customer.total_debt||0).toLocaleString()} с.\nНовый долг составит: ${newTotalDebt.toLocaleString()} с.`);
-        return;
-      }
-    }
+    const partialPay = isDebt ? parseFloat(partialPayment) || 0 : 0;
 
     try {
-      const saleDate = new Date().toISOString();
-
-      for (const item of validItems) {
-        const product = getProduct(item.product_id);
-        const { pairsSold, itemsSold, salePrice, total, profit } = calcItem(item);
-
-        // Рассчитываем частичную оплату пропорционально
-        const itemRatio = grandTotal > 0 ? total / grandTotal : 1;
-        const itemPartialPay = isDebt ? Math.round(partialPay * itemRatio) : 0;
-        const itemRemainingDebt = isDebt ? total - itemPartialPay : 0;
-
-        const createdSale = await business && (await (async () => {
-          const s = await import('@/api/base44Client').then(m => m.base44.entities.Sale.create({
-            business_id: business.id,
-            product_id: item.product_id,
-            warehouse_id: product?.warehouse_id || '',
-            boxes_sold: parseInt(item.boxes_sold),
-            pairs_sold: pairsSold,
-            items_sold: itemsSold,
-            sale_price: salePrice,
-            purchase_price: product?.purchase_price || 0,
-            total_amount: total,
-            profit: profit,
-            sale_date: saleDate,
-            is_debt: isDebt,
-            customer_id: isDebt ? customerId : '',
-            customer_name: customerName || customer?.name || 'Неизвестный',
-            customer_address: customerAddress || '',
-            partial_payment: itemPartialPay
-          }));
-          return s;
-        })());
-
-        // Обновляем склад
-        const newStock = Math.max(0, (product.boxes_in_stock || 0) - parseInt(item.boxes_sold));
-        await import('@/api/base44Client').then(m => m.base44.entities.Product.update(item.product_id, { boxes_in_stock: newStock }));
-
-        // Частичная оплата
-        if (isDebt && customerId && itemPartialPay > 0 && createdSale) {
-          await import('@/api/base44Client').then(m => m.base44.entities.DebtPayment.create({
-            business_id: business.id,
-            customer_id: customerId,
-            sale_id: createdSale.id,
-            amount: itemPartialPay,
-            note: 'Частичная оплата при продаже',
-            payment_date: saleDate
-          }));
+      // Check debt limit for customer
+      if (isDebt && customerId) {
+        const customer = customers.find(c => c.id === customerId);
+        const totalDebtAdded = grandTotal - partialPay;
+        if (customer?.debt_limit != null) {
+          const newTotalDebt = (customer.total_debt || 0) + totalDebtAdded;
+          if (newTotalDebt > customer.debt_limit) {
+            alert(`⚠️ Превышен лимит долга клиента "${customer.name}"!\nЛимит: ${customer.debt_limit.toLocaleString()} с.\nТекущий долг: ${(customer.total_debt||0).toLocaleString()} с.\nНовый долг составит: ${newTotalDebt.toLocaleString()} с.`);
+            setSaving(false);
+            return;
+          }
         }
       }
 
-      // Обновляем долг клиента
-      if (isDebt && customerId && customer) {
-        await import('@/api/base44Client').then(m => m.base44.entities.Customer.update(customerId, {
-          total_debt: (customer.total_debt || 0) + remainingDebt,
-          total_paid: (customer.total_paid || 0) + partialPay
-        }));
+      // Distribute partial payment proportionally across items
+      const saleDate = new Date().toISOString();
+      const createdSales = [];
+
+      for (let i = 0; i < validItems.length; i++) {
+        const item = validItems[i];
+        const product = getProduct(item.product_id);
+        const calc = calcItem(item);
+
+        // Distribute partial payment proportionally
+        const itemPartial = validItems.length === 1
+          ? partialPay
+          : i < validItems.length - 1
+            ? Math.round((calc.totalAmount / grandTotal) * partialPay)
+            : partialPay - createdSales.reduce((s, s2) => s + s2._partial, 0);
+
+        const saleData = {
+          business_id: business.id,
+          product_id: item.product_id,
+          warehouse_id: product?.warehouse_id || '',
+          boxes_sold: parseInt(item.boxes_sold),
+          pairs_sold: calc.pairsSold,
+          items_sold: calc.itemsSold,
+          sale_price: calc.price,
+          purchase_price: product?.purchase_price || 0,
+          total_amount: calc.totalAmount,
+          profit: calc.profit,
+          sale_date: saleDate,
+          is_debt: isDebt,
+          customer_id: isDebt ? customerId : '',
+          customer_name: customerName || 'Неизвестный',
+          customer_address: customerAddress || '',
+          partial_payment: itemPartial
+        };
+
+        const created = await base44.entities.Sale.create(saleData);
+        createdSales.push({ ...created, _partial: itemPartial });
+
+        // Update product stock
+        const newStock = Math.max(0, (product?.boxes_in_stock || 0) - parseInt(item.boxes_sold));
+        await base44.entities.Product.update(item.product_id, { boxes_in_stock: newStock });
       }
 
-      await loadData();
+      // Update customer debt once for total
+      if (isDebt && customerId) {
+        const customer = customers.find(c => c.id === customerId);
+        const totalDebtAdded = grandTotal - partialPay;
+        if (customer) {
+          await base44.entities.Customer.update(customerId, {
+            total_debt: (customer.total_debt || 0) + totalDebtAdded,
+            total_paid: (customer.total_paid || 0) + partialPay
+          });
+
+          // Partial payment history
+          if (partialPay > 0) {
+            await base44.entities.DebtPayment.create({
+              business_id: business.id,
+              customer_id: customerId,
+              sale_id: createdSales[0].id,
+              amount: partialPay,
+              note: 'Частичная оплата при продаже',
+              payment_date: saleDate
+            });
+          }
+
+          // WhatsApp notification
+          if (totalDebtAdded > 0 && customer.phone) {
+            const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
+              phone: customer.phone,
+              customer_name: customer.name,
+              product_name: validItems.map(i => { const p = getProduct(i.product_id); return p ? `${p.brand} ${p.model}` : ''; }).filter(Boolean).join(', '),
+              total_debt: grandTotal,
+              paid_amount: partialPay,
+              remaining_debt: totalDebtAdded,
+              business_name: business.name,
+              type: 'new_debt'
+            });
+            if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
+          }
+        }
+      }
+
+      onSaved();
       handleClose();
     } catch (error) {
       console.error('Error saving multi-sale:', error);
@@ -150,81 +173,96 @@ export default function MultiSaleDialog({ open, onOpenChange, products, customer
     }
   };
 
+  const handleClose = () => {
+    setItems([{ id: Date.now(), product_id: '', boxes_sold: 1, custom_sale_price: '', productSearch: '' }]);
+    setIsDebt(false);
+    setCustomerId('');
+    setCustomerName('');
+    setCustomerAddress('');
+    setPartialPayment(0);
+    setActiveSearch(null);
+    onClose();
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-indigo-600" />
-            Продажа нескольких товаров
+            {t(lang, 'sales_new')}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Cart Items */}
-          {cartItems.map((item, idx) => {
-            const product = getProduct(item.product_id);
-            const { pairsSold, total, profit } = calcItem(item);
-            const filtered = filteredProducts(item.productSearch);
+          {/* Items */}
+          <div className="space-y-3">
+            {items.map((item, idx) => {
+              const product = getProduct(item.product_id);
+              const calc = calcItem(item);
+              const filtered = getFilteredProducts(item.productSearch);
 
-            return (
-              <div key={item.id} className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50/50">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-600">Товар {idx + 1}</span>
-                  {cartItems.length > 1 && (
-                    <button onClick={() => removeItem(item.id)} className="p-1 text-red-400 hover:text-red-600 rounded">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Product search */}
-                <div className="relative">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <Input
-                      value={item.productSearch}
-                      onChange={(e) => {
-                        updateItem(item.id, 'productSearch', e.target.value);
-                        updateItem(item.id, 'showDropdown', true);
-                        if (!e.target.value) updateItem(item.id, 'product_id', '');
-                      }}
-                      placeholder="Поиск товара..."
-                      className="pl-10"
-                    />
+              return (
+                <div key={item.id} className="border border-slate-200 rounded-xl p-3 space-y-3 bg-slate-50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-700">Товар {idx + 1}</span>
+                    {items.length > 1 && (
+                      <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-600 transition p-1">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
-                  {item.showDropdown && item.productSearch && (
-                    <div className="absolute z-50 w-full mt-1 max-h-44 overflow-y-auto border border-slate-200 rounded-lg bg-white shadow-lg">
-                      {filtered.map(p => (
-                        <div key={p.id} onClick={() => {
-                          updateItem(item.id, 'product_id', p.id);
-                          updateItem(item.id, 'productSearch', `${p.brand} ${p.model}`);
-                          updateItem(item.id, 'showDropdown', false);
-                        }} className="p-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3">
-                          {p.photo_url ? (
-                            <img src={p.photo_url} alt="" className="w-9 h-9 rounded-lg object-cover" />
-                          ) : (
-                            <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
-                              <Package className="w-4 h-4 text-slate-400" />
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-sm">{p.brand} {p.model}</p>
-                            <p className="text-xs text-slate-500">{p.boxes_in_stock} кор. • {p.sale_price?.toLocaleString()} с.</p>
-                          </div>
-                        </div>
-                      ))}
-                      {filtered.length === 0 && <p className="p-3 text-center text-slate-500 text-sm">Не найдено</p>}
-                    </div>
-                  )}
-                </div>
 
-                {/* Qty and price */}
-                {product && (
-                  <>
-                    <div className="grid grid-cols-2 gap-3">
+                  {/* Product Search */}
+                  <div className="relative">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Input
+                        value={item.productSearch}
+                        onChange={(e) => {
+                          updateItem(item.id, 'productSearch', e.target.value);
+                          updateItem(item.id, 'product_id', '');
+                          setActiveSearch(item.id);
+                        }}
+                        onFocus={() => setActiveSearch(item.id)}
+                        placeholder={t(lang, 'sales_search_placeholder')}
+                        className="pl-10"
+                      />
+                    </div>
+                    {activeSearch === item.id && item.productSearch && !item.product_id && (
+                      <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-44 overflow-y-auto border border-slate-200 rounded-lg bg-white shadow-lg">
+                        {filtered.map(p => (
+                          <div
+                            key={p.id}
+                            onMouseDown={() => {
+                              updateItem(item.id, 'product_id', p.id);
+                              updateItem(item.id, 'productSearch', `${p.brand} ${p.model}`);
+                              setActiveSearch(null);
+                            }}
+                            className="p-2.5 hover:bg-slate-50 cursor-pointer flex items-center gap-2"
+                          >
+                            {p.photo_url ? (
+                              <img src={p.photo_url} alt="" className="w-8 h-8 rounded object-cover" />
+                            ) : (
+                              <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center">
+                                <Package className="w-4 h-4 text-slate-400" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-medium text-slate-900">{p.brand} {p.model}</p>
+                              <p className="text-xs text-slate-500">{p.boxes_in_stock} кор. • {p.sale_price?.toLocaleString()} с.</p>
+                            </div>
+                          </div>
+                        ))}
+                        {filtered.length === 0 && <p className="p-3 text-center text-slate-500 text-sm">Не найдено</p>}
+                      </div>
+                    )}
+                  </div>
+
+                  {product && (
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <Label className="text-xs">Кол-во коробок</Label>
+                        <Label className="text-xs">{t(lang, 'sales_qty_boxes')} *</Label>
                         <Input
                           type="text"
                           inputMode="numeric"
@@ -233,11 +271,12 @@ export default function MultiSaleDialog({ open, onOpenChange, products, customer
                             const val = e.target.value.replace(/[^0-9]/g, '');
                             updateItem(item.id, 'boxes_sold', val ? parseInt(val) : '');
                           }}
-                          className="mt-1"
+                          className="mt-1 h-8 text-sm"
                         />
+                        <p className="text-xs text-slate-400 mt-0.5">Есть: {product.boxes_in_stock} кор.</p>
                       </div>
                       <div>
-                        <Label className="text-xs">Цена за коробку</Label>
+                        <Label className="text-xs">{t(lang, 'sales_price_per_box')}</Label>
                         <Input
                           type="text"
                           inputMode="decimal"
@@ -246,69 +285,72 @@ export default function MultiSaleDialog({ open, onOpenChange, products, customer
                             const val = e.target.value.replace(/[^0-9.]/g, '');
                             updateItem(item.id, 'custom_sale_price', val);
                           }}
-                          placeholder={`${product.sale_price}`}
-                          className="mt-1"
+                          placeholder={product.sale_price?.toString()}
+                          className="mt-1 h-8 text-sm"
                         />
                       </div>
                     </div>
+                  )}
 
-                    <div className="grid grid-cols-3 gap-2 p-3 bg-white rounded-lg text-sm">
-                      <div>
-                        <p className="text-slate-400 text-xs">Пар</p>
-                        <p className="font-semibold text-slate-900">{pairsSold}</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-400 text-xs">Сумма</p>
-                        <p className="font-semibold text-slate-900">{total.toLocaleString()} с.</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-400 text-xs">Прибыль</p>
-                        <p className="font-semibold text-emerald-600">+{profit.toLocaleString()} с.</p>
-                      </div>
+                  {product && (
+                    <div className="flex gap-4 text-xs text-slate-600 bg-white rounded-lg p-2 border border-slate-100">
+                      <span>Пар: <b>{calc.pairsSold}</b></span>
+                      <span>Сумма: <b className="text-slate-900">{calc.totalAmount.toLocaleString()} с.</b></span>
+                      <span>Прибыль: <b className="text-emerald-600">+{calc.profit.toLocaleString()} с.</b></span>
                     </div>
-                  </>
-                )}
-              </div>
-            );
-          })}
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-          {/* Add item button */}
-          <button onClick={addItem} className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-sm text-slate-500 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+          {/* Add Item Button */}
+          <Button variant="outline" onClick={addItem} className="w-full gap-2 border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50">
             <Plus className="w-4 h-4" />
             Добавить ещё товар
-          </button>
+          </Button>
 
-          {/* Grand total */}
-          {validItems.length > 0 && (
-            <div className="p-4 bg-indigo-50 rounded-xl grid grid-cols-2 gap-3">
+          {/* Grand Total */}
+          {items.some(i => i.product_id) && (
+            <div className="grid grid-cols-2 gap-3 p-3 bg-indigo-50 rounded-xl">
               <div>
-                <p className="text-sm text-slate-500">Итого сумма</p>
-                <p className="text-xl font-bold text-slate-900">{grandTotal.toLocaleString()} с.</p>
+                <p className="text-xs text-slate-500">Итого сумма</p>
+                <p className="text-lg font-bold text-slate-900">{grandTotal.toLocaleString()} с.</p>
               </div>
               <div>
-                <p className="text-sm text-slate-500">Итого прибыль</p>
-                <p className="text-xl font-bold text-emerald-600">+{grandProfit.toLocaleString()} с.</p>
+                <p className="text-xs text-slate-500">Итого прибыль</p>
+                <p className="text-lg font-bold text-emerald-600">+{grandProfit.toLocaleString()} с.</p>
               </div>
             </div>
           )}
 
           {/* Debt toggle */}
-          <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-xl">
-            <Checkbox id="multi_is_debt" checked={isDebt} onCheckedChange={setIsDebt} />
-            <label htmlFor="multi_is_debt" className="font-medium text-slate-900 cursor-pointer">
-              Продажа в долг
+          <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-xl">
+            <Checkbox id="is_debt_multi" checked={isDebt} onCheckedChange={setIsDebt} />
+            <label htmlFor="is_debt_multi" className="font-medium text-slate-900 cursor-pointer text-sm">
+              {t(lang, 'sales_debt_sale')}
             </label>
           </div>
 
           {/* Customer */}
           <div className="space-y-3">
             <div>
-              <Label>Имя клиента</Label>
-              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Не указан" className="mt-1.5" />
+              <Label>{t(lang, 'sales_customer_name')}</Label>
+              <Input
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder={t(lang, 'sales_not_specified')}
+                className="mt-1.5"
+              />
             </div>
             <div>
-              <Label>Адрес клиента</Label>
-              <Input value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="Не указан" className="mt-1.5" />
+              <Label>{t(lang, 'sales_customer_address')}</Label>
+              <Input
+                value={customerAddress}
+                onChange={(e) => setCustomerAddress(e.target.value)}
+                placeholder={t(lang, 'sales_not_specified')}
+                className="mt-1.5"
+              />
             </div>
           </div>
 
@@ -318,12 +360,12 @@ export default function MultiSaleDialog({ open, onOpenChange, products, customer
                 customers={customers}
                 value={customerId}
                 onChange={setCustomerId}
-                businessId={business?.id}
-                onCustomerAdded={loadData}
+                businessId={business.id}
+                onCustomerAdded={() => {}}
               />
               {customerId && (
                 <div>
-                  <Label>Частичная оплата</Label>
+                  <Label>{t(lang, 'sales_partial_pay')}</Label>
                   <Input
                     type="text"
                     inputMode="decimal"
@@ -333,7 +375,7 @@ export default function MultiSaleDialog({ open, onOpenChange, products, customer
                     className="mt-1.5"
                   />
                   <p className="text-xs text-slate-500 mt-1">
-                    Остаток долга: {remainingDebt.toLocaleString()} с.
+                    {t(lang, 'sales_remaining_debt')}: {remaining.toLocaleString()} с.
                   </p>
                 </div>
               )}
@@ -342,9 +384,13 @@ export default function MultiSaleDialog({ open, onOpenChange, products, customer
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="outline" onClick={handleClose}>Отмена</Button>
-          <Button onClick={handleSave} disabled={saving || !canSave} className="bg-indigo-600 hover:bg-indigo-700">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : `Продать (${validItems.length} тов.)`}
+          <Button variant="outline" onClick={handleClose}>{t(lang, 'cancel')}</Button>
+          <Button
+            onClick={handleSave}
+            disabled={saving || !canSave}
+            className="bg-indigo-600 hover:bg-indigo-700"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t(lang, 'sales_sell_btn')}
           </Button>
         </div>
       </DialogContent>
