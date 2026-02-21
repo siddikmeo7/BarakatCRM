@@ -469,14 +469,14 @@ export default function Warehouses() {
                        <td className="px-4 py-3 text-center text-slate-600">{pairs}</td>
                        <td className="px-4 py-3 text-center text-slate-600">{items}</td>
                        <td className="px-4 py-3 text-right font-semibold text-slate-700">
-                         {wholesaleValue.toLocaleString()} с.
-                       </td>
-                       <td className="px-4 py-3 text-right font-semibold text-emerald-600">
-                         +{potentialProfit.toLocaleString()} с.
-                       </td>
-                       <td className="px-4 py-3 text-right font-semibold text-blue-600">
-                         {saleValue.toLocaleString()} с.
-                       </td>
+                          {can('view_stock_value') ? `${wholesaleValue.toLocaleString()} с.` : '••••• с.'}
+                        </td>
+                        <td className="px-4 py-3 text-right font-semibold text-emerald-600">
+                          {can('view_profit') ? `+${potentialProfit.toLocaleString()} с.` : '••••• с.'}
+                        </td>
+                        <td className="px-4 py-3 text-right font-semibold text-blue-600">
+                          {can('view_stock_value') ? `${saleValue.toLocaleString()} с.` : '••••• с.'}
+                        </td>
                      </tr>
                    );
                   })}
