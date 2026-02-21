@@ -195,7 +195,7 @@ export default function BusinessAccess() {
                   className="w-full h-10"
                 >
                   <Users className="w-4 h-4 mr-2" />
-                  Войти в другой бизнес
+                  Войти как сотрудник
                 </Button>
 
                 <button
@@ -207,23 +207,6 @@ export default function BusinessAccess() {
               </div>
             ) : (
               <div className="space-y-4">
-                <Button
-                  onClick={() => setStep('join')}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 h-12 text-base"
-                >
-                  <Users className="w-5 h-5 mr-2" />
-                  Войти как сотрудник
-                </Button>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-300"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-slate-500">или создайте свой бизнес</span>
-                  </div>
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Название вашего бизнеса</label>
                   <Input
@@ -238,10 +221,27 @@ export default function BusinessAccess() {
                 <Button
                   onClick={handleCreateBusiness}
                   disabled={loading}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 h-10"
+                >
+                  {loading ? 'Создание...' : 'Создать новый бизнес'}
+                </Button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-slate-500">или</span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => setStep('join')}
                   variant="outline"
                   className="w-full h-10"
                 >
-                  {loading ? 'Создание...' : 'Создать новый бизнес'}
+                  <Users className="w-4 h-4 mr-2" />
+                  Войти как сотрудник
                 </Button>
 
                 <button
