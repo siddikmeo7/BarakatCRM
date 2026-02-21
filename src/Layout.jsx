@@ -83,21 +83,40 @@ export default function Layout({ children, currentPageName }) {
       setUser(currentUser);
 
       if (currentUser.email !== ADMIN_EMAIL) {
-        const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
-        if (businesses.length > 0) {
-          const foundBiz = businesses[0];
-          setBusiness(foundBiz);
-          setLang(foundBiz.language || 'ru');
-          setEmployeePermissions(null); // owner
-        }
+            // Проверяем владельца
+            const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
+            if (businesses.length > 0) {
+              const foundBiz = businesses[0];
+              setBusiness(foundBiz);
+              setLang(foundBiz.language || 'ru');
+              setEmployeePermissions(null); // owner
+            } else {
+              // Проверяем сотрудника
+              const employeeRecords = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
+              if (employeeRecords.length > 0) {
+                const emp = employeeRecords[0];
+                const bizList = await base44.entities.Business.filter({ id: emp.business_id });
+                if (bizList.length > 0) {
+                  const foundBiz = bizList[0];
+                  setBusiness(foundBiz);
+                  setLang(foundBiz.language || 'ru');
+                  setEmployeePermissions(emp.permissions || {});
+                }
+              }
+            }
 
-        // Если не на странице доступа и нет бизнеса — перенаправить
-        if (businesses.length === 0 && currentPageName !== 'BusinessAccess') {
-          navigate(createPageUrl('BusinessAccess'));
-          setLoading(false);
-          return;
-        }
-      }
+            // Если не нашли ни бизнеса ни сотрудника — перенаправить на страницу доступа
+            const hasBusiness = businesses.length > 0;
+            if (!hasBusiness && currentPageName !== 'BusinessAccess') {
+              // Ещё раз проверяем через employee (уже выше загрузили, смотрим через employeePermissions)
+              const empCheck = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
+              if (empCheck.length === 0) {
+                navigate(createPageUrl('BusinessAccess'));
+                setLoading(false);
+                return;
+              }
+            }
+          }
     } catch (error) {
       console.error('Error loading user:', error);
     } finally {
