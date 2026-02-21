@@ -122,16 +122,14 @@ export default function BusinessAccess() {
       const emp = await base44.entities.Employee.filter({ business_id: biz.id, user_email: email });
 
       if (emp.length === 0) {
-        setError('У вас нет доступа к этому бизнесу');
+        setError('У вас нет доступа к этому бизнесу. Попросите владельца добавить вас как сотрудника.');
         setLoading(false);
         return;
       }
 
-      setBusiness(biz);
-      setBusinessCode('');
-      setAccessCode('');
-      setStep('main');
-      alert('✅ Вы успешно подключились к бизнесу');
+      // Сохраняем выбранный режим — сотрудник
+      sessionStorage.setItem('barakatcrm_mode', `employee_${emp[0].id}`);
+      navigate(createPageUrl('Dashboard'));
     } catch (err) {
       setError('Ошибка: ' + err.message);
     } finally {
