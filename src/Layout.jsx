@@ -122,6 +122,8 @@ export default function Layout({ children, currentPageName }) {
               setBusiness(businesses[0]);
               setLang(businesses[0].language || 'ru');
               setEmployeePermissions(null);
+              window.__barakatEmployee = null;
+              window.__barakatBusiness = businesses[0];
             } else if (employeeRecords.length > 0) {
               // Нет своего бизнеса — входим как сотрудник автоматически (только незамороженные)
               const activeEmp = employeeRecords.find(e => !e.is_frozen);
@@ -131,6 +133,8 @@ export default function Layout({ children, currentPageName }) {
                   setBusiness(bizList[0]);
                   setLang(bizList[0].language || 'ru');
                   setEmployeePermissions(activeEmp.permissions || {});
+                  window.__barakatEmployee = activeEmp;
+                  window.__barakatBusiness = bizList[0];
                 }
               } else if (currentPageName !== 'BusinessAccess') {
                 navigate(createPageUrl('BusinessAccess'));
