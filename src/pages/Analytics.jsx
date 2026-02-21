@@ -493,7 +493,7 @@ export default function Analytics() {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="font-semibold text-slate-900 text-xs md:text-sm">{hideData ? masked : `${Math.round(stats.revenue)} с.`}</p>
-                    <p className="text-xs md:text-sm text-emerald-600 font-medium">+{hideData ? masked : `${Math.round(stats.profit)} с.`}</p>
+                    {can('view_profit') && <p className="text-xs md:text-sm text-emerald-600 font-medium">+{hideData ? masked : `${Math.round(stats.profit)} с.`}</p>}
                   </div>
                 </div>
               );
