@@ -147,6 +147,24 @@ export default function Settings() {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+      
+      // Если режим сотрудника — загружаем бизнес через employee
+      if (isEmployeeMode) {
+        const empId = savedMode.replace('employee_', '');
+        const empList = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
+        const emp = empList.find(e => e.id === empId) || empList[0];
+        if (emp) {
+          const bizList = await base44.entities.Business.filter({ id: emp.business_id });
+          if (bizList.length > 0) {
+            const biz = bizList[0];
+            setBusiness(biz);
+            setLang(biz.language || 'ru');
+          }
+        }
+        setLoading(false);
+        return;
+      }
+      
       const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
       
       if (businesses.length > 0) {
