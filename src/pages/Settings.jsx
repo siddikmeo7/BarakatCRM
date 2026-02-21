@@ -113,8 +113,15 @@ export default function Settings() {
     notifications: false,
     custom: false,
     history: false,
-    security: false
+    security: false,
+    employee_login: false
   });
+
+  // Employee login state
+  const [empLoginCode, setEmpLoginCode] = useState('');
+  const [empAccessCode, setEmpAccessCode] = useState('');
+  const [empLoginLoading, setEmpLoginLoading] = useState(false);
+  const [empLoginError, setEmpLoginError] = useState('');
 
   // History state
   const [activityLogs, setActivityLogs] = useState([]);
