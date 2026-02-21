@@ -853,18 +853,22 @@ export default function Products() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-indigo-200">
+                  {can('view_stock_value') && (
                   <div>
                     <p className="text-sm text-slate-500">{t(lang,'prod_total_value')}</p>
                     <p className="text-lg font-bold text-slate-900">
                       {(parseInt(formData.boxes_in_stock) * (parseFloat(formData.sale_price) || 0)).toLocaleString()} с.
                     </p>
                   </div>
+                  )}
+                  {can('view_profit') && (
                   <div>
                     <p className="text-sm text-slate-500">{t(lang,'prod_total_profit')}</p>
                     <p className="text-lg font-bold text-emerald-600">
                       {(parseInt(formData.boxes_in_stock) * ((parseFloat(formData.sale_price) || 0) - (parseFloat(formData.purchase_price) || 0))).toLocaleString()} с.
                     </p>
                   </div>
+                  )}
                 </div>
               </div>
             )}
