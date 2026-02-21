@@ -458,7 +458,7 @@ export default function Products() {
                       {product.boxes_in_stock || 0} кор.
                       {isLowStock && <span className="text-[10px]">⚠️</span>}
                     </div>
-                    <span className={`text-xs font-medium ${isLowStock ? 'text-red-500' : 'text-emerald-600'}`}>{product.sale_price?.toLocaleString()} с.</span>
+                    <span className={`text-xs font-medium ${isLowStock ? 'text-red-500' : 'text-emerald-600'}`}>{can('view_stock_value') ? `${product.sale_price?.toLocaleString()} с.` : '••• с.'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-slate-400">{product.color} • {product.size_from}-{product.size_to}</span>
