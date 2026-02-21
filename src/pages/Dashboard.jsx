@@ -279,7 +279,7 @@ export default function Dashboard() {
                   <p className="font-medium text-slate-900 truncate">{item.product.brand} {item.product.model}</p>
                   <p className="text-sm text-slate-500">{item.boxes} {t(lang,'dash_boxes')}</p>
                 </div>
-                <p className="font-semibold text-slate-900">{hideData ? masked : `${item.revenue.toLocaleString()} с.`}</p>
+                <p className="font-semibold text-slate-900">{(hideData || !can('view_stock_value')) ? masked : `${item.revenue.toLocaleString()} с.`}</p>
               </div>
             )) : (
               <p className="text-center text-slate-500 py-8">{t(lang,'dash_no_sales')}</p>
