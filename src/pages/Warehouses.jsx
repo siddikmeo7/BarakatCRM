@@ -331,7 +331,7 @@ export default function Warehouses() {
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-900">{stats.productsCount}</td>
                     <td className="px-4 py-3 text-right font-semibold text-purple-600">{stats.totalBoxes}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">{stats.totalValue.toLocaleString()} с.</td>
+                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">{can('view_stock_value') ? `${stats.totalValue.toLocaleString()} с.` : '••••• с.'}</td>
                     <td className="px-4 py-3 text-center text-blue-600 font-semibold">{stats.soldBoxes}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 justify-end">
