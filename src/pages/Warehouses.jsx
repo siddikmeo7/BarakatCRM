@@ -402,11 +402,11 @@ export default function Warehouses() {
                   </div>
                   <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                     <p className="text-sm text-slate-500">Опт. стоимость</p>
-                    <p className="text-2xl font-bold text-orange-600">{stats.totalWholesaleValue.toLocaleString()} с.</p>
+                    <p className="text-2xl font-bold text-orange-600">{can('view_stock_value') ? `${stats.totalWholesaleValue.toLocaleString()} с.` : '••••• с.'}</p>
                   </div>
                   <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                     <p className="text-sm text-slate-500">Розн. стоимость</p>
-                    <p className="text-2xl font-bold text-emerald-600">{stats.totalValue.toLocaleString()} с.</p>
+                    <p className="text-2xl font-bold text-emerald-600">{can('view_stock_value') ? `${stats.totalValue.toLocaleString()} с.` : '••••• с.'}</p>
                   </div>
                   <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                     <p className="text-sm text-slate-500">Продано</p>
