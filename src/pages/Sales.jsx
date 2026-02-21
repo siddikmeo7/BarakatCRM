@@ -36,10 +36,8 @@ import { t } from '@/components/i18n/translations';
 import { ru } from 'date-fns/locale';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
-import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
-
 export default function Sales() {
-  const { can, isOwner } = useEmployeeAccess();
+  const { can } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
