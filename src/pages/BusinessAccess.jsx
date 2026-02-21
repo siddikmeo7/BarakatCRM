@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 
 export default function BusinessAccess() {
-  const [step, setStep] = useState('main'); // main, manage, join
+  const [step, setStep] = useState('main'); // main, manage, join, employee
   const [email, setEmail] = useState('');
   const [businessCode, setBusinessCode] = useState('');
   const [accessCode, setAccessCode] = useState('');
@@ -17,6 +17,8 @@ export default function BusinessAccess() {
   const [error, setError] = useState('');
   const [business, setBusiness] = useState(null);
   const [user, setUser] = useState(null);
+  const [employeeRecords, setEmployeeRecords] = useState([]);
+  const [employeeBusinesses, setEmployeeBusinesses] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
