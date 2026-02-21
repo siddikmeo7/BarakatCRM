@@ -1,81 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import pg from 'npm:pg@8.11.3';
+import postgres from 'npm:postgres@3.4.4';
 
-const { Pool } = pg;
-
-const pool = new Pool({
-  connectionString: Deno.env.get('POSTGRES_CONNECTION_STRING'),
-  ssl: { rejectUnauthorized: false }
-});
-
-// Create tables if they don't exist
-async function ensureTables(client) {
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS businesses (
-      id TEXT PRIMARY KEY,
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS products (
-      id TEXT PRIMARY KEY,
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS sales (
-      id TEXT PRIMARY KEY,
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS customers (
-      id TEXT PRIMARY KEY,
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS warehouses (
-      id TEXT PRIMARY KEY,
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS employees (
-      id TEXT PRIMARY KEY,
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS debt_payments (
-      id TEXT PRIMARY KEY,
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS returns (
-      id TEXT PRIMARY KEY,
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS roles (
-      id TEXT PRIMARY KEY,
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS activity_logs (
-      id TEXT PRIMARY KEY,
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-  `);
-}
-
-// Upsert or delete a record
-async function syncRecord(client, tableName, eventType, id, data) {
-  if (eventType === 'delete') {
-    await client.query(`DELETE FROM ${tableName} WHERE id = $1`, [id]);
-  } else {
-    await client.query(
-      `INSERT INTO ${tableName} (id, data, updated_at) VALUES ($1, $2, NOW())
-       ON CONFLICT (id) DO UPDATE SET data = $2, updated_at = NOW()`,
-      [id, JSON.stringify(data)]
-    );
-  }
-}
+const connectionString = Deno.env.get('POSTGRES_CONNECTION_STRING');
 
 const ENTITY_TABLE_MAP = {
   Business: 'businesses',
@@ -90,17 +16,29 @@ const ENTITY_TABLE_MAP = {
   ActivityLog: 'activity_logs',
 };
 
+async function ensureTables(sql) {
+  for (const tableName of Object.values(ENTITY_TABLE_MAP)) {
+    await sql.unsafe(`
+      CREATE TABLE IF NOT EXISTS ${tableName} (
+        id TEXT PRIMARY KEY,
+        data JSONB NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+  }
+}
+
 Deno.serve(async (req) => {
-  const client = await pool.connect();
+  const sql = postgres(connectionString, { ssl: 'require', max: 5 });
+
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
 
-    await ensureTables(client);
+    await ensureTables(sql);
 
-    // --- FULL SYNC MODE (called manually or on schedule) ---
+    // --- FULL SYNC MODE ---
     if (body.full_sync) {
-      // Admin check
       const user = await base44.auth.me();
       if (user?.role !== 'admin') {
         return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -109,19 +47,22 @@ Deno.serve(async (req) => {
       const results = {};
       for (const [entityName, tableName] of Object.entries(ENTITY_TABLE_MAP)) {
         const records = await base44.asServiceRole.entities[entityName].list();
-        let count = 0;
         for (const record of records) {
-          await syncRecord(client, tableName, 'upsert', record.id, record);
-          count++;
+          await sql`
+            INSERT INTO ${sql(tableName)} (id, data, updated_at)
+            VALUES (${record.id}, ${JSON.stringify(record)}, NOW())
+            ON CONFLICT (id) DO UPDATE SET data = ${JSON.stringify(record)}, updated_at = NOW()
+          `;
         }
-        results[entityName] = count;
+        results[entityName] = records.length;
       }
 
+      await sql.end();
       return Response.json({ success: true, synced: results });
     }
 
     // --- ENTITY EVENT MODE (called by automations) ---
-    const { event, data, old_data } = body;
+    const { event, data } = body;
     if (!event) {
       return Response.json({ error: 'No event provided' }, { status: 400 });
     }
@@ -131,21 +72,29 @@ Deno.serve(async (req) => {
       return Response.json({ error: `Unknown entity: ${event.entity_name}` }, { status: 400 });
     }
 
-    let recordData = data;
-    if (!recordData && event.entity_id) {
-      // payload_too_large fallback: fetch the record
-      recordData = await base44.asServiceRole.entities[event.entity_name].filter({ id: event.entity_id });
-      recordData = recordData[0] || null;
+    if (event.type === 'delete') {
+      await sql`DELETE FROM ${sql(tableName)} WHERE id = ${event.entity_id}`;
+    } else {
+      let recordData = data;
+      if (!recordData) {
+        const rows = await base44.asServiceRole.entities[event.entity_name].filter({ id: event.entity_id });
+        recordData = rows[0] || null;
+      }
+      if (recordData) {
+        await sql`
+          INSERT INTO ${sql(tableName)} (id, data, updated_at)
+          VALUES (${event.entity_id}, ${JSON.stringify(recordData)}, NOW())
+          ON CONFLICT (id) DO UPDATE SET data = ${JSON.stringify(recordData)}, updated_at = NOW()
+        `;
+      }
     }
 
-    await syncRecord(client, tableName, event.type, event.entity_id, recordData);
-
+    await sql.end();
     return Response.json({ success: true, entity: event.entity_name, type: event.type, id: event.entity_id });
 
   } catch (error) {
-    console.error('syncToPostgres error:', error.message, error.stack);
-    return Response.json({ error: error.message, stack: error.stack }, { status: 500 });
-  } finally {
-    client.release();
+    console.error('syncToPostgres error:', error.message);
+    try { await sql.end(); } catch (_) {}
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });
