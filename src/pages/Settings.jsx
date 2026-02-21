@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '../utils';
+import { useNavigate } from 'react-router-dom';
 import { t } from '@/components/i18n/translations';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
