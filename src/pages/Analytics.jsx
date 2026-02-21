@@ -320,24 +320,50 @@ export default function Analytics() {
 
       {/* Inventory Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <StatCard
-          title={t(lang,'analytics_stock_value')}
-          value={convertCurrency(totalStockValue)}
-          subtitle={getCurrencySymbol()}
-          icon={Package}
-          iconBg="bg-cyan-100"
-          iconColor="text-cyan-600"
-          className="text-sm md:text-base"
-        />
-        <StatCard
-          title={t(lang,'analytics_potential_profit')}
-          value={convertCurrency(potentialProfit)}
-          subtitle={t(lang,'analytics_from_stock')}
-          icon={DollarSign}
-          iconBg="bg-indigo-100"
-          iconColor="text-indigo-600"
-          className="text-sm md:text-base"
-        />
+        {can('view_stock_value') ? (
+          <StatCard
+            title={t(lang,'analytics_stock_value')}
+            value={convertCurrency(totalStockValue)}
+            subtitle={getCurrencySymbol()}
+            icon={Package}
+            iconBg="bg-cyan-100"
+            iconColor="text-cyan-600"
+            className="text-sm md:text-base"
+          />
+        ) : (
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+              <Package className="w-5 h-5 text-slate-400" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">{t(lang,'analytics_stock_value')}</p>
+              <p className="text-xl font-bold text-slate-400">••••• с.</p>
+              <p className="text-xs text-slate-400">Нет доступа</p>
+            </div>
+          </div>
+        )}
+        {can('view_profit') ? (
+          <StatCard
+            title={t(lang,'analytics_potential_profit')}
+            value={convertCurrency(potentialProfit)}
+            subtitle={t(lang,'analytics_from_stock')}
+            icon={DollarSign}
+            iconBg="bg-indigo-100"
+            iconColor="text-indigo-600"
+            className="text-sm md:text-base"
+          />
+        ) : (
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+              <DollarSign className="w-5 h-5 text-slate-400" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">{t(lang,'analytics_potential_profit')}</p>
+              <p className="text-xl font-bold text-slate-400">••••• с.</p>
+              <p className="text-xs text-slate-400">Нет доступа</p>
+            </div>
+          </div>
+        )}
         <StatCard
           title={t(lang,'analytics_total_products')}
           value={products.length}
