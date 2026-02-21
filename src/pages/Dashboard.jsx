@@ -30,6 +30,7 @@ import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { can } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);

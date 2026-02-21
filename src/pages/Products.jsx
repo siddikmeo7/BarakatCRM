@@ -36,6 +36,7 @@ const BASE_PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'С
 const BASE_COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый', 'Другой'];
 
 export default function Products() {
+  const { can } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
