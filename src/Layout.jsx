@@ -108,6 +108,8 @@ export default function Layout({ children, currentPageName }) {
                     setBusiness(bizList[0]);
                     setLang(bizList[0].language || 'ru');
                     setEmployeePermissions(emp.permissions || {});
+                    window.__barakatEmployee = emp;
+                    window.__barakatBusiness = bizList[0];
                     setLoading(false);
                     return;
                   }
