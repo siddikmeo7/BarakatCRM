@@ -495,6 +495,42 @@ export default function Settings() {
     );
   }
 
+  // Если режим сотрудника — показываем только смену языка
+  if (isEmployeeMode) {
+    return (
+      <div className="space-y-4">
+        <PageHeader title={t(lang, 'settings_title')} subtitle="Настройки языка" />
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 max-w-sm">
+          <Label className="mb-2 block">{t(lang, 'settings_language')}</Label>
+          <Select value={lang} onValueChange={async (v) => {
+            setLang(v);
+            if (business) await base44.entities.Business.update(business.id, { language: v });
+          }}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LANGUAGES.map(l => (
+                <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            className="mt-4 w-full text-red-600 border-red-200 hover:bg-red-50"
+            variant="outline"
+            onClick={() => {
+              sessionStorage.removeItem('barakatcrm_mode');
+              navigate(createPageUrl('Dashboard'));
+            }}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Выйти из режима сотрудника
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader 
