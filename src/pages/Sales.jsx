@@ -347,7 +347,11 @@ export default function Sales() {
             <TrendingUp className="w-5 h-5 text-emerald-600" />
             <span className="text-sm text-slate-500">{t(lang,'sales_profit')}</span>
           </div>
-          <p className="text-2xl font-bold text-emerald-600">{totals.profit.toLocaleString()}</p>
+          {can('view_profit') ? (
+            <p className="text-2xl font-bold text-emerald-600">{totals.profit.toLocaleString()}</p>
+          ) : (
+            <p className="text-2xl font-bold text-slate-300">••••• с.</p>
+          )}
         </div>
       </div>
 
