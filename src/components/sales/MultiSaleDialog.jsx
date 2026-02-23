@@ -115,7 +115,8 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
           customer_id: isDebt ? customerId : '',
           customer_name: customerName || 'Неизвестный',
           customer_address: customerAddress || '',
-          partial_payment: itemPartial
+          partial_payment: itemPartial,
+          payment_due_date: isDebt && paymentDueDate ? paymentDueDate : null
         };
 
         const created = await base44.entities.Sale.create(saleData);
