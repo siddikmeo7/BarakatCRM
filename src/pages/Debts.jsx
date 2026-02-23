@@ -496,9 +496,22 @@ export default function Debts() {
         </div>
       </div>
 
-      {/* Поиск */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+      {/* Поиск и сортировка */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
         <SearchInput value={search} onChange={setSearch} placeholder={t(lang, 'debts_search')} />
+        <div className="flex gap-2 flex-wrap">
+          {[
+            { value: 'remaining_desc', label: 'Долг ↓' },
+            { value: 'remaining_asc', label: 'Долг ↑' },
+            { value: 'name_asc', label: 'А-Я' },
+            { value: 'purchases_desc', label: 'Покупок ↓' },
+          ].map(opt => (
+            <button key={opt.value} onClick={() => setSortDebtors(opt.value)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${sortDebtors === opt.value ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Список клиентов */}
