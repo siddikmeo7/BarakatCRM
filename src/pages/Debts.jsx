@@ -476,7 +476,7 @@ export default function Debts() {
                             {p.note && <p className="text-xs text-slate-400">{p.note}</p>}
                           </div>
                           <p className="text-xs text-slate-400 flex-shrink-0 text-right">
-                            {format(new Date(p.payment_date || p.created_date), 'dd MMM', { locale: ru })}<br/>
+                            {format(new Date(p.payment_date || p.created_date), 'dd MMM yyyy', { locale: ru })}<br/>
                             <span className="text-slate-300">{format(new Date(p.payment_date || p.created_date), 'HH:mm')}</span>
                           </p>
                         </div>
