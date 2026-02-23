@@ -542,43 +542,60 @@ export default function Debts() {
           </div>
         ) : debtorList.map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }) => {
           const isPaid = remaining <= 0;
-          const unpaidSalesCount = cSales.filter(s => {
+          const unpaidSales = cSales.filter(s => {
             const paid = getSalePaidAmount(s.id);
             return (s.total_amount || 0) - paid > 0;
-          }).length;
+          });
+          const dueDateStatus = !isPaid ? getDueDateStatus(unpaidSales) : null;
+          const isOverdue = dueDateStatus === 'overdue';
+          const isDueToday = dueDateStatus === 'today';
 
           return (
             <div key={c.id}
               onClick={() => setSelectedCustomer(c)}
-              className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all">
+              className={`rounded-2xl shadow-sm p-4 cursor-pointer transition-all border ${
+                isOverdue
+                  ? 'bg-red-50 border-red-300 hover:border-red-400 animate-pulse-border'
+                  : isDueToday
+                  ? 'bg-amber-50 border-amber-400 hover:border-amber-500'
+                  : 'bg-white border-slate-100 hover:shadow-md hover:border-indigo-200'
+              }`}>
+              {/* Баннер срока */}
+              {(isOverdue || isDueToday) && (
+                <div className={`flex items-center gap-2 mb-3 px-3 py-1.5 rounded-lg text-xs font-semibold ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                  <Clock className="w-3.5 h-3.5" />
+                  {isOverdue ? '🔴 Просрочен срок оплаты!' : '🟡 Сегодня последний день оплаты!'}
+                </div>
+              )}
+
               <div className="flex items-center gap-4">
                 {/* Аватар */}
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${isPaid ? 'bg-emerald-100' : 'bg-orange-100'}`}>
-                  <span className={`text-lg font-bold ${isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                  isOverdue ? 'bg-red-200' : isDueToday ? 'bg-amber-200' : isPaid ? 'bg-emerald-100' : 'bg-orange-100'
+                }`}>
+                  <span className={`text-lg font-bold ${isOverdue ? 'text-red-700' : isDueToday ? 'text-amber-700' : isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
                     {c.name?.charAt(0)?.toUpperCase()}
                   </span>
                 </div>
 
                 {/* Инфо */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-slate-900">{c.name}</p>
-                    {isPaid && (
-                      <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium">Погашено</span>
-                    )}
+                    {isPaid && <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium">Погашено</span>}
                   </div>
                   {c.phone && <p className="text-sm text-slate-400">{c.phone}</p>}
                   <div className="flex items-center gap-3 mt-1">
                     <span className="text-xs text-slate-400">{cSales.length} покупок</span>
-                    {unpaidSalesCount > 0 && (
-                      <span className="text-xs text-orange-500 font-medium">{unpaidSalesCount} не оплачено</span>
+                    {unpaidSales.length > 0 && (
+                      <span className="text-xs text-orange-500 font-medium">{unpaidSales.length} не оплачено</span>
                     )}
                   </div>
                 </div>
 
                 {/* Долг */}
                 <div className="text-right flex-shrink-0">
-                  <p className={`text-lg font-bold ${isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
+                  <p className={`text-lg font-bold ${isOverdue ? 'text-red-600' : isDueToday ? 'text-amber-600' : isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
                     {remaining.toLocaleString()} с.
                   </p>
                   <p className="text-xs text-slate-400">из {totalAmount.toLocaleString()} с.</p>
@@ -591,7 +608,7 @@ export default function Debts() {
               {totalAmount > 0 && (
                 <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${isPaid ? 'bg-emerald-500' : 'bg-orange-400'}`}
+                    className={`h-full rounded-full transition-all ${isOverdue ? 'bg-red-500' : isDueToday ? 'bg-amber-500' : isPaid ? 'bg-emerald-500' : 'bg-orange-400'}`}
                     style={{ width: `${Math.min(100, (totalPaid / totalAmount) * 100)}%` }}
                   />
                 </div>
