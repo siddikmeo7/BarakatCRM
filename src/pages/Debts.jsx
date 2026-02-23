@@ -43,6 +43,7 @@ export default function Debts() {
   });
 
   const [sendingMsg, setSendingMsg] = useState(null);
+  const [sortDebtors, setSortDebtors] = useState('remaining_desc');
 
   useEffect(() => { loadData(); }, []);
 
