@@ -351,6 +351,16 @@ export default function Debts() {
                     <p className="text-xs text-slate-400 mt-0.5">
                       {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy', { locale: ru })}
                     </p>
+                    {sale.payment_due_date && !isPaid && (
+                      <p className={`text-xs font-medium mt-0.5 ${
+                        startOfDay(new Date(sale.payment_due_date)) < startOfDay(new Date()) ? 'text-red-600' :
+                        isToday(new Date(sale.payment_due_date)) ? 'text-amber-600' : 'text-slate-500'
+                      }`}>
+                        📅 Срок: {format(new Date(sale.payment_due_date), 'dd MMM yyyy', { locale: ru })}
+                        {startOfDay(new Date(sale.payment_due_date)) < startOfDay(new Date()) ? ' — просрочено!' :
+                         isToday(new Date(sale.payment_due_date)) ? ' — сегодня!' : ''}
+                      </p>
+                    )}
                     <div className="flex gap-3 mt-1">
                       <span className="text-xs text-slate-500">Итого: <span className="font-medium text-slate-800">{sale.total_amount?.toLocaleString()} с.</span></span>
                       <span className="text-xs text-emerald-600">Оплачено: <span className="font-medium">{paid.toLocaleString()} с.</span></span>
