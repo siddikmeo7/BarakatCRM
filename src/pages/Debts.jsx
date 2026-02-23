@@ -376,7 +376,7 @@ export default function Debts() {
               const isHistoryOpen = !!expandedSaleHistory[sale.id];
 
               return (
-                <div key={sale.id} className="divide-y divide-slate-50">
+                <div key={sale.id} className={`divide-y divide-slate-50 ${isPaid ? 'bg-emerald-50/60' : ''}`}>
                   {/* Карточка товара */}
                   <div className="p-4">
                     <div className="flex items-start gap-3">
