@@ -12,7 +12,7 @@ import {
   Phone, MapPin, Loader2, History, ChevronRight, PlusCircle, Plus,
   CheckCircle, ArrowLeft, X
 } from 'lucide-react';
-import { format, parseISO, isToday, isPast, startOfDay } from 'date-fns';
+import { format, parseISO, isToday, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
 
