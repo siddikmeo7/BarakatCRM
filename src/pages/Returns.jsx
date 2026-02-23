@@ -259,69 +259,86 @@ export default function Returns() {
         </div>
       </div>
 
-      {/* Returns Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Дата</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Клиент</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Коробок</th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Состояние</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Возврат</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Причина</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredReturns.map(ret => {
-                const customer = customers.find(c => c.id === ret.customer_id);
-                const product = products.find(p => p.id === ret.product_id);
-                
-                return (
-                  <tr key={ret.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {format(parseISO(ret.return_date || ret.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-slate-900">{customer?.name || 'N/A'}</p>
-                      <p className="text-xs text-slate-500">{customer?.phone}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-slate-900">{product?.brand} {product?.model}</p>
-                    </td>
-                    <td className="px-4 py-3 text-center font-semibold text-orange-600">
-                      {ret.boxes_returned}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
-                        ret.condition === 'Новый' ? 'bg-emerald-100 text-emerald-700' :
-                        ret.condition === 'Хорошее' ? 'bg-blue-100 text-blue-700' :
-                        ret.condition === 'Среднее' ? 'bg-amber-100 text-amber-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {ret.condition}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold text-red-600">
-                      {ret.refund_amount?.toLocaleString()} с.
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 max-w-xs truncate">
-                      {ret.reason || '-'}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        {filteredReturns.length === 0 && (
-          <div className="text-center py-12 text-slate-500">
+      {/* Returns Cards */}
+      <div className="space-y-3">
+        {filteredReturns.length === 0 ? (
+          <div className="text-center py-12 text-slate-500 bg-white rounded-2xl border border-slate-100">
             <RotateCcw className="w-12 h-12 mx-auto mb-4 text-slate-300" />
             <p>Возвраты не найдены</p>
           </div>
-        )}
+        ) : filteredReturns.map(ret => {
+          const customer = customers.find(c => c.id === ret.customer_id);
+          const product = products.find(p => p.id === ret.product_id);
+          const isExpanded = expandedReturn === ret.id;
+
+          return (
+            <div key={ret.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+              {/* Краткая строка */}
+              <button
+                onClick={() => setExpandedReturn(isExpanded ? null : ret.id)}
+                className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-slate-50 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                  <RotateCcw className="w-5 h-5 text-orange-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-slate-900 text-sm truncate">
+                    {product?.brand} {product?.model}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {customer?.name || 'N/A'} · {format(parseISO(ret.return_date || ret.created_date), 'dd MMM yyyy', { locale: ru })}
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0 mr-2">
+                  <p className="font-bold text-red-600 text-sm">{ret.refund_amount?.toLocaleString()} с.</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    ret.condition === 'Новый' ? 'bg-emerald-100 text-emerald-700' :
+                    ret.condition === 'Хорошее' ? 'bg-blue-100 text-blue-700' :
+                    ret.condition === 'Среднее' ? 'bg-amber-100 text-amber-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>{ret.condition}</span>
+                </div>
+                {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />}
+              </button>
+
+              {/* Детали */}
+              {isExpanded && (
+                <div className="border-t border-slate-100 px-4 py-3 bg-slate-50 space-y-2">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-slate-400">Клиент</p>
+                      <p className="font-medium text-slate-800">{customer?.name || '—'}</p>
+                      {customer?.phone && <p className="text-xs text-slate-400">{customer.phone}</p>}
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400">Дата и время</p>
+                      <p className="font-medium text-slate-800">
+                        {format(parseISO(ret.return_date || ret.created_date), 'dd MMM yyyy', { locale: ru })}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {format(parseISO(ret.return_date || ret.created_date), 'HH:mm')}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400">Коробок возвращено</p>
+                      <p className="font-bold text-orange-600">{ret.boxes_returned} кор.</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400">Сумма возврата</p>
+                      <p className="font-bold text-red-600">{ret.refund_amount?.toLocaleString()} с.</p>
+                    </div>
+                  </div>
+                  {ret.reason && (
+                    <div>
+                      <p className="text-xs text-slate-400">Причина</p>
+                      <p className="text-sm text-slate-700">{ret.reason}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Create Return Dialog */}
