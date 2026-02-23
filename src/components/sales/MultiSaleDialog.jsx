@@ -197,6 +197,7 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
     setCustomerName('');
     setCustomerAddress('');
     setPartialPayment(0);
+    setPaymentDueDate('');
     setActiveSearch(null);
     onClose();
   };
