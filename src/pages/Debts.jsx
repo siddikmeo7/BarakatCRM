@@ -41,6 +41,7 @@ export default function Debts() {
 
   // Детальный вид клиента
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [detailTab, setDetailTab] = useState('purchases'); // 'purchases' | 'payments' | 'history'
 
   // Оплата конкретной продажи
   const [payDialog, setPayDialog] = useState(null); // { sale }
