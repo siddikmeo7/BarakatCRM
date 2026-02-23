@@ -42,6 +42,8 @@ export default function Debts() {
   // Детальный вид клиента
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [expandedSaleHistory, setExpandedSaleHistory] = useState({}); // { saleId: true/false }
+  const [editingDueDate, setEditingDueDate] = useState({}); // { saleId: 'YYYY-MM-DD' }
+  const [savingDueDate, setSavingDueDate] = useState(null);
 
   // Оплата конкретной продажи
   const [payDialog, setPayDialog] = useState(null); // { sale }
