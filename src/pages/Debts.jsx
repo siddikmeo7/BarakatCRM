@@ -288,11 +288,15 @@ export default function Debts() {
     const dm = customerDebtMap[c.id] || { totalAmount: 0, totalPaid: 0, sales: [] };
     const totalRemaining = dm.totalAmount - dm.totalPaid;
 
+    const toggleSaleHistory = (saleId) => {
+      setExpandedSaleHistory(prev => ({ ...prev, [saleId]: !prev[saleId] }));
+    };
+
     return (
       <div className="space-y-5">
         {/* Хедер */}
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => { setSelectedCustomer(null); setDetailTab('purchases'); }} className="gap-1">
+          <Button variant="ghost" size="sm" onClick={() => { setSelectedCustomer(null); setExpandedSaleHistory({}); }} className="gap-1">
             <ArrowLeft className="w-4 h-4" /> Назад
           </Button>
           <div className="flex-1">
