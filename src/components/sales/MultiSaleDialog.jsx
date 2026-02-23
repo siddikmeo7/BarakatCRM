@@ -149,16 +149,31 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
             });
           }
 
-          // WhatsApp notification
+          // WhatsApp notification — с детализацией по каждому товару
           if (totalDebtAdded > 0 && customer.phone) {
+            // Строим массив товаров с суммами оплаты/остатка
+            const productsArr = validItems.map((item, idx) => {
+              const p = getProduct(item.product_id);
+              const calc = calcItem(item);
+              const itemPartialPaid = createdSales[idx]?._partial || 0;
+              return {
+                name: p ? `${p.brand} ${p.model}` : 'Товар',
+                boxes: parseInt(item.boxes_sold),
+                total: calc.totalAmount,
+                paid: itemPartialPaid,
+                remaining: calc.totalAmount - itemPartialPaid
+              };
+            });
+
             const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
               phone: customer.phone,
               customer_name: customer.name,
-              product_name: validItems.map(i => { const p = getProduct(i.product_id); return p ? `${p.brand} ${p.model}` : ''; }).filter(Boolean).join(', '),
+              products: productsArr,
               total_debt: grandTotal,
               paid_amount: partialPay,
               remaining_debt: totalDebtAdded,
               business_name: business.name,
+              payment_due_date: paymentDueDate || null,
               type: 'new_debt'
             });
             if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
