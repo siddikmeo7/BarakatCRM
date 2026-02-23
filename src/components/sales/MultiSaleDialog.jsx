@@ -16,6 +16,7 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [partialPayment, setPartialPayment] = useState(0);
+  const [paymentDueDate, setPaymentDueDate] = useState('');
   const [saving, setSaving] = useState(false);
   const [activeSearch, setActiveSearch] = useState(null); // item id with open dropdown
 
