@@ -12,9 +12,22 @@ import {
   Phone, MapPin, Loader2, History, ChevronRight, PlusCircle, Plus,
   CheckCircle, ArrowLeft, X
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isToday, isPast, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
+
+// Проверяет, есть ли у клиента продажа с просроченным или сегодняшним сроком оплаты
+const getDueDateStatus = (salesList) => {
+  const today = startOfDay(new Date());
+  let isOverdue = false, isDueToday = false;
+  for (const s of salesList) {
+    if (!s.payment_due_date || s.is_cancelled) continue;
+    const due = startOfDay(new Date(s.payment_due_date));
+    if (due < today) isOverdue = true;
+    else if (due.getTime() === today.getTime()) isDueToday = true;
+  }
+  return isOverdue ? 'overdue' : isDueToday ? 'today' : null;
+};
 
 export default function Debts() {
   const [business, setBusiness] = useState(null);
