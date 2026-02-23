@@ -14,7 +14,9 @@ import {
   Package,
   Plus,
   Loader2,
-  TrendingDown
+  TrendingDown,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { ru } from 'date-fns/locale';
