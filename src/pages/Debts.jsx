@@ -346,8 +346,21 @@ export default function Debts() {
 
         {/* Список покупок с инлайн-историей */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 className="font-semibold text-slate-900">Купленные товары в долг</h3>
+            <button
+              onClick={() => {
+                const allIds = customerSales.map(s => s.id);
+                const allOpen = allIds.every(id => expandedSaleHistory[id]);
+                const newState = {};
+                allIds.forEach(id => { newState[id] = !allOpen; });
+                setExpandedSaleHistory(newState);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 transition-all"
+            >
+              <History className="w-3.5 h-3.5" />
+              {customerSales.every(s => expandedSaleHistory[s.id]) ? 'Скрыть все транзакции' : 'Показать все транзакции'}
+            </button>
           </div>
           <div className="divide-y divide-slate-100">
             {customerSales.length === 0 ? (
