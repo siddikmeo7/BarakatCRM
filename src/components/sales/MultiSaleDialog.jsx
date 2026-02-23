@@ -382,20 +382,34 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
                 onCustomerAdded={() => {}}
               />
               {customerId && (
-                <div>
-                  <Label>{t(lang, 'sales_partial_pay')}</Label>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={partialPayment}
-                    onChange={(e) => setPartialPayment(e.target.value.replace(/[^0-9.]/g, ''))}
-                    placeholder="0"
-                    className="mt-1.5"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    {t(lang, 'sales_remaining_debt')}: {remaining.toLocaleString()} с.
-                  </p>
-                </div>
+                <>
+                  <div>
+                    <Label>{t(lang, 'sales_partial_pay')}</Label>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={partialPayment}
+                      onChange={(e) => setPartialPayment(e.target.value.replace(/[^0-9.]/g, ''))}
+                      placeholder="0"
+                      className="mt-1.5"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      {t(lang, 'sales_remaining_debt')}: {remaining.toLocaleString()} с.
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="flex items-center gap-1">📅 Срок оплаты (необязательно)</Label>
+                    <Input
+                      type="date"
+                      value={paymentDueDate}
+                      onChange={(e) => setPaymentDueDate(e.target.value)}
+                      className="mt-1.5"
+                    />
+                    {paymentDueDate && (
+                      <p className="text-xs text-orange-500 mt-1">Клиент будет выделен в разделе долгов в этот день</p>
+                    )}
+                  </div>
+                </>
               )}
             </>
           )}
