@@ -294,6 +294,23 @@ export default function Debts() {
       setExpandedSaleHistory(prev => ({ ...prev, [saleId]: !prev[saleId] }));
     };
 
+    const startEditDueDate = (sale) => {
+      setEditingDueDate(prev => ({ ...prev, [sale.id]: sale.payment_due_date || '' }));
+    };
+
+    const cancelEditDueDate = (saleId) => {
+      setEditingDueDate(prev => { const n = { ...prev }; delete n[saleId]; return n; });
+    };
+
+    const saveDueDate = async (saleId) => {
+      setSavingDueDate(saleId);
+      const newDate = editingDueDate[saleId] || null;
+      await base44.entities.Sale.update(saleId, { payment_due_date: newDate });
+      setSales(prev => prev.map(s => s.id === saleId ? { ...s, payment_due_date: newDate } : s));
+      cancelEditDueDate(saleId);
+      setSavingDueDate(null);
+    };
+
     return (
       <div className="space-y-5">
         {/* Хедер */}
