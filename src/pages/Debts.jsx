@@ -292,7 +292,7 @@ export default function Debts() {
       <div className="space-y-5">
         {/* Хедер */}
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => setSelectedCustomer(null)} className="gap-1">
+          <Button variant="ghost" size="sm" onClick={() => { setSelectedCustomer(null); setDetailTab('purchases'); }} className="gap-1">
             <ArrowLeft className="w-4 h-4" /> Назад
           </Button>
           <div className="flex-1">
@@ -321,117 +321,207 @@ export default function Debts() {
           </div>
         </div>
 
-        {/* Покупки клиента */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100">
-            <h3 className="font-semibold text-slate-900">Покупки в долг</h3>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {customerSales.length === 0 ? (
-              <p className="text-center text-slate-500 py-8">Нет покупок</p>
-            ) : customerSales.map(sale => {
-              const prod = products.find(p => p.id === sale.product_id);
-              const paid = getSalePaidAmount(sale.id);
-              const remaining = (sale.total_amount || 0) - paid;
-              const isPaid = remaining <= 0;
-              return (
-                <div key={sale.id} className="p-4 flex items-center gap-3">
-                  {/* Фото / иконка */}
-                  {prod?.photo_url ? (
-                    <img src={prod.photo_url} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-                      <Package className="w-6 h-6 text-slate-400" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-900 text-sm">
-                      {prod ? `${prod.brand} ${prod.model}` : 'Товар не указан'}
-                      {sale.boxes_sold > 0 && <span className="text-slate-400 ml-1">· {sale.boxes_sold} кор.</span>}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy', { locale: ru })}
-                    </p>
-                    {sale.payment_due_date && !isPaid && (
-                      <p className={`text-xs font-medium mt-0.5 ${
-                        startOfDay(new Date(sale.payment_due_date)) < startOfDay(new Date()) ? 'text-red-600' :
-                        isToday(new Date(sale.payment_due_date)) ? 'text-amber-600' : 'text-slate-500'
-                      }`}>
-                        📅 Срок: {format(new Date(sale.payment_due_date), 'dd MMM yyyy', { locale: ru })}
-                        {startOfDay(new Date(sale.payment_due_date)) < startOfDay(new Date()) ? ' — просрочено!' :
-                         isToday(new Date(sale.payment_due_date)) ? ' — сегодня!' : ''}
-                      </p>
-                    )}
-                    <div className="flex gap-3 mt-1">
-                      <span className="text-xs text-slate-500">Итого: <span className="font-medium text-slate-800">{sale.total_amount?.toLocaleString()} с.</span></span>
-                      <span className="text-xs text-emerald-600">Оплачено: <span className="font-medium">{paid.toLocaleString()} с.</span></span>
-                      <span className={`text-xs font-bold ${isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
-                        {isPaid ? '✅ Погашено' : `Остаток: ${remaining.toLocaleString()} с.`}
-                      </span>
-                    </div>
-                  </div>
-                  {!isPaid && (
-                    <Button size="sm" onClick={() => openPayDialog(sale)} className="bg-indigo-600 hover:bg-indigo-700 flex-shrink-0">
-                      <DollarSign className="w-3 h-3 mr-1" /> Оплатить
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+        {/* Табы */}
+        <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
+          {[
+            { key: 'purchases', label: '🛍 Покупки', icon: Package },
+            { key: 'payments', label: '💳 Платежи', icon: DollarSign },
+            { key: 'history', label: '📋 История', icon: History },
+          ].map(tab => (
+            <button key={tab.key} onClick={() => setDetailTab(tab.key)}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${detailTab === tab.key ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {/* История транзакций */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100">
-            <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-              <History className="w-4 h-4 text-indigo-500" /> История операций
-            </h3>
-          </div>
-          <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
-            {timeline.length === 0 ? (
-              <p className="text-center text-slate-400 py-8 text-sm">Нет операций</p>
-            ) : timeline.map((item, i) => {
-              if (item.type === 'sale') {
-                const s = item.data;
-                const prod = products.find(p => p.id === s.product_id);
+        {/* ВИД: Покупки в долг */}
+        {detailTab === 'purchases' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h3 className="font-semibold text-slate-900">Купленные товары</h3>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {customerSales.length === 0 ? (
+                <p className="text-center text-slate-500 py-8">Нет покупок</p>
+              ) : customerSales.map(sale => {
+                const prod = products.find(p => p.id === sale.product_id);
+                const paid = getSalePaidAmount(sale.id);
+                const remaining = (sale.total_amount || 0) - paid;
+                const isPaid = remaining <= 0;
+                const progress = sale.total_amount > 0 ? Math.min(100, (paid / sale.total_amount) * 100) : 0;
                 return (
-                  <div key={`s-${s.id}-${i}`} className="flex items-center gap-3 p-4">
-                    <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
-                      <Package className="w-4 h-4 text-orange-600" />
+                  <div key={sale.id} className={`p-4 ${isPaid ? '' : 'hover:bg-slate-50'}`}>
+                    <div className="flex items-start gap-3">
+                      {prod?.photo_url ? (
+                        <img src={prod.photo_url} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                          <Package className="w-6 h-6 text-slate-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-900 text-sm">
+                          {prod ? `${prod.brand} ${prod.model}` : 'Товар не указан'}
+                          {sale.boxes_sold > 0 && <span className="text-slate-400 font-normal ml-1">· {sale.boxes_sold} кор.</span>}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy', { locale: ru })}
+                        </p>
+                        {sale.payment_due_date && !isPaid && (
+                          <p className={`text-xs font-medium mt-0.5 ${
+                            startOfDay(new Date(sale.payment_due_date)) < startOfDay(new Date()) ? 'text-red-600' :
+                            isToday(new Date(sale.payment_due_date)) ? 'text-amber-600' : 'text-slate-500'
+                          }`}>
+                            📅 Срок: {format(new Date(sale.payment_due_date), 'dd MMM yyyy', { locale: ru })}
+                            {startOfDay(new Date(sale.payment_due_date)) < startOfDay(new Date()) ? ' — просрочено!' :
+                             isToday(new Date(sale.payment_due_date)) ? ' — сегодня!' : ''}
+                          </p>
+                        )}
+                        {/* Финансовая сводка */}
+                        <div className="grid grid-cols-3 gap-2 mt-2 text-xs">
+                          <div className="bg-slate-50 rounded-lg p-2 text-center">
+                            <p className="text-slate-400">Итого</p>
+                            <p className="font-bold text-slate-800">{sale.total_amount?.toLocaleString()} с.</p>
+                          </div>
+                          <div className="bg-emerald-50 rounded-lg p-2 text-center">
+                            <p className="text-emerald-500">Оплачено</p>
+                            <p className="font-bold text-emerald-700">{paid.toLocaleString()} с.</p>
+                          </div>
+                          <div className={`rounded-lg p-2 text-center ${isPaid ? 'bg-emerald-50' : 'bg-orange-50'}`}>
+                            <p className={isPaid ? 'text-emerald-500' : 'text-orange-500'}>Долг</p>
+                            <p className={`font-bold ${isPaid ? 'text-emerald-700' : 'text-orange-700'}`}>
+                              {isPaid ? '✅ 0 с.' : `${remaining.toLocaleString()} с.`}
+                            </p>
+                          </div>
+                        </div>
+                        {/* Прогресс-бар */}
+                        <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${isPaid ? 'bg-emerald-500' : 'bg-orange-400'}`}
+                            style={{ width: `${progress}%` }} />
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800">
-                        Покупка в долг — <span className="text-orange-600">{s.total_amount?.toLocaleString()} с.</span>
-                      </p>
-                      <p className="text-xs text-slate-400">{prod ? `${prod.brand} ${prod.model}` : 'Ручной долг'}</p>
-                    </div>
-                    <p className="text-xs text-slate-400 flex-shrink-0">{format(item.date, 'dd MMM, HH:mm', { locale: ru })}</p>
+                    {!isPaid && (
+                      <div className="mt-3 flex justify-end">
+                        <Button size="sm" onClick={() => openPayDialog(sale)} className="bg-indigo-600 hover:bg-indigo-700">
+                          <DollarSign className="w-3 h-3 mr-1" /> Принять оплату
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 );
-              } else {
-                const p = item.data;
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ВИД: Платежи */}
+        {detailTab === 'payments' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-emerald-500" /> История погашений долга
+              </h3>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {customerPayments.length === 0 ? (
+                <p className="text-center text-slate-400 py-10 text-sm">Платежей пока нет</p>
+              ) : customerPayments
+                  .sort((a, b) => new Date(b.payment_date || b.created_date) - new Date(a.payment_date || a.created_date))
+                  .map((p, i) => {
                 const relatedSale = sales.find(s => s.id === p.sale_id);
                 const prod = relatedSale ? products.find(pr => pr.id === relatedSale.product_id) : null;
                 return (
-                  <div key={`p-${p.id}-${i}`} className="flex items-center gap-3 p-4">
-                    <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                      <DollarSign className="w-4 h-4 text-emerald-600" />
+                  <div key={p.id} className="flex items-center gap-3 p-4">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                      <DollarSign className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800">
-                        Оплата — <span className="text-emerald-600">{p.amount?.toLocaleString()} с.</span>
-                      </p>
-                      {prod && <p className="text-xs text-slate-400">{prod.brand} {prod.model}</p>}
+                      <p className="font-semibold text-emerald-700 text-sm">+{p.amount?.toLocaleString()} сомони</p>
+                      {prod && <p className="text-xs text-slate-500 mt-0.5">{prod.brand} {prod.model}</p>}
                       {p.note && <p className="text-xs text-slate-400">{p.note}</p>}
                     </div>
-                    <p className="text-xs text-slate-400 flex-shrink-0">{format(item.date, 'dd MMM, HH:mm', { locale: ru })}</p>
+                    <p className="text-xs text-slate-400 flex-shrink-0 text-right">
+                      {format(new Date(p.payment_date || p.created_date), 'dd MMM yyyy', { locale: ru })}<br/>
+                      <span className="text-slate-300">{format(new Date(p.payment_date || p.created_date), 'HH:mm')}</span>
+                    </p>
                   </div>
                 );
-              }
-            })}
+              })}
+            </div>
+            {customerPayments.length > 0 && (
+              <div className="px-5 py-3 bg-emerald-50 border-t border-emerald-100 flex justify-between items-center">
+                <span className="text-sm text-emerald-600 font-medium">Всего оплачено</span>
+                <span className="text-lg font-bold text-emerald-700">
+                  {customerPayments.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString()} с.
+                </span>
+              </div>
+            )}
           </div>
-        </div>
+        )}
+
+        {/* ВИД: История операций */}
+        {detailTab === 'history' && (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <History className="w-4 h-4 text-indigo-500" /> История всех операций
+              </h3>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {timeline.length === 0 ? (
+                <p className="text-center text-slate-400 py-8 text-sm">Нет операций</p>
+              ) : timeline.map((item, i) => {
+                if (item.type === 'sale') {
+                  const s = item.data;
+                  const prod = products.find(p => p.id === s.product_id);
+                  return (
+                    <div key={`s-${s.id}-${i}`} className="flex items-center gap-3 p-4">
+                      <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                        <Package className="w-4 h-4 text-orange-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-800">
+                          Покупка в долг — <span className="text-orange-600">{s.total_amount?.toLocaleString()} с.</span>
+                        </p>
+                        <p className="text-xs text-slate-400">{prod ? `${prod.brand} ${prod.model}` : 'Ручной долг'}</p>
+                      </div>
+                      <p className="text-xs text-slate-400 flex-shrink-0">{format(item.date, 'dd MMM, HH:mm', { locale: ru })}</p>
+                    </div>
+                  );
+                } else {
+                  const p = item.data;
+                  const relatedSale = sales.find(s => s.id === p.sale_id);
+                  const prod = relatedSale ? products.find(pr => pr.id === relatedSale.product_id) : null;
+                  return (
+                    <div key={`p-${p.id}-${i}`} className="flex items-center gap-3 p-4">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                        <DollarSign className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-800">
+                          Оплата — <span className="text-emerald-600">{p.amount?.toLocaleString()} с.</span>
+                        </p>
+                        {prod && <p className="text-xs text-slate-400">{prod.brand} {prod.model}</p>}
+                        {p.note && <p className="text-xs text-slate-400">{p.note}</p>}
+                      </div>
+                      <p className="text-xs text-slate-400 flex-shrink-0">{format(item.date, 'dd MMM, HH:mm', { locale: ru })}</p>
+                    </div>
+                  );
+                }
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Кнопка История операций снизу */}
+        {detailTab !== 'history' && (
+          <button onClick={() => setDetailTab('history')}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-slate-200 text-slate-500 hover:border-indigo-300 hover:text-indigo-600 transition-all text-sm font-medium">
+            <History className="w-4 h-4" /> История операций
+          </button>
+        )}
 
         {/* Pay Dialog */}
         <Dialog open={!!payDialog} onOpenChange={(o) => { if (!o) { setPayDialog(null); setPayAmount(''); } }}>
