@@ -34,6 +34,7 @@ export default function Returns() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [filterCondition, setFilterCondition] = useState('all');
+  const [expandedReturn, setExpandedReturn] = useState(null);
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
