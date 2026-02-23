@@ -388,10 +388,17 @@ export default function Debts() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-900 text-sm">
-                          {prod ? `${prod.brand} ${prod.model}` : 'Товар не указан'}
-                          {sale.boxes_sold > 0 && <span className="text-slate-400 font-normal ml-1">· {sale.boxes_sold} кор.</span>}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-slate-900 text-sm">
+                            {prod ? `${prod.brand} ${prod.model}` : 'Товар не указан'}
+                            {sale.boxes_sold > 0 && <span className="text-slate-400 font-normal ml-1">· {sale.boxes_sold} кор.</span>}
+                          </p>
+                          {isPaid && (
+                            <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" /> Долг погашен
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-slate-400 mt-0.5">
                           {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy', { locale: ru })}
                         </p>
