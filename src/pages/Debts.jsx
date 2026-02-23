@@ -240,7 +240,12 @@ export default function Debts() {
       const remaining = dm.totalAmount - dm.totalPaid;
       return { customer: c, ...dm, remaining };
     })
-    .sort((a, b) => b.remaining - a.remaining);
+    .sort((a, b) => {
+      if (sortDebtors === 'remaining_asc') return a.remaining - b.remaining;
+      if (sortDebtors === 'name_asc') return a.customer.name?.localeCompare(b.customer.name);
+      if (sortDebtors === 'purchases_desc') return b.sales.length - a.sales.length;
+      return b.remaining - a.remaining; // remaining_desc по умолчанию
+    });
 
   const totalDebt = customers.reduce((sum, c) => sum + (c.total_debt || 0), 0);
   const totalDebtors = debtorList.filter(d => d.remaining > 0).length;
