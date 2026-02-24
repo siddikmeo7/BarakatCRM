@@ -762,7 +762,7 @@ export default function Debts() {
         ) : (
         <div className="overflow-y-auto max-h-[600px]">
           <div className="divide-y divide-slate-100">
-        {debtorList.map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }, idx) => {
+        {debtorList.map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }, idx) => (
           const isPaid = remaining <= 0;
           const unpaidSales = cSales.filter(s => {
             const paid = getSalePaidAmount(s.id);
