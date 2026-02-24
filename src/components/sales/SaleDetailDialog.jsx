@@ -4,9 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
 import { 
   Package, Edit2, Trash2, Clock, AlertTriangle, 
-  CheckCircle, XCircle, Loader2, ChevronDown, ChevronUp
+  CheckCircle, XCircle, Loader2, ChevronDown, ChevronUp, CreditCard
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
