@@ -62,8 +62,9 @@ export default function Warehouses() {
   const [view, setView] = useState('grid');
   
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
-  const [productSearch, setProductSearch] = useState(''); // поиск товара по всем складам
-  const [warehouseProductSearch, setWarehouseProductSearch] = useState(''); // поиск внутри склада
+  const [productSearch, setProductSearch] = useState(''); // поиск внутри склада
+  const [globalSearch, setGlobalSearch] = useState(''); // глобальный поиск по складам
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -176,40 +177,37 @@ export default function Warehouses() {
     wh.address?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Товары выбранного склада (с фильтрацией по поиску внутри склада)
+  // Товары выбранного склада (с фильтрацией по модели)
   const warehouseProducts = selectedWarehouse 
     ? products.filter(p => {
-        if (p.warehouse_id !== selectedWarehouse.id) return false;
-        if (!warehouseProductSearch) return true;
-        const q = warehouseProductSearch.toLowerCase();
-        return (p.brand || '').toLowerCase().includes(q) || 
-               (p.model || '').toLowerCase().includes(q) ||
-               (p.product_type || '').toLowerCase().includes(q) ||
-               (p.color || '').toLowerCase().includes(q);
+        if (!productSearch) return p.warehouse_id === selectedWarehouse.id;
+        const q = productSearch.toLowerCase();
+        return p.warehouse_id === selectedWarehouse.id && (
+          p.model?.toLowerCase().includes(q) ||
+          p.brand?.toLowerCase().includes(q) ||
+          p.product_type?.toLowerCase().includes(q)
+        );
       })
     : [];
 
-  // Глобальный поиск товара по всем складам
-  const globalProductResults = productSearch.trim()
+  // Глобальный поиск: найти товар по всем складам
+  const globalSearchResults = globalSearch.trim().length > 0
     ? (() => {
-        const q = productSearch.toLowerCase();
+        const q = globalSearch.toLowerCase();
         const matched = products.filter(p =>
-          (p.brand || '').toLowerCase().includes(q) ||
-          (p.model || '').toLowerCase().includes(q) ||
-          (p.product_type || '').toLowerCase().includes(q) ||
-          (p.color || '').toLowerCase().includes(q)
+          p.model?.toLowerCase().includes(q) ||
+          p.brand?.toLowerCase().includes(q) ||
+          p.product_type?.toLowerCase().includes(q)
         );
-        // Группируем по (brand + model) и суммируем по складам
-        const grouped = {};
+        // Группируем по складу
+        const byWarehouse = {};
         matched.forEach(p => {
-          const key = `${p.brand}__${p.model}__${p.color}__${p.product_type}`;
-          if (!grouped[key]) {
-            grouped[key] = { brand: p.brand, model: p.model, color: p.color, product_type: p.product_type, byWarehouse: [] };
-          }
           const wh = warehouses.find(w => w.id === p.warehouse_id);
-          grouped[key].byWarehouse.push({ warehouseName: wh?.name || 'Без склада', boxes: p.boxes_in_stock || 0 });
+          const key = wh?.id || 'unknown';
+          if (!byWarehouse[key]) byWarehouse[key] = { warehouse: wh, products: [] };
+          byWarehouse[key].products.push(p);
         });
-        return Object.values(grouped);
+        return Object.values(byWarehouse);
       })()
     : [];
 
@@ -235,68 +233,74 @@ export default function Warehouses() {
       />
 
       {/* Search */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-        <div className="flex items-center justify-between">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <SearchInput 
             value={search} 
             onChange={setSearch} 
             placeholder="Поиск склада..."
             className="max-w-md"
           />
-          <ViewToggle view={view} onChange={setView} />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+              onClick={() => { setGlobalSearchOpen(true); setGlobalSearch(''); }}
+            >
+              <Search className="w-4 h-4" />
+              Поиск товара
+            </Button>
+            <ViewToggle view={view} onChange={setView} />
+          </div>
         </div>
-        {/* Глобальный поиск товара */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={productSearch}
-            onChange={e => setProductSearch(e.target.value)}
-            placeholder="🔍 Найти товар по всем складам (модель, бренд, тип)..."
-            className="w-full pl-9 pr-9 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          />
-          {productSearch && (
-            <button onClick={() => setProductSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-              <XIcon className="w-4 h-4 text-slate-400" />
+      </div>
+
+      {/* Глобальный поиск товара по складам */}
+      {globalSearchOpen && (
+        <div className="bg-white rounded-2xl shadow-sm border border-indigo-200 p-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <Search className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+            <input
+              autoFocus
+              value={globalSearch}
+              onChange={e => setGlobalSearch(e.target.value)}
+              placeholder="Введите модель, бренд или тип товара..."
+              className="flex-1 outline-none text-slate-800 placeholder-slate-400 text-sm"
+            />
+            <button onClick={() => setGlobalSearchOpen(false)}>
+              <XIcon className="w-5 h-5 text-slate-400 hover:text-slate-600" />
             </button>
-          )}
-        </div>
-        {/* Результаты глобального поиска */}
-        {globalProductResults.length > 0 && (
-          <div className="border border-slate-200 rounded-xl overflow-hidden">
-            <div className="bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-              Найдено товаров: {globalProductResults.length}
-            </div>
-            <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
-              {globalProductResults.map((item, idx) => {
-                const totalBoxes = item.byWarehouse.reduce((s, w) => s + w.boxes, 0);
-                return (
-                  <div key={idx} className="px-4 py-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <div>
-                        <span className="font-semibold text-slate-900">{item.brand} {item.model}</span>
-                        {item.color && <span className="ml-2 text-xs text-slate-500">• {item.color}</span>}
-                        {item.product_type && <span className="ml-2 text-xs text-slate-400">{item.product_type}</span>}
-                      </div>
-                      <span className="font-bold text-indigo-600 text-lg">{totalBoxes} кор.</span>
+          </div>
+          {globalSearch.trim().length > 0 && (
+            globalSearchResults.length === 0 ? (
+              <p className="text-slate-500 text-sm text-center py-4">Товары не найдены</p>
+            ) : (
+              <div className="space-y-3">
+                {globalSearchResults.map(({ warehouse, products: whProds }) => (
+                  <div key={warehouse?.id || 'unknown'} className="border border-slate-100 rounded-xl overflow-hidden">
+                    <div className="bg-slate-50 px-4 py-2 flex items-center gap-2">
+                      <WarehouseIconComp iconKey={warehouse?.icon} className="w-4 h-4 text-purple-600" />
+                      <span className="font-semibold text-slate-700 text-sm">{warehouse?.name || 'Неизвестный склад'}</span>
+                      <span className="ml-auto text-xs text-slate-500">{whProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0)} кор. итого</span>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {item.byWarehouse.map((wh, i) => (
-                        <span key={i} className="text-xs bg-purple-50 text-purple-700 rounded-lg px-2 py-1">
-                          {wh.warehouseName}: <strong>{wh.boxes}</strong> кор.
-                        </span>
+                    <div className="divide-y divide-slate-50">
+                      {whProds.map(p => (
+                        <div key={p.id} className="px-4 py-2.5 flex items-center justify-between">
+                          <div>
+                            <span className="font-medium text-slate-800 text-sm">{p.brand} {p.model}</span>
+                            <span className="ml-2 text-xs text-slate-400">{p.product_type}</span>
+                          </div>
+                          <span className="font-bold text-indigo-600 text-sm">{p.boxes_in_stock || 0} кор.</span>
+                        </div>
                       ))}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        {productSearch && globalProductResults.length === 0 && (
-          <p className="text-sm text-slate-400 text-center py-2">Товары не найдены</p>
-        )}
-      </div>
+                ))}
+              </div>
+            )
+          )}
+        </div>
+      )}
 
       {/* Warehouses View */}
       {!selectedWarehouse && view === 'grid' ? (
@@ -506,20 +510,19 @@ export default function Warehouses() {
 
           {/* Products Table */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center gap-3">
-              <h3 className="font-semibold text-slate-900 flex-1">Товары на складе</h3>
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-3">
+              <h3 className="font-semibold text-slate-900">Товары на складе</h3>
               <div className="relative max-w-xs w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
-                  type="text"
-                  value={warehouseProductSearch}
-                  onChange={e => setWarehouseProductSearch(e.target.value)}
+                  value={productSearch}
+                  onChange={e => setProductSearch(e.target.value)}
                   placeholder="Фильтр по модели..."
-                  className="w-full pl-9 pr-8 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className="w-full pl-9 pr-8 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-400"
                 />
-                {warehouseProductSearch && (
-                  <button onClick={() => setWarehouseProductSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <XIcon className="w-3.5 h-3.5 text-slate-400" />
+                {productSearch && (
+                  <button onClick={() => setProductSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <XIcon className="w-4 h-4 text-slate-400 hover:text-slate-600" />
                   </button>
                 )}
               </div>
