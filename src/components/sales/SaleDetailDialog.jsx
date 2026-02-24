@@ -449,11 +449,11 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
                 <p>Продажа на сумму <b>{sale.total_amount?.toLocaleString()} с.</b> будет записана как долг клиента.</p>
               </div>
               <CustomerSearchSelect
-                customers={[]}
+                customers={allCustomers}
                 value={debtData.customer_id}
                 onChange={(v) => setDebtData({ ...debtData, customer_id: v })}
                 businessId={sale.business_id}
-                onCustomerAdded={() => {}}
+                onCustomerAdded={() => base44.entities.Customer.filter({ business_id: sale.business_id }).then(setAllCustomers)}
               />
               <div>
                 <Label className="text-xs">Частичная оплата сейчас (сомони)</Label>
