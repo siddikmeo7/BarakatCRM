@@ -25,7 +25,9 @@ import {
   ArrowRightLeft,
   Grid3x3,
   List,
-  Calendar
+  Calendar,
+  Search,
+  X as XIcon
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import ViewToggle from '@/components/ui/ViewToggle';
