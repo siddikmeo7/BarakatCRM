@@ -299,7 +299,7 @@ export default function Warehouses() {
                           className={`px-4 py-2.5 flex items-center justify-between transition-colors ${
                             i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'
                           } hover:bg-indigo-50 cursor-pointer group`}
-                          onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id}
+                          onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id + '&from=' + encodeURIComponent(createPageUrl('Warehouses'))}
                         >
                           <div>
                             <span className="font-semibold text-slate-900 text-sm group-hover:text-indigo-700">{p.brand} {p.model}</span>
