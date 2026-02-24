@@ -46,10 +46,6 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    // Редирект на Analytics в мобильной версии
-    if (window.innerWidth < 768) {
-      navigate(createPageUrl('Analytics'));
-    }
     loadData();
   }, [navigate]);
 
