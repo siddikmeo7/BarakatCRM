@@ -27,12 +27,6 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
     customer_id: '',
     partial_payment: ''
   });
-  const [allCustomers, setAllCustomers] = useState([]);
-
-  useEffect(() => {
-    // Загружаем всех клиентов бизнеса для поиска
-    base44.entities.Customer.filter({ business_id: sale.business_id }).then(setAllCustomers).catch(() => {});
-  }, [sale.business_id]);
 
   if (!sale) return null;
 
@@ -453,7 +447,10 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
                 value={debtData.customer_id}
                 onChange={(v) => setDebtData({ ...debtData, customer_id: v })}
                 businessId={sale.business_id}
-                onCustomerAdded={() => base44.entities.Customer.filter({ business_id: sale.business_id }).then(setAllCustomers)}
+                onCustomerAdded={async () => {
+                  const updated = await base44.entities.Customer.filter({ business_id: sale.business_id });
+                  setAllCustomers(updated);
+                }}
               />
               <div>
                 <Label className="text-xs">Частичная оплата сейчас (сомони)</Label>
