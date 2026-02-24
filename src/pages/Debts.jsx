@@ -195,6 +195,62 @@ export default function Debts() {
     }
   };
 
+  // Частичное погашение всего долга клиента — система сама распределяет по продажам
+  const handleBulkPayment = async () => {
+    if (!selectedCustomer || !bulkPayAmount) return;
+    let remaining = parseFloat(bulkPayAmount);
+    if (!remaining || remaining <= 0) return;
+    setBulkPaySaving(true);
+    try {
+      const customer = selectedCustomer;
+      // Берём все неоплаченные продажи клиента, сортируем по дате (старые первые)
+      const unpaidSales = customerSales
+        .filter(s => !s.is_cancelled && (s.total_amount || 0) - getSalePaidAmount(s.id) > 0)
+        .sort((a, b) => new Date(a.sale_date || a.created_date) - new Date(b.sale_date || b.created_date));
+
+      const newPayments = [];
+      for (const sale of unpaidSales) {
+        if (remaining <= 0) break;
+        const saleRemaining = (sale.total_amount || 0) - getSalePaidAmount(sale.id);
+        const toApply = Math.min(remaining, saleRemaining);
+        newPayments.push(
+          base44.entities.DebtPayment.create({
+            business_id: business.id,
+            customer_id: customer.id,
+            sale_id: sale.id,
+            amount: toApply,
+            payment_date: new Date().toISOString(),
+            note: 'Частичное погашение долга'
+          })
+        );
+        remaining -= toApply;
+      }
+
+      const totalPaid = parseFloat(bulkPayAmount) - remaining; // фактически применено
+      const created = await Promise.all(newPayments);
+
+      // Обновляем клиента
+      const updatedCustomer = {
+        ...customer,
+        total_debt: Math.max(0, (customer.total_debt || 0) - totalPaid),
+        total_paid: (customer.total_paid || 0) + totalPaid
+      };
+      await base44.entities.Customer.update(customer.id, {
+        total_debt: updatedCustomer.total_debt,
+        total_paid: updatedCustomer.total_paid
+      });
+
+      setPayments(prev => [...prev, ...created]);
+      setCustomers(prev => prev.map(c => c.id === customer.id ? updatedCustomer : c));
+      setSelectedCustomer(updatedCustomer);
+
+      setBulkPayOpen(false);
+      setBulkPayAmount('');
+    } finally {
+      setBulkPaySaving(false);
+    }
+  };
+
   const openWhatsApp = async (customer) => {
     if (!customer?.phone) return alert(t(lang, 'debts_no_phone'));
     setSendingMsg(customer.id);
