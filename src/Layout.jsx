@@ -83,9 +83,15 @@ export default function Layout({ children, currentPageName }) {
     if (user.email === ADMIN_EMAIL) return;
     if (employeePermissions === null) return; // владелец — полный доступ
     const activeItem = ALL_MENU_ITEMS.find(item => item.name === currentPageName);
-    if (!activeItem) return;
-    if (activeItem.permKey && !employeePermissions?.[activeItem.permKey]) {
-      const firstAvailable = ALL_MENU_ITEMS.find(item => !item.permKey || employeePermissions?.[item.permKey]);
+    // Если страница требует разрешения и его нет — редирект
+    const hasAccess = !activeItem || !activeItem.permKey || !!employeePermissions?.[activeItem.permKey];
+    // Dashboard не требует permKey, но если сотрудник пришёл на Dashboard и у него нет view_dashboard — редирект
+    const dashboardBlocked = currentPageName === 'Dashboard' && employeePermissions?.view_dashboard === false;
+    if (!hasAccess || dashboardBlocked) {
+      const firstAvailable = ALL_MENU_ITEMS.find(item => {
+        if (item.name === 'Dashboard' && employeePermissions?.view_dashboard === false) return false;
+        return !item.permKey || !!employeePermissions?.[item.permKey];
+      });
       if (firstAvailable && firstAvailable.name !== currentPageName) {
         navigate(createPageUrl(firstAvailable.name));
       }
