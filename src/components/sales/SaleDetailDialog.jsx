@@ -27,6 +27,13 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
     customer_id: '',
     partial_payment: ''
   });
+  const [allCustomers, setAllCustomers] = useState([]);
+
+  useEffect(() => {
+    if (sale?.business_id) {
+      base44.entities.Customer.filter({ business_id: sale.business_id }).then(setAllCustomers);
+    }
+  }, [sale?.business_id]);
 
   if (!sale) return null;
 
