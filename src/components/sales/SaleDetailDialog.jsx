@@ -37,6 +37,7 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
 
   if (!sale) return null;
 
+
   const editCount = sale.edit_count || 0;
   const editsLeft = MAX_EDITS - editCount;
   const canEdit = !sale.is_cancelled && editsLeft > 0;
