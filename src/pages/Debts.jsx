@@ -760,8 +760,8 @@ export default function Debts() {
             <p>{t(lang, 'debts_not_found')}</p>
           </div>
         ) : (
-        <div className="overflow-y-auto max-h-[600px]">
-          <div className="divide-y divide-slate-100">
+        <div className="overflow-y-auto max-h-[560px]">
+        <div className="divide-y divide-slate-100">
         {debtorList.map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }, idx) => {
           const isPaid = remaining <= 0;
           const unpaidSales = cSales.filter(s => {
@@ -775,18 +775,19 @@ export default function Debts() {
           return (
             <div key={c.id}
               onClick={() => setSelectedCustomer(c)}
-              className={`p-4 cursor-pointer transition-all ${
+              className={`p-4 cursor-pointer transition-all flex gap-3 items-start ${
                 isOverdue
-                  ? 'bg-red-50 hover:bg-red-100'
-                  : isDueToday
-                  ? 'bg-amber-50 hover:bg-amber-100'
-                  : 'bg-white hover:bg-slate-50'
-              }`}>
-              {/* Номер строки + баннер срока */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold text-slate-300 w-6 text-right flex-shrink-0">{idx + 1}</span>
-                {(isOverdue || isDueToday) && (
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-semibold flex-1 ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                    ? 'bg-red-50 hover:bg-red-100'
+                    : isDueToday
+                    ? 'bg-amber-50 hover:bg-amber-100'
+                    : 'bg-white hover:bg-slate-50'
+                }`}>
+                {/* Номер */}
+                <div className="w-6 text-sm font-medium text-slate-400 flex-shrink-0 pt-1">{idx + 1}</div>
+                <div className="flex-1 min-w-0">
+              {/* Баннер срока */}
+              {(isOverdue || isDueToday) && (
+                <div className={`flex items-center gap-2 mb-3 px-3 py-1.5 rounded-lg text-xs font-semibold ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                   <Clock className="w-3.5 h-3.5" />
                   {isOverdue ? '🔴 Просрочен срок оплаты!' : '🟡 Сегодня последний день оплаты!'}
                 </div>
