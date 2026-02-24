@@ -76,6 +76,17 @@ export default function Warehouses() {
     loadData();
   }, []);
 
+  // При возврате с страницы товара — восстановить выбранный склад
+  useEffect(() => {
+    if (warehouses.length === 0) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const warehouseId = urlParams.get('warehouseId');
+    if (warehouseId) {
+      const found = warehouses.find(w => w.id === warehouseId);
+      if (found) setSelectedWarehouse(found);
+    }
+  }, [warehouses]);
+
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
