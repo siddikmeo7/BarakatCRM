@@ -252,7 +252,14 @@ export default function Sales() {
       matchesDate = isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to || dateRange.from });
     }
     
-    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer;
+    let matchesTime = true;
+    if (filterTime) {
+      const saleDate = parseISO(sale.sale_date || sale.created_date);
+      const saleHHMM = `${String(saleDate.getHours()).padStart(2,'0')}:${String(saleDate.getMinutes()).padStart(2,'0')}`;
+      matchesTime = saleHHMM === filterTime;
+    }
+    
+    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer && matchesTime;
   });
 
   // Сортировка
