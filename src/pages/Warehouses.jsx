@@ -62,8 +62,9 @@ export default function Warehouses() {
   const [view, setView] = useState('grid');
   
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
-  const [productSearch, setProductSearch] = useState(''); // поиск товара по всем складам
-  const [warehouseProductSearch, setWarehouseProductSearch] = useState(''); // поиск внутри склада
+  const [productSearch, setProductSearch] = useState(''); // поиск внутри склада
+  const [globalSearch, setGlobalSearch] = useState(''); // глобальный поиск по складам
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -176,40 +177,37 @@ export default function Warehouses() {
     wh.address?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Товары выбранного склада (с фильтрацией по поиску внутри склада)
+  // Товары выбранного склада (с фильтрацией по модели)
   const warehouseProducts = selectedWarehouse 
     ? products.filter(p => {
-        if (p.warehouse_id !== selectedWarehouse.id) return false;
-        if (!warehouseProductSearch) return true;
-        const q = warehouseProductSearch.toLowerCase();
-        return (p.brand || '').toLowerCase().includes(q) || 
-               (p.model || '').toLowerCase().includes(q) ||
-               (p.product_type || '').toLowerCase().includes(q) ||
-               (p.color || '').toLowerCase().includes(q);
+        if (!productSearch) return p.warehouse_id === selectedWarehouse.id;
+        const q = productSearch.toLowerCase();
+        return p.warehouse_id === selectedWarehouse.id && (
+          p.model?.toLowerCase().includes(q) ||
+          p.brand?.toLowerCase().includes(q) ||
+          p.product_type?.toLowerCase().includes(q)
+        );
       })
     : [];
 
-  // Глобальный поиск товара по всем складам
-  const globalProductResults = productSearch.trim()
+  // Глобальный поиск: найти товар по всем складам
+  const globalSearchResults = globalSearch.trim().length > 0
     ? (() => {
-        const q = productSearch.toLowerCase();
+        const q = globalSearch.toLowerCase();
         const matched = products.filter(p =>
-          (p.brand || '').toLowerCase().includes(q) ||
-          (p.model || '').toLowerCase().includes(q) ||
-          (p.product_type || '').toLowerCase().includes(q) ||
-          (p.color || '').toLowerCase().includes(q)
+          p.model?.toLowerCase().includes(q) ||
+          p.brand?.toLowerCase().includes(q) ||
+          p.product_type?.toLowerCase().includes(q)
         );
-        // Группируем по (brand + model) и суммируем по складам
-        const grouped = {};
+        // Группируем по складу
+        const byWarehouse = {};
         matched.forEach(p => {
-          const key = `${p.brand}__${p.model}__${p.color}__${p.product_type}`;
-          if (!grouped[key]) {
-            grouped[key] = { brand: p.brand, model: p.model, color: p.color, product_type: p.product_type, byWarehouse: [] };
-          }
           const wh = warehouses.find(w => w.id === p.warehouse_id);
-          grouped[key].byWarehouse.push({ warehouseName: wh?.name || 'Без склада', boxes: p.boxes_in_stock || 0 });
+          const key = wh?.id || 'unknown';
+          if (!byWarehouse[key]) byWarehouse[key] = { warehouse: wh, products: [] };
+          byWarehouse[key].products.push(p);
         });
-        return Object.values(grouped);
+        return Object.values(byWarehouse);
       })()
     : [];
 
