@@ -479,6 +479,19 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
             </>
           )}
 
+          {mode === 'convert_debt' && (
+            <>
+              <Button variant="outline" onClick={() => setMode('view')} className="flex-1">Назад</Button>
+              <Button
+                onClick={handleConvertToDebt}
+                disabled={saving || !debtConvert.customer_id}
+                className="flex-1 bg-orange-600 hover:bg-orange-700 gap-2"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CreditCard className="w-4 h-4" />Перевести в долг</>}
+              </Button>
+            </>
+          )}
+
           {mode === 'cancel' && (
             <div className="w-full space-y-3">
               <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
