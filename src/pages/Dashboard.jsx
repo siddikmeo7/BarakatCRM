@@ -49,6 +49,16 @@ export default function Dashboard() {
     loadData();
   }, [navigate]);
 
+  // Редирект на Analytics в мобильной версии (только если есть доступ)
+  useEffect(() => {
+    if (!loading && window.innerWidth < 768) {
+      if (can('view_analytics')) {
+        navigate(createPageUrl('Analytics'));
+      }
+      // Если нет доступа — остаёмся на Dashboard
+    }
+  }, [loading]);
+
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
