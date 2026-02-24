@@ -250,15 +250,8 @@ export default function Sales() {
       const saleDate = parseISO(sale.sale_date || sale.created_date);
       matchesDate = isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to || dateRange.from });
     }
-
-    let matchesTime = true;
-    if (filterTime) {
-      const saleDate = parseISO(sale.sale_date || sale.created_date);
-      const saleHHMM = `${String(saleDate.getHours()).padStart(2,'0')}:${String(saleDate.getMinutes()).padStart(2,'0')}`;
-      matchesTime = saleHHMM === filterTime;
-    }
     
-    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer && matchesTime;
+    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer;
   });
 
   // Сортировка
@@ -414,18 +407,6 @@ export default function Sales() {
               <SelectItem value="items">{t(lang,'sales_items')}</SelectItem>
             </SelectContent>
           </Select>
-          <div className="flex items-center gap-2">
-            <input
-              type="time"
-              value={filterTime}
-              onChange={(e) => { setFilterTime(e.target.value); setSalesPage(1); }}
-              className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              title="Фильтр по времени"
-            />
-            {filterTime && (
-              <button onClick={() => { setFilterTime(''); setSalesPage(1); }} className="text-xs text-slate-400 hover:text-red-500 transition-colors">✕</button>
-            )}
-          </div>
           <Select value={filterCustomer} onValueChange={(v) => { setFilterCustomer(v); setSalesPage(1); }}>
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Все клиенты" />
@@ -448,6 +429,18 @@ export default function Sales() {
               <SelectItem value="boxes">По коробкам</SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <input
+              type="time"
+              value={filterTime}
+              onChange={(e) => { setFilterTime(e.target.value); setSalesPage(1); }}
+              className="border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-400 bg-white"
+            />
+            {filterTime && (
+              <button onClick={() => { setFilterTime(''); setSalesPage(1); }} className="text-slate-400 hover:text-slate-600 text-xs">✕</button>
+            )}
+          </div>
         </div>
       </div>
 
