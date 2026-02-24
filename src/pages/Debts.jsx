@@ -195,62 +195,6 @@ export default function Debts() {
     }
   };
 
-  // Частичное погашение всего долга клиента — система сама распределяет по продажам
-  const handleBulkPayment = async () => {
-    if (!selectedCustomer || !bulkPayAmount) return;
-    let remaining = parseFloat(bulkPayAmount);
-    if (!remaining || remaining <= 0) return;
-    setBulkPaySaving(true);
-    try {
-      const customer = selectedCustomer;
-      // Берём все неоплаченные продажи клиента, сортируем по дате (старые первые)
-      const unpaidSales = customerSales
-        .filter(s => !s.is_cancelled && (s.total_amount || 0) - getSalePaidAmount(s.id) > 0)
-        .sort((a, b) => new Date(a.sale_date || a.created_date) - new Date(b.sale_date || b.created_date));
-
-      const newPayments = [];
-      for (const sale of unpaidSales) {
-        if (remaining <= 0) break;
-        const saleRemaining = (sale.total_amount || 0) - getSalePaidAmount(sale.id);
-        const toApply = Math.min(remaining, saleRemaining);
-        newPayments.push(
-          base44.entities.DebtPayment.create({
-            business_id: business.id,
-            customer_id: customer.id,
-            sale_id: sale.id,
-            amount: toApply,
-            payment_date: new Date().toISOString(),
-            note: 'Частичное погашение долга'
-          })
-        );
-        remaining -= toApply;
-      }
-
-      const totalPaid = parseFloat(bulkPayAmount) - remaining; // фактически применено
-      const created = await Promise.all(newPayments);
-
-      // Обновляем клиента
-      const updatedCustomer = {
-        ...customer,
-        total_debt: Math.max(0, (customer.total_debt || 0) - totalPaid),
-        total_paid: (customer.total_paid || 0) + totalPaid
-      };
-      await base44.entities.Customer.update(customer.id, {
-        total_debt: updatedCustomer.total_debt,
-        total_paid: updatedCustomer.total_paid
-      });
-
-      setPayments(prev => [...prev, ...created]);
-      setCustomers(prev => prev.map(c => c.id === customer.id ? updatedCustomer : c));
-      setSelectedCustomer(updatedCustomer);
-
-      setBulkPayOpen(false);
-      setBulkPayAmount('');
-    } finally {
-      setBulkPaySaving(false);
-    }
-  };
-
   const openWhatsApp = async (customer) => {
     if (!customer?.phone) return alert(t(lang, 'debts_no_phone'));
     setSendingMsg(customer.id);
@@ -383,18 +327,15 @@ export default function Debts() {
             <h1 className="text-2xl font-bold text-slate-900">{c.name}</h1>
             {c.phone && <p className="text-sm text-slate-500 flex items-center gap-1"><Phone className="w-3 h-3" />{c.phone}</p>}
           </div>
-          <div className="flex items-center gap-2">
-            {(customerDebtMap[c.id]?.totalAmount - customerDebtMap[c.id]?.totalPaid) > 0 && (
-              <Button size="sm" onClick={() => { setBulkPayOpen(true); setBulkPayAmount(''); }}
-                className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 text-xs">
-                <DollarSign className="w-3.5 h-3.5" /> Погасить долг
-              </Button>
-            )}
-            <button onClick={() => openWhatsApp(c)} disabled={sendingMsg === c.id}
-              className="flex items-center gap-2 px-3 py-2 bg-green-50 hover:bg-green-100 rounded-xl text-green-700 text-sm font-medium">
-              <MessageCircle className="w-4 h-4" /> WhatsApp
-            </button>
-          </div>
+          <button
+            onClick={() => { setBulkPayOpen(true); setBulkPayAmount(''); }}
+            className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-xl text-white text-sm font-medium">
+            <DollarSign className="w-4 h-4" /> Погасить долг
+          </button>
+          <button onClick={() => openWhatsApp(c)} disabled={sendingMsg === c.id}
+            className="flex items-center gap-2 px-3 py-2 bg-green-50 hover:bg-green-100 rounded-xl text-green-700 text-sm font-medium">
+            <MessageCircle className="w-4 h-4" /> WhatsApp
+          </button>
         </div>
 
         {/* Сводка */}
@@ -577,6 +518,48 @@ export default function Debts() {
             })}
           </div>
         </div>
+
+        {/* Bulk Pay Dialog — погасить часть общего долга */}
+        <Dialog open={bulkPayOpen} onOpenChange={(o) => { if (!o) setBulkPayOpen(false); }}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Погасить долг клиента</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="p-3 bg-orange-50 rounded-xl text-sm space-y-1">
+                <p className="text-slate-500">Клиент: <span className="font-semibold text-slate-900">{selectedCustomer?.name}</span></p>
+                <p className="text-slate-500">Общий долг: <span className="font-bold text-orange-600">{(selectedCustomer?.total_debt || 0).toLocaleString()} с.</span></p>
+                <p className="text-xs text-slate-400 mt-1">Система автоматически распределит оплату по покупкам, начиная с самой ранней.</p>
+              </div>
+              <div>
+                <Label>Сумма оплаты (сомони) *</Label>
+                <Input
+                  type="text" inputMode="decimal" pattern="[0-9.]*"
+                  className="mt-1.5"
+                  value={bulkPayAmount}
+                  onChange={e => setBulkPayAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+                  placeholder="Введите сумму..."
+                />
+                {bulkPayAmount && parseFloat(bulkPayAmount) > 0 && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Остаток после оплаты: <span className="font-semibold text-orange-600">
+                      {Math.max(0, (selectedCustomer?.total_debt || 0) - parseFloat(bulkPayAmount)).toLocaleString()} с.
+                    </span>
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-3 pt-1">
+                <Button variant="outline" className="flex-1" onClick={() => setBulkPayOpen(false)}>Отмена</Button>
+                <Button
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                  disabled={bulkPaySaving || !bulkPayAmount || parseFloat(bulkPayAmount) <= 0}
+                  onClick={handleBulkPayment}>
+                  {bulkPaySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Принять оплату'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Pay Dialog */}
         <Dialog open={!!payDialog} onOpenChange={(o) => { if (!o) { setPayDialog(null); setPayAmount(''); } }}>
