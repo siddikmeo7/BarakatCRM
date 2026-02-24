@@ -760,89 +760,79 @@ export default function Debts() {
             <p>{t(lang, 'debts_not_found')}</p>
           </div>
         ) : (
-        <div className="overflow-y-auto max-h-[600px]">
-          <div className="divide-y divide-slate-100">
-        {debtorList.map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }, idx) => (
-          const isPaid = remaining <= 0;
-          const unpaidSales = cSales.filter(s => {
-            const paid = getSalePaidAmount(s.id);
-            return (s.total_amount || 0) - paid > 0;
-          });
-          const dueDateStatus = !isPaid ? getDueDateStatus(unpaidSales) : null;
-          const isOverdue = dueDateStatus === 'overdue';
-          const isDueToday = dueDateStatus === 'today';
+          <div className="overflow-y-auto max-h-[560px]">
+            <div className="divide-y divide-slate-100">
+              {debtorList.map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }, idx) => {
+                const isPaid = remaining <= 0;
+                const unpaidSales = cSales.filter(s => {
+                  const paid = getSalePaidAmount(s.id);
+                  return (s.total_amount || 0) - paid > 0;
+                });
+                const dueDateStatus = !isPaid ? getDueDateStatus(unpaidSales) : null;
+                const isOverdue = dueDateStatus === 'overdue';
+                const isDueToday = dueDateStatus === 'today';
 
-          return (
-            <div key={c.id}
-              onClick={() => setSelectedCustomer(c)}
-              className={`p-4 cursor-pointer transition-all ${
-                isOverdue
-                  ? 'bg-red-50 hover:bg-red-100'
-                  : isDueToday
-                  ? 'bg-amber-50 hover:bg-amber-100'
-                  : 'bg-white hover:bg-slate-50'
-              }`}>
-              {/* Номер строки + баннер срока */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold text-slate-300 w-6 text-right flex-shrink-0">{idx + 1}</span>
-                {(isOverdue || isDueToday) && (
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-semibold flex-1 ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
-                  <Clock className="w-3.5 h-3.5" />
-                  {isOverdue ? '🔴 Просрочен срок оплаты!' : '🟡 Сегодня последний день оплаты!'}
-                </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-4 pl-8">
-                {/* Аватар */}
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-                  isOverdue ? 'bg-red-200' : isDueToday ? 'bg-amber-200' : isPaid ? 'bg-emerald-100' : 'bg-orange-100'
-                }`}>
-                  <span className={`text-lg font-bold ${isOverdue ? 'text-red-700' : isDueToday ? 'text-amber-700' : isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
-                    {c.name?.charAt(0)?.toUpperCase()}
-                  </span>
-                </div>
-
-                {/* Инфо */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-slate-900">{c.name}</p>
-                    {isPaid && <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium">Погашено</span>}
+                return (
+                  <div key={c.id}
+                    onClick={() => setSelectedCustomer(c)}
+                    className={`p-4 cursor-pointer transition-all flex gap-3 items-start ${
+                      isOverdue ? 'bg-red-50 hover:bg-red-100' :
+                      isDueToday ? 'bg-amber-50 hover:bg-amber-100' :
+                      'bg-white hover:bg-slate-50'
+                    }`}>
+                    {/* Номер */}
+                    <div className="w-6 text-sm font-medium text-slate-400 flex-shrink-0 pt-1">{idx + 1}</div>
+                    <div className="flex-1 min-w-0">
+                      {/* Баннер срока */}
+                      {(isOverdue || isDueToday) && (
+                        <div className={`flex items-center gap-2 mb-3 px-3 py-1.5 rounded-lg text-xs font-semibold ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                          <Clock className="w-3.5 h-3.5" />
+                          {isOverdue ? '🔴 Просрочен срок оплаты!' : '🟡 Сегодня последний день оплаты!'}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                          isOverdue ? 'bg-red-200' : isDueToday ? 'bg-amber-200' : isPaid ? 'bg-emerald-100' : 'bg-orange-100'
+                        }`}>
+                          <span className={`text-lg font-bold ${isOverdue ? 'text-red-700' : isDueToday ? 'text-amber-700' : isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
+                            {c.name?.charAt(0)?.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-slate-900">{c.name}</p>
+                            {isPaid && <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium">Погашено</span>}
+                          </div>
+                          {c.phone && <p className="text-sm text-slate-400">{c.phone}</p>}
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-xs text-slate-400">{cSales.length} покупок</span>
+                            {unpaidSales.length > 0 && (
+                              <span className="text-xs text-orange-500 font-medium">{unpaidSales.length} не оплачено</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className={`text-lg font-bold ${isOverdue ? 'text-red-600' : isDueToday ? 'text-amber-600' : isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
+                            {remaining.toLocaleString()} с.
+                          </p>
+                          <p className="text-xs text-slate-400">из {totalAmount.toLocaleString()} с.</p>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-slate-300 flex-shrink-0" />
+                      </div>
+                      {totalAmount > 0 && (
+                        <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${isOverdue ? 'bg-red-500' : isDueToday ? 'bg-amber-500' : isPaid ? 'bg-emerald-500' : 'bg-orange-400'}`}
+                            style={{ width: `${Math.min(100, (totalPaid / totalAmount) * 100)}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  {c.phone && <p className="text-sm text-slate-400">{c.phone}</p>}
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-xs text-slate-400">{cSales.length} покупок</span>
-                    {unpaidSales.length > 0 && (
-                      <span className="text-xs text-orange-500 font-medium">{unpaidSales.length} не оплачено</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Долг */}
-                <div className="text-right flex-shrink-0">
-                  <p className={`text-lg font-bold ${isOverdue ? 'text-red-600' : isDueToday ? 'text-amber-600' : isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
-                    {remaining.toLocaleString()} с.
-                  </p>
-                  <p className="text-xs text-slate-400">из {totalAmount.toLocaleString()} с.</p>
-                </div>
-
-                <ChevronRight className="w-5 h-5 text-slate-300 flex-shrink-0" />
-              </div>
-
-              {/* Прогресс-бар */}
-              {totalAmount > 0 && (
-                <div className="mt-3 ml-8 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${isOverdue ? 'bg-red-500' : isDueToday ? 'bg-amber-500' : isPaid ? 'bg-emerald-500' : 'bg-orange-400'}`}
-                    style={{ width: `${Math.min(100, (totalPaid / totalAmount) * 100)}%` }}
-                  />
-                </div>
-              )}
+                );
+              })}
             </div>
-          );
-        })}
           </div>
-        </div>
         )}
       </div>
 
