@@ -271,9 +271,11 @@ export default function Customers() {
       {/* Customers Grid/List */}
       {view === 'list' && (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto overflow-y-auto max-h-[500px]">
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-slate-50 sticky top-0 z-10">
               <tr>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600 w-10">#</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Клиент</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Телефон</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Долг</th>
