@@ -77,6 +77,21 @@ export default function Layout({ children, currentPageName }) {
     setDrawerOpen(false);
   }, [currentPageName]);
 
+  // Если текущая страница недоступна сотруднику — редирект на первую доступную
+  useEffect(() => {
+    if (loading || !user) return;
+    if (user.email === ADMIN_EMAIL) return;
+    if (employeePermissions === null) return; // владелец — полный доступ
+    const activeItem = ALL_MENU_ITEMS.find(item => item.name === currentPageName);
+    if (!activeItem) return;
+    if (activeItem.permKey && !employeePermissions?.[activeItem.permKey]) {
+      const firstAvailable = ALL_MENU_ITEMS.find(item => !item.permKey || employeePermissions?.[item.permKey]);
+      if (firstAvailable && firstAvailable.name !== currentPageName) {
+        navigate(createPageUrl(firstAvailable.name));
+      }
+    }
+  }, [loading, currentPageName, employeePermissions, user]);
+
   const loadUserAndBusiness = async () => {
     try {
       const currentUser = await base44.auth.me();
