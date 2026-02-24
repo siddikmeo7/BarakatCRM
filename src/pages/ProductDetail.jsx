@@ -80,9 +80,19 @@ export default function ProductDetail() {
   const totalRevenue = sales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const totalProfit = sales.reduce((sum, s) => sum + (s.profit || 0), 0);
 
+  const handleBack = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const from = urlParams.get('from');
+    if (from) {
+      navigate(from);
+    } else {
+      navigate(-1);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
+      <Button variant="outline" onClick={handleBack} className="gap-2">
         <ArrowLeft className="w-4 h-4" />
         Назад
       </Button>
