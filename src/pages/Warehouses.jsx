@@ -571,29 +571,35 @@ export default function Warehouses() {
                    const wholesaleValue = boxes * (product.purchase_price || 0);
                    const saleValue = boxes * (product.sale_price || 0);
                    const potentialProfit = saleValue - wholesaleValue;
+                   const lowStock = boxes > 0 && boxes <= (business?.low_stock_limit || 2);
+                   const noStock = boxes === 0;
 
                    return (
                      <tr 
                        key={product.id} 
-                       className="hover:bg-slate-50 cursor-pointer"
+                       className={`cursor-pointer transition-colors ${noStock ? 'bg-red-50 hover:bg-red-100' : lowStock ? 'bg-orange-50 hover:bg-orange-100' : 'hover:bg-slate-50'}`}
                        onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + product.id}
                      >
                        <td className="px-4 py-3">
-                         <div className="flex items-center gap-3">
-                           {product.photo_url ? (
-                             <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                           ) : (
-                             <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                               <Package className="w-5 h-5 text-slate-400" />
-                             </div>
-                           )}
-                           <div>
-                             <p className="font-medium text-slate-900">{product.brand}</p>
-                             <p className="text-sm text-slate-500">{product.model}</p>
-                           </div>
-                         </div>
+                          <div className="flex items-center gap-3">
+                            {product.photo_url ? (
+                              <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                            ) : (
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${noStock ? 'bg-red-100' : lowStock ? 'bg-orange-100' : 'bg-slate-100'}`}>
+                                <Package className={`w-5 h-5 ${noStock ? 'text-red-400' : lowStock ? 'text-orange-400' : 'text-slate-400'}`} />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-slate-900">{product.brand}</p>
+                              <p className="text-sm text-slate-500">{product.model}</p>
+                              {lowStock && <span className="text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">⚠️ Осталось мало</span>}
+                              {noStock && <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">❌ Нет в наличии</span>}
+                            </div>
+                          </div>
+                        </td>
+                       <td className="px-4 py-3 text-center font-semibold">
+                         <span className={`px-2 py-1 rounded-full text-sm font-bold ${noStock ? 'bg-red-100 text-red-600' : lowStock ? 'bg-orange-100 text-orange-600' : 'text-indigo-600'}`}>{boxes}</span>
                        </td>
-                       <td className="px-4 py-3 text-center font-semibold text-indigo-600">{boxes}</td>
                        <td className="px-4 py-3 text-center text-slate-600">{pairs}</td>
                        <td className="px-4 py-3 text-center text-slate-600">{items}</td>
                        <td className="px-4 py-3 text-right font-semibold text-slate-700">
