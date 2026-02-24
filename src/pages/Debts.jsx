@@ -51,6 +51,11 @@ export default function Debts() {
   const [messageChannel, setMessageChannel] = useState('telegram');
   const [saving, setSaving] = useState(false);
 
+  // Частичное погашение всего долга клиента
+  const [bulkPayOpen, setBulkPayOpen] = useState(false);
+  const [bulkPayAmount, setBulkPayAmount] = useState('');
+  const [bulkPaySaving, setBulkPaySaving] = useState(false);
+
   // Добавить долг вручную
   const [addDebtOpen, setAddDebtOpen] = useState(false);
   const [addDebtData, setAddDebtData] = useState({
