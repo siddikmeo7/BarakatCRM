@@ -760,8 +760,8 @@ export default function Debts() {
             <p>{t(lang, 'debts_not_found')}</p>
           </div>
         ) : (
-        <div className="overflow-y-auto max-h-[600px]">
-          <div className="divide-y divide-slate-100">
+        <div className="overflow-y-auto max-h-[560px]">
+        <div className="divide-y divide-slate-100">
         {debtorList.map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }, idx) => {
           const isPaid = remaining <= 0;
           const unpaidSales = cSales.filter(s => {
@@ -775,12 +775,12 @@ export default function Debts() {
           return (
             <div key={c.id}
               onClick={() => setSelectedCustomer(c)}
-              className={`p-4 cursor-pointer transition-all ${
+              className={`p-4 cursor-pointer transition-all flex gap-3 items-start ${
                 isOverdue
-                  ? 'bg-red-50 hover:bg-red-100'
+                  ? 'bg-red-50 border-red-300 hover:border-red-400 animate-pulse-border'
                   : isDueToday
-                  ? 'bg-amber-50 hover:bg-amber-100'
-                  : 'bg-white hover:bg-slate-50'
+                  ? 'bg-amber-50 border-amber-400 hover:border-amber-500'
+                  : 'bg-white border-slate-100 hover:shadow-md hover:border-indigo-200'
               }`}>
               {/* Баннер срока */}
               {(isOverdue || isDueToday) && (
