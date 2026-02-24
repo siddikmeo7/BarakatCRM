@@ -235,14 +235,10 @@ export default function Sales() {
   // Фильтрация продаж для отображения в списке (все, включая отменённые)
   let filteredSales = sales.filter(sale => {
     const product = products.find(p => p.id === sale.product_id);
-    const customer = customers.find(c => c.id === sale.customer_id);
     const matchesSearch = !search ||
       product?.brand?.toLowerCase().includes(search.toLowerCase()) ||
-      product?.model?.toLowerCase().includes(search.toLowerCase()) ||
-      customer?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      sale.customer_name?.toLowerCase().includes(search.toLowerCase());
+      product?.model?.toLowerCase().includes(search.toLowerCase());
     const matchesWarehouse = filterWarehouse === 'all' || sale.warehouse_id === filterWarehouse;
-    const matchesCustomer = filterCustomer === 'all' || sale.customer_id === filterCustomer;
     
     let matchesDate = true;
     if (dateRange?.from) {
@@ -250,7 +246,7 @@ export default function Sales() {
       matchesDate = isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to || dateRange.from });
     }
     
-    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer;
+    return matchesSearch && matchesWarehouse && matchesDate;
   });
 
   // Сортировка
@@ -393,6 +389,17 @@ export default function Sales() {
               <SelectItem value="all">{t(lang,'sales_wh_all')}</SelectItem>
               {warehouses.map(wh => (
                 <SelectItem key={wh.id} value={wh.id}>{wh.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterCustomer} onValueChange={v => { setFilterCustomer(v); setSalesPage(1); }}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Все клиенты" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все клиенты</SelectItem>
+              {customers.filter(c => sales.some(s => s.customer_id === c.id)).map(c => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
