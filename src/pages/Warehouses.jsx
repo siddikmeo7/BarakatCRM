@@ -275,9 +275,9 @@ export default function Warehouses() {
             globalSearchResults.length === 0 ? (
               <p className="text-slate-500 text-sm text-center py-4">Товары не найдены</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
                 {/* Итого по всем складам */}
-                <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 flex items-center justify-between">
+                <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 flex items-center justify-between sticky top-0 z-10">
                   <span className="font-bold text-indigo-800 text-sm">📦 Итого по всем складам</span>
                   <span className="font-bold text-indigo-700 text-xl">
                     {globalSearchResults.reduce((total, { products: whProds }) =>
@@ -293,13 +293,27 @@ export default function Warehouses() {
                       <span className="ml-auto text-xs font-semibold text-purple-600">{whProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0)} кор.</span>
                     </div>
                     <div className="divide-y divide-slate-50">
-                      {whProds.map(p => (
-                        <div key={p.id} className="px-4 py-2.5 flex items-center justify-between">
+                      {whProds.map((p, i) => (
+                        <div
+                          key={p.id}
+                          className={`px-4 py-2.5 flex items-center justify-between transition-colors ${
+                            i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'
+                          } hover:bg-indigo-50 cursor-pointer group`}
+                          onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id}
+                        >
                           <div>
-                            <span className="font-medium text-slate-800 text-sm">{p.brand} {p.model}</span>
+                            <span className="font-semibold text-slate-900 text-sm group-hover:text-indigo-700">{p.brand} {p.model}</span>
                             <span className="ml-2 text-xs text-slate-400">{p.color} • {p.product_type}</span>
                           </div>
-                          <span className="font-bold text-indigo-600 text-sm">{p.boxes_in_stock || 0} кор.</span>
+                          <span className={`font-bold text-sm px-3 py-1 rounded-full ${
+                            (p.boxes_in_stock || 0) === 0
+                              ? 'bg-red-100 text-red-600'
+                              : (p.boxes_in_stock || 0) <= 3
+                              ? 'bg-orange-100 text-orange-600'
+                              : 'bg-emerald-100 text-emerald-700'
+                          }`}>
+                            {p.boxes_in_stock || 0} кор.
+                          </span>
                         </div>
                       ))}
                     </div>
