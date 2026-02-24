@@ -250,8 +250,15 @@ export default function Sales() {
       const saleDate = parseISO(sale.sale_date || sale.created_date);
       matchesDate = isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to || dateRange.from });
     }
+
+    let matchesTime = true;
+    if (filterTime) {
+      const saleDate = parseISO(sale.sale_date || sale.created_date);
+      const saleHHMM = `${String(saleDate.getHours()).padStart(2,'0')}:${String(saleDate.getMinutes()).padStart(2,'0')}`;
+      matchesTime = saleHHMM === filterTime;
+    }
     
-    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer;
+    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer && matchesTime;
   });
 
   // Сортировка
