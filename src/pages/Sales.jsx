@@ -59,6 +59,7 @@ export default function Sales() {
   const [sortBy, setSortBy] = useState('date'); // date, amount, profit, boxes
   const [view, setView] = useState('list'); // list, grid
   const [salesPage, setSalesPage] = useState(1);
+  const [filterCustomer, setFilterCustomer] = useState('all');
   
   const [formData, setFormData] = useState({
     product_id: '',
