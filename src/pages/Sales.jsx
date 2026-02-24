@@ -60,6 +60,7 @@ export default function Sales() {
   const [view, setView] = useState('list'); // list, grid
   const [salesPage, setSalesPage] = useState(1);
   const [filterCustomer, setFilterCustomer] = useState('all');
+  const [filterTime, setFilterTime] = useState('');
   
   const [formData, setFormData] = useState({
     product_id: '',
