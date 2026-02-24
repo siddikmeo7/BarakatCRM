@@ -760,8 +760,8 @@ export default function Debts() {
             <p>{t(lang, 'debts_not_found')}</p>
           </div>
         ) : (
-        <div className="overflow-y-auto max-h-[600px]">
-          <div className="divide-y divide-slate-100">
+        <div className="overflow-y-auto max-h-[560px]">
+        <div className="divide-y divide-slate-100">
         {debtorList.map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }, idx) => {
           const isPaid = remaining <= 0;
           const unpaidSales = cSales.filter(s => {
@@ -775,7 +775,7 @@ export default function Debts() {
           return (
             <div key={c.id}
               onClick={() => setSelectedCustomer(c)}
-              className={`p-4 cursor-pointer transition-all ${
+              className={`rounded-2xl shadow-sm p-4 cursor-pointer transition-all border ${
                 isOverdue
                   ? 'bg-red-50 border-red-300 hover:border-red-400 animate-pulse-border'
                   : isDueToday
