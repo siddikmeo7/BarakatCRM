@@ -15,7 +15,7 @@ import { ru } from 'date-fns/locale';
 const MAX_EDITS = 5;
 
 export default function SaleDetailDialog({ sale, product, customer, onClose, onUpdated }) {
-  const [mode, setMode] = useState('view'); // view | edit | cancel | convert_debt
+  const [mode, setMode] = useState('view'); // view | edit | cancel | to_debt
   const [saving, setSaving] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [editData, setEditData] = useState({
@@ -23,10 +23,9 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
     sale_price: sale.sale_price,
     note: ''
   });
-  const [debtConvert, setDebtConvert] = useState({
+  const [debtData, setDebtData] = useState({
     customer_id: '',
-    partial_payment: 0,
-    payment_due_date: ''
+    partial_payment: ''
   });
 
   if (!sale) return null;
@@ -134,62 +133,6 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
     }
   };
 
-  const handleConvertToDebt = async () => {
-    if (!debtConvert.customer_id) return;
-    setSaving(true);
-    try {
-      const partialPay = parseFloat(debtConvert.partial_payment) || 0;
-      const remainingDebt = sale.total_amount - partialPay;
-
-      // Обновляем продажу: меняем тип на долг
-      await base44.entities.Sale.update(sale.id, {
-        is_debt: true,
-        customer_id: debtConvert.customer_id,
-        partial_payment: partialPay,
-        payment_due_date: debtConvert.payment_due_date || null,
-        edit_count: editCount + 1,
-        edit_history: [...editHistory, {
-          edited_at: new Date().toISOString(),
-          boxes_sold: sale.boxes_sold,
-          sale_price: sale.sale_price,
-          total_amount: sale.total_amount,
-          profit: sale.profit,
-          note: 'Изменено с наличных на долг',
-          changes: [{ label: 'Тип оплаты', from: 'Наличные', to: 'В долг' }]
-        }]
-      });
-
-      // Обновляем долг клиента
-      const customerData = await base44.entities.Customer.filter({ id: debtConvert.customer_id });
-      if (customerData.length > 0) {
-        const cust = customerData[0];
-        await base44.entities.Customer.update(cust.id, {
-          total_debt: (cust.total_debt || 0) + remainingDebt,
-          total_paid: (cust.total_paid || 0) + partialPay
-        });
-
-        // Если была частичная оплата — записываем её
-        if (partialPay > 0) {
-          await base44.entities.DebtPayment.create({
-            business_id: sale.business_id,
-            customer_id: debtConvert.customer_id,
-            sale_id: sale.id,
-            amount: partialPay,
-            note: 'Частичная оплата при переводе в долг',
-            payment_date: new Date().toISOString()
-          });
-        }
-      }
-
-      onUpdated();
-      setMode('view');
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleCancel = async () => {
     setSaving(true);
     try {
@@ -221,6 +164,63 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
           // Возвращаем partial_payment обратно (он был зачислен как total_paid при продаже)
           total_paid: Math.max(0, (customer.total_paid || 0) - (sale.partial_payment || 0) - alreadyPaid)
         });
+      }
+
+      onUpdated();
+      onClose();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleConvertToDebt = async () => {
+    if (!debtData.customer_id) return;
+    setSaving(true);
+    try {
+      const partialPay = parseFloat(debtData.partial_payment) || 0;
+      const remainingDebt = sale.total_amount - partialPay;
+
+      // Получаем данные клиента
+      const customerRecords = await base44.entities.Customer.filter({ id: debtData.customer_id });
+      const selectedCustomer = customerRecords[0];
+
+      // Обновляем продажу — меняем тип оплаты на долг
+      await base44.entities.Sale.update(sale.id, {
+        is_debt: true,
+        customer_id: debtData.customer_id,
+        partial_payment: partialPay,
+        edit_count: (sale.edit_count || 0) + 1,
+        edit_history: [...(sale.edit_history || []), {
+          edited_at: new Date().toISOString(),
+          boxes_sold: sale.boxes_sold,
+          sale_price: sale.sale_price,
+          total_amount: sale.total_amount,
+          profit: sale.profit,
+          note: 'Изменён тип оплаты: Наличные → В долг',
+          changes: [{ label: 'Тип оплаты', from: 'Наличные', to: 'В долг' }]
+        }]
+      });
+
+      // Обновляем долг клиента
+      if (selectedCustomer) {
+        await base44.entities.Customer.update(debtData.customer_id, {
+          total_debt: (selectedCustomer.total_debt || 0) + remainingDebt,
+          total_paid: (selectedCustomer.total_paid || 0) + partialPay
+        });
+
+        // Если есть частичная оплата — записываем в историю платежей
+        if (partialPay > 0) {
+          await base44.entities.DebtPayment.create({
+            business_id: sale.business_id,
+            customer_id: debtData.customer_id,
+            sale_id: sale.id,
+            amount: partialPay,
+            note: 'Частичная оплата при изменении типа на долг',
+            payment_date: new Date().toISOString()
+          });
+        }
       }
 
       onUpdated();
@@ -336,51 +336,6 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
             </div>
           )}
 
-          {/* Перевод в долг */}
-          {mode === 'convert_debt' && (
-            <div className="space-y-3 p-4 bg-orange-50 border border-orange-200 rounded-xl">
-              <p className="text-sm font-semibold text-orange-800 flex items-center gap-2">
-                <CreditCard className="w-4 h-4" />
-                Перевод продажи в долг
-              </p>
-              <p className="text-xs text-orange-700">Сумма продажи: <b>{sale.total_amount?.toLocaleString()} с.</b></p>
-              <div>
-                <Label className="text-xs">Выберите клиента *</Label>
-                <div className="mt-1">
-                  <CustomerSearchSelect
-                    customers={[]}
-                    value={debtConvert.customer_id}
-                    onChange={(v) => setDebtConvert({ ...debtConvert, customer_id: v })}
-                    businessId={sale.business_id}
-                    onCustomerAdded={() => {}}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">Частичная оплата сейчас (сомони)</Label>
-                <Input
-                  type="text" inputMode="decimal"
-                  value={debtConvert.partial_payment}
-                  onChange={(e) => setDebtConvert({ ...debtConvert, partial_payment: e.target.value.replace(/[^0-9.]/g, '') })}
-                  placeholder="0"
-                  className="mt-1 h-9"
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  Остаток долга: {(sale.total_amount - (parseFloat(debtConvert.partial_payment) || 0)).toLocaleString()} с.
-                </p>
-              </div>
-              <div>
-                <Label className="text-xs">Срок оплаты</Label>
-                <Input
-                  type="date"
-                  value={debtConvert.payment_due_date}
-                  onChange={(e) => setDebtConvert({ ...debtConvert, payment_due_date: e.target.value })}
-                  className="mt-1 h-9"
-                />
-              </div>
-            </div>
-          )}
-
           {/* Лимит редактирований */}
           {!sale.is_cancelled && (
             <div className={`flex items-center gap-2 p-3 rounded-xl text-sm ${editsLeft === 0 ? 'bg-red-50 text-red-700' : editsLeft <= 2 ? 'bg-amber-50 text-amber-700' : 'bg-slate-50 text-slate-600'}`}>
@@ -451,8 +406,7 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
               {!sale.is_debt && (
                 <Button
                   variant="outline"
-                  disabled={!canEdit}
-                  onClick={() => setMode('convert_debt')}
+                  onClick={() => setMode('to_debt')}
                   className="flex-1 gap-2 text-orange-600 border-orange-200 hover:bg-orange-50"
                 >
                   <CreditCard className="w-4 h-4" />
@@ -479,17 +433,48 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
             </>
           )}
 
-          {mode === 'convert_debt' && (
-            <>
-              <Button variant="outline" onClick={() => setMode('view')} className="flex-1">Назад</Button>
-              <Button
-                onClick={handleConvertToDebt}
-                disabled={saving || !debtConvert.customer_id}
-                className="flex-1 bg-orange-600 hover:bg-orange-700 gap-2"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CreditCard className="w-4 h-4" />Перевести в долг</>}
-              </Button>
-            </>
+          {mode === 'to_debt' && (
+            <div className="w-full space-y-3">
+              <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl text-sm text-orange-800">
+                <p className="font-medium mb-1 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" />
+                  Перевести в долг
+                </p>
+                <p>Продажа на сумму <b>{sale.total_amount?.toLocaleString()} с.</b> будет записана как долг клиента.</p>
+              </div>
+              <CustomerSearchSelect
+                customers={[]}
+                value={debtData.customer_id}
+                onChange={(v) => setDebtData({ ...debtData, customer_id: v })}
+                businessId={sale.business_id}
+                onCustomerAdded={() => {}}
+              />
+              <div>
+                <Label className="text-xs">Частичная оплата сейчас (сомони)</Label>
+                <Input
+                  type="text" inputMode="decimal"
+                  value={debtData.partial_payment}
+                  onChange={(e) => setDebtData({ ...debtData, partial_payment: e.target.value.replace(/[^0-9.]/g, '') })}
+                  placeholder="0"
+                  className="mt-1 h-9"
+                />
+                {debtData.partial_payment > 0 && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Остаток долга: {(sale.total_amount - (parseFloat(debtData.partial_payment) || 0)).toLocaleString()} с.
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setMode('view')} className="flex-1">Назад</Button>
+                <Button
+                  onClick={handleConvertToDebt}
+                  disabled={saving || !debtData.customer_id}
+                  className="flex-1 bg-orange-600 hover:bg-orange-700 text-white gap-2"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle className="w-4 h-4" />Сохранить</>}
+                </Button>
+              </div>
+            </div>
           )}
 
           {mode === 'cancel' && (
