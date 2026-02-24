@@ -182,8 +182,10 @@ export default function Layout({ children, currentPageName }) {
   const isOwner = employeePermissions === null;
 
   const canAccess = (permKey) => {
-    if (isOwner || !permKey) return true;
-    return !!employeePermissions?.[permKey];
+    if (isOwner) return true;
+    if (!permKey) return true;
+    // Если разрешение явно не задано (undefined) — считаем запрещённым для сотрудников
+    return employeePermissions?.[permKey] === true;
   };
 
   const MENU_ITEMS = ALL_MENU_ITEMS.filter(item => {
