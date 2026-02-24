@@ -299,7 +299,7 @@ export default function Warehouses() {
                           className={`px-4 py-2.5 flex items-center justify-between transition-colors ${
                             i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'
                           } hover:bg-indigo-50 cursor-pointer group`}
-                          onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id + '&from=' + encodeURIComponent(createPageUrl('Warehouses'))}
+                          onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id}
                         >
                           <div>
                             <span className="font-semibold text-slate-900 text-sm group-hover:text-indigo-700">{p.brand} {p.model}</span>
@@ -578,7 +578,7 @@ export default function Warehouses() {
                      <tr 
                        key={product.id} 
                        className={`cursor-pointer transition-colors ${noStock ? 'bg-red-50 hover:bg-red-100' : lowStock ? 'bg-orange-50 hover:bg-orange-100' : 'hover:bg-slate-50'}`}
-                       onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + product.id}
+                       onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + product.id + '&from=' + encodeURIComponent(createPageUrl('Warehouses') + '?warehouseId=' + selectedWarehouse.id)}
                      >
                        <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
