@@ -398,19 +398,43 @@ export default function Debts() {
         </div>
 
         {/* Сводка */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-orange-50 rounded-xl p-4 text-center">
-            <p className="text-xs text-orange-500 mb-1">Текущий долг</p>
-            <p className="text-xl font-bold text-orange-600">{(c.total_debt || 0).toLocaleString()} с.</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Финансовая сводка</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-slate-50 rounded-xl p-3">
+              <p className="text-xs text-slate-400 mb-0.5">Всего куплено в долг</p>
+              <p className="text-lg font-bold text-slate-800">{dm.totalAmount.toLocaleString()} с.</p>
+            </div>
+            <div className="bg-emerald-50 rounded-xl p-3">
+              <p className="text-xs text-emerald-500 mb-0.5">Оплачено</p>
+              <p className="text-lg font-bold text-emerald-600">{dm.totalPaid.toLocaleString()} с.</p>
+            </div>
+            <div className={`rounded-xl p-3 ${totalRemaining > 0 ? 'bg-orange-50' : 'bg-emerald-50'}`}>
+              <p className={`text-xs mb-0.5 ${totalRemaining > 0 ? 'text-orange-500' : 'text-emerald-500'}`}>Остаток долга</p>
+              <p className={`text-lg font-bold ${totalRemaining > 0 ? 'text-orange-600' : 'text-emerald-600'}`}>
+                {totalRemaining > 0 ? `${totalRemaining.toLocaleString()} с.` : '✅ 0 с.'}
+              </p>
+            </div>
+            <div className="bg-blue-50 rounded-xl p-3">
+              <p className="text-xs text-blue-400 mb-0.5">Покупок в долг</p>
+              <p className="text-lg font-bold text-blue-600">{customerSales.length}</p>
+            </div>
           </div>
-          <div className="bg-emerald-50 rounded-xl p-4 text-center">
-            <p className="text-xs text-emerald-500 mb-1">Оплачено</p>
-            <p className="text-xl font-bold text-emerald-600">{(c.total_paid || 0).toLocaleString()} с.</p>
-          </div>
-          <div className="bg-blue-50 rounded-xl p-4 text-center">
-            <p className="text-xs text-blue-500 mb-1">Покупок в долг</p>
-            <p className="text-xl font-bold text-blue-600">{customerSales.length}</p>
-          </div>
+          {/* Общий прогресс-бар */}
+          {dm.totalAmount > 0 && (
+            <div>
+              <div className="flex justify-between text-xs text-slate-400 mb-1">
+                <span>Прогресс оплаты</span>
+                <span>{Math.round((dm.totalPaid / dm.totalAmount) * 100)}%</span>
+              </div>
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${totalRemaining <= 0 ? 'bg-emerald-500' : 'bg-orange-400'}`}
+                  style={{ width: `${Math.min(100, (dm.totalPaid / dm.totalAmount) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Список покупок с инлайн-историей */}
