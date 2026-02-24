@@ -26,7 +26,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Grid3x3,
-  List
+  List,
+  Clock
 } from 'lucide-react';
 import ViewToggle from '@/components/ui/ViewToggle';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
