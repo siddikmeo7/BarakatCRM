@@ -276,19 +276,28 @@ export default function Warehouses() {
               <p className="text-slate-500 text-sm text-center py-4">Товары не найдены</p>
             ) : (
               <div className="space-y-3">
+                {/* Итого по всем складам */}
+                <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 flex items-center justify-between">
+                  <span className="font-bold text-indigo-800 text-sm">📦 Итого по всем складам</span>
+                  <span className="font-bold text-indigo-700 text-xl">
+                    {globalSearchResults.reduce((total, { products: whProds }) =>
+                      total + whProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0), 0)} кор.
+                  </span>
+                </div>
+
                 {globalSearchResults.map(({ warehouse, products: whProds }) => (
                   <div key={warehouse?.id || 'unknown'} className="border border-slate-100 rounded-xl overflow-hidden">
                     <div className="bg-slate-50 px-4 py-2 flex items-center gap-2">
                       <WarehouseIconComp iconKey={warehouse?.icon} className="w-4 h-4 text-purple-600" />
                       <span className="font-semibold text-slate-700 text-sm">{warehouse?.name || 'Неизвестный склад'}</span>
-                      <span className="ml-auto text-xs text-slate-500">{whProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0)} кор. итого</span>
+                      <span className="ml-auto text-xs font-semibold text-purple-600">{whProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0)} кор.</span>
                     </div>
                     <div className="divide-y divide-slate-50">
                       {whProds.map(p => (
                         <div key={p.id} className="px-4 py-2.5 flex items-center justify-between">
                           <div>
                             <span className="font-medium text-slate-800 text-sm">{p.brand} {p.model}</span>
-                            <span className="ml-2 text-xs text-slate-400">{p.product_type}</span>
+                            <span className="ml-2 text-xs text-slate-400">{p.color} • {p.product_type}</span>
                           </div>
                           <span className="font-bold text-indigo-600 text-sm">{p.boxes_in_stock || 0} кор.</span>
                         </div>
