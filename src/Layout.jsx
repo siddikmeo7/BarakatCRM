@@ -177,24 +177,6 @@ export default function Layout({ children, currentPageName }) {
     return canAccess(item.permKey);
   });
 
-  const currentMenu = isAdmin && isAdminPage ? ADMIN_MENU_ITEMS : MENU_ITEMS;
-
-  // Если текущая страница недоступна сотруднику — редирект на первую доступную
-  useEffect(() => {
-    if (loading || !user || isAdmin) return;
-    const isOwnerUser = employeePermissions === null;
-    if (isOwnerUser) return;
-    const activeItem = ALL_MENU_ITEMS.find(item => item.name === currentPageName);
-    if (!activeItem) return;
-    if (activeItem.permKey && !employeePermissions?.[activeItem.permKey]) {
-      // Найдём первую доступную страницу
-      const firstAvailable = ALL_MENU_ITEMS.find(item => !item.permKey || employeePermissions?.[item.permKey]);
-      if (firstAvailable && firstAvailable.name !== currentPageName) {
-        navigate(createPageUrl(firstAvailable.name));
-      }
-    }
-  }, [loading, currentPageName, employeePermissions]);
-
   const DrawerContent = () => (
     <div className="flex flex-col h-full">
       {/* Drawer Header */}
