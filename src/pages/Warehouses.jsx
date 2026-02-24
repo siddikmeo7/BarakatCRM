@@ -62,8 +62,9 @@ export default function Warehouses() {
   const [view, setView] = useState('grid');
   
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
-  const [productSearch, setProductSearch] = useState(''); // поиск товара по всем складам
-  const [warehouseProductSearch, setWarehouseProductSearch] = useState(''); // поиск внутри склада
+  const [productSearch, setProductSearch] = useState(''); // поиск внутри склада
+  const [globalSearch, setGlobalSearch] = useState(''); // глобальный поиск по складам
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
