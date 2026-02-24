@@ -27,6 +27,12 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
     customer_id: '',
     partial_payment: ''
   });
+  const [allCustomers, setAllCustomers] = useState([]);
+
+  useEffect(() => {
+    // Загружаем всех клиентов бизнеса для поиска
+    base44.entities.Customer.filter({ business_id: sale.business_id }).then(setAllCustomers).catch(() => {});
+  }, [sale.business_id]);
 
   if (!sale) return null;
 
