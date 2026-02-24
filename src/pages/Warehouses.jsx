@@ -62,9 +62,8 @@ export default function Warehouses() {
   const [view, setView] = useState('grid');
   
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
-  const [productSearch, setProductSearch] = useState(''); // поиск внутри склада
-  const [globalSearch, setGlobalSearch] = useState(''); // глобальный поиск по складам
-  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [productSearch, setProductSearch] = useState(''); // поиск товара по всем складам
+  const [warehouseProductSearch, setWarehouseProductSearch] = useState(''); // поиск внутри склада
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -177,37 +176,40 @@ export default function Warehouses() {
     wh.address?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Товары выбранного склада (с фильтрацией по модели)
+  // Товары выбранного склада (с фильтрацией по поиску внутри склада)
   const warehouseProducts = selectedWarehouse 
     ? products.filter(p => {
-        if (!productSearch) return p.warehouse_id === selectedWarehouse.id;
-        const q = productSearch.toLowerCase();
-        return p.warehouse_id === selectedWarehouse.id && (
-          p.model?.toLowerCase().includes(q) ||
-          p.brand?.toLowerCase().includes(q) ||
-          p.product_type?.toLowerCase().includes(q)
-        );
+        if (p.warehouse_id !== selectedWarehouse.id) return false;
+        if (!warehouseProductSearch) return true;
+        const q = warehouseProductSearch.toLowerCase();
+        return (p.brand || '').toLowerCase().includes(q) || 
+               (p.model || '').toLowerCase().includes(q) ||
+               (p.product_type || '').toLowerCase().includes(q) ||
+               (p.color || '').toLowerCase().includes(q);
       })
     : [];
 
-  // Глобальный поиск: найти товар по всем складам
-  const globalSearchResults = globalSearch.trim().length > 0
+  // Глобальный поиск товара по всем складам
+  const globalProductResults = productSearch.trim()
     ? (() => {
-        const q = globalSearch.toLowerCase();
+        const q = productSearch.toLowerCase();
         const matched = products.filter(p =>
-          p.model?.toLowerCase().includes(q) ||
-          p.brand?.toLowerCase().includes(q) ||
-          p.product_type?.toLowerCase().includes(q)
+          (p.brand || '').toLowerCase().includes(q) ||
+          (p.model || '').toLowerCase().includes(q) ||
+          (p.product_type || '').toLowerCase().includes(q) ||
+          (p.color || '').toLowerCase().includes(q)
         );
-        // Группируем по складу
-        const byWarehouse = {};
+        // Группируем по (brand + model) и суммируем по складам
+        const grouped = {};
         matched.forEach(p => {
+          const key = `${p.brand}__${p.model}__${p.color}__${p.product_type}`;
+          if (!grouped[key]) {
+            grouped[key] = { brand: p.brand, model: p.model, color: p.color, product_type: p.product_type, byWarehouse: [] };
+          }
           const wh = warehouses.find(w => w.id === p.warehouse_id);
-          const key = wh?.id || 'unknown';
-          if (!byWarehouse[key]) byWarehouse[key] = { warehouse: wh, products: [] };
-          byWarehouse[key].products.push(p);
+          grouped[key].byWarehouse.push({ warehouseName: wh?.name || 'Без склада', boxes: p.boxes_in_stock || 0 });
         });
-        return Object.values(byWarehouse);
+        return Object.values(grouped);
       })()
     : [];
 
@@ -233,7 +235,7 @@ export default function Warehouses() {
       />
 
       {/* Search */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
         <div className="flex items-center justify-between">
           <SearchInput 
             value={search} 
@@ -243,6 +245,57 @@ export default function Warehouses() {
           />
           <ViewToggle view={view} onChange={setView} />
         </div>
+        {/* Глобальный поиск товара */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            value={productSearch}
+            onChange={e => setProductSearch(e.target.value)}
+            placeholder="🔍 Найти товар по всем складам (модель, бренд, тип)..."
+            className="w-full pl-9 pr-9 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          />
+          {productSearch && (
+            <button onClick={() => setProductSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+              <XIcon className="w-4 h-4 text-slate-400" />
+            </button>
+          )}
+        </div>
+        {/* Результаты глобального поиска */}
+        {globalProductResults.length > 0 && (
+          <div className="border border-slate-200 rounded-xl overflow-hidden">
+            <div className="bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Найдено товаров: {globalProductResults.length}
+            </div>
+            <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+              {globalProductResults.map((item, idx) => {
+                const totalBoxes = item.byWarehouse.reduce((s, w) => s + w.boxes, 0);
+                return (
+                  <div key={idx} className="px-4 py-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <div>
+                        <span className="font-semibold text-slate-900">{item.brand} {item.model}</span>
+                        {item.color && <span className="ml-2 text-xs text-slate-500">• {item.color}</span>}
+                        {item.product_type && <span className="ml-2 text-xs text-slate-400">{item.product_type}</span>}
+                      </div>
+                      <span className="font-bold text-indigo-600 text-lg">{totalBoxes} кор.</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {item.byWarehouse.map((wh, i) => (
+                        <span key={i} className="text-xs bg-purple-50 text-purple-700 rounded-lg px-2 py-1">
+                          {wh.warehouseName}: <strong>{wh.boxes}</strong> кор.
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {productSearch && globalProductResults.length === 0 && (
+          <p className="text-sm text-slate-400 text-center py-2">Товары не найдены</p>
+        )}
       </div>
 
       {/* Warehouses View */}
