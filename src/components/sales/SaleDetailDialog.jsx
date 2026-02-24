@@ -15,7 +15,7 @@ import { ru } from 'date-fns/locale';
 const MAX_EDITS = 5;
 
 export default function SaleDetailDialog({ sale, product, customer, onClose, onUpdated }) {
-  const [mode, setMode] = useState('view'); // view | edit | cancel | to_debt
+  const [mode, setMode] = useState('view'); // view | edit | cancel | convert_debt
   const [saving, setSaving] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [editData, setEditData] = useState({
@@ -23,9 +23,10 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
     sale_price: sale.sale_price,
     note: ''
   });
-  const [debtData, setDebtData] = useState({
+  const [debtConvert, setDebtConvert] = useState({
     customer_id: '',
-    partial_payment: ''
+    partial_payment: 0,
+    payment_due_date: ''
   });
 
   if (!sale) return null;
@@ -122,6 +123,62 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
         await base44.entities.Customer.update(customer.id, {
           total_debt: Math.max(0, (customer.total_debt || 0) + debtDiff)
         });
+      }
+
+      onUpdated();
+      setMode('view');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleConvertToDebt = async () => {
+    if (!debtConvert.customer_id) return;
+    setSaving(true);
+    try {
+      const partialPay = parseFloat(debtConvert.partial_payment) || 0;
+      const remainingDebt = sale.total_amount - partialPay;
+
+      // Обновляем продажу: меняем тип на долг
+      await base44.entities.Sale.update(sale.id, {
+        is_debt: true,
+        customer_id: debtConvert.customer_id,
+        partial_payment: partialPay,
+        payment_due_date: debtConvert.payment_due_date || null,
+        edit_count: editCount + 1,
+        edit_history: [...editHistory, {
+          edited_at: new Date().toISOString(),
+          boxes_sold: sale.boxes_sold,
+          sale_price: sale.sale_price,
+          total_amount: sale.total_amount,
+          profit: sale.profit,
+          note: 'Изменено с наличных на долг',
+          changes: [{ label: 'Тип оплаты', from: 'Наличные', to: 'В долг' }]
+        }]
+      });
+
+      // Обновляем долг клиента
+      const customerData = await base44.entities.Customer.filter({ id: debtConvert.customer_id });
+      if (customerData.length > 0) {
+        const cust = customerData[0];
+        await base44.entities.Customer.update(cust.id, {
+          total_debt: (cust.total_debt || 0) + remainingDebt,
+          total_paid: (cust.total_paid || 0) + partialPay
+        });
+
+        // Если была частичная оплата — записываем её
+        if (partialPay > 0) {
+          await base44.entities.DebtPayment.create({
+            business_id: sale.business_id,
+            customer_id: debtConvert.customer_id,
+            sale_id: sale.id,
+            amount: partialPay,
+            note: 'Частичная оплата при переводе в долг',
+            payment_date: new Date().toISOString()
+          });
+        }
       }
 
       onUpdated();
