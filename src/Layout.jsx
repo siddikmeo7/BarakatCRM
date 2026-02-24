@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
 const ALL_MENU_ITEMS = [
-  { name: 'Dashboard',    icon: LayoutDashboard, labelKey: 'nav_dashboard', color: 'text-indigo-500',  activeBg: 'bg-indigo-500',  activeText: 'text-indigo-600', permKey: null },
+  { name: 'Dashboard',    icon: LayoutDashboard, labelKey: 'nav_dashboard', color: 'text-indigo-500',  activeBg: 'bg-indigo-500',  activeText: 'text-indigo-600', permKey: 'view_dashboard' },
   { name: 'Analytics',   icon: TrendingUp,       labelKey: 'nav_analytics', color: 'text-emerald-500', activeBg: 'bg-emerald-500', activeText: 'text-emerald-600', permKey: 'view_analytics' },
   { name: 'Products',    icon: Package,          labelKey: 'nav_products',  color: 'text-blue-500',    activeBg: 'bg-blue-500',    activeText: 'text-blue-600', permKey: 'view_products' },
   { name: 'Warehouses',  icon: Warehouse,        labelKey: 'nav_warehouses',color: 'text-orange-500',  activeBg: 'bg-orange-500',  activeText: 'text-orange-600', permKey: 'view_warehouses' },
@@ -83,15 +83,9 @@ export default function Layout({ children, currentPageName }) {
     if (user.email === ADMIN_EMAIL) return;
     if (employeePermissions === null) return; // владелец — полный доступ
     const activeItem = ALL_MENU_ITEMS.find(item => item.name === currentPageName);
-    // Если страница требует разрешения и его нет — редирект
-    const hasAccess = !activeItem || !activeItem.permKey || !!employeePermissions?.[activeItem.permKey];
-    // Dashboard не требует permKey, но если сотрудник пришёл на Dashboard и у него нет view_dashboard — редирект
-    const dashboardBlocked = currentPageName === 'Dashboard' && employeePermissions?.view_dashboard === false;
-    if (!hasAccess || dashboardBlocked) {
-      const firstAvailable = ALL_MENU_ITEMS.find(item => {
-        if (item.name === 'Dashboard' && employeePermissions?.view_dashboard === false) return false;
-        return !item.permKey || !!employeePermissions?.[item.permKey];
-      });
+    if (!activeItem) return;
+    if (activeItem.permKey && !employeePermissions?.[activeItem.permKey]) {
+      const firstAvailable = ALL_MENU_ITEMS.find(item => !item.permKey || employeePermissions?.[item.permKey]);
       if (firstAvailable && firstAvailable.name !== currentPageName) {
         navigate(createPageUrl(firstAvailable.name));
       }
