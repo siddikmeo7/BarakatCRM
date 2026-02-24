@@ -15,13 +15,18 @@ import { ru } from 'date-fns/locale';
 const MAX_EDITS = 5;
 
 export default function SaleDetailDialog({ sale, product, customer, onClose, onUpdated }) {
-  const [mode, setMode] = useState('view'); // view | edit | cancel
+  const [mode, setMode] = useState('view'); // view | edit | cancel | convert_debt
   const [saving, setSaving] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [editData, setEditData] = useState({
     boxes_sold: sale.boxes_sold,
     sale_price: sale.sale_price,
     note: ''
+  });
+  const [debtConvert, setDebtConvert] = useState({
+    customer_id: '',
+    partial_payment: 0,
+    payment_due_date: ''
   });
 
   if (!sale) return null;
