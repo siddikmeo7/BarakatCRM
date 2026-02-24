@@ -235,10 +235,14 @@ export default function Sales() {
   // Фильтрация продаж для отображения в списке (все, включая отменённые)
   let filteredSales = sales.filter(sale => {
     const product = products.find(p => p.id === sale.product_id);
+    const customer = customers.find(c => c.id === sale.customer_id);
     const matchesSearch = !search ||
       product?.brand?.toLowerCase().includes(search.toLowerCase()) ||
-      product?.model?.toLowerCase().includes(search.toLowerCase());
+      product?.model?.toLowerCase().includes(search.toLowerCase()) ||
+      customer?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      sale.customer_name?.toLowerCase().includes(search.toLowerCase());
     const matchesWarehouse = filterWarehouse === 'all' || sale.warehouse_id === filterWarehouse;
+    const matchesCustomer = filterCustomer === 'all' || sale.customer_id === filterCustomer;
     
     let matchesDate = true;
     if (dateRange?.from) {
@@ -246,7 +250,7 @@ export default function Sales() {
       matchesDate = isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to || dateRange.from });
     }
     
-    return matchesSearch && matchesWarehouse && matchesDate;
+    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer;
   });
 
   // Сортировка
