@@ -334,6 +334,7 @@ export default function Customers() {
               })}
             </tbody>
           </table>
+          </div>
           {/* Pagination list */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-1.5 py-3 border-t border-slate-100 flex-wrap">
