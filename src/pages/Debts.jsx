@@ -775,7 +775,7 @@ export default function Debts() {
           return (
             <div key={c.id}
               onClick={() => setSelectedCustomer(c)}
-              className={`rounded-2xl shadow-sm p-4 cursor-pointer transition-all border ${
+              className={`p-4 cursor-pointer transition-all ${
                 isOverdue
                   ? 'bg-red-50 border-red-300 hover:border-red-400 animate-pulse-border'
                   : isDueToday
