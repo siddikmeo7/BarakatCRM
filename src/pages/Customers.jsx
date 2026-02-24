@@ -285,10 +285,12 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {paginatedCustomers.map(customer => {
+              {paginatedCustomers.map((customer, idx) => {
                 const whatsappNum = customer.use_phone_for_all ? customer.phone : (customer.whatsapp || customer.phone);
+                const rowNum = (page - 1) * PAGE_SIZE + idx + 1;
                 return (
                   <tr key={customer.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 text-sm text-slate-400 font-medium">{rowNum}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
