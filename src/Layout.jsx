@@ -192,6 +192,8 @@ export default function Layout({ children, currentPageName }) {
     return canAccess(item.permKey);
   });
 
+  const currentMenu = isAdmin && isAdminPage ? ADMIN_MENU_ITEMS : MENU_ITEMS;
+
   const DrawerContent = () => (
     <div className="flex flex-col h-full">
       {/* Drawer Header */}
