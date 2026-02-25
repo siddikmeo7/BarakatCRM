@@ -58,32 +58,38 @@ const GROUPS = {
 
 const PRESETS = {
   seller: {
-    label: 'Продавец',
+    label: '🛍️ Продавец',
     permissions: {
-      view_analytics: false, view_profit: false,
-      view_products: true,   add_products: true,    edit_products: false, delete_products: false,
-      view_sales: true,      add_sales: true,        edit_sales: false,    cancel_sales: false,
+      view_dashboard: true, view_analytics: false, view_profit: false, view_stock_value: false, view_purchase_price: false,
+      view_products: true, add_products: false, edit_products: false, delete_products: false, move_products: false,
+      view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false, manage_discounts: false,
       view_warehouses: true, manage_warehouses: false,
-      view_customers: true,  manage_customers: false,
-      view_debts: false,     manage_debts: false,
-      manage_returns: false, view_activity_log: false, manage_employees: false,
+      view_customers: true, manage_customers: false,
+      view_debts: false, manage_debts: false,
+      manage_returns: false, view_activity_log: false, export_reports: false,
+      manage_employees: false, manage_roles: false, manage_settings: false, view_settings_language: true,
     }
   },
   manager: {
-    label: 'Менеджер',
+    label: '👔 Менеджер',
     permissions: {
-      view_analytics: true,  view_profit: false,
-      view_products: true,   add_products: true,    edit_products: true,  delete_products: false,
-      view_sales: true,      add_sales: true,        edit_sales: true,     cancel_sales: false,
+      view_dashboard: true, view_analytics: true, view_profit: false, view_stock_value: false, view_purchase_price: false,
+      view_products: true, add_products: true, edit_products: true, delete_products: false, move_products: true,
+      view_sales: true, add_sales: true, edit_sales: true, cancel_sales: false, manage_discounts: true,
       view_warehouses: true, manage_warehouses: false,
-      view_customers: true,  manage_customers: true,
-      view_debts: true,      manage_debts: true,
-      manage_returns: true,  view_activity_log: false, manage_employees: false,
+      view_customers: true, manage_customers: true,
+      view_debts: true, manage_debts: true,
+      manage_returns: true, view_activity_log: false, export_reports: false,
+      manage_employees: false, manage_roles: false, manage_settings: false, view_settings_language: true,
     }
   },
   admin: {
-    label: 'Администратор',
+    label: '👑 Администратор',
     permissions: Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, true]))
+  },
+  none: {
+    label: '🚫 Без прав',
+    permissions: Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false]))
   }
 };
 
