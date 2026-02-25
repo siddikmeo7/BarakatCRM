@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import BackupExportPanel from '@/components/settings/BackupExportPanel';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, formatDistanceToNow } from 'date-fns';
+import { ru as dateFnsRu } from 'date-fns/locale';
 import { ru } from 'date-fns/locale';
 import { 
   Settings as SettingsIcon, 
