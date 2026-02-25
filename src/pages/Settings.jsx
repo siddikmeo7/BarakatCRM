@@ -1208,7 +1208,7 @@ export default function Settings() {
               />
             )}
           </CollapsibleContent>
-        </Collapsible>}
+        </Collapsible> : null}
 
         {/* Notifications Settings — всем */}
         <Collapsible open={expandedSections.notifications} onOpenChange={(open) => setExpandedSections({...expandedSections, notifications: open})}>
