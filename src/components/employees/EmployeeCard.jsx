@@ -133,6 +133,41 @@ export default function EmployeeCard({ employee, onEdit, onDelete }) {
       {/* Expanded: detailed info */}
       {expanded && (
         <div className="border-t border-slate-100 bg-slate-50 p-4 space-y-3">
+          {/* Login Credentials */}
+          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 space-y-2">
+            <p className="text-xs font-semibold text-indigo-800">🔑 Данные для входа</p>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between bg-white rounded-lg px-2.5 py-1.5 border border-indigo-100">
+                <div className="min-w-0">
+                  <p className="text-xs text-slate-400">Email</p>
+                  <p className="text-xs font-mono font-semibold text-slate-900 truncate">{employee.user_email}</p>
+                </div>
+                <button
+                  onClick={() => navigator.clipboard.writeText(employee.user_email)}
+                  className="p-1 hover:bg-indigo-50 rounded flex-shrink-0 ml-2"
+                  title="Копировать"
+                >
+                  <Copy className="w-3.5 h-3.5 text-indigo-500" />
+                </button>
+              </div>
+              {employee.login_session_token && (
+                <div className="flex items-center justify-between bg-white rounded-lg px-2.5 py-1.5 border border-indigo-100">
+                  <div className="min-w-0">
+                    <p className="text-xs text-slate-400">Код входа</p>
+                    <p className="text-xs font-mono font-bold text-indigo-700 tracking-widest">{employee.login_session_token}</p>
+                  </div>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(employee.login_session_token)}
+                    className="p-1 hover:bg-indigo-50 rounded flex-shrink-0 ml-2"
+                    title="Копировать"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-indigo-500" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Last login detail */}
           {employee.last_login_at ? (
             <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-100">
@@ -145,12 +180,12 @@ export default function EmployeeCard({ employee, onEdit, onDelete }) {
                 <p className="text-xs text-slate-400">{formatDistanceToNow(new Date(employee.last_login_at), { addSuffix: true, locale: dateFnsRu })}</p>
               </div>
             </div>
-          ) : (
+           ) : (
             <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-100">
               <LogIn className="w-4 h-4 text-slate-300 flex-shrink-0" />
               <p className="text-sm text-slate-400 italic">Ещё не входил в систему</p>
             </div>
-          )}
+           )}
 
           {/* Permissions */}
           {!employee.is_admin && (
