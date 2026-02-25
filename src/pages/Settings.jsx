@@ -1285,6 +1285,27 @@ export default function Settings() {
                 </div>
               </div>
 
+              {/* Выйти со всех устройств */}
+              <div className="p-4 border border-orange-200 bg-orange-50 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <LogOut className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-orange-900 mb-1">Выйти со всех устройств</h4>
+                    <p className="text-sm text-orange-700 mb-3">
+                      Принудительно завершить все активные сессии на других устройствах и браузерах. Текущее устройство останется активным.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="text-orange-700 border-orange-300 hover:bg-orange-100 gap-2"
+                      onClick={handleRevokeAllSessions}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Выйти со всех устройств
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               {/* Резервное копирование и Экспорт */}
               <BackupExportPanel business={business} onBackupJSON={handleBackup} />
 
