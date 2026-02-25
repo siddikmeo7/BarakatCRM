@@ -506,7 +506,7 @@ export default function Settings() {
       />
 
       {/* Аккаунт карточка */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
@@ -517,7 +517,17 @@ export default function Settings() {
             <div>
               <p className="font-semibold text-slate-900">{user?.full_name || t(lang,'settings_user')}</p>
               <p className="text-sm text-slate-500">{user?.email}</p>
-              <p className="text-xs text-slate-400">{user?.role === 'admin' ? t(lang,'settings_admin_role') : t(lang,'settings_user')}</p>
+              {/* Статус пользователя */}
+              {(() => {
+                const emp = window.__barakatEmployee;
+                if (!emp) {
+                  return <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium mt-0.5">👑 Владелец</span>;
+                } else if (emp.is_admin) {
+                  return <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium mt-0.5">🛡️ Администратор</span>;
+                } else {
+                  return <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium mt-0.5">👤 Сотрудник</span>;
+                }
+              })()}
             </div>
           </div>
           <Button 
@@ -533,6 +543,52 @@ export default function Settings() {
             {t(lang, 'settings_logout')}
           </Button>
         </div>
+
+        {/* Разрешения сотрудника */}
+        {(() => {
+          const emp = window.__barakatEmployee;
+          if (!emp) return null;
+          const PERM_LABELS = {
+            view_dashboard: 'Дашборд', view_analytics: 'Аналитика', view_profit: 'Прибыль',
+            view_stock_value: 'Стоимость склада', view_purchase_price: 'Цена закупки',
+            view_products: 'Просмотр товаров', add_products: 'Добавление товаров',
+            edit_products: 'Редакт. товары', delete_products: 'Удаление товаров', move_products: 'Перемещение',
+            view_sales: 'Просмотр продаж', add_sales: 'Продажи', edit_sales: 'Редакт. продаж',
+            cancel_sales: 'Отмена продаж', manage_discounts: 'Скидки',
+            view_warehouses: 'Склады', manage_warehouses: 'Управление складами',
+            view_customers: 'Клиенты', manage_customers: 'Управление клиентами',
+            view_debts: 'Долги', manage_debts: 'Управление долгами',
+            manage_returns: 'Возвраты', view_activity_log: 'История',
+            export_reports: 'Экспорт', manage_employees: 'Сотрудники',
+            manage_roles: 'Роли', manage_settings: 'Настройки',
+          };
+          if (emp.is_admin) {
+            return (
+              <div className="border-t border-slate-100 pt-3">
+                <p className="text-xs font-medium text-slate-500 mb-2">Разрешения:</p>
+                <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <p className="text-xs text-emerald-700 font-medium">✅ Полный доступ — все разрешения как у владельца</p>
+                </div>
+              </div>
+            );
+          }
+          const granted = Object.entries(emp.permissions || {}).filter(([, v]) => v);
+          const denied = Object.entries(emp.permissions || {}).filter(([, v]) => !v);
+          return (
+            <div className="border-t border-slate-100 pt-3">
+              <p className="text-xs font-medium text-slate-500 mb-2">Ваши разрешения:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {granted.length === 0 && <span className="text-xs text-slate-400 italic">Нет разрешений</span>}
+                {granted.map(([k]) => (
+                  <span key={k} className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">{PERM_LABELS[k] || k}</span>
+                ))}
+                {denied.map(([k]) => (
+                  <span key={k} className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded text-xs line-through">{PERM_LABELS[k] || k}</span>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       <div className="space-y-2">
