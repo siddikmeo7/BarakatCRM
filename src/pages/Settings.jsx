@@ -128,13 +128,6 @@ export default function Settings() {
   const [empLoginLoading, setEmpLoginLoading] = useState(false);
   const [empLoginError, setEmpLoginError] = useState('');
 
-  // History state
-  const [activityLogs, setActivityLogs] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [historySearch, setHistorySearch] = useState('');
-  const [historyFilter, setHistoryFilter] = useState('all'); // all, delete, update
-  const [historyEntityFilter, setHistoryEntityFilter] = useState('all');
-  const [historyDetailLog, setHistoryDetailLog] = useState(null);
   const [deleteAccountDialog, setDeleteAccountDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [editingEmployee, setEditingEmployee] = useState(null);
