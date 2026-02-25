@@ -172,7 +172,7 @@ export default function Layout({ children, currentPageName }) {
                 if (bizList.length > 0) {
                   setBusiness(bizList[0]);
                   setLang(bizList[0].language || 'ru');
-                  setEmployeePermissions(activeEmp.permissions || {});
+                  setEmployeePermissions(activeEmp.is_admin ? null : (activeEmp.permissions || {}));
                   window.__barakatEmployee = activeEmp;
                   window.__barakatBusiness = bizList[0];
                 }
