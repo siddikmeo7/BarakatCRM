@@ -67,9 +67,25 @@ export default function ActivityLog() {
     setSelected(new Set());
     try {
       const user = await base44.auth.me();
-      const businesses = await base44.entities.Business.filter({ owner_email: user.email });
-      if (businesses.length > 0) {
-        const biz = businesses[0];
+
+      // Поддержка режима сотрудника
+      const savedMode = sessionStorage.getItem('barakatcrm_mode');
+      let biz = null;
+
+      if (savedMode && savedMode.startsWith('employee_')) {
+        const emp = window.__barakatEmployee;
+        if (emp?.business_id) {
+          const bizList = await base44.entities.Business.filter({ id: emp.business_id });
+          if (bizList.length > 0) biz = bizList[0];
+        }
+      }
+
+      if (!biz) {
+        const businesses = await base44.entities.Business.filter({ owner_email: user.email });
+        if (businesses.length > 0) biz = businesses[0];
+      }
+
+      if (biz) {
         setBusiness(biz);
         const logsData = await base44.entities.ActivityLog.filter({ business_id: biz.id });
         setLogs(logsData.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
