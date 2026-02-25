@@ -136,7 +136,8 @@ export default function Debts() {
     const { sale } = payDialog;
     const paidSoFar = getSalePaidAmount(sale.id);
     const saleRemaining = (sale.total_amount || 0) - paidSoFar;
-    const actualAmount = amount; // Разрешаем принять любую сумму, даже больше долга
+    if (amount > saleRemaining) return;
+    const actualAmount = amount;
 
     setSaving(true);
     try {
@@ -200,6 +201,10 @@ export default function Debts() {
     if (!selectedCustomer || !bulkPayAmount) return;
     let remaining = parseFloat(bulkPayAmount);
     if (!remaining || remaining <= 0) return;
+    const totalRemainingDebt = customerSales
+      .filter(s => !s.is_cancelled)
+      .reduce((sum, s) => sum + Math.max(0, (s.total_amount || 0) - getSalePaidAmount(s.id)), 0);
+    if (remaining > totalRemainingDebt) return;
     setBulkPaySaving(true);
     try {
       const customer = selectedCustomer;
