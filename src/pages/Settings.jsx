@@ -62,8 +62,8 @@ export default function Settings() {
   // Проверяем режим сотрудника
   const savedMode = sessionStorage.getItem('barakatcrm_mode');
   const isEmployeeMode = savedMode && savedMode.startsWith('employee_');
-  // Проверяем: является ли сотрудник администратором (полный доступ)
-  const currentEmployee = window.__barakatEmployee;
+  // Реактивное состояние сотрудника — обновляется после loadData
+  const [currentEmployee, setCurrentEmployee] = useState(() => window.__barakatEmployee || null);
   const isEmployeeAdmin = currentEmployee?.is_admin === true;
   const [business, setBusiness] = useState(null);
   const [employees, setEmployees] = useState([]);
