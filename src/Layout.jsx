@@ -125,20 +125,6 @@ export default function Layout({ children, currentPageName }) {
                   const bizList = await base44.entities.Business.filter({ id: emp.business_id });
                   if (bizList.length > 0) {
                     const biz = bizList[0];
-                    // Проверяем: сессионный токен актуален?
-                    const storedToken = sessionStorage.getItem(`session_token_${emp.id}`);
-                    if (emp.login_session_token && storedToken && storedToken !== emp.login_session_token) {
-                      // Владелец сменил код — выбрасываем сотрудника
-                      sessionStorage.removeItem('barakatcrm_mode');
-                      alert('Коды доступа к бизнесу были изменены владельцем. Войдите заново с новыми кодами.');
-                      setLoading(false);
-                      if (currentPageName !== 'BusinessAccess') navigate(createPageUrl('BusinessAccess'));
-                      return;
-                    }
-                    // Сохраняем токен текущей сессии
-                    if (emp.login_session_token) {
-                      sessionStorage.setItem(`session_token_${emp.id}`, emp.login_session_token);
-                    }
                     setBusiness(biz);
                     setLang(biz.language || 'ru');
                     // Если сотрудник — администратор, даём полный доступ (null = как у владельца)
