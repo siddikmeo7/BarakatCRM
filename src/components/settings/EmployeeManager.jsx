@@ -122,7 +122,7 @@ function EmployeeCard({ employee, business, onDelete, onUpdate }) {
 
   const handleSavePerms = async () => {
     setSaving(true);
-    await base44.entities.Employee.update(employee.id, { permissions: perms });
+    await base44.entities.Employee.update(employee.id, { permissions: perms, is_admin: isAdmin });
     onUpdate();
     setEditing(false);
     setSaving(false);
