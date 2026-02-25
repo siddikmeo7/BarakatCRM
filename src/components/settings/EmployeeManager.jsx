@@ -471,7 +471,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
 
                   <Button
                     onClick={() => setStep(2)}
-                    disabled={!form.name || !form.user_email}
+                    disabled={!form.name || !form.user_email || !form.password}
                     className="w-full bg-indigo-600 hover:bg-indigo-700"
                   >
                     Далее — Настроить права →
