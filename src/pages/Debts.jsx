@@ -391,6 +391,11 @@ export default function Debts() {
             {c.phone && <p className="text-sm text-slate-500 flex items-center gap-1"><Phone className="w-3 h-3" />{c.phone}</p>}
           </div>
           <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline"
+              onClick={() => { setAddDebtData({ customer_id: c.id, new_customer_name: '', new_customer_phone: '', amount: '', note: '', is_new_customer: false }); setAddDebtOpen(true); }}
+              className="gap-1.5 text-xs border-orange-300 text-orange-700 hover:bg-orange-50">
+              <Plus className="w-3.5 h-3.5" /> Добавить долг
+            </Button>
             {(customerDebtMap[c.id]?.totalAmount - customerDebtMap[c.id]?.totalPaid) > 0 && (
               <Button size="sm" onClick={() => { setBulkPayOpen(true); setBulkPayAmount(''); }}
                 className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 text-xs">
