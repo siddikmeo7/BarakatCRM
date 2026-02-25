@@ -631,18 +631,15 @@ export default function Debts() {
                   placeholder="Введите сумму..."
                 />
                 {bulkPayAmount && parseFloat(bulkPayAmount) > 0 && (
-                  <p className={`text-xs mt-1 ${parseFloat(bulkPayAmount) > (selectedCustomer?.total_debt || 0) ? 'text-blue-600' : 'text-emerald-600'}`}>
-                    Остаток после оплаты: {Math.max(0, (selectedCustomer?.total_debt || 0) - parseFloat(bulkPayAmount)).toLocaleString()} с.
-                    {parseFloat(bulkPayAmount) > (selectedCustomer?.total_debt || 0) && (
-                      <span className="ml-1 text-blue-500">(клиент переплатил {(parseFloat(bulkPayAmount) - (selectedCustomer?.total_debt || 0)).toLocaleString()} с.)</span>
-                    )}
-                  </p>
+                  parseFloat(bulkPayAmount) > (selectedCustomer?.total_debt || 0)
+                    ? <p className="text-xs text-red-500 mt-1">⚠️ Сумма превышает долг клиента ({(selectedCustomer?.total_debt || 0).toLocaleString()} с.)</p>
+                    : <p className="text-xs text-emerald-600 mt-1">Остаток после оплаты: {((selectedCustomer?.total_debt || 0) - parseFloat(bulkPayAmount)).toLocaleString()} с.</p>
                 )}
               </div>
               <div className="flex gap-3 pt-1">
                 <Button variant="outline" className="flex-1" onClick={() => { setBulkPayOpen(false); setBulkPayAmount(''); }}>Отмена</Button>
                 <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                  disabled={bulkPaySaving || !bulkPayAmount || parseFloat(bulkPayAmount) <= 0}
+                  disabled={bulkPaySaving || !bulkPayAmount || parseFloat(bulkPayAmount) <= 0 || parseFloat(bulkPayAmount) > (selectedCustomer?.total_debt || 0)}
                   onClick={handleBulkPayment}>
                   {bulkPaySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Погасить'}
                 </Button>
