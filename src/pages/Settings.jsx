@@ -162,6 +162,18 @@ export default function Settings() {
             const biz = bizList[0];
             setBusiness(biz);
             setLang(biz.language || 'ru');
+            setFormData({
+              name: biz.name || '',
+              phone: biz.phone || '',
+              address: biz.address || '',
+              language: biz.language || 'ru',
+              default_color: biz.default_color || 'Чёрный',
+              default_size_from: biz.default_size_from || 39,
+              default_size_to: biz.default_size_to || 44,
+              default_pairs_per_box: biz.default_pairs_per_box || 6,
+              default_product_type: biz.default_product_type || 'Туфли',
+              low_stock_limit: biz.low_stock_limit ?? 2
+            });
           }
         }
         setLoading(false);
