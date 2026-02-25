@@ -1458,7 +1458,7 @@ export default function Settings() {
             </div>
           </div>
           <ChevronDown className="w-5 h-5 text-slate-400 -rotate-90" />
-        </div>
+        </div>}
 
         {/* Employee Login Section */}
         <Collapsible open={expandedSections.employee_login} onOpenChange={(open) => setExpandedSections({...expandedSections, employee_login: open})}>
