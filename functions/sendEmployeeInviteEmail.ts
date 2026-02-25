@@ -76,7 +76,6 @@ Deno.serve(async (req) => {
     .content { background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
     .info-block { background: white; padding: 15px; border-left: 4px solid #667eea; margin-bottom: 15px; border-radius: 5px; }
     .label { font-weight: bold; color: #667eea; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
-    .code-box { background: #f0f0f0; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 16px; font-weight: bold; letter-spacing: 2px; }
     .footer { color: #666; font-size: 12px; text-align: center; }
     .step { margin-bottom: 15px; }
     .step-number { display: inline-block; background: #667eea; color: white; width: 25px; height: 25px; border-radius: 50%; text-align: center; line-height: 25px; margin-right: 10px; font-weight: bold; }
@@ -98,40 +97,30 @@ Deno.serve(async (req) => {
         <div style="font-size: 14px; color: #333;">${roleName}</div>
       </div>
 
-      <div class="info-block">
-        <div class="label">🔑 Код для входа в бизнес</div>
-        <div class="code-box">${loginCode}</div>
-      </div>
-
-      <div class="info-block">
-        <div class="label">🔐 Код доступа</div>
-        <div class="code-box">${accessCode}</div>
-      </div>
-
       ${permissionsHtml}
 
       <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin-top: 20px;">
         <h3 style="margin-top: 0; color: #1967d2;">📝 Как войти в систему:</h3>
         <div class="step">
           <span class="step-number">1</span>
-          <strong>Перейдите на страницу входа</strong>
+          <strong>Перейдите на страницу входа BarakatCRM</strong>
         </div>
         <div class="step">
           <span class="step-number">2</span>
-          <strong>Выберите "Войти как сотрудник"</strong>
+          <strong>Введите вашу почту:</strong> ${email}
         </div>
         <div class="step">
           <span class="step-number">3</span>
-          <strong>Введите код бизнеса и код доступа</strong> из письма выше
+          <strong>Введите ваш пароль</strong> (установленный в вашем аккаунте)
         </div>
         <div class="step">
           <span class="step-number">4</span>
-          <strong>Используйте вашу почту</strong> ${email}
+          <strong>После входа выберите роль сотрудника</strong> в бизнесе "${businessName}"
         </div>
       </div>
 
       <p style="color: #666; font-size: 12px; margin-top: 20px;">
-        ℹ️ Сохраните эти коды в безопасном месте. Их можно будет запросить у владельца бизнеса.
+        ℹ️ Владелец бизнеса уже авторизовал вас в системе. Если у вас возникли вопросы, обратитесь к владельцу.
       </p>
     </div>
 
