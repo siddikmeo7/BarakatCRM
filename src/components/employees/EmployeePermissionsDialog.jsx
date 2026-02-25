@@ -110,6 +110,7 @@ const PERMISSION_GROUPS = [
 export default function EmployeePermissionsDialog({ employee, onClose, onSaved }) {
   const [permissions, setPermissions] = useState(employee?.permissions || {});
   const [isFrozen, setIsFrozen] = useState(employee?.is_frozen || false);
+  const [isAdmin, setIsAdmin] = useState(employee?.is_admin || false);
   const [saving, setSaving] = useState(false);
 
   const toggle = (key) => {
