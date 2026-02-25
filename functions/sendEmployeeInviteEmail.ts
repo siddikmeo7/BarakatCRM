@@ -55,11 +55,16 @@ Deno.serve(async (req) => {
 
     const grantedPerms = Object.entries(permissions || {})
       .filter(([, v]) => v)
-      .map(([k]) => PERM_LABELS[k] || k)
-      .join(', ');
+      .map(([k]) => PERM_LABELS[k] || k);
 
-    const emailBody = `
-<!DOCTYPE html>
+    const permissionsHtml = grantedPerms.length > 0 
+      ? `<div style="background: white; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+           <div style="font-weight: bold; color: #667eea; font-size: 12px; text-transform: uppercase; margin-bottom: 10px;">📋 Ваши разрешения</div>
+           <div>${grantedPerms.map(perm => `<span style="display: inline-block; background: #e8f0fe; color: #1967d2; padding: 5px 10px; border-radius: 20px; margin: 5px 5px 5px 0; font-size: 12px;">${perm}</span>`).join('')}</div>
+         </div>`
+      : '';
+
+    const emailBody = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -71,12 +76,9 @@ Deno.serve(async (req) => {
     .content { background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
     .info-block { background: white; padding: 15px; border-left: 4px solid #667eea; margin-bottom: 15px; border-radius: 5px; }
     .label { font-weight: bold; color: #667eea; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
-    .value { font-size: 14px; color: #333; font-family: monospace; word-break: break-all; }
     .code-box { background: #f0f0f0; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 16px; font-weight: bold; letter-spacing: 2px; }
-    .permissions { background: white; padding: 15px; border-radius: 5px; }
-    .permission-item { display: inline-block; background: #e8f0fe; color: #1967d2; padding: 5px 10px; border-radius: 20px; margin: 5px 5px 5px 0; font-size: 12px; }
     .footer { color: #666; font-size: 12px; text-align: center; }
-    .step { margin-bottom: 20px; }
+    .step { margin-bottom: 15px; }
     .step-number { display: inline-block; background: #667eea; color: white; width: 25px; height: 25px; border-radius: 50%; text-align: center; line-height: 25px; margin-right: 10px; font-weight: bold; }
   </style>
 </head>
@@ -89,11 +91,11 @@ Deno.serve(async (req) => {
 
     <div class="content">
       <p>Привет, <strong>${employeeName}</strong>!</p>
-      <p>${user.full_name || 'Владелец'} добавил(а) вас как сотрудника в бизнес <strong>${businessName}</strong>.</p>
+      <p>${user.full_name || 'Владелец'} добавил вас как сотрудника в бизнес <strong>${businessName}</strong>.</p>
 
       <div class="info-block">
         <div class="label">Ваша роль</div>
-        <div class="value">${roleName}</div>
+        <div style="font-size: 14px; color: #333;">${roleName}</div>
       </div>
 
       <div class="info-block">
@@ -106,14 +108,7 @@ Deno.serve(async (req) => {
         <div class="code-box">${accessCode}</div>
       </div>
 
-      ${grantedPerms ? `
-      <div class="permissions">
-        <div class="label">📋 Ваши разрешения</div>
-        <div style="margin-top: 10px;">
-          ${grantedPerms.split(', ').map(perm => `<span class="permission-item">${perm}</span>`).join('')}
-        </div>
-      </div>
-      ` : ''}
+      ${permissionsHtml}
 
       <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin-top: 20px;">
         <h3 style="margin-top: 0; color: #1967d2;">📝 Как войти в систему:</h3>
@@ -146,8 +141,7 @@ Deno.serve(async (req) => {
     </div>
   </div>
 </body>
-</html>
-    `;
+</html>`;
 
     const result = await base44.integrations.Core.SendEmail({
       to: email,
