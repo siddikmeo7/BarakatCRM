@@ -285,6 +285,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     setForm({ name: '', user_email: '', phone: '', role: 'Продавец', permissions: { ...PRESETS.seller.permissions } });
     setStep(1);
     setInviteSent(false);
+    setCreatedCode('');
   };
 
   const handlePreset = (presetKey) => {
