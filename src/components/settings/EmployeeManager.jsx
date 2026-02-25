@@ -244,7 +244,7 @@ function EmployeeCard({ employee, business, onDelete, onUpdate }) {
             </div>
           )}
 
-          {Object.entries(groupedPerms).map(([group, items]) => (
+          {!isAdmin && Object.entries(groupedPerms).map(([group, items]) => (
             <div key={group}>
               <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full', GROUPS[group]?.color)}>{GROUPS[group]?.label}</span>
               <div className="flex flex-wrap gap-2 mt-2">
