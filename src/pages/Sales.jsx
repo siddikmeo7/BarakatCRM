@@ -81,6 +81,15 @@ export default function Sales() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (!showCustomerDropdown) return;
+    const handler = (e) => {
+      if (!e.target.closest('.customer-filter-dropdown')) setShowCustomerDropdown(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showCustomerDropdown]);
+
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
