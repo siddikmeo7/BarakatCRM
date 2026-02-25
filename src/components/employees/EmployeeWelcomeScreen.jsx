@@ -31,6 +31,7 @@ const PERM_LABELS = {
 
 export default function EmployeeWelcomeScreen({ employee, business, onContinue }) {
   const [user, setUser] = useState(null);
+  const isAdmin = employee?.is_admin;
 
   useEffect(() => {
     base44.auth.me().then(u => setUser(u)).catch(() => {});
@@ -40,8 +41,8 @@ export default function EmployeeWelcomeScreen({ employee, business, onContinue }
     }
   }, [employee?.id]);
 
-  const grantedPerms = Object.entries(employee?.permissions || {}).filter(([, v]) => v);
-  const deniedPerms = Object.entries(employee?.permissions || {}).filter(([, v]) => !v);
+  const grantedPerms = isAdmin ? Object.entries(PERM_LABELS).map(([key]) => [key, true]) : Object.entries(employee?.permissions || {}).filter(([, v]) => v);
+  const deniedPerms = isAdmin ? [] : Object.entries(employee?.permissions || {}).filter(([, v]) => !v);
 
   return (
     <div className="fixed inset-0 z-50 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center p-4">
