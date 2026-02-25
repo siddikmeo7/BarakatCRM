@@ -977,6 +977,11 @@ export default function Settings() {
                           <p className="font-medium text-slate-900">{employee.name}</p>
                           <p className="text-sm text-slate-500">{employee.user_email}</p>
                           {employee.phone && <p className="text-xs text-slate-400">{employee.phone}</p>}
+                          {employee.last_login_at ? (
+                            <p className="text-xs text-emerald-600">🟢 Был: {formatDistanceToNow(new Date(employee.last_login_at), { addSuffix: true, locale: dateFnsRu })}</p>
+                          ) : (
+                            <p className="text-xs text-slate-400">⚪ Ещё не входил</p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
