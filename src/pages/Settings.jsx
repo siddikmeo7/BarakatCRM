@@ -1320,8 +1320,8 @@ export default function Settings() {
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Custom Fields */}
-        <Collapsible open={expandedSections.custom} onOpenChange={(open) => setExpandedSections({...expandedSections, custom: open})}>
+        {/* Custom Fields — view_settings_custom */}
+        {canPerm('view_settings_custom') && <Collapsible open={expandedSections.custom} onOpenChange={(open) => setExpandedSections({...expandedSections, custom: open})}>
           <CollapsibleTrigger asChild>
             <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
               <div className="flex items-center gap-3">
