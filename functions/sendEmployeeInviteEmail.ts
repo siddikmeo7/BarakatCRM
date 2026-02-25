@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { email, employeeName, businessName, permissions, roleId } = await req.json();
+    const { email, employeeName, businessName, permissions, roleId, employeePassword, loginCode } = await req.json();
 
     // Загружаем информацию о роли для получения её названия
     let roleName = 'Сотрудник';
@@ -108,17 +108,21 @@ Deno.serve(async (req) => {
           <strong>Перейдите на страницу входа BarakatCRM</strong>
         </div>
         <div class="step">
-          <span class="step-number">2</span>
-          <strong>Введите вашу почту:</strong> <code>${email}</code>
-        </div>
-        <div class="step">
-          <span class="step-number">3</span>
-          <strong>Введите ваш пароль</strong> (установленный в вашем аккаунте)
-        </div>
-        <div class="step">
-          <span class="step-number">4</span>
-          <strong>После входа выберите роль сотрудника</strong> в бизнесе "${businessName}"
-        </div>
+            <span class="step-number">2</span>
+            <strong>Введите вашу почту:</strong> <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">${email}</code>
+          </div>
+          <div class="step">
+            <span class="step-number">3</span>
+            <strong>Введите ваш пароль:</strong> <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">${employeePassword || 'N/A'}</code>
+          </div>
+          <div class="step">
+            <span class="step-number">4</span>
+            <strong>Введите код входа:</strong> <code style="background: #fff3cd; padding: 5px 10px; border-radius: 3px; font-weight: bold; letter-spacing: 2px;">${loginCode || 'N/A'}</code>
+          </div>
+          <div class="step">
+            <span class="step-number">5</span>
+            <strong>После входа выберите роль сотрудника</strong> в бизнесе "${businessName}"
+          </div>
       </div>
 
       <p style="color: #666; font-size: 12px; margin-top: 20px;">

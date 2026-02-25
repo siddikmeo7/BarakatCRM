@@ -321,15 +321,16 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
       // Приглашаем пользователя в систему с email
       try { await base44.users.inviteUser(form.user_email, 'user'); } catch (e) {}
 
-      // Отправляем email с информацией
+      // Отправляем email с информацией (включая пароль и код входа)
       try {
-        const appUrl = window.location.origin;
         await base44.functions.invoke('sendEmployeeInviteEmail', {
           email: form.user_email,
           employeeName: form.name,
           businessName: business.name,
           roleId: 'custom',
           permissions: form.permissions,
+          employeePassword: form.password,
+          loginCode: newEmp.login_session_token,
         });
       } catch (e) {
         console.error('Error sending email:', e);
