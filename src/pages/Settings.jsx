@@ -417,14 +417,47 @@ export default function Settings() {
     }
   };
 
+  const [activeSessions, setActiveSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const currentSessionId = sessionStorage.getItem('barakat_session_id');
+
+  const loadActiveSessions = async () => {
+    setSessionsLoading(true);
+    try {
+      const res = await base44.functions.invoke('revokeAllSessions', { action: 'list' });
+      setActiveSessions(res.data?.sessions || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
   const handleRevokeAllSessions = async () => {
     if (!confirm('Выйти со всех других устройств? Текущая сессия останется активной.')) return;
     try {
-      const res = await base44.functions.invoke('revokeAllSessions', {});
+      const res = await base44.functions.invoke('revokeAllSessions', { action: 'revoke_all', current_session_id: currentSessionId });
       if (res.data?.success) {
-        // Сохраняем новый токен локально — это устройство остаётся активным
         sessionStorage.setItem('my_session_token', res.data.session_token);
+        await loadActiveSessions();
         alert('✅ Все другие устройства были отключены.');
+      }
+    } catch (e) {
+      alert('Ошибка: ' + e.message);
+    }
+  };
+
+  const handleRevokeOneSession = async (targetSessionId) => {
+    if (!confirm('Завершить эту сессию?')) return;
+    try {
+      const res = await base44.functions.invoke('revokeAllSessions', { action: 'revoke_one', target_session_id: targetSessionId, current_session_id: currentSessionId });
+      if (res.data?.success) {
+        if (targetSessionId === currentSessionId) {
+          sessionStorage.clear();
+          base44.auth.logout();
+        } else {
+          await loadActiveSessions();
+        }
       }
     } catch (e) {
       alert('Ошибка: ' + e.message);
