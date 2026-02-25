@@ -119,7 +119,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
 
   const handleSave = async () => {
     setSaving(true);
-    await base44.entities.Employee.update(employee.id, { permissions, is_frozen: isFrozen });
+    await base44.entities.Employee.update(employee.id, { permissions, is_frozen: isFrozen, is_admin: isAdmin });
     setSaving(false);
     onSaved?.();
     onClose();
