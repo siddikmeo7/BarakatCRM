@@ -71,6 +71,15 @@ export default function EmployeeWelcomeScreen({ employee, business, onContinue }
               <p className="text-white font-semibold text-sm">{business?.name}</p>
             </div>
           </div>
+          {isAdmin && (
+            <div className="mt-3 bg-white/20 rounded-xl px-4 py-2 flex items-center gap-2">
+              <span className="text-xl">👑</span>
+              <div>
+                <p className="text-white font-bold text-sm">Статус: Администратор</p>
+                <p className="text-white/80 text-xs">Полный доступ ко всем функциям бизнеса</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Content */}
