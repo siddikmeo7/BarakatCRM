@@ -303,7 +303,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
   };
 
   const handleAdd = async () => {
-    if (!form.name || !form.user_email) return;
+    if (!form.name || !form.user_email || !form.password) return;
     setSaving(true);
     try {
       const newEmp = await base44.entities.Employee.create({
@@ -311,6 +311,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
         user_email: form.user_email.trim().toLowerCase(),
         phone: form.phone,
         role: form.role,
+        password: form.password,
         permissions: form.permissions,
         business_id: business.id,
         role_id: 'custom',
