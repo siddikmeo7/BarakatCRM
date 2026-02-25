@@ -139,7 +139,7 @@ function EmployeeCard({ employee, business, onDelete, onUpdate }) {
     return acc;
   }, {});
 
-  const activeCount = ALL_PERMISSIONS.filter(p => perms[p.key]).length;
+  const activeCount = isAdmin ? ALL_PERMISSIONS.length : ALL_PERMISSIONS.filter(p => perms[p.key]).length;
 
   return (
     <div className={cn('border rounded-xl overflow-hidden', employee.is_active ? 'border-slate-200' : 'border-slate-200 opacity-60')}>
