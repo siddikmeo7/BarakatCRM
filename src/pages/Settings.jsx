@@ -861,122 +861,16 @@ export default function Settings() {
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-4">
-            {/* Add Employee Form */}
-            <div className="mb-5 rounded-2xl overflow-hidden border border-indigo-100 shadow-sm">
-              {/* Header */}
-              <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-5 py-4 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                  <Plus className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-base">{t(lang,'settings_emp_add')}</h4>
-                  <p className="text-indigo-100 text-xs">Заполните данные нового сотрудника</p>
-                </div>
+            {/* Add Employee Button */}
+            <button
+              onClick={() => setShowAddEmployeeForm(true)}
+              className="w-full mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-400 transition-all text-indigo-600 font-semibold text-sm"
+            >
+              <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
+                <Plus className="w-4 h-4 text-white" />
               </div>
-
-              <div className="bg-white p-5 space-y-4">
-                {/* Fields */}
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{t(lang,'settings_emp_name')}</Label>
-                    <Input 
-                      value={newEmployee.name}
-                      onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
-                      placeholder="Иван Иванов"
-                      className="mt-1.5 rounded-xl border-slate-200 focus:border-indigo-400"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Email</Label>
-                    <Input 
-                      type="email"
-                      value={newEmployee.user_email}
-                      onChange={(e) => setNewEmployee({ ...newEmployee, user_email: e.target.value })}
-                      placeholder="email@example.com"
-                      className="mt-1.5 rounded-xl border-slate-200 focus:border-indigo-400"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{t(lang,'settings_phone')}</Label>
-                    <Input 
-                      value={newEmployee.phone}
-                      onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
-                      placeholder="+992 XXX XX XX XX"
-                      className="mt-1.5 rounded-xl border-slate-200 focus:border-indigo-400"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{t(lang,'settings_emp_role')}</Label>
-                    <Select value={newEmployee.role} onValueChange={(v) => {
-                      let permissions = { ...newEmployee.permissions };
-                      if (v === 'Продавец') {
-                        permissions = {
-                          view_analytics: false, view_profit: false,
-                          view_products: true, add_products: true, edit_products: false, delete_products: false,
-                          view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false,
-                          view_warehouses: true, manage_warehouses: false,
-                          view_customers: true, manage_customers: false,
-                          view_debts: false, manage_debts: false,
-                          manage_returns: false, view_activity_log: false,
-                        };
-                      } else if (v === 'Менеджер') {
-                        permissions = {
-                          view_analytics: true, view_profit: false,
-                          view_products: true, add_products: true, edit_products: true, delete_products: false,
-                          view_sales: true, add_sales: true, edit_sales: true, cancel_sales: false,
-                          view_warehouses: true, manage_warehouses: false,
-                          view_customers: true, manage_customers: true,
-                          view_debts: true, manage_debts: true,
-                          manage_returns: true, view_activity_log: false,
-                        };
-                      }
-                      setNewEmployee({ ...newEmployee, role: v, permissions });
-                    }}>
-                      <SelectTrigger className="mt-1.5 rounded-xl border-slate-200">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Продавец">🛍️ Продавец</SelectItem>
-                        <SelectItem value="Менеджер">👔 Менеджер</SelectItem>
-                        <SelectItem value="Кладовщик">📦 Кладовщик</SelectItem>
-                        <SelectItem value="Доставщик">🚚 Доставщик</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Included permissions preview */}
-                {Object.entries(newEmployee.permissions).filter(([,v]) => v).length > 0 && (
-                  <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-                    <p className="text-xs font-semibold text-indigo-700 mb-2">📋 Права для этой роли:</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {Object.entries(newEmployee.permissions).filter(([,v]) => v).map(([k]) => {
-                        const labels = {
-                          view_analytics:'Аналитика', view_profit:'Прибыль', view_products:'Товары',
-                          add_products:'+ Товары', edit_products:'Ред. товары', delete_products:'Удал. товары',
-                          view_sales:'Продажи', add_sales:'+ Продажи', edit_sales:'Ред. продажи', cancel_sales:'Отм. продажи',
-                          view_warehouses:'Склады', manage_warehouses:'Упр. склады',
-                          view_customers:'Клиенты', manage_customers:'Упр. клиенты',
-                          view_debts:'Долги', manage_debts:'Упр. долги',
-                          manage_returns:'Возвраты', view_activity_log:'История'
-                        };
-                        return <span key={k} className="px-2 py-0.5 bg-white border border-indigo-200 text-indigo-700 rounded-lg text-xs font-medium">{labels[k]}</span>;
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Submit */}
-                <Button 
-                  onClick={handleAddEmployee}
-                  disabled={!newEmployee.name || !newEmployee.user_email}
-                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl h-11 font-semibold gap-2 shadow-md shadow-indigo-200"
-                >
-                  <Plus className="w-4 h-4" />
-                  Добавить сотрудника
-                </Button>
-              </div>
-            </div>
+              Добавить сотрудника
+            </button>
 
             {/* Employees List */}
             <div className="space-y-3">
