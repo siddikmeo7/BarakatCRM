@@ -1360,6 +1360,111 @@ export default function Settings() {
         </Button>
       </div>
 
+      {/* Add Employee Dialog */}
+      <Dialog open={showAddEmployeeForm} onOpenChange={(open) => {
+        setShowAddEmployeeForm(open);
+        if (!open) setNewEmployee({ name: '', user_email: '', phone: '', role: 'Продавец', permissions: { view_analytics: false, view_profit: false, view_products: true, add_products: true, edit_products: false, delete_products: false, view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false, view_warehouses: true, manage_warehouses: false, view_customers: true, manage_customers: false, view_debts: false, manage_debts: false, manage_returns: false, view_activity_log: false }, custom_permissions: [] });
+      }}>
+        <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-5 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+              <Plus className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <DialogTitle className="text-white font-bold text-lg leading-tight">{t(lang,'settings_emp_add')}</DialogTitle>
+              <p className="text-indigo-100 text-xs mt-0.5">Заполните данные нового сотрудника</p>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t(lang,'settings_emp_name')}</Label>
+                <Input
+                  value={newEmployee.name}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
+                  placeholder="Иван Иванов"
+                  className="mt-1.5 rounded-xl"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Email</Label>
+                <Input
+                  type="email"
+                  value={newEmployee.user_email}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, user_email: e.target.value })}
+                  placeholder="email@example.com"
+                  className="mt-1.5 rounded-xl"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t(lang,'settings_phone')}</Label>
+                <Input
+                  value={newEmployee.phone}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
+                  placeholder="+992 XX XXX XX XX"
+                  className="mt-1.5 rounded-xl"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Роль</Label>
+                <Select value={newEmployee.role} onValueChange={(v) => {
+                  let permissions = { ...newEmployee.permissions };
+                  if (v === 'Продавец') {
+                    permissions = { view_analytics: false, view_profit: false, view_products: true, add_products: true, edit_products: false, delete_products: false, view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false, view_warehouses: true, manage_warehouses: false, view_customers: true, manage_customers: false, view_debts: false, manage_debts: false, manage_returns: false, view_activity_log: false };
+                  } else if (v === 'Менеджер') {
+                    permissions = { view_analytics: true, view_profit: false, view_products: true, add_products: true, edit_products: true, delete_products: false, view_sales: true, add_sales: true, edit_sales: true, cancel_sales: false, view_warehouses: true, manage_warehouses: false, view_customers: true, manage_customers: true, view_debts: true, manage_debts: true, manage_returns: true, view_activity_log: false };
+                  }
+                  setNewEmployee({ ...newEmployee, role: v, permissions });
+                }}>
+                  <SelectTrigger className="mt-1.5 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Продавец">🛍️ Продавец</SelectItem>
+                    <SelectItem value="Менеджер">👔 Менеджер</SelectItem>
+                    <SelectItem value="Кладовщик">📦 Кладовщик</SelectItem>
+                    <SelectItem value="Доставщик">🚚 Доставщик</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Permissions preview */}
+            {Object.entries(newEmployee.permissions).filter(([,v]) => v).length > 0 && (
+              <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                <p className="text-xs font-semibold text-indigo-700 mb-2">📋 Права для роли «{newEmployee.role}»:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(newEmployee.permissions).filter(([,v]) => v).map(([k]) => {
+                    const labels = { view_analytics:'Аналитика', view_products:'Товары', add_products:'+ Товары', edit_products:'Ред. товары', view_sales:'Продажи', add_sales:'+ Продажи', edit_sales:'Ред. продажи', view_warehouses:'Склады', view_customers:'Клиенты', manage_customers:'Упр. клиенты', view_debts:'Долги', manage_debts:'Упр. долги', manage_returns:'Возвраты' };
+                    return <span key={k} className="px-2 py-0.5 bg-white border border-indigo-200 text-indigo-700 rounded-lg text-xs font-medium">{labels[k] || k}</span>;
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="outline"
+                className="flex-1 rounded-xl"
+                onClick={() => setShowAddEmployeeForm(false)}
+              >
+                Отмена
+              </Button>
+              <Button
+                onClick={async () => { await handleAddEmployee(); setShowAddEmployeeForm(false); }}
+                disabled={!newEmployee.name || !newEmployee.user_email}
+                className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl font-semibold gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Добавить
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Color Dialog */}
       <Dialog open={editColorDialog} onOpenChange={setEditColorDialog}>
         <DialogContent>
