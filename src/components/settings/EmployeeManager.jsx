@@ -45,6 +45,7 @@ const ALL_PERMISSIONS = [
 ];
 
 const GROUPS = {
+  main:       { label: 'Главная',     color: 'bg-indigo-100 text-indigo-700' },
   analytics:  { label: 'Аналитика',   color: 'bg-purple-100 text-purple-700' },
   products:   { label: 'Товары',      color: 'bg-blue-100 text-blue-700' },
   sales:      { label: 'Продажи',     color: 'bg-green-100 text-green-700' },
