@@ -1627,7 +1627,7 @@ export default function Settings() {
                   </div>
                   </div>
                   </CollapsibleContent>
-                  </Collapsible>
+                  </Collapsible>}
                   </div>
 
                   {/* Save Button */}
