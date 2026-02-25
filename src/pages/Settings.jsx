@@ -838,10 +838,10 @@ export default function Settings() {
               </ol>
             </div>
           </CollapsibleContent>
-        </Collapsible>
+        </Collapsible>}
 
-        {/* Default Settings */}
-        <Collapsible open={expandedSections.defaults} onOpenChange={(open) => setExpandedSections({...expandedSections, defaults: open})}>
+        {/* Default Settings — view_settings_defaults */}
+        {canPerm('view_settings_defaults') && <Collapsible open={expandedSections.defaults} onOpenChange={(open) => setExpandedSections({...expandedSections, defaults: open})}>
           <CollapsibleTrigger asChild>
             <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
               <div className="flex items-center gap-3">
