@@ -136,7 +136,7 @@ export default function Debts() {
     const { sale } = payDialog;
     const paidSoFar = getSalePaidAmount(sale.id);
     const saleRemaining = (sale.total_amount || 0) - paidSoFar;
-    const actualAmount = Math.min(amount, saleRemaining);
+    const actualAmount = amount; // Разрешаем принять любую сумму, даже больше долга
 
     setSaving(true);
     try {
