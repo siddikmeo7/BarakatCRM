@@ -119,33 +119,39 @@ export default function BusinessAccess() {
     setLoading(true);
     setError('');
     try {
-      const bCode = businessCode.trim();
-      const aCode = accessCode.trim();
+      const empEmail = email.trim().toLowerCase();
+      const code = accessCode.trim().toUpperCase();
 
-      if (!bCode || !aCode) {
-        setError('Введите коды доступа');
+      if (!empEmail || !code) {
+        setError('Введите email и код входа');
         setLoading(false);
         return;
       }
 
-      const businesses = await base44.entities.Business.filter({ business_code: bCode, access_code: aCode });
-      if (businesses.length === 0) {
-        setError('Неверные коды доступа');
+      // Ищем сотрудника по email и коду входа
+      const emps = await base44.entities.Employee.filter({ user_email: empEmail, is_active: true });
+
+      if (emps.length === 0) {
+        setError('Сотрудник с таким email не найден. Попросите владельца добавить вас.');
         setLoading(false);
         return;
       }
 
-      const biz = businesses[0];
-      const emp = await base44.entities.Employee.filter({ business_id: biz.id, user_email: email });
-
-      if (emp.length === 0) {
-        setError('У вас нет доступа к этому бизнесу. Попросите владельца добавить вас как сотрудника.');
+      // Проверяем код входа
+      const emp = emps.find(e => e.login_session_token === code);
+      if (!emp) {
+        setError('Неверный код входа. Уточните у владельца бизнеса.');
         setLoading(false);
         return;
       }
 
-      // Сохраняем выбранный режим — сотрудник
-      sessionStorage.setItem('barakatcrm_mode', `employee_${emp[0].id}`);
+      if (emp.is_frozen) {
+        setError('Ваш аккаунт заморожен. Обратитесь к владельцу бизнеса.');
+        setLoading(false);
+        return;
+      }
+
+      sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
       navigate(createPageUrl('Dashboard'));
     } catch (err) {
       setError('Ошибка: ' + err.message);
