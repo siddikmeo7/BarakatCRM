@@ -183,12 +183,19 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Если пароль был изменён, хешируем его
+      let passwordToSave = password;
+      if (password && !password.startsWith('$')) { // Проверяем, не похож ли уже на хеш
+        const { data: { hash } } = await base44.functions.invoke('hashPassword', { password });
+        passwordToSave = hash;
+      }
+
       await base44.entities.Employee.update(employee.id, { 
         permissions: { ...permissions }, 
         is_frozen: isFrozen, 
         is_admin: isAdmin,
         login_session_token: loginCode,
-        password: password,
+        password: passwordToSave,
       });
       await onSaved?.();
     } finally {
