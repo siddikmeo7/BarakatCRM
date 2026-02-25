@@ -228,7 +228,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
         </div>
 
         <div className="space-y-4">
-          {PERMISSION_GROUPS.map((group) => {
+          {!isAdmin && PERMISSION_GROUPS.map((group) => {
             const Icon = group.icon;
             return (
               <div key={group.label} className="border border-slate-200 rounded-xl overflow-hidden">
