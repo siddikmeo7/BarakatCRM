@@ -100,10 +100,16 @@ const PERMISSION_GROUPS = [
     color: 'text-purple-600',
     bg: 'bg-purple-50',
     permissions: [
-      { key: 'view_settings_language', label: 'Менять язык интерфейса',   desc: 'Изменять язык в настройках' },
-      { key: 'manage_settings',        label: 'Управлять настройками',    desc: 'Полный доступ к настройкам бизнеса' },
-      { key: 'manage_employees',       label: 'Управлять сотрудниками',   desc: 'Добавлять и удалять сотрудников' },
-      { key: 'manage_roles',           label: 'Управлять ролями',         desc: 'Создавать и редактировать роли' },
+      { key: 'view_settings_language',  label: 'Менять язык интерфейса',         desc: 'Изменять язык интерфейса в настройках' },
+      { key: 'view_settings_defaults',  label: 'Просматривать настройки по умол.', desc: 'Видеть настройки товаров по умолчанию (размеры, цвета)' },
+      { key: 'manage_settings_defaults',label: 'Изменять настройки по умол.',    desc: 'Изменять размеры, цвета, типы товаров по умолчанию' },
+      { key: 'view_settings_custom',    label: 'Просматривать кастомные поля',   desc: 'Видеть пользовательские цвета и типы товаров' },
+      { key: 'manage_settings_custom',  label: 'Управлять кастомными полями',    desc: 'Добавлять/удалять пользовательские цвета и типы товаров' },
+      { key: 'view_settings_security',  label: 'Просматривать безопасность',     desc: 'Видеть раздел резервных копий и безопасности' },
+      { key: 'manage_settings',         label: 'Полные настройки бизнеса',       desc: 'Полный доступ: название, телефон, адрес бизнеса' },
+      { key: 'view_settings_codes',     label: 'Видеть коды доступа',            desc: 'Просматривать коды входа в бизнес' },
+      { key: 'manage_employees',        label: 'Управлять сотрудниками',         desc: 'Добавлять и удалять сотрудников' },
+      { key: 'manage_roles',            label: 'Управлять ролями',               desc: 'Создавать и редактировать роли' },
     ]
   },
 ];
