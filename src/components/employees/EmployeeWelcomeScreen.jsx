@@ -85,7 +85,9 @@ export default function EmployeeWelcomeScreen({ employee, business, onContinue }
         {/* Content */}
         <div className="p-5 space-y-4">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Вы были добавлены с доступом:</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+              {isAdmin ? 'Вам доступны все функции:' : 'Вы были добавлены с доступом:'}
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {grantedPerms.map(([key]) => {
                 const info = PERM_LABELS[key];
