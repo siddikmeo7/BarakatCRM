@@ -51,6 +51,8 @@ export default function Layout({ children, currentPageName }) {
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
   const [employeePermissions, setEmployeePermissions] = useState(null); // null = owner (full access)
+  const [currentEmployee, setCurrentEmployee] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
