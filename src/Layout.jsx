@@ -46,6 +46,7 @@ const ADMIN_MENU_ITEMS = [
 
 export default function Layout({ children, currentPageName }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [sessionId, setSessionId] = useState(() => sessionStorage.getItem('barakat_session_id') || null);
   const [user, setUser] = useState(null);
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
