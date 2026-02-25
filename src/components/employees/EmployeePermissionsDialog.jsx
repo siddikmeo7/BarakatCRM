@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
-import { Save, Shield, Package, ShoppingCart, Warehouse, Users, CreditCard, RotateCcw, TrendingUp, History, Settings, LayoutDashboard, FileDown, Percent, ArrowLeftRight } from 'lucide-react';
+import { Save, Shield, Package, ShoppingCart, Warehouse, Users, CreditCard, RotateCcw, TrendingUp, History, Settings, LayoutDashboard, FileDown, Percent, ArrowLeftRight, RotateCw, Copy, Check, Upload } from 'lucide-react';
 
 const PERMISSION_GROUPS = [
   {
@@ -119,9 +120,43 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
   const [isFrozen, setIsFrozen] = useState(employee?.is_frozen || false);
   const [isAdmin, setIsAdmin] = useState(employee?.is_admin || false);
   const [saving, setSaving] = useState(false);
+  const [loginCode, setLoginCode] = useState(employee?.login_session_token || '');
+  const [copied, setCopied] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const toggle = (key) => {
     setPermissions(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const generateNewCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  };
+
+  const handleRegenerateCode = () => {
+    const newCode = generateNewCode();
+    setLoginCode(newCode);
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(loginCode);
+    setCopied('code');
+    setTimeout(() => setCopied(''), 2000);
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.entities.Employee.update(employee.id, { avatar_url: file_url });
+      await onSaved?.();
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -130,7 +165,8 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
       await base44.entities.Employee.update(employee.id, { 
         permissions: { ...permissions }, 
         is_frozen: isFrozen, 
-        is_admin: isAdmin 
+        is_admin: isAdmin,
+        login_session_token: loginCode,
       });
       await onSaved?.();
     } finally {
@@ -206,7 +242,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
         </div>
 
         {/* Freeze toggle */}
-        <div className={`flex items-center justify-between p-3 rounded-xl border mb-4 ${isFrozen ? 'bg-blue-50 border-blue-300' : 'bg-slate-50 border-slate-200'}`}>
+         <div className={`flex items-center justify-between p-3 rounded-xl border mb-4 ${isFrozen ? 'bg-blue-50 border-blue-300' : 'bg-slate-50 border-slate-200'}`}>
           <div>
             <p className={`text-sm font-semibold ${isFrozen ? 'text-blue-800' : 'text-slate-700'}`}>
               {isFrozen ? '🧊 Аккаунт заморожен' : '✅ Аккаунт активен'}
@@ -221,6 +257,57 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
           >
             <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${isFrozen ? 'translate-x-5' : 'translate-x-0'}`} />
           </div>
+        </div>
+
+        {/* Avatar upload */}
+        <div className="flex flex-col items-center gap-3 p-4 bg-slate-50 rounded-xl mb-4">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center overflow-hidden">
+            {employee?.avatar_url ? (
+              <img src={employee.avatar_url} alt={employee?.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white text-2xl font-bold">{employee?.name?.charAt(0)?.toUpperCase()}</span>
+            )}
+          </div>
+          <label className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition cursor-pointer">
+            <Upload className="w-3.5 h-3.5" />
+            {uploading ? 'Загрузка...' : 'Загрузить фото'}
+            <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploading} className="hidden" />
+          </label>
+        </div>
+
+        {/* Login code section */}
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4 space-y-3">
+          <p className="text-sm font-semibold text-indigo-900">🔑 Код входа сотрудника</p>
+          <div className="bg-white rounded-lg p-3 border border-indigo-100 space-y-2">
+            <div className="flex items-center justify-between">
+              <Input 
+                value={loginCode} 
+                onChange={(e) => setLoginCode(e.target.value)} 
+                className="font-mono font-bold text-lg tracking-widest flex-1"
+                maxLength="8"
+              />
+              <button
+                onClick={handleCopyCode}
+                className="p-2 hover:bg-indigo-50 rounded ml-2"
+                title="Копировать"
+              >
+                {copied === 'code' ? (
+                  <Check className="w-4 h-4 text-green-500" />
+                ) : (
+                  <Copy className="w-4 h-4 text-indigo-500" />
+                )}
+              </button>
+            </div>
+          </div>
+          <Button 
+            onClick={handleRegenerateCode}
+            variant="outline"
+            size="sm"
+            className="w-full gap-2"
+          >
+            <RotateCw className="w-4 h-4" />
+            Сгенерировать новый код
+          </Button>
         </div>
 
         <div className="space-y-2 mb-4">
