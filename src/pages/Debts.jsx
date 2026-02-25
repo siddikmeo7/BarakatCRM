@@ -63,6 +63,11 @@ export default function Debts() {
     amount: '', note: '', is_new_customer: false
   });
 
+  const openAddDebtForCustomer = (customerId) => {
+    setAddDebtData({ customer_id: customerId, new_customer_name: '', new_customer_phone: '', amount: '', note: '', is_new_customer: false });
+    setAddDebtOpen(true);
+  };
+
   const [sendingMsg, setSendingMsg] = useState(null);
   const [sortDebtors, setSortDebtors] = useState('remaining_desc');
 
