@@ -121,6 +121,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
   const [isAdmin, setIsAdmin] = useState(employee?.is_admin || false);
   const [saving, setSaving] = useState(false);
   const [loginCode, setLoginCode] = useState(employee?.login_session_token || '');
+  const [password, setPassword] = useState(employee?.password || '');
   const [copied, setCopied] = useState('');
   const [uploading, setUploading] = useState(false);
 
@@ -135,6 +136,20 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
     return code;
   };
 
+  const generateStrongPassword = () => {
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lower = 'abcdefghijklmnopqrstuvwxyz';
+    const numbers = '0123456789';
+    const symbols = '!@#$%^&*';
+    const all = upper + lower + numbers + symbols;
+    let pwd = '';
+    pwd += upper[Math.floor(Math.random() * upper.length)];
+    pwd += numbers[Math.floor(Math.random() * numbers.length)];
+    pwd += symbols[Math.floor(Math.random() * symbols.length)];
+    for (let i = 0; i < 9; i++) pwd += all[Math.floor(Math.random() * all.length)];
+    return pwd.split('').sort(() => Math.random() - 0.5).join('');
+  };
+
   const handleRegenerateCode = () => {
     const newCode = generateNewCode();
     setLoginCode(newCode);
@@ -143,6 +158,12 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
   const handleCopyCode = () => {
     navigator.clipboard.writeText(loginCode);
     setCopied('code');
+    setTimeout(() => setCopied(''), 2000);
+  };
+
+  const handleCopyPassword = () => {
+    navigator.clipboard.writeText(password);
+    setCopied('password');
     setTimeout(() => setCopied(''), 2000);
   };
 
@@ -167,6 +188,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
         is_frozen: isFrozen, 
         is_admin: isAdmin,
         login_session_token: loginCode,
+        password: password,
       });
       await onSaved?.();
     } finally {
@@ -275,39 +297,77 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
           </label>
         </div>
 
-        {/* Login code section */}
-        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4 space-y-3">
-          <p className="text-sm font-semibold text-indigo-900">🔑 Код входа сотрудника</p>
-          <div className="bg-white rounded-lg p-3 border border-indigo-100 space-y-2">
-            <div className="flex items-center justify-between">
-              <Input 
-                value={loginCode} 
-                onChange={(e) => setLoginCode(e.target.value)} 
-                className="font-mono font-bold text-lg tracking-widest flex-1"
-                maxLength="8"
-              />
-              <button
-                onClick={handleCopyCode}
-                className="p-2 hover:bg-indigo-50 rounded ml-2"
-                title="Копировать"
-              >
-                {copied === 'code' ? (
-                  <Check className="w-4 h-4 text-green-500" />
-                ) : (
-                  <Copy className="w-4 h-4 text-indigo-500" />
-                )}
-              </button>
+        {/* Login code and password section */}
+        <div className="space-y-3 mb-4">
+          {/* Код входа */}
+          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 space-y-3">
+            <p className="text-sm font-semibold text-indigo-900">🔑 Код входа</p>
+            <div className="bg-white rounded-lg p-3 border border-indigo-100 space-y-2">
+              <div className="flex items-center justify-between">
+                <Input 
+                  value={loginCode} 
+                  onChange={(e) => setLoginCode(e.target.value)} 
+                  className="font-mono font-bold text-lg tracking-widest flex-1"
+                  maxLength="8"
+                />
+                <button
+                  onClick={handleCopyCode}
+                  className="p-2 hover:bg-indigo-50 rounded ml-2"
+                  title="Копировать"
+                >
+                  {copied === 'code' ? (
+                    <Check className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-indigo-500" />
+                  )}
+                </button>
+              </div>
             </div>
+            <Button 
+              onClick={handleRegenerateCode}
+              variant="outline"
+              size="sm"
+              className="w-full gap-2"
+            >
+              <RotateCw className="w-4 h-4" />
+              Сгенерировать новый код
+            </Button>
           </div>
-          <Button 
-            onClick={handleRegenerateCode}
-            variant="outline"
-            size="sm"
-            className="w-full gap-2"
-          >
-            <RotateCw className="w-4 h-4" />
-            Сгенерировать новый код
-          </Button>
+
+          {/* Пароль для входа */}
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-3">
+            <p className="text-sm font-semibold text-green-900">🔐 Пароль для входа</p>
+            <div className="bg-white rounded-lg p-3 border border-green-100 space-y-2">
+              <div className="flex items-center justify-between">
+                <Input 
+                  type="password"
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  className="font-mono flex-1"
+                />
+                <button
+                  onClick={handleCopyPassword}
+                  className="p-2 hover:bg-green-50 rounded ml-2"
+                  title="Копировать"
+                >
+                  {copied === 'password' ? (
+                    <Check className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-green-600" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <Button 
+              onClick={() => setPassword(generateStrongPassword())}
+              variant="outline"
+              size="sm"
+              className="w-full gap-2"
+            >
+              <RotateCw className="w-4 h-4" />
+              Сгенерировать новый пароль
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2 mb-4">
