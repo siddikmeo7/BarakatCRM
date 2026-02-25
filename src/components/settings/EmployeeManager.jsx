@@ -275,7 +275,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
   const [addDialog, setAddDialog] = useState(false);
   const [step, setStep] = useState(1); // 1=info, 2=permissions
   const [form, setForm] = useState({
-    name: '', user_email: '', phone: '', role: 'Продавец',
+    name: '', user_email: '', phone: '', role: 'Продавец', password: '',
     permissions: { ...PRESETS.seller.permissions }
   });
   const [saving, setSaving] = useState(false);
