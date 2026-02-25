@@ -419,6 +419,7 @@ export default function Settings() {
   };
 
   const handleRegenerateCode = async (type) => {
+    if (!confirm(`Изменить ${type === 'business' ? 'код бизнеса' : 'код доступа'}? Все сотрудники, которые вошли по старому коду, будут автоматически выброшены из системы и должны будут войти заново.`)) return;
     setSaving(true);
     try {
       const newCode = type === 'business' ? generateCodeLocal(12) : generateCodeLocal(8);
@@ -429,9 +430,15 @@ export default function Settings() {
 
       await base44.entities.Business.update(business.id, updateData);
       
+      // Сбрасываем токены сессий всех сотрудников (они должны войти заново)
+      const allEmps = await base44.entities.Employee.filter({ business_id: business.id });
+      await Promise.all(allEmps.map(emp =>
+        base44.entities.Employee.update(emp.id, { login_session_token: newCode + '_' + Date.now() })
+      ));
+      
       const updated = await base44.entities.Business.filter({ id: business.id });
       if (updated.length > 0) setBusiness(updated[0]);
-      alert(`✅ ${type === 'business' ? 'Код бизнеса' : 'Код доступа'} успешно изменён: ${newCode}`);
+      alert(`✅ ${type === 'business' ? 'Код бизнеса' : 'Код доступа'} успешно изменён: ${newCode}\n\nВсе сотрудники (${allEmps.length}) будут перенаправлены на страницу входа при следующем обновлении.`);
     } catch (err) {
       alert('Ошибка: ' + err.message);
     } finally {
