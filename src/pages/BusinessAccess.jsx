@@ -317,25 +317,29 @@ export default function BusinessAccess() {
               Назад
             </button>
 
-            <h2 className="text-2xl font-bold text-slate-900 mb-6">Войти в бизнес</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Войти как сотрудник</h2>
+            <p className="text-sm text-slate-500 mb-6">Введите ваш email и код входа, которые дал вам владелец бизнеса</p>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Код бизнеса</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Ваш Email</label>
                 <Input
-                  placeholder="XXXXXXXXXXXX"
-                  value={businessCode}
-                  onChange={(e) => setBusinessCode(e.target.value.toUpperCase())}
+                  type="email"
+                  placeholder="ваш@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Код доступа</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Код входа</label>
                 <Input
                   placeholder="XXXXXXXX"
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                  className="font-mono tracking-widest text-lg font-bold"
                 />
+                <p className="text-xs text-slate-400 mt-1">Код из 8 символов — выдаётся владельцем бизнеса</p>
               </div>
 
               {error && <div className="bg-red-100 text-red-700 p-3 rounded text-sm">{error}</div>}
