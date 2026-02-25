@@ -977,6 +977,7 @@ export default function Settings() {
                 <EmployeeCard
                   key={employee.id}
                   employee={employee}
+                  business={business}
                   onEdit={setEditingEmployee}
                   onDelete={handleDeleteEmployee}
                 />
