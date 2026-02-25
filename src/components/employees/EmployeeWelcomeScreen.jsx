@@ -71,17 +71,33 @@ export default function EmployeeWelcomeScreen({ employee, business, onContinue }
         className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-3xl text-white">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center">
-              <UserCheck className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <p className="text-white/70 text-sm">Добро пожаловать!</p>
-              <h2 className="text-xl font-bold">{employee?.name}</h2>
-              <p className="text-white/80 text-sm">{employee?.role || 'Сотрудник'}</p>
-            </div>
-          </div>
+         <div className="p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-3xl text-white">
+           <div className="flex items-center gap-4 mb-4">
+             <div className="relative group">
+               <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center overflow-hidden">
+                 {user?.avatar_url ? (
+                   <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                 ) : (
+                   <UserCheck className="w-7 h-7 text-white" />
+                 )}
+               </div>
+               <label className="absolute inset-0 rounded-2xl bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
+                 <Upload className="w-5 h-5 text-white" />
+                 <input
+                   type="file"
+                   accept="image/*"
+                   onChange={handleAvatarUpload}
+                   disabled={uploadingAvatar}
+                   className="hidden"
+                 />
+               </label>
+             </div>
+             <div>
+               <p className="text-white/70 text-sm">Добро пожаловать!</p>
+               <h2 className="text-xl font-bold">{employee?.name}</h2>
+               <p className="text-white/80 text-sm">{employee?.role || 'Сотрудник'}</p>
+             </div>
+           </div>
           <div className="flex items-center gap-2 bg-white/10 rounded-xl p-3">
             <Building2 className="w-4 h-4 text-white/70 flex-shrink-0" />
             <div>
