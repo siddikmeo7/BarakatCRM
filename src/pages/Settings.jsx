@@ -948,10 +948,10 @@ export default function Settings() {
               </div>
             </div>
           </CollapsibleContent>
-        </Collapsible>}
+        </Collapsible> : null}
 
         {/* Employees — manage_employees */}
-        {canPerm('manage_employees') && <Collapsible open={expandedSections.employees} onOpenChange={(open) => setExpandedSections({...expandedSections, employees: open})}>
+        {canPerm('manage_employees') ? <Collapsible open={expandedSections.employees} onOpenChange={(open) => setExpandedSections({...expandedSections, employees: open})}>
           <CollapsibleTrigger asChild>
             <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
               <div className="flex items-center gap-3">
