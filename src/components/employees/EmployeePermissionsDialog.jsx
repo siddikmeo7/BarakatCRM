@@ -228,6 +228,19 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
         </div>
 
         <div className="space-y-4">
+          {isAdmin && (
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-300 rounded-xl p-5 text-center">
+              <p className="text-lg font-bold text-indigo-700 mb-1">👑 Статус: Администратор</p>
+              <p className="text-sm text-slate-600">Этот сотрудник имеет полный доступ ко всем функциям бизнеса, как владелец</p>
+              <div className="mt-3 flex flex-wrap gap-2 justify-center text-xs">
+                {PERMISSION_GROUPS.map(g => (
+                  <span key={g.label} className={cn('px-2 py-1 rounded-full font-medium', g.bg, g.color)}>
+                    ✓ {g.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {!isAdmin && PERMISSION_GROUPS.map((group) => {
             const Icon = group.icon;
             return (
