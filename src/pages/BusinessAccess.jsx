@@ -116,48 +116,8 @@ export default function BusinessAccess() {
   };
 
   const handleJoinBusiness = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const empEmail = email.trim().toLowerCase();
-      const code = accessCode.trim().toUpperCase();
-
-      if (!empEmail || !code) {
-        setError('Введите email и код входа');
-        setLoading(false);
-        return;
-      }
-
-      // Ищем сотрудника по email и коду входа
-      const emps = await base44.entities.Employee.filter({ user_email: empEmail, is_active: true });
-
-      if (emps.length === 0) {
-        setError('Сотрудник с таким email не найден. Попросите владельца добавить вас.');
-        setLoading(false);
-        return;
-      }
-
-      // Проверяем код входа
-      const emp = emps.find(e => e.login_session_token === code);
-      if (!emp) {
-        setError('Неверный код входа. Уточните у владельца бизнеса.');
-        setLoading(false);
-        return;
-      }
-
-      if (emp.is_frozen) {
-        setError('Ваш аккаунт заморожен. Обратитесь к владельцу бизнеса.');
-        setLoading(false);
-        return;
-      }
-
-      sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
-      navigate(createPageUrl('Dashboard'));
-    } catch (err) {
-      setError('Ошибка: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
+    // Сотрудники будут входить через обычный Base44 логин и система автоматически определит их как сотрудников
+    setError('Используйте обычный вход с вашей почтой и паролем. Вас автоматически добавим как сотрудника.');
   };
 
   const copyToClipboard = (text) => {
