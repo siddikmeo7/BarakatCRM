@@ -11,10 +11,11 @@ const PERMISSION_GROUPS = [
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
     permissions: [
-      { key: 'view_dashboard', label: 'Видеть главную страницу', desc: 'Доступ к дашборду с общей статистикой' },
-      { key: 'view_analytics', label: 'Видеть аналитику', desc: 'Раздел аналитики и статистики' },
-      { key: 'view_profit', label: 'Видеть прибыль', desc: 'Суммы прибыли в продажах и аналитике' },
-      { key: 'view_stock_value', label: 'Видеть стоимость товаров', desc: 'Суммы стоимости склада и цены закупки' },
+      { key: 'view_dashboard',      label: 'Видеть главную страницу',  desc: 'Доступ к дашборду с общей статистикой' },
+      { key: 'view_analytics',      label: 'Видеть аналитику',          desc: 'Раздел аналитики и статистики' },
+      { key: 'view_profit',         label: 'Видеть прибыль',            desc: 'Суммы прибыли в продажах и аналитике' },
+      { key: 'view_stock_value',    label: 'Видеть стоимость товаров',  desc: 'Суммы стоимости склада и цены закупки' },
+      { key: 'view_purchase_price', label: 'Видеть цены закупки',       desc: 'Отображение цен закупки на товарах' },
     ]
   },
   {
@@ -23,11 +24,11 @@ const PERMISSION_GROUPS = [
     color: 'text-blue-600',
     bg: 'bg-blue-50',
     permissions: [
-      { key: 'view_products', label: 'Просматривать товары', desc: 'Видеть список товаров на складе' },
-      { key: 'add_products', label: 'Добавлять товары', desc: 'Создавать новые товары' },
-      { key: 'edit_products', label: 'Редактировать товары', desc: 'Изменять данные товаров' },
-      { key: 'delete_products', label: 'Удалять товары', desc: 'Удалять товары из системы' },
-      { key: 'move_products', label: 'Перемещать товары', desc: 'Перемещать товары между складами' },
+      { key: 'view_products',   label: 'Просматривать товары',   desc: 'Видеть список товаров на складе' },
+      { key: 'add_products',    label: 'Добавлять товары',        desc: 'Создавать новые товары' },
+      { key: 'edit_products',   label: 'Редактировать товары',    desc: 'Изменять данные товаров' },
+      { key: 'delete_products', label: 'Удалять товары',          desc: 'Удалять товары из системы' },
+      { key: 'move_products',   label: 'Перемещать товары',       desc: 'Перемещать товары между складами' },
     ]
   },
   {
@@ -36,11 +37,11 @@ const PERMISSION_GROUPS = [
     color: 'text-green-600',
     bg: 'bg-green-50',
     permissions: [
-      { key: 'view_sales', label: 'Просматривать продажи', desc: 'Видеть историю продаж' },
-      { key: 'add_sales', label: 'Делать продажи', desc: 'Оформлять новые продажи' },
-      { key: 'edit_sales', label: 'Редактировать продажи', desc: 'Изменять оформленные продажи' },
-      { key: 'cancel_sales', label: 'Отменять продажи', desc: 'Отменять оформленные продажи' },
-      { key: 'manage_discounts', label: 'Давать скидки', desc: 'Изменять цену при продаже' },
+      { key: 'view_sales',       label: 'Просматривать продажи',   desc: 'Видеть историю продаж' },
+      { key: 'add_sales',        label: 'Делать продажи',           desc: 'Оформлять новые продажи' },
+      { key: 'edit_sales',       label: 'Редактировать продажи',    desc: 'Изменять оформленные продажи' },
+      { key: 'cancel_sales',     label: 'Отменять продажи',         desc: 'Отменять оформленные продажи' },
+      { key: 'manage_discounts', label: 'Давать скидки',            desc: 'Изменять цену при продаже' },
     ]
   },
   {
@@ -49,8 +50,8 @@ const PERMISSION_GROUPS = [
     color: 'text-orange-600',
     bg: 'bg-orange-50',
     permissions: [
-      { key: 'view_warehouses', label: 'Видеть склады', desc: 'Просматривать склады и товары в них' },
-      { key: 'manage_warehouses', label: 'Управлять складами', desc: 'Добавлять, редактировать склады' },
+      { key: 'view_warehouses',   label: 'Видеть склады',         desc: 'Просматривать склады и товары в них' },
+      { key: 'manage_warehouses', label: 'Управлять складами',    desc: 'Добавлять, редактировать склады' },
     ]
   },
   {
@@ -59,8 +60,8 @@ const PERMISSION_GROUPS = [
     color: 'text-pink-600',
     bg: 'bg-pink-50',
     permissions: [
-      { key: 'view_customers', label: 'Видеть клиентов', desc: 'Просматривать список клиентов' },
-      { key: 'manage_customers', label: 'Управлять клиентами', desc: 'Добавлять и редактировать клиентов' },
+      { key: 'view_customers',   label: 'Видеть клиентов',        desc: 'Просматривать список клиентов' },
+      { key: 'manage_customers', label: 'Управлять клиентами',    desc: 'Добавлять и редактировать клиентов' },
     ]
   },
   {
@@ -69,8 +70,8 @@ const PERMISSION_GROUPS = [
     color: 'text-red-600',
     bg: 'bg-red-50',
     permissions: [
-      { key: 'view_debts', label: 'Видеть долги', desc: 'Просматривать раздел долгов' },
-      { key: 'manage_debts', label: 'Управлять долгами', desc: 'Принимать оплату по долгам' },
+      { key: 'view_debts',   label: 'Видеть долги',        desc: 'Просматривать раздел долгов' },
+      { key: 'manage_debts', label: 'Управлять долгами',   desc: 'Принимать оплату по долгам' },
     ]
   },
   {
@@ -83,24 +84,25 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    label: 'История и журнал',
+    label: 'История и экспорт',
     icon: History,
     color: 'text-slate-600',
     bg: 'bg-slate-50',
     permissions: [
       { key: 'view_activity_log', label: 'Видеть историю действий', desc: 'Просматривать лог активности' },
-      { key: 'export_reports', label: 'Экспортировать отчёты', desc: 'Скачивать данные в Excel/PDF' },
+      { key: 'export_reports',    label: 'Экспортировать отчёты',   desc: 'Скачивать данные в Excel/PDF' },
     ]
   },
   {
-    label: 'Настройки',
+    label: 'Настройки и управление',
     icon: Settings,
     color: 'text-purple-600',
     bg: 'bg-purple-50',
     permissions: [
-      { key: 'view_settings_language', label: 'Менять язык интерфейса', desc: 'Изменять язык в настройках' },
-      { key: 'manage_employees', label: 'Управлять сотрудниками', desc: 'Добавлять и удалять сотрудников' },
-      { key: 'manage_roles', label: 'Управлять ролями', desc: 'Создавать и редактировать роли' },
+      { key: 'view_settings_language', label: 'Менять язык интерфейса',   desc: 'Изменять язык в настройках' },
+      { key: 'manage_settings',        label: 'Управлять настройками',    desc: 'Полный доступ к настройкам бизнеса' },
+      { key: 'manage_employees',       label: 'Управлять сотрудниками',   desc: 'Добавлять и удалять сотрудников' },
+      { key: 'manage_roles',           label: 'Управлять ролями',         desc: 'Создавать и редактировать роли' },
     ]
   },
 ];
