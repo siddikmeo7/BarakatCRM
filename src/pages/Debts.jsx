@@ -626,8 +626,11 @@ export default function Debts() {
                   placeholder="Введите сумму..."
                 />
                 {bulkPayAmount && parseFloat(bulkPayAmount) > 0 && (
-                  <p className="text-xs text-emerald-600 mt-1">
+                  <p className={`text-xs mt-1 ${parseFloat(bulkPayAmount) > (selectedCustomer?.total_debt || 0) ? 'text-blue-600' : 'text-emerald-600'}`}>
                     Остаток после оплаты: {Math.max(0, (selectedCustomer?.total_debt || 0) - parseFloat(bulkPayAmount)).toLocaleString()} с.
+                    {parseFloat(bulkPayAmount) > (selectedCustomer?.total_debt || 0) && (
+                      <span className="ml-1 text-blue-500">(клиент переплатил {(parseFloat(bulkPayAmount) - (selectedCustomer?.total_debt || 0)).toLocaleString()} с.)</span>
+                    )}
                   </p>
                 )}
               </div>
