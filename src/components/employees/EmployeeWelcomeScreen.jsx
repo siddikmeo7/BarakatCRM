@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
   Check, X, Package, ShoppingCart, Users, Warehouse, CreditCard,
-  BarChart2, Shield, RotateCcw, UserCheck, ChevronRight, Building2
+  BarChart2, Shield, RotateCcw, UserCheck, ChevronRight, Building2, Upload
 } from 'lucide-react';
 
 const PERM_LABELS = {
