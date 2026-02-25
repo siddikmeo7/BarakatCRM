@@ -145,12 +145,18 @@ export default function Settings() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
+      // Обновляем currentEmployee из свежих данных
+      const freshEmployee = window.__barakatEmployee || null;
+      
       // Если режим сотрудника — загружаем бизнес через employee
       if (isEmployeeMode) {
         const empId = savedMode.replace('employee_', '');
         const empList = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
         const emp = empList.find(e => e.id === empId) || empList[0];
         if (emp) {
+          // Обновляем глобальный объект и локальный state свежими данными из БД
+          window.__barakatEmployee = emp;
+          setCurrentEmployee(emp);
           const bizList = await base44.entities.Business.filter({ id: emp.business_id });
           if (bizList.length > 0) {
             const biz = bizList[0];
@@ -161,6 +167,7 @@ export default function Settings() {
         setLoading(false);
         return;
       }
+      setCurrentEmployee(freshEmployee);
       
       const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
       
