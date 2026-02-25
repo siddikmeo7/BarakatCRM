@@ -140,7 +140,8 @@ export default function Layout({ children, currentPageName }) {
                     }
                     setBusiness(biz);
                     setLang(biz.language || 'ru');
-                    setEmployeePermissions(emp.permissions || {});
+                    // Если сотрудник — администратор, даём полный доступ (null = как у владельца)
+                    setEmployeePermissions(emp.is_admin ? null : (emp.permissions || {}));
                     setCurrentEmployee(emp);
                     window.__barakatEmployee = emp;
                     window.__barakatBusiness = biz;
