@@ -417,17 +417,54 @@ export default function Sales() {
               <SelectItem value="items">{t(lang,'sales_items')}</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={filterCustomer} onValueChange={(v) => { setFilterCustomer(v); setSalesPage(1); }}>
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="Все клиенты" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все клиенты</SelectItem>
-              {customers.filter(c => sales.some(s => s.customer_id === c.id)).map(c => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="relative">
+            <div
+              className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-1.5 bg-white cursor-pointer w-48 text-sm"
+              onClick={() => setShowCustomerDropdown(v => !v)}
+            >
+              <span className="flex-1 truncate text-slate-700">
+                {filterCustomer === 'all' ? 'Все клиенты' : customers.find(c => c.id === filterCustomer)?.name || 'Клиент'}
+              </span>
+              {filterCustomer !== 'all' && (
+                <button onClick={e => { e.stopPropagation(); setFilterCustomer('all'); setFilterCustomerSearch(''); setSalesPage(1); }} className="text-slate-400 hover:text-slate-600">✕</button>
+              )}
+            </div>
+            {showCustomerDropdown && (
+              <div className="absolute z-50 top-full mt-1 left-0 w-56 bg-white border border-slate-200 rounded-xl shadow-lg">
+                <div className="p-2">
+                  <input
+                    autoFocus
+                    className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+                    placeholder="Поиск клиента..."
+                    value={filterCustomerSearch}
+                    onChange={e => setFilterCustomerSearch(e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                  />
+                </div>
+                <div className="max-h-48 overflow-y-auto pb-1">
+                  <div
+                    className={`px-3 py-2 text-sm cursor-pointer hover:bg-slate-50 ${filterCustomer === 'all' ? 'text-indigo-600 font-medium' : 'text-slate-700'}`}
+                    onClick={() => { setFilterCustomer('all'); setFilterCustomerSearch(''); setShowCustomerDropdown(false); setSalesPage(1); }}
+                  >
+                    Все клиенты
+                  </div>
+                  {customers
+                    .filter(c => sales.some(s => s.customer_id === c.id))
+                    .filter(c => !filterCustomerSearch || c.name?.toLowerCase().includes(filterCustomerSearch.toLowerCase()))
+                    .map(c => (
+                      <div
+                        key={c.id}
+                        className={`px-3 py-2 text-sm cursor-pointer hover:bg-slate-50 ${filterCustomer === c.id ? 'text-indigo-600 font-medium bg-indigo-50' : 'text-slate-700'}`}
+                        onClick={() => { setFilterCustomer(c.id); setFilterCustomerSearch(''); setShowCustomerDropdown(false); setSalesPage(1); }}
+                      >
+                        {c.name}
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            )}
+          </div>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Сортировка" />
