@@ -218,8 +218,8 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
             <button onClick={() => handlePreset('manager')} className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full hover:bg-green-200">
               👔 Менеджер (расширенный)
             </button>
-            <button onClick={() => handlePreset('all')} className="px-3 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200">
-              ✅ Все права
+            <button onClick={() => handlePreset('all')} className="px-3 py-1 text-xs bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full hover:from-indigo-200 hover:to-purple-200 font-bold border border-indigo-300">
+              👑 Администратор (все права)
             </button>
             <button onClick={() => handlePreset('none')} className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-full hover:bg-red-200">
               🚫 Без прав
