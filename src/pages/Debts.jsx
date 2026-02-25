@@ -394,7 +394,7 @@ export default function Debts() {
             <Button size="sm" variant="outline"
               onClick={() => { setAddDebtData({ customer_id: c.id, new_customer_name: '', new_customer_phone: '', amount: '', note: '', is_new_customer: false }); setAddDebtOpen(true); }}
               className="gap-1.5 text-xs border-orange-300 text-orange-700 hover:bg-orange-50">
-              <Plus className="w-3.5 h-3.5" /> Добавить долг
+              <Plus className="w-3.5 h-3.5" /> Прибавить долг
             </Button>
             {(customerDebtMap[c.id]?.totalAmount - customerDebtMap[c.id]?.totalPaid) > 0 && (
               <Button size="sm" onClick={() => { setBulkPayOpen(true); setBulkPayAmount(''); }}
