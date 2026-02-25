@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ru as dateFnsRu } from 'date-fns/locale';
-import { Shield, Trash2, Phone, Mail, Clock, LogIn, ChevronDown, ChevronUp } from 'lucide-react';
+import { Shield, Trash2, Phone, Mail, Clock, LogIn, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 
 const PERM_LABELS = {
   view_dashboard: 'Дашборд', view_analytics: 'Аналитика', view_profit: 'Прибыль',
