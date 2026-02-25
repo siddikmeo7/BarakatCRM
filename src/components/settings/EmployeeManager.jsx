@@ -393,28 +393,19 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
                 <p className="font-semibold text-slate-900">Сотрудник добавлен!</p>
               </div>
               <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 space-y-3">
-                <p className="text-sm font-semibold text-indigo-800">🔑 Данные для входа сотрудника:</p>
+                <p className="text-sm font-semibold text-indigo-800">📧 Приглашение отправлено:</p>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-indigo-100">
                     <div>
-                      <p className="text-xs text-slate-400">Email</p>
+                      <p className="text-xs text-slate-400">Email сотрудника</p>
                       <p className="font-mono font-semibold text-slate-900 text-sm">{form.user_email}</p>
                     </div>
                     <button onClick={() => { navigator.clipboard.writeText(form.user_email); }} className="p-1.5 hover:bg-indigo-50 rounded">
                       <Copy className="w-4 h-4 text-indigo-500" />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-indigo-100">
-                    <div>
-                      <p className="text-xs text-slate-400">Код входа</p>
-                      <p className="font-mono font-bold text-indigo-700 text-xl tracking-widest">{createdCode}</p>
-                    </div>
-                    <button onClick={() => { navigator.clipboard.writeText(createdCode); }} className="p-1.5 hover:bg-indigo-50 rounded">
-                      <Copy className="w-4 h-4 text-indigo-500" />
-                    </button>
-                  </div>
                 </div>
-                <p className="text-xs text-slate-500">📧 Эти данные также отправлены на email сотрудника</p>
+                <p className="text-xs text-slate-500">✅ Сотрудник должен войти с этой почтой и своим паролем</p>
               </div>
               <Button className="w-full" variant="outline" onClick={() => { setAddDialog(false); resetForm(); }}>Готово</Button>
             </div>
