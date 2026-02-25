@@ -275,7 +275,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
   const [addDialog, setAddDialog] = useState(false);
   const [step, setStep] = useState(1); // 1=info, 2=permissions
   const [form, setForm] = useState({
-    name: '', user_email: '', phone: '', role: 'Продавец', password: '',
+    name: '', user_email: '', phone: '', role: 'Продавец', password: '', loginCode: '',
     permissions: { ...PRESETS.seller.permissions }
   });
   const [saving, setSaving] = useState(false);
@@ -285,10 +285,24 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const resetForm = () => {
-    setForm({ name: '', user_email: '', phone: '', role: 'Продавец', password: '', permissions: { ...PRESETS.seller.permissions } });
+    setForm({ name: '', user_email: '', phone: '', role: 'Продавец', password: '', loginCode: '', permissions: { ...PRESETS.seller.permissions } });
     setStep(1);
     setInviteSent(false);
     setCreatedCode('');
+  };
+
+  const generateStrongPassword = () => {
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lower = 'abcdefghijklmnopqrstuvwxyz';
+    const numbers = '0123456789';
+    const symbols = '!@#$%^&*';
+    const all = upper + lower + numbers + symbols;
+    let pwd = '';
+    pwd += upper[Math.floor(Math.random() * upper.length)];
+    pwd += numbers[Math.floor(Math.random() * numbers.length)];
+    pwd += symbols[Math.floor(Math.random() * symbols.length)];
+    for (let i = 0; i < 9; i++) pwd += all[Math.floor(Math.random() * all.length)];
+    return pwd.split('').sort(() => Math.random() - 0.5).join('');
   };
 
   const handlePreset = (presetKey) => {
@@ -306,7 +320,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     if (!form.name || !form.user_email || !form.password) return;
     setSaving(true);
     try {
-      const loginCode = generateEmployeeCode();
+      const finalCode = form.loginCode || generateEmployeeCode();
       const newEmp = await base44.entities.Employee.create({
         name: form.name,
         user_email: form.user_email.trim().toLowerCase(),
@@ -317,7 +331,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
         business_id: business.id,
         role_id: 'custom',
         is_active: true,
-        login_session_token: loginCode,
+        login_session_token: finalCode,
       });
 
       // Приглашаем пользователя в систему с email
@@ -332,7 +346,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
           roleId: 'custom',
           permissions: form.permissions,
           employeePassword: form.password,
-          loginCode: loginCode,
+          loginCode: finalCode,
         });
       } catch (e) {
         console.error('Error sending email:', e);
@@ -443,8 +457,22 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
                       <Input type="email" value={form.user_email} onChange={e => setForm(f => ({ ...f, user_email: e.target.value }))} placeholder="email@example.com" className="mt-1.5" />
                     </div>
                     <div>
-                      <Label>Пароль *</Label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <Label>Пароль *</Label>
+                        <button 
+                          type="button"
+                          onClick={() => setForm(f => ({ ...f, password: generateStrongPassword() }))}
+                          className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                        >
+                          🔐 Генерировать
+                        </button>
+                      </div>
                       <Input type="password" value={form.password || ''} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="Пароль для входа" className="mt-1.5" />
+                    </div>
+                    <div>
+                      <Label>Код входа (опционально)</Label>
+                      <Input value={form.loginCode || ''} onChange={e => setForm(f => ({ ...f, loginCode: e.target.value }))} placeholder="Оставить пусто для автогенерации" maxLength="8" className="mt-1.5 font-mono font-bold tracking-widest" />
+                      <p className="text-xs text-slate-400 mt-1">Если не заполнить, будет автоматически сгенерирован</p>
                     </div>
                     <div>
                       <Label>Телефон</Label>
