@@ -306,8 +306,6 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     if (!form.name || !form.user_email) return;
     setSaving(true);
     try {
-      const employeeCode = generateEmployeeCode();
-
       const newEmp = await base44.entities.Employee.create({
         name: form.name,
         user_email: form.user_email.trim().toLowerCase(),
@@ -317,23 +315,24 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
         business_id: business.id,
         role_id: 'custom',
         is_active: true,
-        login_session_token: employeeCode, // используем это поле как личный код входа
       });
 
-      setCreatedCode(employeeCode);
-
-      // Приглашаем пользователя в систему
+      // Приглашаем пользователя в систему с email
       try { await base44.users.inviteUser(form.user_email, 'user'); } catch (e) {}
 
-      // Отправляем email с кодом
+      // Отправляем email с информацией
       try {
         const appUrl = window.location.origin;
-        await base44.integrations.Core.SendEmail({
-          to: form.user_email,
-          subject: `Приглашение в бизнес "${business.name}" — BarakatCRM`,
-          body: `Здравствуйте, ${form.name}!\n\nВас пригласили в бизнес "${business.name}" как "${form.role}".\n\n🔑 Ваши данные для входа:\n• Email: ${form.user_email}\n• Код входа: ${employeeCode}\n\n📱 Как войти:\n1. Перейдите: ${appUrl}\n2. Нажмите "Войти как сотрудник"\n3. Введите ваш email и код входа выше\n\nС уважением,\n${business.name}`
+        await base44.functions.invoke('sendEmployeeInviteEmail', {
+          email: form.user_email,
+          employeeName: form.name,
+          businessName: business.name,
+          roleId: 'custom',
+          permissions: form.permissions,
         });
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error sending email:', e);
+      }
 
       setInviteSent(true);
       onUpdate();
