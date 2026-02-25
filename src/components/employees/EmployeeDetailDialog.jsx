@@ -73,22 +73,38 @@ export default function EmployeeDetailDialog({ employee, open, onOpenChange, onU
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Employee info */}
-          <div className="bg-slate-50 rounded-lg p-4 space-y-2">
-            <p className="text-sm font-semibold text-slate-900">{employee.name}</p>
-            <p className="text-xs text-slate-500">{employee.role}</p>
-            {employee.is_frozen && (
-              <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                <AlertCircle className="w-3.5 h-3.5" />
-                Аккаунт заморожен
-              </div>
-            )}
-            {employee.is_admin && (
-              <div className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded inline-block">
-                👑 Администратор
-              </div>
-            )}
-          </div>
+           {/* Avatar section */}
+           <div className="flex flex-col items-center gap-3 pb-4 border-b">
+             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center overflow-hidden">
+               {employee.avatar_url ? (
+                 <img src={employee.avatar_url} alt={employee.name} className="w-full h-full object-cover" />
+               ) : (
+                 <User className="w-8 h-8 text-white" />
+               )}
+             </div>
+             <label className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition cursor-pointer">
+               <Upload className="w-3.5 h-3.5" />
+               {uploading ? 'Загрузка...' : 'Загрузить фото'}
+               <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploading} className="hidden" />
+             </label>
+           </div>
+
+           {/* Employee info */}
+           <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+             <p className="text-sm font-semibold text-slate-900">{employee.name}</p>
+             <p className="text-xs text-slate-500">{employee.role}</p>
+             {employee.is_frozen && (
+               <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                 <AlertCircle className="w-3.5 h-3.5" />
+                 Аккаунт заморожен
+               </div>
+             )}
+             {employee.is_admin && (
+               <div className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded inline-block">
+                 👑 Администратор
+               </div>
+             )}
+           </div>
 
           {/* Login Credentials */}
           <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-3">
