@@ -136,6 +136,7 @@ export default function Settings() {
   const [deleteAccountDialog, setDeleteAccountDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [editingEmployee, setEditingEmployee] = useState(null);
+  const [showAddEmployeeForm, setShowAddEmployeeForm] = useState(false);
 
   useEffect(() => {
     loadData();
