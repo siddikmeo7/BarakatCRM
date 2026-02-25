@@ -173,6 +173,24 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
           </DialogTitle>
         </DialogHeader>
 
+        {/* Admin toggle */}
+        <div className={`flex items-center justify-between p-3 rounded-xl border mb-3 ${isAdmin ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300' : 'bg-slate-50 border-slate-200'}`}>
+          <div>
+            <p className={`text-sm font-bold ${isAdmin ? 'text-indigo-700' : 'text-slate-700'}`}>
+              {isAdmin ? '👑 Администратор — полный доступ' : '👤 Обычный сотрудник'}
+            </p>
+            <p className="text-xs text-slate-500">
+              {isAdmin ? 'Видит и управляет всем как владелец бизнеса' : 'Права доступа настраиваются вручную ниже'}
+            </p>
+          </div>
+          <div
+            onClick={() => setIsAdmin(a => !a)}
+            className={`w-12 h-7 rounded-full transition-all flex items-center px-1 cursor-pointer ${isAdmin ? 'bg-gradient-to-r from-indigo-500 to-purple-500' : 'bg-slate-300'}`}
+          >
+            <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${isAdmin ? 'translate-x-5' : 'translate-x-0'}`} />
+          </div>
+        </div>
+
         {/* Freeze toggle */}
         <div className={`flex items-center justify-between p-3 rounded-xl border mb-4 ${isFrozen ? 'bg-blue-50 border-blue-300' : 'bg-slate-50 border-slate-200'}`}>
           <div>
