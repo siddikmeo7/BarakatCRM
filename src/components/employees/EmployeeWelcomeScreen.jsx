@@ -31,6 +31,7 @@ const PERM_LABELS = {
 
 export default function EmployeeWelcomeScreen({ employee, business, onContinue }) {
   const [user, setUser] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const isAdmin = employee?.is_admin;
 
   useEffect(() => {
@@ -40,6 +41,23 @@ export default function EmployeeWelcomeScreen({ employee, business, onContinue }
       base44.entities.Employee.update(employee.id, { last_login_at: new Date().toISOString() }).catch(() => {});
     }
   }, [employee?.id]);
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const res = await base44.integrations.Core.UploadFile({ file });
+      if (res.data?.file_url) {
+        await base44.auth.updateMe({ avatar_url: res.data.file_url });
+        setUser(await base44.auth.me());
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const grantedPerms = isAdmin ? Object.entries(PERM_LABELS).map(([key]) => [key, true]) : Object.entries(employee?.permissions || {}).filter(([, v]) => v);
   const deniedPerms = isAdmin ? [] : Object.entries(employee?.permissions || {}).filter(([, v]) => !v);
