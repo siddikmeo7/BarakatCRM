@@ -306,6 +306,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     if (!form.name || !form.user_email || !form.password) return;
     setSaving(true);
     try {
+      const loginCode = generateEmployeeCode();
       const newEmp = await base44.entities.Employee.create({
         name: form.name,
         user_email: form.user_email.trim().toLowerCase(),
@@ -316,6 +317,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
         business_id: business.id,
         role_id: 'custom',
         is_active: true,
+        login_session_token: loginCode,
       });
 
       // Приглашаем пользователя в систему с email
@@ -330,7 +332,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
           roleId: 'custom',
           permissions: form.permissions,
           employeePassword: form.password,
-          loginCode: newEmp.login_session_token,
+          loginCode: loginCode,
         });
       } catch (e) {
         console.error('Error sending email:', e);
