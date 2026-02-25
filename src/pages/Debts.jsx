@@ -839,6 +839,12 @@ export default function Debts() {
                     {remaining.toLocaleString()} с.
                   </p>
                   <p className="text-xs text-slate-400">из {totalAmount.toLocaleString()} с.</p>
+                  <button
+                    onClick={e => { e.stopPropagation(); setAddDebtData({ customer_id: c.id, new_customer_name: '', new_customer_phone: '', amount: '', note: '', is_new_customer: false }); setAddDebtOpen(true); }}
+                    className="mt-1 text-xs text-orange-500 hover:text-orange-700 font-medium flex items-center gap-0.5 ml-auto"
+                  >
+                    <Plus className="w-3 h-3" /> долг
+                  </button>
                 </div>
 
                 <ChevronRight className="w-5 h-5 text-slate-300 flex-shrink-0" />
