@@ -597,12 +597,11 @@ export default function Settings() {
     );
   }
 
-  // Хелпер проверки разрешений для владельца/сотрудника-адмна (всегда true) или обычного сотрудника
-  const empPerms = currentEmployee?.permissions || {};
+  // Хелпер проверки разрешений — всегда читает актуальный currentEmployee из state
   const canPerm = (key) => {
     if (!currentEmployee) return true; // владелец
     if (currentEmployee.is_admin) return true; // администратор
-    return !!empPerms[key];
+    return !!(currentEmployee.permissions?.[key]);
   };
 
   return (
