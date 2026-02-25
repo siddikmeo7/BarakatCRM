@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { email, employeeName, businessName, loginCode, accessCode, permissions, roleId } = await req.json();
+    const { email, employeeName, businessName, permissions, roleId } = await req.json();
 
     // Загружаем информацию о роли для получения её названия
     let roleName = 'Сотрудник';
