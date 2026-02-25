@@ -1208,9 +1208,9 @@ export default function Settings() {
               />
             )}
           </CollapsibleContent>
-        </Collapsible>
+        </Collapsible>}
 
-        {/* Notifications Settings */}
+        {/* Notifications Settings — всем */}
         <Collapsible open={expandedSections.notifications} onOpenChange={(open) => setExpandedSections({...expandedSections, notifications: open})}>
           <CollapsibleTrigger asChild>
             <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
