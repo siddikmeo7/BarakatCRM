@@ -152,6 +152,9 @@ function EmployeeCard({ employee, business, onDelete, onUpdate }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-semibold text-slate-900 truncate">{employee.name}</p>
+            {employee.is_admin && (
+              <span className="text-xs bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-2 py-0.5 rounded-full font-bold">👑 АДМИН</span>
+            )}
             {!employee.is_active && (
               <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Неактивен</span>
             )}
