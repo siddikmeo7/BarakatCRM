@@ -692,8 +692,8 @@ export default function Settings() {
       </div>
 
       <div className="space-y-2">
-        {/* Business Settings */}
-        <Collapsible open={expandedSections.business} onOpenChange={(open) => setExpandedSections({...expandedSections, business: open})}>
+        {/* Business Settings — только владелец/manage_settings */}
+        {canPerm('manage_settings') && <Collapsible open={expandedSections.business} onOpenChange={(open) => setExpandedSections({...expandedSections, business: open})}>
           <CollapsibleTrigger asChild>
             <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
               <div className="flex items-center gap-3">
