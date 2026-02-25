@@ -117,6 +117,7 @@ function EmployeeCard({ employee, business, onDelete, onUpdate }) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [perms, setPerms] = useState(employee.permissions || {});
+  const [isAdmin, setIsAdmin] = useState(employee.is_admin || false);
   const [saving, setSaving] = useState(false);
 
   const handleSavePerms = async () => {
