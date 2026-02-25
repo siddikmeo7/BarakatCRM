@@ -524,7 +524,15 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
             </div>
           )}
         </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+        </Dialog>
+
+        {/* Employee Detail Dialog */}
+        <EmployeeDetailDialog 
+         employee={selectedEmployee} 
+         open={detailDialog} 
+         onOpenChange={setDetailDialog}
+         onUpdate={onUpdate}
+        />
+        </div>
+        );
+        }
