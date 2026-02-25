@@ -417,6 +417,20 @@ export default function Settings() {
     }
   };
 
+  const handleRevokeAllSessions = async () => {
+    if (!confirm('Выйти со всех других устройств? Текущая сессия останется активной.')) return;
+    try {
+      const res = await base44.functions.invoke('revokeAllSessions', {});
+      if (res.data?.success) {
+        // Сохраняем новый токен локально — это устройство остаётся активным
+        sessionStorage.setItem('my_session_token', res.data.session_token);
+        alert('✅ Все другие устройства были отключены.');
+      }
+    } catch (e) {
+      alert('Ошибка: ' + e.message);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== user?.email) {
       alert('Подтверждение не совпадает. Пожалуйста, введите правильный email.');
