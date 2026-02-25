@@ -127,32 +127,36 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
 
   const handlePreset = (preset) => {
     if (preset === 'seller') {
+      setIsAdmin(false);
       setPermissions({
-        view_analytics: false, view_profit: false, view_dashboard: true,
-        view_products: true, add_products: true, edit_products: false, delete_products: false, move_products: false,
+        view_dashboard: true, view_analytics: false, view_profit: false, view_stock_value: false, view_purchase_price: false,
+        view_products: true, add_products: false, edit_products: false, delete_products: false, move_products: false,
         view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false, manage_discounts: false,
         view_warehouses: true, manage_warehouses: false,
         view_customers: true, manage_customers: false,
         view_debts: false, manage_debts: false,
-        manage_returns: false, view_activity_log: false,
-        view_settings_language: true, manage_employees: false, manage_roles: false, export_reports: false,
+        manage_returns: false, view_activity_log: false, export_reports: false,
+        view_settings_language: true, manage_employees: false, manage_roles: false, manage_settings: false,
       });
     } else if (preset === 'manager') {
+      setIsAdmin(false);
       setPermissions({
-        view_analytics: true, view_profit: false, view_dashboard: true,
+        view_dashboard: true, view_analytics: true, view_profit: false, view_stock_value: false, view_purchase_price: false,
         view_products: true, add_products: true, edit_products: true, delete_products: false, move_products: true,
         view_sales: true, add_sales: true, edit_sales: true, cancel_sales: false, manage_discounts: true,
         view_warehouses: true, manage_warehouses: false,
         view_customers: true, manage_customers: true,
         view_debts: true, manage_debts: true,
-        manage_returns: true, view_activity_log: false,
-        view_settings_language: true, manage_employees: false, manage_roles: false, export_reports: false,
+        manage_returns: true, view_activity_log: false, export_reports: false,
+        view_settings_language: true, manage_employees: false, manage_roles: false, manage_settings: false,
       });
     } else if (preset === 'all') {
+      setIsAdmin(true);
       const all = {};
       PERMISSION_GROUPS.forEach(g => g.permissions.forEach(p => { all[p.key] = true; }));
       setPermissions(all);
     } else if (preset === 'none') {
+      setIsAdmin(false);
       const none = {};
       PERMISSION_GROUPS.forEach(g => g.permissions.forEach(p => { none[p.key] = false; }));
       setPermissions(none);
