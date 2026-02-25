@@ -322,7 +322,22 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     try {
       const finalCode = form.loginCode || generateEmployeeCode();
       
-      // Хешируем пароль перед сохранением
+      // СНАЧАЛА отправляем письмо с открытым паролем
+      try {
+        await base44.functions.invoke('sendEmployeeInviteEmail', {
+          email: form.user_email,
+          employeeName: form.name,
+          businessName: business.name,
+          roleId: 'custom',
+          permissions: form.permissions,
+          employeePassword: form.password,
+          loginCode: finalCode,
+        });
+      } catch (e) {
+        console.error('Error sending email:', e);
+      }
+
+      // ПОТОМ хешируем пароль и создаём сотрудника
       const { data: { hash } } = await base44.functions.invoke('hashPassword', { password: form.password });
       
       const newEmp = await base44.entities.Employee.create({
@@ -340,21 +355,6 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
 
       // Приглашаем пользователя в систему с email
       try { await base44.users.inviteUser(form.user_email, 'user'); } catch (e) {}
-
-      // Отправляем email с информацией (включая пароль и код входа)
-      try {
-        await base44.functions.invoke('sendEmployeeInviteEmail', {
-          email: form.user_email,
-          employeeName: form.name,
-          businessName: business.name,
-          roleId: 'custom',
-          permissions: form.permissions,
-          employeePassword: form.password,
-          loginCode: finalCode,
-        });
-      } catch (e) {
-        console.error('Error sending email:', e);
-      }
 
       setInviteSent(true);
       onUpdate();
