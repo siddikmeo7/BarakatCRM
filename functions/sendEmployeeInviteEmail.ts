@@ -13,13 +13,15 @@ Deno.serve(async (req) => {
 
     // Загружаем информацию о роли для получения её названия
     let roleName = 'Сотрудник';
-    try {
-      const role = await base44.entities.Role.filter({ id: roleId });
-      if (role.length > 0) {
-        roleName = role[0].name;
+    if (roleId) {
+      try {
+        const role = await base44.entities.Role.filter({ id: roleId });
+        if (role.length > 0) {
+          roleName = role[0].name;
+        }
+      } catch (e) {
+        console.error('Error fetching role:', e);
       }
-    } catch (e) {
-      console.error('Error fetching role:', e);
     }
 
     // Формируем список разрешений
@@ -107,7 +109,7 @@ Deno.serve(async (req) => {
         </div>
         <div class="step">
           <span class="step-number">2</span>
-          <strong>Введите вашу почту:</strong> ${email}
+          <strong>Введите вашу почту:</strong> <code>${email}</code>
         </div>
         <div class="step">
           <span class="step-number">3</span>
@@ -132,7 +134,7 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-    const result = await base44.integrations.Core.SendEmail({
+    await base44.integrations.Core.SendEmail({
       to: email,
       subject: `Вас добавили в ${businessName} как сотрудника BarakatCRM`,
       body: emailBody,
