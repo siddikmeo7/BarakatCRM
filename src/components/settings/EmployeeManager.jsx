@@ -281,6 +281,8 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
   const [saving, setSaving] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
   const [createdCode, setCreatedCode] = useState('');
+  const [detailDialog, setDetailDialog] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const resetForm = () => {
     setForm({ name: '', user_email: '', phone: '', role: 'Продавец', permissions: { ...PRESETS.seller.permissions } });
