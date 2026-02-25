@@ -50,13 +50,21 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
   const handleResendInviteEmail = async () => {
     setSendingEmail(true);
     try {
+      // ⚠️ Примечание: при повторной отправке мы отправляем хешированный пароль из БД
+      // Рекомендуем показать владельцу диалог для ввода нового пароля
+      const newPassword = prompt('🔑 Введите новый пароль для отправки в письме (или отмена):');
+      if (!newPassword) {
+        setSendingEmail(false);
+        return;
+      }
+
       await base44.functions.invoke('sendEmployeeInviteEmail', {
         email: employee.user_email,
         employeeName: employee.name,
         businessName: business?.name || 'BarakatCRM',
         permissions: employee.permissions,
         roleId: employee.role_id,
-        employeePassword: employee.password,
+        employeePassword: newPassword,
         loginCode: employee.login_session_token,
       });
       alert('✅ Письмо отправлено на ' + employee.user_email);
