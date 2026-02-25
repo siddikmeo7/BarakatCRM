@@ -1019,71 +1019,32 @@ export default function Settings() {
 
             {/* Employees List */}
             <div className="space-y-3">
-              {employees.map(employee => {
-                const enabledCount = Object.values(employee.permissions || {}).filter(Boolean).length;
-                return (
-                  <div key={employee.id} className="border border-slate-200 rounded-xl overflow-hidden">
-                    <div className="flex items-center justify-between p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                          <span className="text-lg font-bold text-indigo-600">
-                            {employee.name?.charAt(0)?.toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900">{employee.name}</p>
-                          <p className="text-sm text-slate-500">{employee.user_email}</p>
-                          {employee.phone && <p className="text-xs text-slate-400">{employee.phone}</p>}
-                          {employee.last_login_at ? (
-                            <p className="text-xs text-emerald-600">🟢 Был: {formatDistanceToNow(new Date(employee.last_login_at), { addSuffix: true, locale: dateFnsRu })}</p>
-                          ) : (
-                            <p className="text-xs text-slate-400">⚪ Ещё не входил</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                      {employee.is_frozen && (
-                        <span className="px-2.5 py-1 bg-blue-100 rounded-lg text-xs text-blue-700 font-medium">🧊 Заморожен</span>
-                      )}
-                      <span className="px-2.5 py-1 bg-slate-100 rounded-lg text-xs text-slate-700 font-medium">
-                        {employee.role}
-                      </span>
-                        <button
-                          onClick={() => setEditingEmployee(employee)}
-                          className="p-2 hover:bg-indigo-50 rounded-lg group"
-                          title="Настроить разрешения"
-                        >
-                          <Shield className="w-4 h-4 text-indigo-400 group-hover:text-indigo-600" />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteEmployee(employee.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="px-4 pb-3 border-t border-slate-100 pt-2 bg-slate-50">
-                      <p className="text-xs text-slate-500 mb-1.5">Разрешений: <span className="font-semibold text-indigo-600">{enabledCount}</span></p>
-                      <div className="flex flex-wrap gap-1">
-                        {Object.entries(employee.permissions || {}).filter(([,v]) => v).map(([k]) => {
-                          const labels = {
-                            view_analytics:'Аналитика', view_profit:'Прибыль', view_products:'Товары',
-                            add_products:'+ Товары', edit_products:'Ред. товары', delete_products:'Удал. товары',
-                            view_sales:'Продажи', add_sales:'+ Продажи', edit_sales:'Ред. продажи', cancel_sales:'Отм. продажи',
-                            view_warehouses:'Склады', manage_warehouses:'Упр. склады',
-                            view_customers:'Клиенты', manage_customers:'Упр. клиенты',
-                            view_debts:'Долги', manage_debts:'Упр. долги',
-                            manage_returns:'Возвраты', view_activity_log:'История'
-                          };
-                          return <span key={k} className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs">{labels[k]}</span>;
-                        })}
-                        {enabledCount === 0 && <span className="text-xs text-slate-400 italic">Нет разрешений — нажмите 🛡 для настройки</span>}
-                      </div>
-                    </div>
+              {/* Stats bar */}
+              {employees.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  <div className="bg-white rounded-xl border border-slate-100 p-3 text-center">
+                    <p className="text-2xl font-bold text-slate-800">{employees.length}</p>
+                    <p className="text-xs text-slate-500">Всего</p>
                   </div>
-                );
-              })}
+                  <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-3 text-center">
+                    <p className="text-2xl font-bold text-emerald-700">{employees.filter(e => e.last_login_at && (Date.now() - new Date(e.last_login_at).getTime()) < 15 * 60 * 1000).length}</p>
+                    <p className="text-xs text-emerald-600">Онлайн</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-xl border border-slate-100 p-3 text-center">
+                    <p className="text-2xl font-bold text-slate-600">{employees.filter(e => e.is_frozen).length}</p>
+                    <p className="text-xs text-slate-500">Заморожено</p>
+                  </div>
+                </div>
+              )}
+
+              {employees.map(employee => (
+                <EmployeeCard
+                  key={employee.id}
+                  employee={employee}
+                  onEdit={setEditingEmployee}
+                  onDelete={handleDeleteEmployee}
+                />
+              ))}
               {employees.length === 0 && (
                 <p className="text-center text-slate-500 py-8">
                   {t(lang,'settings_emp_empty')}
