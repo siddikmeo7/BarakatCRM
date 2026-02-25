@@ -290,44 +290,48 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     setForm(f => ({ ...f, role: PRESETS[presetKey].label, permissions: { ...PRESETS[presetKey].permissions } }));
   };
 
+  const generateEmployeeCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  };
+
   const handleAdd = async () => {
     if (!form.name || !form.user_email) return;
     setSaving(true);
     try {
-      await base44.entities.Employee.create({
+      const employeeCode = generateEmployeeCode();
+
+      const newEmp = await base44.entities.Employee.create({
         name: form.name,
-        user_email: form.user_email,
+        user_email: form.user_email.trim().toLowerCase(),
         phone: form.phone,
         role: form.role,
         permissions: form.permissions,
         business_id: business.id,
         role_id: 'custom',
         is_active: true,
+        login_session_token: employeeCode, // используем это поле как личный код входа
       });
 
-      // Приглашаем пользователя в систему (чтобы мог войти)
-      try {
-        await base44.users.inviteUser(form.user_email, 'user');
-      } catch (e) {
-        console.error('Invite error:', e);
-      }
+      setCreatedCode(employeeCode);
 
-      // Отправляем email с инструкцией
+      // Приглашаем пользователя в систему
+      try { await base44.users.inviteUser(form.user_email, 'user'); } catch (e) {}
+
+      // Отправляем email с кодом
       try {
         const appUrl = window.location.origin;
         await base44.integrations.Core.SendEmail({
           to: form.user_email,
           subject: `Приглашение в бизнес "${business.name}" — BarakatCRM`,
-          body: `Здравствуйте, ${form.name}!\n\nВас пригласили в бизнес "${business.name}" в системе BarakatCRM как "${form.role}".\n\n📱 Как войти:\n1. Перейдите по ссылке: ${appUrl}\n2. Войдите используя этот email: ${form.user_email}\n3. Система автоматически определит ваш бизнес\n\nЕсли вам не пришло письмо для подтверждения — проверьте папку "Спам".\n\nС уважением,\n${business.name}`
+          body: `Здравствуйте, ${form.name}!\n\nВас пригласили в бизнес "${business.name}" как "${form.role}".\n\n🔑 Ваши данные для входа:\n• Email: ${form.user_email}\n• Код входа: ${employeeCode}\n\n📱 Как войти:\n1. Перейдите: ${appUrl}\n2. Нажмите "Войти как сотрудник"\n3. Введите ваш email и код входа выше\n\nС уважением,\n${business.name}`
         });
-        setInviteSent(true);
-      } catch (e) {
-        console.error('Email error:', e);
-        setInviteSent(true); // всё равно показываем успех, сотрудник создан
-      }
+      } catch (e) {}
 
+      setInviteSent(true);
       onUpdate();
-      setTimeout(() => { setAddDialog(false); resetForm(); }, 1500);
     } catch (e) {
       console.error(e);
     } finally {
