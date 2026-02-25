@@ -364,7 +364,9 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
       {/* List */}
       <div className="space-y-3">
         {employees.map(emp => (
-          <EmployeeCard key={emp.id} employee={emp} business={business} onDelete={handleDelete} onUpdate={onUpdate} />
+          <div key={emp.id} onClick={() => { setSelectedEmployee(emp); setDetailDialog(true); }} className="cursor-pointer">
+            <EmployeeCard employee={emp} business={business} onDelete={handleDelete} onUpdate={onUpdate} />
+          </div>
         ))}
         {employees.length === 0 && (
           <div className="text-center py-10 text-slate-400">
