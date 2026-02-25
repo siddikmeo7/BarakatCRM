@@ -439,6 +439,10 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
                       <Input type="email" value={form.user_email} onChange={e => setForm(f => ({ ...f, user_email: e.target.value }))} placeholder="email@example.com" className="mt-1.5" />
                     </div>
                     <div>
+                      <Label>Пароль *</Label>
+                      <Input type="password" value={form.password || ''} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="Пароль для входа" className="mt-1.5" />
+                    </div>
+                    <div>
                       <Label>Телефон</Label>
                       <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+992 XXX XX XX XX" className="mt-1.5" />
                     </div>
