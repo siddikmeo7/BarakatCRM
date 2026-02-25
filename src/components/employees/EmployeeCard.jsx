@@ -115,10 +115,10 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
         </div>
 
         {/* Expand toggle */}
-        <button
-          onClick={() => setExpanded(e => !e)}
-          className="mt-3 w-full flex items-center justify-between px-3 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors text-xs text-slate-500 font-medium"
-        >
+         <button
+           onClick={() => onViewDetails ? onViewDetails(employee) : setExpanded(e => !e)}
+           className="mt-3 w-full flex items-center justify-between px-3 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors text-xs text-slate-500 font-medium"
+         >
           <span>
             {employee.is_admin
               ? '✅ Полный доступ'
