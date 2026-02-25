@@ -267,7 +267,7 @@ export default function Settings() {
       const roleId = foundRole.id;
 
       // Создаём запись сотрудника
-      await base44.entities.Employee.create({
+      const createdEmp = await base44.entities.Employee.create({
         name: newEmployee.name,
         user_email: newEmployee.user_email,
         phone: newEmployee.phone,
@@ -286,14 +286,24 @@ export default function Settings() {
         console.error('Invite error:', inviteErr);
       }
       
+      // Отправляем письмо сотруднику с информацией
+      try {
+        await base44.functions.invoke('sendEmployeeInviteEmail', {
+          email: newEmployee.user_email,
+          employeeName: newEmployee.name,
+          businessName: business.name,
+          loginCode: createdEmp.login_session_token || 'XXXXXXXX',
+          accessCode: business.access_code,
+          permissions: newEmployee.permissions,
+          roleId: roleId
+        });
+      } catch (emailErr) {
+        console.error('Email error:', emailErr);
+      }
+      
       await loadData();
       
-      // Показываем сообщение о результате
-      if (inviteSuccess) {
-        alert(`Приглашение отправлено на ${newEmployee.user_email}. Сотрудник получит письмо с инструкциями для входа.`);
-      } else {
-        alert(`Сотрудник добавлен, но с отправкой приглашения была проблема. Возможно, этот email уже зарегистрирован в системе. Сотрудник сможет войти со своей почтой.`);
-      }
+      alert(`✅ Сотрудник ${newEmployee.name} добавлен и приглашение отправлено на ${newEmployee.user_email}`);
       
       setNewEmployee({ 
         name: '', 
@@ -312,7 +322,6 @@ export default function Settings() {
         custom_permissions: []
       });
       setNewCustomPermission('');
-      alert(`✅ Сотрудник ${newEmployee.name} добавлен! Приглашение отправлено на ${newEmployee.user_email}`);
     } catch (error) {
       console.error('Error adding employee:', error);
       alert('Ошибка при добавлении сотрудника');
