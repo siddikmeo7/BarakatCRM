@@ -232,7 +232,7 @@ function EmployeeCard({ employee, business, onDelete, onUpdate }) {
             )}
           </div>
 
-          {editing && (
+          {editing && !isAdmin && (
             <div className="flex flex-wrap gap-2 pb-2 border-b border-slate-200">
               <span className="text-xs text-slate-500 self-center">Шаблон:</span>
               {Object.entries(PRESETS).map(([key, preset]) => (
