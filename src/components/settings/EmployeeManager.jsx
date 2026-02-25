@@ -321,12 +321,16 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     setSaving(true);
     try {
       const finalCode = form.loginCode || generateEmployeeCode();
+      
+      // Хешируем пароль перед сохранением
+      const { data: { hash } } = await base44.functions.invoke('hashPassword', { password: form.password });
+      
       const newEmp = await base44.entities.Employee.create({
         name: form.name,
         user_email: form.user_email.trim().toLowerCase(),
         phone: form.phone,
         role: form.role,
-        password: form.password,
+        password: hash,
         permissions: form.permissions,
         business_id: business.id,
         role_id: 'custom',
