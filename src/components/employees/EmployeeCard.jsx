@@ -50,14 +50,13 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
   const handleResendInviteEmail = async () => {
     setSendingEmail(true);
     try {
-      // ⚠️ Примечание: при повторной отправке мы отправляем хешированный пароль из БД
-      // Рекомендуем показать владельцу диалог для ввода нового пароля
       const newPassword = prompt('🔑 Введите новый пароль для отправки в письме (или отмена):');
       if (!newPassword) {
         setSendingEmail(false);
         return;
       }
 
+      // Сначала отправляем письмо с открытым паролем
       await base44.functions.invoke('sendEmployeeInviteEmail', {
         email: employee.user_email,
         employeeName: employee.name,
@@ -67,9 +66,14 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
         employeePassword: newPassword,
         loginCode: employee.login_session_token,
       });
-      alert('✅ Письмо отправлено на ' + employee.user_email);
+
+      // Потом обновляем пароль в БД (хешируем)
+      const { data: { hash } } = await base44.functions.invoke('hashPassword', { password: newPassword });
+      await base44.entities.Employee.update(employee.id, { password: hash });
+
+      alert('✅ Пароль обновлён и письмо отправлено на ' + employee.user_email);
     } catch (err) {
-      console.error('Error sending email:', err);
+      console.error('Error:', err);
       const errorMsg = err?.response?.data?.error || err?.message || 'Неизвестная ошибка';
       alert('❌ Ошибка: ' + errorMsg);
     } finally {
