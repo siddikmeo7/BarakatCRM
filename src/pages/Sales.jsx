@@ -426,7 +426,7 @@ export default function Sales() {
               <SelectItem value="items">{t(lang,'sales_items')}</SelectItem>
             </SelectContent>
           </Select>
-          <div className="relative">
+          <div className="relative customer-filter-dropdown">
             <div
               className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-1.5 bg-white cursor-pointer w-48 text-sm"
               onClick={() => setShowCustomerDropdown(v => !v)}
