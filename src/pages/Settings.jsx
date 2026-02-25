@@ -1441,10 +1441,10 @@ export default function Settings() {
               </div>
             </div>
           </CollapsibleContent>
-        </Collapsible>}
+        </Collapsible> : null}
 
         {/* History Section — view_activity_log */}
-        {canPerm('view_activity_log') && <div
+        {canPerm('view_activity_log') ? <div
           onClick={() => navigate(createPageUrl('ActivityLog'))}
           className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition"
         >
