@@ -590,6 +590,14 @@ export default function Settings() {
     );
   }
 
+  // Хелпер проверки разрешений для владельца/сотрудника-адмна (всегда true) или обычного сотрудника
+  const empPerms = currentEmployee?.permissions || {};
+  const canPerm = (key) => {
+    if (!currentEmployee) return true; // владелец
+    if (currentEmployee.is_admin) return true; // администратор
+    return !!empPerms[key];
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader 
