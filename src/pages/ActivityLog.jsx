@@ -1,46 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import SearchInput from '@/components/filters/SearchInput';
-import DateFilter from '@/components/filters/DateFilter';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
-  History, RotateCcw, Trash2, Package, ShoppingCart, Users, AlertCircle, Eye, 
-  ArrowLeft, Database, Filter, RefreshCw, Download, User, Clock, ChevronRight,
-  CheckCircle2, XCircle, Edit3, PlusCircle
+import {
+  History, RotateCcw, Trash2, Package, ShoppingCart, Users, AlertCircle, Eye,
+  ArrowLeft, Database, RefreshCw, User, Clock, ChevronRight, CheckCircle2,
+  XCircle, Edit3, PlusCircle, Search, Square, CheckSquare, ChevronDown,
+  BarChart2, X, ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, startOfDay, endOfDay, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 const ENTITY_ICONS = {
-  Product: Package,
-  Sale: ShoppingCart,
-  Customer: Users,
-  Warehouse: Database,
-  Employee: Users,
-  Return: RotateCcw
+  Product: Package, Sale: ShoppingCart, Customer: Users,
+  Warehouse: Database, Employee: Users, Return: RotateCcw
 };
-
-const ENTITY_LABELS = { 
-  Product: 'Товар', Sale: 'Продажа', Customer: 'Клиент', 
-  Warehouse: 'Склад', Employee: 'Сотрудник', Return: 'Возврат' 
+const ENTITY_LABELS = {
+  Product: 'Товар', Sale: 'Продажа', Customer: 'Клиент',
+  Warehouse: 'Склад', Employee: 'Сотрудник', Return: 'Возврат'
 };
-
-const ACTION_COLORS = { 
-  create: 'bg-emerald-100 text-emerald-700 border-emerald-200', 
-  update: 'bg-blue-100 text-blue-700 border-blue-200', 
-  delete: 'bg-red-100 text-red-700 border-red-200' 
+const ACTION_COLORS = {
+  create: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  update: 'bg-blue-100 text-blue-700 border-blue-200',
+  delete: 'bg-red-100 text-red-700 border-red-200'
 };
-
-const ACTION_ICONS = {
-  create: PlusCircle,
-  update: Edit3,
-  delete: XCircle
-};
-
+const ACTION_ICONS = { create: PlusCircle, update: Edit3, delete: XCircle };
 const ACTION_LABELS = { create: 'Создание', update: 'Изменение', delete: 'Удаление' };
 
 export default function ActivityLog() {
@@ -48,23 +36,35 @@ export default function ActivityLog() {
   const [business, setBusiness] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Filters
   const [search, setSearch] = useState('');
   const [filterAction, setFilterAction] = useState('all');
   const [filterEntity, setFilterEntity] = useState('all');
   const [filterUser, setFilterUser] = useState('all');
-  const [dateRange, setDateRange] = useState({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date())
-  });
+  const [quickPeriod, setQuickPeriod] = useState('month');
+  const [dateRange, setDateRange] = useState({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
+
+  // Sort
+  const [sortField, setSortField] = useState('date');
+  const [sortDir, setSortDir] = useState('desc');
+
+  // Selection
+  const [selected, setSelected] = useState(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+
+  // UI
   const [detailLog, setDetailLog] = useState(null);
   const [restoring, setRestoring] = useState(null);
   const [deleting, setDeleting] = useState(null);
-  const [quickPeriod, setQuickPeriod] = useState('month');
+  const [activeTab, setActiveTab] = useState('list'); // 'list' | 'users'
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     setLoading(true);
+    setSelected(new Set());
     try {
       const user = await base44.auth.me();
       const businesses = await base44.entities.Business.filter({ owner_email: user.email });
@@ -74,11 +74,8 @@ export default function ActivityLog() {
         const logsData = await base44.entities.ActivityLog.filter({ business_id: biz.id });
         setLogs(logsData.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
       }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
   const setQuickDate = (period) => {
@@ -96,12 +93,9 @@ export default function ActivityLog() {
     setRestoring(log.id);
     try {
       const entityMap = {
-        Product: base44.entities.Product,
-        Sale: base44.entities.Sale,
-        Customer: base44.entities.Customer,
-        Warehouse: base44.entities.Warehouse,
-        Employee: base44.entities.Employee,
-        Return: base44.entities.Return,
+        Product: base44.entities.Product, Sale: base44.entities.Sale,
+        Customer: base44.entities.Customer, Warehouse: base44.entities.Warehouse,
+        Employee: base44.entities.Employee, Return: base44.entities.Return,
       };
       const entity = entityMap[log.entity_type];
       if (entity) {
@@ -111,11 +105,8 @@ export default function ActivityLog() {
         setLogs(prev => prev.map(l => l.id === log.id ? { ...l, is_restored: true } : l));
         if (detailLog?.id === log.id) setDetailLog({ ...log, is_restored: true });
       }
-    } catch (e) {
-      alert('Ошибка при восстановлении');
-    } finally {
-      setRestoring(null);
-    }
+    } catch (e) { alert('Ошибка при восстановлении'); }
+    finally { setRestoring(null); }
   };
 
   const handleDeleteLog = async (logId) => {
@@ -124,241 +115,458 @@ export default function ActivityLog() {
     try {
       await base44.entities.ActivityLog.delete(logId);
       setLogs(prev => prev.filter(l => l.id !== logId));
+      setSelected(prev => { const n = new Set(prev); n.delete(logId); return n; });
       if (detailLog?.id === logId) setDetailLog(null);
-    } finally {
-      setDeleting(null);
+    } finally { setDeleting(null); }
+  };
+
+  // Bulk actions
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Удалить ${selected.size} записей из истории?`)) return;
+    setBulkLoading(true);
+    await Promise.all([...selected].map(id => base44.entities.ActivityLog.delete(id)));
+    setLogs(prev => prev.filter(l => !selected.has(l.id)));
+    setSelected(new Set());
+    setBulkLoading(false);
+  };
+
+  const handleBulkRestoreSelected = async () => {
+    if (selected.size === 0) return;
+    const toRestore = filteredLogs.filter(l => selected.has(l.id) && l.action_type === 'delete' && !l.is_restored && l.entity_data);
+    if (toRestore.length === 0) { alert('Среди выбранных нет записей для восстановления'); return; }
+    if (!confirm(`Восстановить ${toRestore.length} записей?`)) return;
+    setBulkLoading(true);
+    for (const log of toRestore) await handleRestoreSilent(log);
+    setBulkLoading(false);
+    setSelected(new Set());
+  };
+
+  const handleRestoreSilent = async (log) => {
+    const entityMap = {
+      Product: base44.entities.Product, Sale: base44.entities.Sale,
+      Customer: base44.entities.Customer, Warehouse: base44.entities.Warehouse,
+      Employee: base44.entities.Employee, Return: base44.entities.Return,
+    };
+    const entity = entityMap[log.entity_type];
+    if (entity) {
+      const { id, created_date, updated_date, ...restData } = log.entity_data;
+      await entity.create(restData);
+      await base44.entities.ActivityLog.update(log.id, { is_restored: true });
+      setLogs(prev => prev.map(l => l.id === log.id ? { ...l, is_restored: true } : l));
     }
   };
 
-  const handleClearAll = async () => {
-    if (!confirm(`Очистить ${filteredLogs.length} записей из истории? Это действие нельзя отменить.`)) return;
-    await Promise.all(filteredLogs.map(l => base44.entities.ActivityLog.delete(l.id)));
-    await loadData();
+  const toggleSelect = (id) => {
+    setSelected(prev => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
   };
 
-  // Фильтрация
-  const uniqueUsers = [...new Set(logs.map(l => l.user_email).filter(Boolean))];
+  const toggleSelectAll = () => {
+    if (selected.size === filteredLogs.length) setSelected(new Set());
+    else setSelected(new Set(filteredLogs.map(l => l.id)));
+  };
 
-  const filteredLogs = logs.filter(log => {
-    const logDate = new Date(log.created_date);
-    const matchesSearch = !search ||
-      log.description?.toLowerCase().includes(search.toLowerCase()) ||
-      log.entity_type?.toLowerCase().includes(search.toLowerCase()) ||
-      log.user_email?.toLowerCase().includes(search.toLowerCase());
-    const matchesAction = filterAction === 'all' || log.action_type === filterAction;
-    const matchesEntity = filterEntity === 'all' || log.entity_type === filterEntity;
-    const matchesUser = filterUser === 'all' || log.user_email === filterUser;
-    let matchesDate = true;
-    if (dateRange?.from && dateRange?.to) {
-      const toDate = new Date(dateRange.to);
-      toDate.setHours(23, 59, 59, 999);
-      matchesDate = logDate >= new Date(dateRange.from) && logDate <= toDate;
-    }
-    return matchesSearch && matchesAction && matchesEntity && matchesUser && matchesDate;
-  });
+  const toggleSort = (field) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('desc'); }
+  };
 
-  // Статистика
-  const stats = {
+  // Derived data
+  const uniqueUsers = useMemo(() => [...new Set(logs.map(l => l.user_email).filter(Boolean))], [logs]);
+
+  const filteredLogs = useMemo(() => {
+    return logs.filter(log => {
+      const logDate = new Date(log.created_date);
+      const matchesSearch = !search ||
+        log.description?.toLowerCase().includes(search.toLowerCase()) ||
+        log.entity_type?.toLowerCase().includes(search.toLowerCase()) ||
+        log.user_email?.toLowerCase().includes(search.toLowerCase());
+      const matchesAction = filterAction === 'all' || log.action_type === filterAction;
+      const matchesEntity = filterEntity === 'all' || log.entity_type === filterEntity;
+      const matchesUser = filterUser === 'all' || log.user_email === filterUser;
+      let matchesDate = true;
+      if (dateRange?.from && dateRange?.to) {
+        const toDate = new Date(dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        matchesDate = logDate >= new Date(dateRange.from) && logDate <= toDate;
+      }
+      return matchesSearch && matchesAction && matchesEntity && matchesUser && matchesDate;
+    }).sort((a, b) => {
+      let valA, valB;
+      if (sortField === 'date') { valA = new Date(a.created_date); valB = new Date(b.created_date); }
+      else if (sortField === 'action') { valA = a.action_type; valB = b.action_type; }
+      else if (sortField === 'entity') { valA = a.entity_type; valB = b.entity_type; }
+      else if (sortField === 'user') { valA = a.user_email || ''; valB = b.user_email || ''; }
+      if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [logs, search, filterAction, filterEntity, filterUser, dateRange, sortField, sortDir]);
+
+  // User stats for "by user" tab
+  const userStats = useMemo(() => {
+    const map = {};
+    logs.forEach(log => {
+      const u = log.user_email || 'Система';
+      if (!map[u]) map[u] = { email: u, total: 0, create: 0, update: 0, delete: 0, last: null };
+      map[u].total++;
+      map[u][log.action_type] = (map[u][log.action_type] || 0) + 1;
+      const d = new Date(log.created_date);
+      if (!map[u].last || d > map[u].last) map[u].last = d;
+    });
+    return Object.values(map).sort((a, b) => b.total - a.total);
+  }, [logs]);
+
+  const stats = useMemo(() => ({
     total: filteredLogs.length,
     creates: filteredLogs.filter(l => l.action_type === 'create').length,
     updates: filteredLogs.filter(l => l.action_type === 'update').length,
     deletes: filteredLogs.filter(l => l.action_type === 'delete').length,
     restored: filteredLogs.filter(l => l.is_restored).length,
-  };
+  }), [filteredLogs]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
+  const SortBtn = ({ field, label }) => (
+    <button onClick={() => toggleSort(field)}
+      className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg border transition-all ${sortField === field ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
+      {label}
+      {sortField !== field ? <ArrowUpDown className="w-3 h-3" /> :
+        sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+    </button>
+  );
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+    </div>
+  );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="sm" onClick={() => navigate(createPageUrl('Settings'))} className="gap-1">
           <ArrowLeft className="w-4 h-4" /> Настройки
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <History className="w-6 h-6 text-indigo-600" /> История действий
+          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <History className="w-5 h-5 text-indigo-600" /> История действий
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">{logs.length} записей всего</p>
+          <p className="text-xs text-slate-500">{logs.length} записей всего</p>
         </div>
         <Button variant="outline" size="sm" onClick={loadData} className="gap-1">
           <RefreshCw className="w-4 h-4" /> Обновить
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      {/* Tabs */}
+      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
         {[
-          { label: 'Всего', value: stats.total, color: 'text-slate-700', bg: 'bg-slate-50 border-slate-200' },
-          { label: 'Создано', value: stats.creates, color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
-          { label: 'Изменено', value: stats.updates, color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
-          { label: 'Удалено', value: stats.deletes, color: 'text-red-700', bg: 'bg-red-50 border-red-200' },
-          { label: 'Восстановлено', value: stats.restored, color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
-        ].map(s => (
-          <div key={s.label} className={`rounded-xl border p-3 ${s.bg}`}>
-            <p className="text-xs text-slate-500 mb-0.5">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-          </div>
+          { key: 'list', label: 'Список', icon: History },
+          { key: 'users', label: 'По сотрудникам', icon: BarChart2 },
+        ].map(tab => (
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.key ? 'bg-white shadow text-indigo-700' : 'text-slate-600 hover:text-slate-800'}`}>
+            <tab.icon className="w-4 h-4" /> {tab.label}
+          </button>
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-        {/* Quick period */}
-        <div className="flex flex-wrap gap-2 items-center">
-          {[
-            { key: 'today', label: 'Сегодня' },
-            { key: 'week', label: '7 дней' },
-            { key: 'month', label: 'Месяц' },
-            { key: 'all', label: 'Все время' },
-          ].map(p => (
-            <button key={p.key} onClick={() => setQuickDate(p.key)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${quickPeriod === p.key ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}>
-              {p.label}
-            </button>
-          ))}
-          <DateFilter dateRange={dateRange} onDateRangeChange={r => { setDateRange(r); setQuickPeriod(''); }} />
-        </div>
-
-        <div className="flex flex-wrap gap-3 items-center">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Поиск по описанию, типу, пользователю..."
-            className="w-full sm:w-72"
-          />
-          <Select value={filterAction} onValueChange={setFilterAction}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Действие" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все действия</SelectItem>
-              <SelectItem value="create">✅ Создание</SelectItem>
-              <SelectItem value="update">✏️ Изменение</SelectItem>
-              <SelectItem value="delete">🗑 Удаление</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterEntity} onValueChange={setFilterEntity}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Тип" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все типы</SelectItem>
-              <SelectItem value="Product">📦 Товары</SelectItem>
-              <SelectItem value="Sale">🛒 Продажи</SelectItem>
-              <SelectItem value="Customer">👤 Клиенты</SelectItem>
-              <SelectItem value="Warehouse">🏭 Склады</SelectItem>
-              <SelectItem value="Employee">👥 Сотрудники</SelectItem>
-              <SelectItem value="Return">↩️ Возвраты</SelectItem>
-            </SelectContent>
-          </Select>
-          {uniqueUsers.length > 1 && (
-            <Select value={filterUser} onValueChange={setFilterUser}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Пользователь" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все пользователи</SelectItem>
-                {uniqueUsers.map(u => (
-                  <SelectItem key={u} value={u}>{u}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          {filteredLogs.length > 0 && (
-            <button onClick={handleClearAll} className="ml-auto text-xs text-red-500 hover:text-red-700 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-200 transition-all">
-              <Trash2 className="w-3.5 h-3.5" /> Очистить ({filteredLogs.length})
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Logs List */}
-      {filteredLogs.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 text-center py-16">
-          <History className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-          <p className="text-slate-500 font-medium">История пуста</p>
-          <p className="text-slate-400 text-sm mt-1">Попробуйте изменить фильтры</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="divide-y divide-slate-100">
-            {filteredLogs.map(log => {
-              const Icon = ENTITY_ICONS[log.entity_type] || AlertCircle;
-              const ActionIcon = ACTION_ICONS[log.action_type] || AlertCircle;
-              const isDeleting = deleting === log.id;
-              const isRestoring = restoring === log.id;
-              return (
-                <div key={log.id} className={`p-4 hover:bg-slate-50 transition-colors ${log.is_restored ? 'bg-emerald-50/40' : ''}`}>
-                  <div className="flex items-start gap-3">
-                    {/* Icon */}
-                    <div className={`p-2 rounded-xl flex-shrink-0 border ${ACTION_COLORS[log.action_type]}`}>
-                      <ActionIcon className="w-4 h-4" />
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className={`px-2 py-0.5 rounded-md text-xs font-semibold border ${ACTION_COLORS[log.action_type]}`}>
-                          {ACTION_LABELS[log.action_type]}
-                        </span>
-                        <span className="flex items-center gap-1 text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
-                          <Icon className="w-3 h-3" />
-                          {ENTITY_LABELS[log.entity_type] || log.entity_type}
-                        </span>
-                        {log.is_restored && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md text-xs font-medium border border-emerald-200">
-                            <CheckCircle2 className="w-3 h-3" /> Восстановлено
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-slate-700 font-medium">{log.description}</p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
-                        <span className="flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          {log.user_email || 'Система'}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {format(parseISO(log.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {log.entity_data && (
-                        <button onClick={() => setDetailLog(log)}
-                          className="p-2 hover:bg-indigo-50 rounded-lg transition-colors"
-                          title="Подробности">
-                          <Eye className="w-4 h-4 text-indigo-500" />
-                        </button>
-                      )}
-                      {log.action_type === 'delete' && !log.is_restored && log.entity_data && (
-                        <button onClick={() => handleRestore(log)} disabled={isRestoring}
-                          className="p-2 hover:bg-emerald-50 rounded-lg transition-colors"
-                          title="Восстановить">
-                          <RotateCcw className={`w-4 h-4 text-emerald-600 ${isRestoring ? 'animate-spin' : ''}`} />
-                        </button>
-                      )}
-                      <button onClick={() => handleDeleteLog(log.id)} disabled={isDeleting}
-                        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Удалить запись">
-                        <Trash2 className={`w-4 h-4 text-red-400 ${isDeleting ? 'animate-pulse' : ''}`} />
-                      </button>
-                    </div>
+      {activeTab === 'users' ? (
+        /* ── USER STATS TAB ── */
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {userStats.map(u => (
+              <div key={u.email} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-bold text-sm">{u.email.charAt(0).toUpperCase()}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm truncate">{u.email}</p>
+                    <p className="text-xs text-slate-400">{u.total} действий</p>
+                  </div>
+                  <button onClick={() => { setFilterUser(u.email); setActiveTab('list'); }}
+                    className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors">
+                    Фильтр
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-emerald-50 rounded-lg p-2 text-center">
+                    <p className="text-xs text-emerald-600">Создал</p>
+                    <p className="text-lg font-bold text-emerald-700">{u.create || 0}</p>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-2 text-center">
+                    <p className="text-xs text-blue-600">Изменил</p>
+                    <p className="text-lg font-bold text-blue-700">{u.update || 0}</p>
+                  </div>
+                  <div className="bg-red-50 rounded-lg p-2 text-center">
+                    <p className="text-xs text-red-600">Удалил</p>
+                    <p className="text-lg font-bold text-red-700">{u.delete || 0}</p>
                   </div>
                 </div>
-              );
-            })}
+                {/* Activity bar */}
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden flex">
+                  {u.create > 0 && <div className="bg-emerald-400 h-full" style={{ width: `${(u.create / u.total) * 100}%` }} />}
+                  {u.update > 0 && <div className="bg-blue-400 h-full" style={{ width: `${(u.update / u.total) * 100}%` }} />}
+                  {u.delete > 0 && <div className="bg-red-400 h-full" style={{ width: `${(u.delete / u.total) * 100}%` }} />}
+                </div>
+                {u.last && <p className="text-xs text-slate-400">Последнее: {format(u.last, 'dd MMM yyyy, HH:mm', { locale: ru })}</p>}
+              </div>
+            ))}
+            {userStats.length === 0 && (
+              <div className="col-span-3 text-center py-12 text-slate-400">
+                <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>Нет данных</p>
+              </div>
+            )}
           </div>
         </div>
+      ) : (
+        /* ── LIST TAB ── */
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            {[
+              { label: 'Всего', value: stats.total, color: 'text-slate-700', bg: 'bg-slate-50 border-slate-200', action: 'all' },
+              { label: 'Создано', value: stats.creates, color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', action: 'create' },
+              { label: 'Изменено', value: stats.updates, color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', action: 'update' },
+              { label: 'Удалено', value: stats.deletes, color: 'text-red-700', bg: 'bg-red-50 border-red-200', action: 'delete' },
+              { label: 'Восстановлено', value: stats.restored, color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', action: null },
+            ].map(s => (
+              <div key={s.label}
+                onClick={() => s.action !== null && setFilterAction(s.action === filterAction && s.action !== 'all' ? 'all' : s.action)}
+                className={`rounded-xl border p-3 cursor-pointer hover:opacity-80 transition-opacity ${s.bg} ${filterAction === s.action && s.action ? 'ring-2 ring-indigo-400' : ''}`}>
+                <p className="text-xs text-slate-500 mb-0.5">{s.label}</p>
+                <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Filters */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+            {/* Quick period buttons */}
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: 'today', label: 'Сегодня' },
+                { key: 'week', label: '7 дней' },
+                { key: 'month', label: 'Месяц' },
+                { key: 'all', label: 'Все время' },
+              ].map(p => (
+                <button key={p.key} onClick={() => setQuickDate(p.key)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${quickPeriod === p.key ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Search + dropdowns */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input className="pl-9" placeholder="Поиск по описанию, типу, email..." value={search} onChange={e => setSearch(e.target.value)} />
+                {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-slate-400" /></button>}
+              </div>
+              <Select value={filterAction} onValueChange={setFilterAction}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Действие" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Все действия</SelectItem>
+                  <SelectItem value="create">✅ Создание</SelectItem>
+                  <SelectItem value="update">✏️ Изменение</SelectItem>
+                  <SelectItem value="delete">🗑 Удаление</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterEntity} onValueChange={setFilterEntity}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Тип" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Все типы</SelectItem>
+                  <SelectItem value="Product">📦 Товары</SelectItem>
+                  <SelectItem value="Sale">🛒 Продажи</SelectItem>
+                  <SelectItem value="Customer">👤 Клиенты</SelectItem>
+                  <SelectItem value="Warehouse">🏭 Склады</SelectItem>
+                  <SelectItem value="Employee">👥 Сотрудники</SelectItem>
+                  <SelectItem value="Return">↩️ Возвраты</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterUser} onValueChange={setFilterUser}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Сотрудник" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Все сотрудники</SelectItem>
+                  {uniqueUsers.map(u => (
+                    <SelectItem key={u} value={u}>{u}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Active filters chips */}
+              <div className="flex flex-wrap gap-1">
+                {filterAction !== 'all' && (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs">
+                    {ACTION_LABELS[filterAction]}
+                    <button onClick={() => setFilterAction('all')}><X className="w-3 h-3" /></button>
+                  </span>
+                )}
+                {filterEntity !== 'all' && (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs">
+                    {ENTITY_LABELS[filterEntity]}
+                    <button onClick={() => setFilterEntity('all')}><X className="w-3 h-3" /></button>
+                  </span>
+                )}
+                {filterUser !== 'all' && (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs max-w-[160px] truncate">
+                    {filterUser}
+                    <button onClick={() => setFilterUser('all')}><X className="w-3 h-3 flex-shrink-0" /></button>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Sort + select toolbar */}
+            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+              <span className="text-xs text-slate-400 font-medium">Сортировка:</span>
+              <SortBtn field="date" label="Дата" />
+              <SortBtn field="action" label="Действие" />
+              <SortBtn field="entity" label="Тип" />
+              <SortBtn field="user" label="Сотрудник" />
+
+              <div className="ml-auto flex items-center gap-2">
+                <button onClick={() => { setSelectMode(!selectMode); setSelected(new Set()); }}
+                  className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${selectMode ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-300'}`}>
+                  <CheckSquare className="w-3.5 h-3.5" /> {selectMode ? 'Отменить выбор' : 'Выбрать'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Bulk action bar */}
+          {selectMode && selected.size > 0 && (
+            <div className="bg-indigo-600 text-white rounded-2xl p-3 flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-semibold">Выбрано: {selected.size}</span>
+              <Button size="sm" variant="secondary" onClick={handleBulkRestoreSelected} disabled={bulkLoading} className="gap-1 bg-white/20 hover:bg-white/30 text-white border-white/30">
+                <RotateCcw className="w-3.5 h-3.5" /> Восстановить выбранные
+              </Button>
+              <Button size="sm" variant="secondary" onClick={handleBulkDelete} disabled={bulkLoading} className="gap-1 bg-red-500 hover:bg-red-600 text-white border-transparent">
+                <Trash2 className="w-3.5 h-3.5" /> Удалить выбранные
+              </Button>
+              <button onClick={() => setSelected(new Set())} className="ml-auto text-white/70 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Log list */}
+          {filteredLogs.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 text-center py-16">
+              <History className="w-14 h-14 text-slate-200 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">История пуста</p>
+              <p className="text-slate-400 text-sm mt-1">Попробуйте изменить фильтры</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+              {/* List header */}
+              <div className="flex items-center gap-3 px-4 py-2 border-b border-slate-100 bg-slate-50">
+                {selectMode && (
+                  <button onClick={toggleSelectAll} className="flex-shrink-0">
+                    {selected.size === filteredLogs.length
+                      ? <CheckSquare className="w-4 h-4 text-indigo-600" />
+                      : <Square className="w-4 h-4 text-slate-400" />}
+                  </button>
+                )}
+                <span className="text-xs text-slate-500 font-medium flex-1">{filteredLogs.length} записей</span>
+                <button onClick={async () => {
+                  if (!confirm(`Очистить ${filteredLogs.length} записей?`)) return;
+                  setBulkLoading(true);
+                  await Promise.all(filteredLogs.map(l => base44.entities.ActivityLog.delete(l.id)));
+                  await loadData();
+                  setBulkLoading(false);
+                }} className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1">
+                  <Trash2 className="w-3 h-3" /> Очистить всё
+                </button>
+              </div>
+
+              <div className="divide-y divide-slate-100">
+                {filteredLogs.map(log => {
+                  const Icon = ENTITY_ICONS[log.entity_type] || AlertCircle;
+                  const ActionIcon = ACTION_ICONS[log.action_type] || AlertCircle;
+                  const isSelected = selected.has(log.id);
+                  return (
+                    <div key={log.id}
+                      onClick={selectMode ? () => toggleSelect(log.id) : undefined}
+                      className={`p-3 sm:p-4 transition-colors flex items-start gap-3 ${log.is_restored ? 'bg-emerald-50/40' : ''} ${selectMode ? 'cursor-pointer' : ''} ${isSelected ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
+
+                      {selectMode && (
+                        <div className="flex-shrink-0 mt-0.5">
+                          {isSelected ? <CheckSquare className="w-4 h-4 text-indigo-600" /> : <Square className="w-4 h-4 text-slate-300" />}
+                        </div>
+                      )}
+
+                      <div className={`p-2 rounded-xl flex-shrink-0 border ${ACTION_COLORS[log.action_type]}`}>
+                        <ActionIcon className="w-4 h-4" />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className={`px-2 py-0.5 rounded-md text-xs font-semibold border ${ACTION_COLORS[log.action_type]}`}>
+                            {ACTION_LABELS[log.action_type]}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                            <Icon className="w-3 h-3" />
+                            {ENTITY_LABELS[log.entity_type] || log.entity_type}
+                          </span>
+                          {log.is_restored && (
+                            <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md text-xs border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3" /> Восстановлено
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-slate-700">{log.description}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 flex-wrap">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setFilterUser(log.user_email); }}
+                            className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
+                            <User className="w-3 h-3" />
+                            {log.user_email || 'Система'}
+                          </button>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {format(parseISO(log.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
+                          </span>
+                        </div>
+                      </div>
+
+                      {!selectMode && (
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {log.entity_data && (
+                            <button onClick={() => setDetailLog(log)} className="p-2 hover:bg-indigo-50 rounded-lg" title="Подробности">
+                              <Eye className="w-4 h-4 text-indigo-500" />
+                            </button>
+                          )}
+                          {log.action_type === 'delete' && !log.is_restored && log.entity_data && (
+                            <button onClick={() => handleRestore(log)} disabled={restoring === log.id} className="p-2 hover:bg-emerald-50 rounded-lg" title="Восстановить">
+                              <RotateCcw className={`w-4 h-4 text-emerald-600 ${restoring === log.id ? 'animate-spin' : ''}`} />
+                            </button>
+                          )}
+                          <button onClick={() => handleDeleteLog(log.id)} disabled={deleting === log.id} className="p-2 hover:bg-red-50 rounded-lg" title="Удалить">
+                            <Trash2 className={`w-4 h-4 text-red-400 ${deleting === log.id ? 'animate-pulse' : ''}`} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Detail Dialog */}
@@ -381,12 +589,15 @@ export default function ActivityLog() {
           </DialogHeader>
           {detailLog && (
             <div className="space-y-4 py-2">
-              {/* Meta info */}
               <div className="p-3 bg-slate-50 rounded-xl space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-slate-400" />
                   <span className="text-slate-500">Кто:</span>
                   <span className="font-semibold text-slate-800">{detailLog.user_email || 'Система'}</span>
+                  <button onClick={() => { setFilterUser(detailLog.user_email); setDetailLog(null); }}
+                    className="ml-auto text-xs text-indigo-500 hover:text-indigo-700 px-2 py-0.5 bg-indigo-50 rounded">
+                    Фильтровать по сотруднику
+                  </button>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-slate-400" />
@@ -398,7 +609,6 @@ export default function ActivityLog() {
                 )}
               </div>
 
-              {/* Changes for update */}
               {detailLog.action_type === 'update' && detailLog.entity_data?.changes && Object.keys(detailLog.entity_data.changes).length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Что изменилось:</p>
@@ -417,7 +627,6 @@ export default function ActivityLog() {
                 </div>
               )}
 
-              {/* Entity data fields */}
               {detailLog.entity_data && (
                 <div>
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
@@ -434,7 +643,7 @@ export default function ActivityLog() {
                           <span className="text-slate-400 w-36 flex-shrink-0 font-mono text-xs pt-0.5">{key}</span>
                           <span className="text-slate-800 font-medium break-all">
                             {typeof val === 'boolean' ? (val ? '✅ Да' : '❌ Нет') :
-                             typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                              typeof val === 'object' ? JSON.stringify(val) : String(val)}
                           </span>
                         </div>
                       ))}
@@ -457,9 +666,8 @@ export default function ActivityLog() {
                     <RotateCcw className="w-4 h-4" /> Восстановить
                   </Button>
                 )}
-                <button onClick={() => { handleDeleteLog(detailLog.id); setDetailLog(null); }}
-                  className="p-2 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
-                  title="Удалить из истории">
+                <button onClick={() => { handleDeleteLog(detailLog.id); }}
+                  className="p-2 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-200 transition-colors">
                   <Trash2 className="w-4 h-4 text-red-400" />
                 </button>
               </div>
