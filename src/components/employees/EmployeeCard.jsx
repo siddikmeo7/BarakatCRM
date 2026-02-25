@@ -60,7 +60,8 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
       alert('✅ Письмо отправлено на ' + employee.user_email);
     } catch (err) {
       console.error('Error sending email:', err);
-      alert('❌ Ошибка при отправке письма');
+      const errorMsg = err?.response?.data?.error || err?.message || 'Неизвестная ошибка';
+      alert('❌ Ошибка: ' + errorMsg);
     } finally {
       setSendingEmail(false);
     }
