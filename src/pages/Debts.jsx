@@ -208,25 +208,27 @@ export default function Debts() {
         .filter(s => !s.is_cancelled && (s.total_amount || 0) - getSalePaidAmount(s.id) > 0)
         .sort((a, b) => new Date(a.sale_date || a.created_date) - new Date(b.sale_date || b.created_date));
 
+      const totalPaid = parseFloat(bulkPayAmount); // принимаем всю введённую сумму
       const newPayments = [];
+      let toDistribute = totalPaid;
       for (const sale of unpaidSales) {
-        if (remaining <= 0) break;
+        if (toDistribute <= 0) break;
         const saleRemaining = (sale.total_amount || 0) - getSalePaidAmount(sale.id);
-        const toApply = Math.min(remaining, saleRemaining);
-        newPayments.push(
-          base44.entities.DebtPayment.create({
-            business_id: business.id,
-            customer_id: customer.id,
-            sale_id: sale.id,
-            amount: toApply,
-            payment_date: new Date().toISOString(),
-            note: 'Частичное погашение долга'
-          })
-        );
-        remaining -= toApply;
+        const toApply = Math.min(toDistribute, saleRemaining);
+        if (toApply > 0) {
+          newPayments.push(
+            base44.entities.DebtPayment.create({
+              business_id: business.id,
+              customer_id: customer.id,
+              sale_id: sale.id,
+              amount: toApply,
+              payment_date: new Date().toISOString(),
+              note: 'Частичное погашение долга'
+            })
+          );
+          toDistribute -= toApply;
+        }
       }
-
-      const totalPaid = parseFloat(bulkPayAmount) - remaining; // фактически применено
       const created = await Promise.all(newPayments);
 
       // Обновляем клиента
