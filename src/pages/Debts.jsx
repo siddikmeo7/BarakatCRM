@@ -675,6 +675,9 @@ export default function Debts() {
                     <Input type="text" inputMode="decimal" pattern="[0-9.]*" className="mt-1.5"
                       value={payAmount} onChange={e => setPayAmount(e.target.value.replace(/[^0-9.]/g, ''))}
                       placeholder="Введите сумму..." />
+                    {payAmount && parseFloat(payAmount) > remaining && (
+                      <p className="text-xs text-red-500 mt-1">⚠️ Сумма превышает остаток долга ({remaining.toLocaleString()} с.)</p>
+                    )}
                   </div>
                   <div>
                     <Label>Уведомление</Label>
@@ -690,7 +693,7 @@ export default function Debts() {
                   <div className="flex gap-3 pt-1">
                     <Button variant="outline" className="flex-1" onClick={() => { setPayDialog(null); setPayAmount(''); }}>Отмена</Button>
                     <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                      disabled={saving || !payAmount || parseFloat(payAmount) <= 0}
+                      disabled={saving || !payAmount || parseFloat(payAmount) <= 0 || parseFloat(payAmount) > remaining}
                       onClick={handlePayment}>
                       {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Принять оплату'}
                     </Button>
