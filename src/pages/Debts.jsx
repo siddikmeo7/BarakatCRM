@@ -621,6 +621,42 @@ export default function Debts() {
           </div>
         </div>
 
+        {/* Add Debt Dialog (в детальном виде) */}
+        <Dialog open={addDebtOpen} onOpenChange={setAddDebtOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Прибавить долг — {c.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="p-3 bg-orange-50 rounded-xl text-sm">
+                <p className="text-slate-500">Текущий долг: <span className="font-bold text-orange-600">{totalRemaining.toLocaleString()} с.</span></p>
+              </div>
+              <div>
+                <Label>Сумма долга (сомони) *</Label>
+                <Input className="mt-1.5" type="text" inputMode="decimal" pattern="[0-9.]*"
+                  placeholder="0" value={addDebtData.amount}
+                  onChange={e => setAddDebtData(d => ({ ...d, amount: e.target.value.replace(/[^0-9.]/g, '') }))} />
+                {addDebtData.amount && parseFloat(addDebtData.amount) > 0 && (
+                  <p className="text-xs text-orange-600 mt-1">Долг станет: {(totalRemaining + parseFloat(addDebtData.amount)).toLocaleString()} с.</p>
+                )}
+              </div>
+              <div>
+                <Label>Примечание (необязательно)</Label>
+                <Input className="mt-1.5" placeholder="Причина долга, товар и т.д." value={addDebtData.note}
+                  onChange={e => setAddDebtData(d => ({ ...d, note: e.target.value }))} />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => { setAddDebtOpen(false); setAddDebtData({ customer_id: '', new_customer_name: '', new_customer_phone: '', amount: '', note: '', is_new_customer: false }); }}>Отмена</Button>
+                <Button className="flex-1 bg-orange-600 hover:bg-orange-700"
+                  disabled={saving || !addDebtData.amount || parseFloat(addDebtData.amount) <= 0}
+                  onClick={handleAddDebt}>
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4 mr-1" /> Прибавить долг</>}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Bulk Pay Dialog */}
         <Dialog open={bulkPayOpen} onOpenChange={(o) => { if (!o) { setBulkPayOpen(false); setBulkPayAmount(''); } }}>
           <DialogContent className="max-w-sm">
