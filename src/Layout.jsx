@@ -101,41 +101,6 @@ export default function Layout({ children, currentPageName }) {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      // Регистрируем сессию устройства (если ещё не зарегистрирована)
-      let mySessionId = sessionStorage.getItem('barakat_session_id');
-      let myToken = sessionStorage.getItem('my_session_token');
-
-      if (!mySessionId) {
-        // Новая сессия — регистрируем устройство
-        try {
-          const res = await base44.functions.invoke('revokeAllSessions', { action: 'register' });
-          if (res.data?.success) {
-            mySessionId = res.data.session_id;
-            myToken = res.data.session_token;
-            sessionStorage.setItem('barakat_session_id', mySessionId);
-            sessionStorage.setItem('my_session_token', myToken);
-            setSessionId(mySessionId);
-          }
-        } catch (e) {
-          console.warn('Session register failed:', e);
-        }
-      } else if (currentUser.session_token && myToken && myToken !== currentUser.session_token) {
-        // Токен сменился — проверяем, есть ли наша сессия в списке
-        const mySessionInList = (currentUser.active_sessions || []).find(s => s.session_id === mySessionId);
-        if (!mySessionInList) {
-          // Нашу сессию удалили — принудительный выход
-          sessionStorage.clear();
-          alert('Ваша сессия была завершена. Войдите снова.');
-          base44.auth.logout();
-          return;
-        }
-        // Сессия есть, просто обновляем токен
-        sessionStorage.setItem('my_session_token', currentUser.session_token);
-      } else {
-        // Периодически обновляем last_seen
-        base44.functions.invoke('revokeAllSessions', { action: 'heartbeat', session_id: mySessionId }).catch(() => {});
-      }
-
       if (currentUser.email !== ADMIN_EMAIL) {
             // Проверяем: есть ли выбранный режим (сотрудник или владелец) в sessionStorage
             const savedMode = sessionStorage.getItem('barakatcrm_mode'); // 'owner' | 'employee_<empId>'
