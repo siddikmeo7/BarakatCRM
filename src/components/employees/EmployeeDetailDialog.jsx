@@ -4,7 +4,7 @@ import { ru as dateFnsRu } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Mail, Copy, RotateCw, LogIn, Check, AlertCircle } from 'lucide-react';
+import { Mail, Copy, RotateCw, LogIn, Check, AlertCircle, Upload, User, Eye, EyeOff } from 'lucide-react';
 
 export default function EmployeeDetailDialog({ employee, open, onOpenChange, onUpdate }) {
   const [showCode, setShowCode] = useState(true);
