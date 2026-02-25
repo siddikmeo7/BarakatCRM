@@ -387,29 +387,31 @@ export default function Debts() {
     return (
       <div className="space-y-5">
         {/* Хедер */}
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => { setSelectedCustomer(null); setExpandedSaleHistory({}); }} className="gap-1">
-            <ArrowLeft className="w-4 h-4" /> Назад
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-slate-900">{c.name}</h1>
-            {c.phone && <p className="text-sm text-slate-500 flex items-center gap-1"><Phone className="w-3 h-3" />{c.phone}</p>}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => { setSelectedCustomer(null); setExpandedSaleHistory({}); }} className="gap-1 flex-shrink-0">
+              <ArrowLeft className="w-4 h-4" /> Назад
+            </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold text-slate-900 truncate">{c.name}</h1>
+              {c.phone && <p className="text-sm text-slate-500 flex items-center gap-1"><Phone className="w-3 h-3" />{c.phone}</p>}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button size="sm" variant="outline"
-              onClick={() => { setAddDebtData({ customer_id: c.id, new_customer_name: '', new_customer_phone: '', amount: '', note: '', is_new_customer: false }); setAddDebtOpen(true); }}
-              className="gap-1.5 text-xs border-orange-300 text-orange-700 hover:bg-orange-50">
+              onClick={() => openAddDebtForCustomer(c.id)}
+              className="gap-1.5 text-xs border-orange-300 text-orange-700 hover:bg-orange-50 flex-1">
               <Plus className="w-3.5 h-3.5" /> Прибавить долг
             </Button>
             {(customerDebtMap[c.id]?.totalAmount - customerDebtMap[c.id]?.totalPaid) > 0 && (
               <Button size="sm" onClick={() => { setBulkPayOpen(true); setBulkPayAmount(''); }}
-                className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 text-xs">
+                className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 text-xs flex-1">
                 <DollarSign className="w-3.5 h-3.5" /> Погасить долг
               </Button>
             )}
             <button onClick={() => openWhatsApp(c)} disabled={sendingMsg === c.id}
-              className="flex items-center gap-2 px-3 py-2 bg-green-50 hover:bg-green-100 rounded-xl text-green-700 text-sm font-medium">
-              <MessageCircle className="w-4 h-4" /> WhatsApp
+              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-green-50 hover:bg-green-100 rounded-xl text-green-700 text-xs font-medium flex-1">
+              <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
             </button>
           </div>
         </div>
