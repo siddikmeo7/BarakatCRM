@@ -277,40 +277,38 @@ export default function BusinessAccess() {
               Назад
             </button>
 
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Войти как сотрудник</h2>
-            <p className="text-sm text-slate-500 mb-6">Введите ваш email и код входа, которые дал вам владелец бизнеса</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Вход как сотрудник</h2>
+            <p className="text-sm text-slate-500 mb-6">Используйте вашу почту и пароль для входа в систему</p>
 
             <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                <p className="font-medium mb-2">ℹ️ Вход для сотрудников</p>
+                <p>Вы можете войти с помощью вашей почты и пароля, которые установлены в вашем аккаунте. Владелец бизнеса уже авторизовал вас в системе.</p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Ваш Email</label>
                 <Input
                   type="email"
                   placeholder="ваш@email.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  disabled
+                  className="bg-slate-100"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Код входа</label>
-                <Input
-                  placeholder="XXXXXXXX"
-                  value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                  className="font-mono tracking-widest text-lg font-bold"
-                />
-                <p className="text-xs text-slate-400 mt-1">Код из 8 символов — выдаётся владельцем бизнеса</p>
-              </div>
-
-              {error && <div className="bg-red-100 text-red-700 p-3 rounded text-sm">{error}</div>}
+              {error && <div className="bg-blue-100 text-blue-800 p-3 rounded text-sm border border-blue-300">{error}</div>}
 
               <Button
-                onClick={handleJoinBusiness}
-                disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 h-10"
+                disabled
+                className="w-full bg-slate-400 cursor-default h-10"
               >
-                {loading ? 'Подключение...' : 'Войти'}
+                Вход производится автоматически через основной логин
               </Button>
+
+              <p className="text-xs text-slate-500 text-center">
+                При следующем входе в систему вам будет предложено выбрать режим входа (владелец или сотрудник)
+              </p>
             </div>
           </div>
         )}
