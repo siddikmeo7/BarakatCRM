@@ -115,7 +115,7 @@ const PERMISSION_GROUPS = [
 ];
 
 export default function EmployeePermissionsDialog({ employee, onClose, onSaved }) {
-  const [permissions, setPermissions] = useState(employee?.permissions || {});
+  const [permissions, setPermissions] = useState(() => ({ ...(employee?.permissions || {}) }));
   const [isFrozen, setIsFrozen] = useState(employee?.is_frozen || false);
   const [isAdmin, setIsAdmin] = useState(employee?.is_admin || false);
   const [saving, setSaving] = useState(false);
@@ -126,10 +126,17 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
 
   const handleSave = async () => {
     setSaving(true);
-    await base44.entities.Employee.update(employee.id, { permissions, is_frozen: isFrozen, is_admin: isAdmin });
-    setSaving(false);
-    onSaved?.();
-    onClose();
+    try {
+      await base44.entities.Employee.update(employee.id, { 
+        permissions: { ...permissions }, 
+        is_frozen: isFrozen, 
+        is_admin: isAdmin 
+      });
+      await onSaved?.();
+    } finally {
+      setSaving(false);
+      onClose();
+    }
   };
 
   const handlePreset = (preset) => {
