@@ -123,12 +123,27 @@ export default function Layout({ children, currentPageName }) {
                 } else {
                   const bizList = await base44.entities.Business.filter({ id: emp.business_id });
                   if (bizList.length > 0) {
-                    setBusiness(bizList[0]);
-                    setLang(bizList[0].language || 'ru');
+                    const biz = bizList[0];
+                    // Проверяем: сессионный токен актуален?
+                    const storedToken = sessionStorage.getItem(`session_token_${emp.id}`);
+                    if (emp.login_session_token && storedToken && storedToken !== emp.login_session_token) {
+                      // Владелец сменил код — выбрасываем сотрудника
+                      sessionStorage.removeItem('barakatcrm_mode');
+                      alert('Коды доступа к бизнесу были изменены владельцем. Войдите заново с новыми кодами.');
+                      setLoading(false);
+                      if (currentPageName !== 'BusinessAccess') navigate(createPageUrl('BusinessAccess'));
+                      return;
+                    }
+                    // Сохраняем токен текущей сессии
+                    if (emp.login_session_token) {
+                      sessionStorage.setItem(`session_token_${emp.id}`, emp.login_session_token);
+                    }
+                    setBusiness(biz);
+                    setLang(biz.language || 'ru');
                     setEmployeePermissions(emp.permissions || {});
                     setCurrentEmployee(emp);
                     window.__barakatEmployee = emp;
-                    window.__barakatBusiness = bizList[0];
+                    window.__barakatBusiness = biz;
                     // Показываем приветственный экран только при первом входе за сессию
                     const welcomeKey = `welcomed_${emp.id}`;
                     if (!sessionStorage.getItem(welcomeKey)) {
