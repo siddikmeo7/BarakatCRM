@@ -126,8 +126,14 @@ export default function Layout({ children, currentPageName }) {
                     setBusiness(bizList[0]);
                     setLang(bizList[0].language || 'ru');
                     setEmployeePermissions(emp.permissions || {});
+                    setCurrentEmployee(emp);
                     window.__barakatEmployee = emp;
                     window.__barakatBusiness = bizList[0];
+                    // Показываем приветственный экран только при первом входе за сессию
+                    const welcomeKey = `welcomed_${emp.id}`;
+                    if (!sessionStorage.getItem(welcomeKey)) {
+                      setShowWelcome(true);
+                    }
                     setLoading(false);
                     return;
                   }
