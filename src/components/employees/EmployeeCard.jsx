@@ -39,12 +39,34 @@ function getOnlineStatus(lastLoginAt) {
   return { label: formatDistanceToNow(new Date(lastLoginAt), { addSuffix: true, locale: dateFnsRu }), color: 'bg-slate-300', textColor: 'text-slate-400' };
 }
 
-export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails }) {
+export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails, business }) {
   const [expanded, setExpanded] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const status = getOnlineStatus(employee.last_login_at);
   const grantedPerms = Object.entries(employee.permissions || {}).filter(([, v]) => v);
   const enabledCount = grantedPerms.length;
   const roleColor = ROLE_COLORS[employee.role] || 'bg-slate-100 text-slate-700';
+
+  const handleResendInviteEmail = async () => {
+    setSendingEmail(true);
+    try {
+      await base44.functions.invoke('sendEmployeeInviteEmail', {
+        email: employee.user_email,
+        employeeName: employee.name,
+        businessName: business?.name || 'BarakatCRM',
+        loginCode: employee.login_session_token || 'XXXXXXXX',
+        accessCode: business?.access_code || 'XXXXXXXX',
+        permissions: employee.permissions,
+        roleId: employee.role_id
+      });
+      alert('✅ Письмо отправлено на ' + employee.user_email);
+    } catch (err) {
+      console.error('Error sending email:', err);
+      alert('❌ Ошибка при отправке письма');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
 
   return (
     <div className={`bg-white rounded-2xl border overflow-hidden transition-all ${employee.is_frozen ? 'border-blue-200 opacity-75' : 'border-slate-200'}`}>
