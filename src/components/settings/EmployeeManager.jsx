@@ -285,7 +285,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const resetForm = () => {
-    setForm({ name: '', user_email: '', phone: '', role: 'Продавец', permissions: { ...PRESETS.seller.permissions } });
+    setForm({ name: '', user_email: '', phone: '', role: 'Продавец', password: '', permissions: { ...PRESETS.seller.permissions } });
     setStep(1);
     setInviteSent(false);
     setCreatedCode('');
