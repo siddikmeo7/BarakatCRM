@@ -231,7 +231,7 @@ export default function Debts() {
       }
       const created = await Promise.all(newPayments);
 
-      // Обновляем клиента
+      // Обновляем клиента (долг не может быть меньше 0)
       const updatedCustomer = {
         ...customer,
         total_debt: Math.max(0, (customer.total_debt || 0) - totalPaid),
