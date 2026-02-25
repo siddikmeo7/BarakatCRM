@@ -38,7 +38,7 @@ function getOnlineStatus(lastLoginAt) {
   return { label: formatDistanceToNow(new Date(lastLoginAt), { addSuffix: true, locale: dateFnsRu }), color: 'bg-slate-300', textColor: 'text-slate-400' };
 }
 
-export default function EmployeeCard({ employee, onEdit, onDelete }) {
+export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails }) {
   const [expanded, setExpanded] = useState(false);
   const status = getOnlineStatus(employee.last_login_at);
   const grantedPerms = Object.entries(employee.permissions || {}).filter(([, v]) => v);
