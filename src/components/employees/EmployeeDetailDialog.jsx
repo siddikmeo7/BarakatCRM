@@ -44,6 +44,23 @@ export default function EmployeeDetailDialog({ employee, open, onOpenChange, onU
     }
   };
 
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.entities.Employee.update(employee.id, { avatar_url: file_url });
+      setMessage('✅ Аватар загружен');
+      setTimeout(() => setMessage(''), 3000);
+      onUpdate();
+    } catch (err) {
+      setMessage('❌ Ошибка при загрузке');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (!employee) return null;
 
   const refreshedEmp = employee; // в реальном приложении можно перезагрузить данные
