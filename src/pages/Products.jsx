@@ -37,6 +37,24 @@ const BASE_COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Си
 
 export default function Products() {
   const { can } = useEmployeeAccess();
+  
+  // Блокировка страницы если нет доступа
+  if (!can('view_products')) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+            <Package className="w-8 h-8 text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Нет доступа</h3>
+            <p className="text-slate-600">У вас нет прав для просмотра товаров.<br/>Обратитесь к владельцу бизнеса.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   const [business, setBusiness] = useState(null);
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
@@ -338,10 +356,12 @@ export default function Products() {
         title={t(lang,'prod_title')}
         subtitle={`${products.length} ${t(lang,'prod_subtitle_count')} ${can('view_stock_value') ? `${totalStockValue.toLocaleString()} ${t(lang,'dash_somoni')}` : '••••• с.'}`}
         actions={
-          <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-            <Plus className="w-4 h-4" />
-            {t(lang,'prod_add')}
-          </Button>
+          can('add_products') && (
+            <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+              <Plus className="w-4 h-4" />
+              {t(lang,'prod_add')}
+            </Button>
+          )
         }
       />
 
@@ -443,12 +463,16 @@ export default function Products() {
                     <p className={`text-xs truncate ${isLowStock ? 'text-red-500' : 'text-slate-500'}`}>{product.model}</p>
                   </div>
                   <div className="flex gap-1 ml-1 flex-shrink-0">
-                    <button onClick={() => handleOpenDialog(product)} className="p-1 bg-slate-100 rounded-lg hover:bg-slate-200">
-                      <Edit2 className="w-3 h-3 text-slate-600" />
-                    </button>
-                    <button onClick={() => handleDelete(product.id)} className="p-1 bg-slate-100 rounded-lg hover:bg-red-100">
-                      <Trash2 className="w-3 h-3 text-red-500" />
-                    </button>
+                    {can('edit_products') && (
+                      <button onClick={() => handleOpenDialog(product)} className="p-1 bg-slate-100 rounded-lg hover:bg-slate-200">
+                        <Edit2 className="w-3 h-3 text-slate-600" />
+                      </button>
+                    )}
+                    {can('delete_products') && (
+                      <button onClick={() => handleDelete(product.id)} className="p-1 bg-slate-100 rounded-lg hover:bg-red-100">
+                        <Trash2 className="w-3 h-3 text-red-500" />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="px-3 py-2">
@@ -483,12 +507,16 @@ export default function Products() {
                     </div>
                   )}
                   <div className="absolute top-2 right-2 flex gap-1">
-                    <button onClick={() => handleOpenDialog(product)} className="p-2 bg-white rounded-lg shadow-md hover:bg-slate-50">
-                      <Edit2 className="w-4 h-4 text-slate-600" />
-                    </button>
-                    <button onClick={() => handleDelete(product.id)} className="p-2 bg-white rounded-lg shadow-md hover:bg-red-50">
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </button>
+                    {can('edit_products') && (
+                      <button onClick={() => handleOpenDialog(product)} className="p-2 bg-white rounded-lg shadow-md hover:bg-slate-50">
+                        <Edit2 className="w-4 h-4 text-slate-600" />
+                      </button>
+                    )}
+                    {can('delete_products') && (
+                      <button onClick={() => handleDelete(product.id)} className="p-2 bg-white rounded-lg shadow-md hover:bg-red-50">
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="p-3">
@@ -579,12 +607,16 @@ export default function Products() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 justify-end">
-                        <button onClick={() => handleOpenDialog(product)} className="p-1.5 hover:bg-slate-100 rounded-lg">
-                          <Edit2 className="w-4 h-4 text-slate-500" />
-                        </button>
-                        <button onClick={() => handleDelete(product.id)} className="p-1.5 hover:bg-red-50 rounded-lg">
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
+                        {can('edit_products') && (
+                          <button onClick={() => handleOpenDialog(product)} className="p-1.5 hover:bg-slate-100 rounded-lg">
+                            <Edit2 className="w-4 h-4 text-slate-500" />
+                          </button>
+                        )}
+                        {can('delete_products') && (
+                          <button onClick={() => handleDelete(product.id)} className="p-1.5 hover:bg-red-50 rounded-lg">
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

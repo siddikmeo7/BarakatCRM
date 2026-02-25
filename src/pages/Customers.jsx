@@ -29,7 +29,29 @@ import {
 
 const PAGE_SIZE = 20;
 
+import { t } from '@/components/i18n/translations';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+
 export default function Customers() {
+  const { can } = useEmployeeAccess();
+  
+  // Блокировка страницы если нет доступа
+  if (!can('view_customers')) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+            <Users className="w-8 h-8 text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Нет доступа</h3>
+            <p className="text-slate-600">У вас нет прав для просмотра клиентов.<br/>Обратитесь к владельцу бизнеса.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   const [business, setBusiness] = useState(null);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -207,10 +229,12 @@ export default function Customers() {
         title="Клиенты"
         subtitle={`${customers.length} клиентов`}
         actions={
-          <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-            <Plus className="w-4 h-4" />
-            Добавить клиента
-          </Button>
+          can('manage_customers') && (
+            <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+              <Plus className="w-4 h-4" />
+              Добавить клиента
+            </Button>
+          )
         }
       />
 
@@ -321,12 +345,16 @@ export default function Customers() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 justify-end">
-                        <button onClick={() => handleOpenDialog(customer)} className="p-1.5 hover:bg-slate-100 rounded-lg">
-                          <Edit2 className="w-4 h-4 text-slate-500" />
-                        </button>
-                        <button onClick={() => handleDelete(customer.id)} className="p-1.5 hover:bg-red-50 rounded-lg">
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
+                        {can('manage_customers') && (
+                          <>
+                            <button onClick={() => handleOpenDialog(customer)} className="p-1.5 hover:bg-slate-100 rounded-lg">
+                              <Edit2 className="w-4 h-4 text-slate-500" />
+                            </button>
+                            <button onClick={() => handleDelete(customer.id)} className="p-1.5 hover:bg-red-50 rounded-lg">
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -369,18 +397,22 @@ export default function Customers() {
                     </span>
                   </div>
                   <div className="flex gap-1">
-                    <button 
-                      onClick={() => handleOpenDialog(customer)}
-                      className="p-2 hover:bg-slate-100 rounded-lg"
-                    >
-                      <Edit2 className="w-4 h-4 text-slate-500" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(customer.id)}
-                      className="p-2 hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </button>
+                    {can('manage_customers') && (
+                      <>
+                        <button 
+                          onClick={() => handleOpenDialog(customer)}
+                          className="p-2 hover:bg-slate-100 rounded-lg"
+                        >
+                          <Edit2 className="w-4 h-4 text-slate-500" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(customer.id)}
+                          className="p-2 hover:bg-red-50 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 

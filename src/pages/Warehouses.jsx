@@ -49,6 +49,24 @@ function WarehouseIconComp({ iconKey, className }) {
 
 export default function Warehouses() {
   const { can } = useEmployeeAccess();
+  
+  // Блокировка страницы если нет доступа
+  if (!can('view_warehouses')) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+            <WarehouseIcon className="w-8 h-8 text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Нет доступа</h3>
+            <p className="text-slate-600">У вас нет прав для просмотра складов.<br/>Обратитесь к владельцу бизнеса.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   const [business, setBusiness] = useState(null);
   const [warehouses, setWarehouses] = useState([]);
   const [products, setProducts] = useState([]);
@@ -236,10 +254,12 @@ export default function Warehouses() {
         title="Склады"
         subtitle={`${warehouses.length} складов`}
         actions={
-          <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-            <Plus className="w-4 h-4" />
-            Добавить склад
-          </Button>
+          can('manage_warehouses') && (
+            <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+              <Plus className="w-4 h-4" />
+              Добавить склад
+            </Button>
+          )
         }
       />
 
@@ -354,18 +374,22 @@ export default function Warehouses() {
                       <WarehouseIconComp iconKey={warehouse.icon} className="w-6 h-6 text-purple-600" />
                     </div>
                     <div className="flex gap-1">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleOpenDialog(warehouse); }}
-                        className="p-2 hover:bg-slate-100 rounded-lg"
-                      >
-                        <Edit2 className="w-4 h-4 text-slate-500" />
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDelete(warehouse.id); }}
-                        className="p-2 hover:bg-red-50 rounded-lg"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </button>
+                      {can('manage_warehouses') && (
+                        <>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleOpenDialog(warehouse); }}
+                            className="p-2 hover:bg-slate-100 rounded-lg"
+                          >
+                            <Edit2 className="w-4 h-4 text-slate-500" />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDelete(warehouse.id); }}
+                            className="p-2 hover:bg-red-50 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -460,18 +484,22 @@ export default function Warehouses() {
                     <td className="px-4 py-3 text-center text-blue-600 font-semibold">{stats.soldBoxes}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 justify-end">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleOpenDialog(warehouse); }}
-                          className="p-1.5 hover:bg-slate-100 rounded-lg"
-                        >
-                          <Edit2 className="w-4 h-4 text-slate-500" />
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleDelete(warehouse.id); }}
-                          className="p-1.5 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
+                       {can('manage_warehouses') && (
+                         <>
+                           <button 
+                             onClick={(e) => { e.stopPropagation(); handleOpenDialog(warehouse); }}
+                             className="p-1.5 hover:bg-slate-100 rounded-lg"
+                           >
+                             <Edit2 className="w-4 h-4 text-slate-500" />
+                           </button>
+                           <button 
+                             onClick={(e) => { e.stopPropagation(); handleDelete(warehouse.id); }}
+                             className="p-1.5 hover:bg-red-50 rounded-lg"
+                           >
+                             <Trash2 className="w-4 h-4 text-red-500" />
+                           </button>
+                         </>
+                       )}
                       </div>
                     </td>
                   </tr>
@@ -501,14 +529,16 @@ export default function Warehouses() {
                 </div>
               </div>
             </div>
-            <Button
-              onClick={() => setMoveDialogOpen(true)}
-              variant="outline"
-              className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-            >
-              <ArrowRightLeft className="w-4 h-4" />
-              Переместить товары
-            </Button>
+            {can('move_products') && (
+              <Button
+                onClick={() => setMoveDialogOpen(true)}
+                variant="outline"
+                className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+              >
+                <ArrowRightLeft className="w-4 h-4" />
+                Переместить товары
+              </Button>
+            )}
           </div>
 
           {/* Stats */}
