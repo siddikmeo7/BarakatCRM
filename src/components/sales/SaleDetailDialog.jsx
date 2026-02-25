@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { ru } from 'date-fns/locale';
 const MAX_EDITS = 5;
 
 export default function SaleDetailDialog({ sale, product, customer, onClose, onUpdated }) {
+  const { can } = useEmployeeAccess();
   const [mode, setMode] = useState('view'); // view | edit | cancel | to_debt
   const [saving, setSaving] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -402,16 +404,18 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
         <div className="flex flex-wrap gap-2 pt-2">
           {!sale.is_cancelled && mode === 'view' && (
             <>
-              <Button
-                variant="outline"
-                disabled={!canEdit}
-                onClick={() => setMode('edit')}
-                className="flex-1 gap-2"
-              >
-                <Edit2 className="w-4 h-4" />
-                Редактировать
-              </Button>
-              {!sale.is_debt && (
+              {can('edit_sales') && (
+                <Button
+                  variant="outline"
+                  disabled={!canEdit}
+                  onClick={() => setMode('edit')}
+                  className="flex-1 gap-2"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  Редактировать
+                </Button>
+              )}
+              {can('edit_sales') && !sale.is_debt && (
                 <Button
                   variant="outline"
                   onClick={() => setMode('to_debt')}
@@ -421,14 +425,16 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
                   В долг
                 </Button>
               )}
-              <Button
-                variant="outline"
-                onClick={() => setMode('cancel')}
-                className="flex-1 gap-2 text-red-600 border-red-200 hover:bg-red-50"
-              >
-                <XCircle className="w-4 h-4" />
-                Отменить продажу
-              </Button>
+              {can('cancel_sales') && (
+                <Button
+                  variant="outline"
+                  onClick={() => setMode('cancel')}
+                  className="flex-1 gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <XCircle className="w-4 h-4" />
+                  Отменить продажу
+                </Button>
+              )}
             </>
           )}
 
