@@ -9,9 +9,10 @@ import {
   Plus, Trash2, Edit2, Mail, Phone, User,
   Eye, EyeOff, ShoppingCart, Package, Warehouse,
   Users, CreditCard, BarChart2, Shield, Check, X,
-  RotateCcw, ChevronDown, ChevronUp, Send, UserCheck
+  RotateCcw, ChevronDown, ChevronUp, Send, UserCheck, Copy
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import EmployeeDetailDialog from '../employees/EmployeeDetailDialog';
 
 const ALL_PERMISSIONS = [
   { key: 'view_dashboard',       label: 'Видеть главную',              icon: LayoutDashboard, group: 'main' },
