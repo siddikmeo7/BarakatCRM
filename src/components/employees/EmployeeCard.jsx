@@ -55,7 +55,9 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
         employeeName: employee.name,
         businessName: business?.name || 'BarakatCRM',
         permissions: employee.permissions,
-        roleId: employee.role_id
+        roleId: employee.role_id,
+        employeePassword: employee.password,
+        loginCode: employee.login_session_token,
       });
       alert('✅ Письмо отправлено на ' + employee.user_email);
     } catch (err) {
