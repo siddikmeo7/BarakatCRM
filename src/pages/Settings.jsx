@@ -793,8 +793,10 @@ export default function Settings() {
                   <Users className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">{t(lang,'settings_employees')}</h3>
-                  <p className="text-xs text-slate-500">{employees.length} сотрудник(ов)</p>
+                   <h3 className="font-semibold text-slate-900">{t(lang,'settings_employees')}</h3>
+                   <p className="text-xs text-slate-500">
+                     {employees.length} сотрудник(ов) · <span className="text-emerald-600 font-medium">{employees.filter(e => e.last_login_at).length} входили</span>
+                   </p>
                 </div>
               </div>
               <ChevronDown className={`w-5 h-5 text-slate-500 transition ${expandedSections.employees ? 'rotate-180' : ''}`} />
