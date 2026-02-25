@@ -381,12 +381,38 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
           </DialogHeader>
 
           {inviteSent ? (
-            <div className="text-center py-8 space-y-3">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <Check className="w-8 h-8 text-green-600" />
+            <div className="py-4 space-y-4">
+              <div className="text-center space-y-2">
+                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                  <Check className="w-7 h-7 text-green-600" />
+                </div>
+                <p className="font-semibold text-slate-900">Сотрудник добавлен!</p>
               </div>
-              <p className="font-semibold text-slate-900">Сотрудник добавлен!</p>
-              <p className="text-sm text-slate-500">Приглашение отправлено на <strong>{form.user_email}</strong></p>
+              <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 space-y-3">
+                <p className="text-sm font-semibold text-indigo-800">🔑 Данные для входа сотрудника:</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-indigo-100">
+                    <div>
+                      <p className="text-xs text-slate-400">Email</p>
+                      <p className="font-mono font-semibold text-slate-900 text-sm">{form.user_email}</p>
+                    </div>
+                    <button onClick={() => { navigator.clipboard.writeText(form.user_email); }} className="p-1.5 hover:bg-indigo-50 rounded">
+                      <Copy className="w-4 h-4 text-indigo-500" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-indigo-100">
+                    <div>
+                      <p className="text-xs text-slate-400">Код входа</p>
+                      <p className="font-mono font-bold text-indigo-700 text-xl tracking-widest">{createdCode}</p>
+                    </div>
+                    <button onClick={() => { navigator.clipboard.writeText(createdCode); }} className="p-1.5 hover:bg-indigo-50 rounded">
+                      <Copy className="w-4 h-4 text-indigo-500" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500">📧 Эти данные также отправлены на email сотрудника</p>
+              </div>
+              <Button className="w-full" variant="outline" onClick={() => { setAddDialog(false); resetForm(); }}>Готово</Button>
             </div>
           ) : (
             <div className="space-y-5">
