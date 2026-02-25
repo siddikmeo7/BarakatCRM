@@ -62,6 +62,9 @@ export default function Settings() {
   // Проверяем режим сотрудника
   const savedMode = sessionStorage.getItem('barakatcrm_mode');
   const isEmployeeMode = savedMode && savedMode.startsWith('employee_');
+  // Проверяем: является ли сотрудник администратором (полный доступ)
+  const currentEmployee = window.__barakatEmployee;
+  const isEmployeeAdmin = currentEmployee?.is_admin === true;
   const [business, setBusiness] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [user, setUser] = useState(null);
@@ -459,8 +462,8 @@ export default function Settings() {
     );
   }
 
-  // Если режим сотрудника — показываем только смену языка
-  if (isEmployeeMode) {
+  // Если режим сотрудника и НЕ администратор — показываем только смену языка
+  if (isEmployeeMode && !isEmployeeAdmin) {
     return (
       <div className="space-y-4">
         <PageHeader title={t(lang, 'settings_title')} subtitle="Настройки языка" />
