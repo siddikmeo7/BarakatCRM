@@ -296,6 +296,19 @@ export default function Layout({ children, currentPageName }) {
     </div>
   );
 
+  if (showWelcome && currentEmployee && business) {
+    return (
+      <EmployeeWelcomeScreen
+        employee={currentEmployee}
+        business={business}
+        onContinue={() => {
+          sessionStorage.setItem(`welcomed_${currentEmployee.id}`, '1');
+          setShowWelcome(false);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background dark:bg-slate-950">
       {/* === DRAWER OVERLAY (both mobile & desktop) === */}
