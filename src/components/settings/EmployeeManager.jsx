@@ -188,8 +188,35 @@ function EmployeeCard({ employee, business, onDelete, onUpdate }) {
       {/* Permissions panel */}
       {expanded && (
         <div className="border-t border-slate-100 bg-slate-50 p-4 space-y-4">
+          {/* Admin toggle */}
+          {editing && (
+            <div className={cn('flex items-center justify-between p-3 rounded-xl border mb-3',
+              isAdmin ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300' : 'bg-white border-slate-200')}>
+              <div>
+                <p className={cn('text-sm font-bold', isAdmin ? 'text-indigo-700' : 'text-slate-700')}>
+                  {isAdmin ? '👑 Администратор — полный доступ' : '👤 Обычный сотрудник'}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {isAdmin ? 'Видит и управляет всем как владелец бизнеса' : 'Права доступа настраиваются вручную'}
+                </p>
+              </div>
+              <div
+                onClick={() => setIsAdmin(a => !a)}
+                className={cn('w-12 h-7 rounded-full transition-all flex items-center px-1 cursor-pointer',
+                  isAdmin ? 'bg-gradient-to-r from-indigo-500 to-purple-500' : 'bg-slate-300')}>
+                <div className={cn('w-5 h-5 rounded-full bg-white shadow transition-transform', isAdmin ? 'translate-x-5' : 'translate-x-0')} />
+              </div>
+            </div>
+          )}
+          {employee.is_admin && !editing && (
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-300 rounded-xl p-3 mb-3">
+              <p className="text-sm font-bold text-indigo-700">👑 Администратор — полный доступ</p>
+              <p className="text-xs text-slate-600">Этот сотрудник видит и управляет всем как владелец бизнеса</p>
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-slate-700">Разрешения</p>
+            <p className="text-sm font-semibold text-slate-700">Разрешения {isAdmin && editing ? '(отключены для админа)' : ''}</p>
             {!editing ? (
               <Button size="sm" variant="outline" onClick={() => setEditing(true)} className="gap-1 text-xs">
                 <Edit2 className="w-3 h-3" /> Изменить
