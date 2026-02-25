@@ -128,6 +128,14 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
               <Shield className="w-4 h-4 text-indigo-400 group-hover:text-indigo-600" />
             </button>
             <button
+              onClick={handleResendInviteEmail}
+              disabled={sendingEmail}
+              className="p-2 hover:bg-green-50 rounded-xl transition-colors group disabled:opacity-50"
+              title="Отправить письмо"
+            >
+              <Send className="w-4 h-4 text-green-400 group-hover:text-green-600" />
+            </button>
+            <button
               onClick={() => onDelete(employee.id)}
               className="p-2 hover:bg-red-50 rounded-xl transition-colors"
               title="Удалить"
