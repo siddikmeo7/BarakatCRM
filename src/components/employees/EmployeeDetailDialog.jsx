@@ -11,6 +11,7 @@ export default function EmployeeDetailDialog({ employee, open, onOpenChange, onU
   const [regenerating, setRegenerating] = useState(false);
   const [copied, setCopied] = useState('');
   const [message, setMessage] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const handleCopy = (text, type) => {
     navigator.clipboard.writeText(text);
