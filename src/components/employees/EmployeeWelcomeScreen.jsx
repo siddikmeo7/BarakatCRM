@@ -118,6 +118,23 @@ export default function EmployeeWelcomeScreen({ employee, business, onContinue }
 
         {/* Content */}
         <div className="p-5 space-y-4">
+          {/* Account Info */}
+          <div className="bg-slate-50 rounded-xl p-3 space-y-2">
+            <p className="text-xs font-semibold text-slate-600 uppercase">📧 Информация аккаунта</p>
+            <div className="space-y-1.5">
+              <div className="text-xs">
+                <span className="text-slate-500">Email:</span>
+                <p className="font-mono text-slate-900 break-all">{user?.email}</p>
+              </div>
+              {user?.full_name && (
+                <div className="text-xs">
+                  <span className="text-slate-500">Имя:</span>
+                  <p className="text-slate-900">{user.full_name}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
               {isAdmin ? 'Вам доступны все функции:' : 'Вы были добавлены с доступом:'}
