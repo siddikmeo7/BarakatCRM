@@ -1296,7 +1296,7 @@ export default function Settings() {
         </div> : null}
 
         {/* Employee Login Section */}
-        <Collapsible open={expandedSections.employee_login} onOpenChange={(open) => setExpandedSections({...expandedSections, employee_login: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.employee_login} onOpenChange={(open) => setExpandedSections({...expandedSections, employee_login: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.employee_login ? 'bg-purple-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
