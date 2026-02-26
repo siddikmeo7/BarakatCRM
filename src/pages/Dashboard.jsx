@@ -149,13 +149,7 @@ export default function Dashboard() {
     })
     .filter(item => item.product);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
+  if (loading) return <PageLoader message="Загрузка дашборда..." />;
 
   const masked = '•••••';
 
