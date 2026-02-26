@@ -347,9 +347,10 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
             <div className="bg-white rounded-lg p-3 border border-green-100 space-y-2">
               <div className="flex items-center justify-between">
                 <Input 
-                  type="password"
+                  type="text"
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
+                  placeholder="Введите новый пароль..."
                   className="font-mono flex-1"
                 />
                 <button
