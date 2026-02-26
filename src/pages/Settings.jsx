@@ -1046,9 +1046,9 @@ export default function Settings() {
         </Collapsible> : null}
 
         {/* Notifications Settings — всем */}
-        <Collapsible open={expandedSections.notifications} onOpenChange={(open) => setExpandedSections({...expandedSections, notifications: open})}>
+        <Collapsible open={expandedSections.notifications} onOpenChange={(open) => setExpandedSections({...expandedSections, notifications: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <CollapsibleTrigger asChild>
-            <div className={`rounded-xl p-4 cursor-pointer border flex items-center justify-between transition-all ${expandedSections.notifications ? 'bg-yellow-50 border-yellow-200 shadow-sm' : 'bg-white hover:bg-slate-50 border-slate-100'}`}>
+            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.notifications ? 'bg-yellow-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg transition-colors ${expandedSections.notifications ? 'bg-yellow-500' : 'bg-yellow-100'}`}>
                   <Bell className={`w-5 h-5 ${expandedSections.notifications ? 'text-white' : 'text-yellow-600'}`} />
@@ -1061,7 +1061,7 @@ export default function Settings() {
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.notifications ? 'rotate-180 text-yellow-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6">
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6">
             <div className="space-y-4">
               <div className="flex items-start gap-4 p-4 border border-slate-200 rounded-xl">
                 <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
