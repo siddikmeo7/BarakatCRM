@@ -121,7 +121,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
   const [isAdmin, setIsAdmin] = useState(employee?.is_admin || false);
   const [saving, setSaving] = useState(false);
   const [loginCode, setLoginCode] = useState(employee?.login_session_token || '');
-  const [password, setPassword] = useState(employee?.password || '');
+  const [password, setPassword] = useState(''); // Пустое — пользователь вводит новый пароль явно
   const [copied, setCopied] = useState('');
   const [uploading, setUploading] = useState(false);
 
