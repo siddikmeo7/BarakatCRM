@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { t } from '@/components/i18n/translations';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
+
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
