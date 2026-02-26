@@ -141,6 +141,8 @@ export default function Layout({ children, currentPageName }) {
                     setCurrentEmployee(emp);
                     window.__barakatEmployee = emp;
                     window.__barakatBusiness = biz;
+                    // Сохраняем режим сотрудника постоянно (переживает перезапуск браузера)
+                    localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
                     // Показываем приветственный экран только при первом входе за сессию
                     const welcomeKey = `welcomed_${emp.id}`;
                     if (!sessionStorage.getItem(welcomeKey)) {
