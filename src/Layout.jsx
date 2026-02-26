@@ -197,7 +197,19 @@ export default function Layout({ children, currentPageName }) {
               if (bizList.length > 0) {
                 setBusiness(bizList[0]);
                 setLang(bizList[0].language || 'ru');
-                setEmployeePermissions(activeEmp.is_admin ? null : (activeEmp.permissions || {}));
+                if (activeEmp.is_admin) {
+                  setEmployeePermissions(null);
+                } else if (activeEmp.role_id) {
+                  try {
+                    const roleList = await base44.entities.Role.filter({ id: activeEmp.role_id });
+                    const rolePerms = roleList[0]?.permissions || {};
+                    setEmployeePermissions(mergePermissions(rolePerms, activeEmp.permissions || {}));
+                  } catch (_) {
+                    setEmployeePermissions(activeEmp.permissions || {});
+                  }
+                } else {
+                  setEmployeePermissions(activeEmp.permissions || {});
+                }
                 setCurrentEmployee(activeEmp);
                 window.__barakatEmployee = activeEmp;
                 window.__barakatBusiness = bizList[0];
