@@ -111,7 +111,7 @@ export default function Layout({ children, currentPageName }) {
 
       if (currentUser.email !== ADMIN_EMAIL) {
             // Проверяем: есть ли выбранный режим (сотрудник или владелец) в sessionStorage
-            const savedMode = sessionStorage.getItem('barakatcrm_mode'); // 'owner' | 'employee_<empId>'
+            const savedMode = localStorage.getItem('barakatcrm_mode') || sessionStorage.getItem('barakatcrm_mode'); // 'owner' | 'employee_<empId>'
 
             // Параллельно грузим бизнес и сотрудника
             const [businesses, employeeRecords] = await Promise.all([
