@@ -1298,17 +1298,17 @@ export default function Settings() {
         {/* Employee Login Section */}
         <Collapsible open={expandedSections.employee_login} onOpenChange={(open) => setExpandedSections({...expandedSections, employee_login: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <CollapsibleTrigger asChild>
-            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.employee_login ? 'bg-purple-50' : 'hover:bg-slate-50'}`}>
+            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.employee_login ? 'bg-violet-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.employee_login ? 'bg-purple-600' : 'bg-purple-100'}`}>
-                  <Users className={`w-5 h-5 ${expandedSections.employee_login ? 'text-white' : 'text-purple-600'}`} />
+                <div className={`p-2 rounded-lg transition-colors ${expandedSections.employee_login ? 'bg-violet-600' : 'bg-violet-100'}`}>
+                  <Users className={`w-5 h-5 ${expandedSections.employee_login ? 'text-white' : 'text-violet-600'}`} />
                 </div>
                 <div>
-                  <h3 className={`font-semibold ${expandedSections.employee_login ? 'text-purple-700' : 'text-slate-900'}`}>Войти как сотрудник</h3>
+                  <h3 className={`font-semibold ${expandedSections.employee_login ? 'text-violet-700' : 'text-slate-900'}`}>Войти как сотрудник</h3>
                   <p className="text-xs text-slate-500">Подключиться к другому бизнесу по кодам</p>
                 </div>
               </div>
-              <ChevronDown className={`w-5 h-5 transition ${expandedSections.employee_login ? 'rotate-180 text-purple-600' : 'text-slate-500'}`} />
+              <ChevronDown className={`w-5 h-5 transition ${expandedSections.employee_login ? 'rotate-180 text-violet-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6">
@@ -1373,9 +1373,9 @@ export default function Settings() {
         </Collapsible>
 
         {/* Security Section — view_settings_security */}
-        {canPerm('view_settings_security') ? <Collapsible open={expandedSections.security} onOpenChange={(open) => setExpandedSections({...expandedSections, security: open})}>
+        {canPerm('view_settings_security') ? <Collapsible open={expandedSections.security} onOpenChange={(open) => setExpandedSections({...expandedSections, security: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <CollapsibleTrigger asChild>
-            <div className={`rounded-xl p-4 cursor-pointer border flex items-center justify-between transition-all ${expandedSections.security ? 'bg-red-50 border-red-200 shadow-sm' : 'bg-white hover:bg-slate-50 border-slate-100'}`}>
+            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.security ? 'bg-red-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg transition-colors ${expandedSections.security ? 'bg-red-600' : 'bg-red-100'}`}>
                   <Shield className={`w-5 h-5 ${expandedSections.security ? 'text-white' : 'text-red-600'}`} />
@@ -1388,7 +1388,7 @@ export default function Settings() {
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.security ? 'rotate-180 text-red-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-4 space-y-3">
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4 space-y-3">
 
             {/* Активные устройства */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
