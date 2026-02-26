@@ -126,6 +126,7 @@ export default function Layout({ children, currentPageName }) {
               if (emp) {
                 if (emp.is_frozen) {
                   // Аккаунт заморожен — сбрасываем режим сотрудника и продолжаем как обычно
+                  localStorage.removeItem('barakatcrm_mode');
                   sessionStorage.removeItem('barakatcrm_mode');
                   alert('Аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.');
                   // Не возвращаемся — продолжаем загрузку ниже (владелец или BusinessAccess)
