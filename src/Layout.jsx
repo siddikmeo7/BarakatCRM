@@ -145,6 +145,9 @@ export default function Layout({ children, currentPageName }) {
                     localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
                     // Показываем приветственный экран только при первом входе за сессию
                     const welcomeKey = `welcomed_${emp.id}`;
+                    // Обновляем last_login_at при входе
+                    await base44.entities.Employee.update(emp.id, { last_login_at: new Date().toISOString() });
+
                     if (!sessionStorage.getItem(welcomeKey)) {
                       setShowWelcome(true);
                     }
@@ -173,6 +176,8 @@ export default function Layout({ children, currentPageName }) {
                   setEmployeePermissions(activeEmp.is_admin ? null : (activeEmp.permissions || {}));
                   window.__barakatEmployee = activeEmp;
                   window.__barakatBusiness = bizList[0];
+                  // Обновляем last_login_at при входе
+                  await base44.entities.Employee.update(activeEmp.id, { last_login_at: new Date().toISOString() });
                 }
               } else if (currentPageName !== 'BusinessAccess') {
                 navigate(createPageUrl('BusinessAccess'));
