@@ -29,6 +29,7 @@ import { format, parseISO, isToday, isThisWeek, isThisMonth, isWithinInterval, s
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import PageLoader from '@/components/ui/PageLoader';
 
 const PAGE_SIZE = 20;
 

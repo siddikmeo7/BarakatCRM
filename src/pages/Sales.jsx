@@ -36,6 +36,7 @@ const SALES_PAGE_SIZE = 25;
 import { t } from '@/components/i18n/translations';
 import { ru } from 'date-fns/locale';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import PageLoader from '@/components/ui/PageLoader';
 
 export default function Sales() {
   const { can } = useEmployeeAccess();
