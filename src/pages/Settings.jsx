@@ -140,6 +140,13 @@ export default function Settings() {
 
   useEffect(() => {
     loadData();
+    // Автообновление каждые 15 минут для актуальных статусов сотрудников
+    const interval = setInterval(() => {
+      if (business?.id) {
+        base44.entities.Employee.filter({ business_id: business?.id }).then(setEmployees);
+      }
+    }, 15 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadData = async () => {
@@ -1002,7 +1009,7 @@ export default function Settings() {
                     <p className="text-xs text-slate-500">Всего</p>
                   </div>
                   <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-3 text-center">
-                    <p className="text-2xl font-bold text-emerald-700">{employees.filter(e => e.last_login_at && (Date.now() - new Date(e.last_login_at).getTime()) < 15 * 60 * 1000).length}</p>
+                    <p className="text-2xl font-bold text-emerald-700">{employees.filter(e => e.last_login_at && (Date.now() - new Date(e.last_login_at).getTime()) < 10 * 60 * 1000).length}</p>
                     <p className="text-xs text-emerald-600">Онлайн</p>
                   </div>
                   <div className="bg-slate-50 rounded-xl border border-slate-100 p-3 text-center">
