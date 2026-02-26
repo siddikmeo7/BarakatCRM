@@ -276,13 +276,21 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
   const [step, setStep] = useState(1); // 1=info, 2=permissions
   const [form, setForm] = useState({
     name: '', user_email: '', phone: '', role: 'Продавец', password: '', loginCode: '',
-    permissions: { ...PRESETS.seller.permissions }
+    permissions: { ...PRESETS.seller.permissions },
+    role_id: '',
   });
   const [saving, setSaving] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
   const [createdCode, setCreatedCode] = useState('');
   const [detailDialog, setDetailDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [availableRoles, setAvailableRoles] = useState([]);
+
+  useEffect(() => {
+    if (business?.id) {
+      base44.entities.Role.filter({ business_id: business.id }).then(setAvailableRoles).catch(() => {});
+    }
+  }, [business?.id]);
 
   const resetForm = () => {
     setForm({ name: '', user_email: '', phone: '', role: 'Продавец', password: '', loginCode: '', permissions: { ...PRESETS.seller.permissions } });
