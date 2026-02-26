@@ -1508,10 +1508,10 @@ export default function Settings() {
             </div>
 
           </CollapsibleContent>
-        </Collapsible> : null}
-                  </div>
+        </Collapsible></div> : null}
+      </div>
 
-                  {/* Save Button */}
+      {/* Save Button */}
                   <div className="sticky bottom-0 bg-white border-t border-slate-200 p-4 flex justify-end gap-3 -mx-8 px-8">
         <Button 
           onClick={handleSave}
