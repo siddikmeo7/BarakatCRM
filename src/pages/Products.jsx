@@ -99,7 +99,7 @@ export default function Products() {
       let biz = window.__barakatBusiness;
       if (!biz) {
         // Сначала проверяем режим сотрудника
-        const savedMode = sessionStorage.getItem('barakatcrm_mode');
+        const savedMode = localStorage.getItem('barakatcrm_mode') || sessionStorage.getItem('barakatcrm_mode');
         if (savedMode && savedMode.startsWith('employee_')) {
           const empId = savedMode.replace('employee_', '');
           const empRecords = await base44.entities.Employee.filter({ user_email: user.email, is_active: true });
