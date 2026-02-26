@@ -137,9 +137,7 @@ export default function Layout({ children, currentPageName }) {
               const emp = employeeRecords.find(e => e.id === empId) || employeeRecords[0];
               if (emp) {
                 if (emp.is_frozen) {
-                  // Аккаунт заморожен — сбрасываем режим сотрудника и продолжаем как обычно
-                  localStorage.removeItem('barakatcrm_mode');
-                  sessionStorage.removeItem('barakatcrm_mode');
+                  // Аккаунт заморожен — НЕ сбрасываем режим, просто показываем сообщение
                   alert('Аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.');
                   // Не возвращаемся — продолжаем загрузку ниже (владелец или BusinessAccess)
                 } else {
