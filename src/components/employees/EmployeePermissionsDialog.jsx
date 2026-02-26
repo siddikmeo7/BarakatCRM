@@ -191,16 +191,22 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
       };
 
       // Если введён новый пароль — хешируем и сохраняем
-      if (password && password.trim().length > 0) {
-        const { data: { hash } } = await base44.functions.invoke('hashPassword', { password: password.trim() });
+      const trimmedPassword = password.trim();
+      if (trimmedPassword.length > 0) {
+        const resp = await base44.functions.invoke('hashPassword', { password: trimmedPassword });
+        const hash = resp?.data?.hash;
+        if (!hash) throw new Error('Ошибка хеширования пароля');
         updateData.password = hash;
       }
 
       await base44.entities.Employee.update(employee.id, updateData);
       await onSaved?.();
+      onClose();
+    } catch (err) {
+      console.error('Save error:', err);
+      alert('❌ Ошибка при сохранении: ' + (err?.message || err));
     } finally {
       setSaving(false);
-      onClose();
     }
   };
 
