@@ -779,7 +779,7 @@ export default function Settings() {
         </Collapsible></div> : null}
 
         {/* Access Codes — только владелец/view_settings_codes */}
-        {canPerm('view_settings_codes') ? <Collapsible open={expandedSections.access} onOpenChange={(open) => setExpandedSections({...expandedSections, access: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        {canPerm('view_settings_codes') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.access} onOpenChange={(open) => setExpandedSections({...expandedSections, access: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.access ? 'bg-emerald-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
