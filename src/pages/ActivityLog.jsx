@@ -315,45 +315,55 @@ export default function ActivityLog() {
         /* ── USER STATS TAB ── */
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {userStats.map(u => (
-              <div key={u.email} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-sm">{u.email.charAt(0).toUpperCase()}</span>
+            {userStats.map(u => {
+              const empName = u.name || employees.find(e => e.user_email === u.email)?.name;
+              const noActions = u.total === 0;
+              return (
+                <div key={u.email} className={`bg-white rounded-2xl border shadow-sm p-4 space-y-3 ${noActions ? 'border-slate-100 opacity-70' : 'border-slate-100'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${noActions ? 'bg-slate-200' : 'bg-gradient-to-br from-indigo-400 to-purple-500'}`}>
+                      <span className={`font-bold text-sm ${noActions ? 'text-slate-500' : 'text-white'}`}>{u.email.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {empName && <p className="font-semibold text-slate-900 text-sm truncate">{empName}</p>}
+                      <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                      <p className={`text-xs font-medium mt-0.5 ${noActions ? 'text-slate-400 italic' : 'text-slate-400'}`}>
+                        {noActions ? 'Нет действий' : `${u.total} действий`}
+                      </p>
+                    </div>
+                    {!noActions && (
+                      <button onClick={() => { setFilterUser(u.email); setActiveTab('list'); }}
+                        className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors flex-shrink-0">
+                        Фильтр
+                      </button>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-900 text-sm truncate">{getUserLabel(u.email)}</p>
-                    <p className="text-xs text-slate-400 truncate">{u.email}</p>
-                    <p className="text-xs text-slate-400">{u.total} действий</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-emerald-50 rounded-lg p-2 text-center">
+                      <p className="text-xs text-emerald-600">Создал</p>
+                      <p className="text-lg font-bold text-emerald-700">{u.create || 0}</p>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-2 text-center">
+                      <p className="text-xs text-blue-600">Изменил</p>
+                      <p className="text-lg font-bold text-blue-700">{u.update || 0}</p>
+                    </div>
+                    <div className="bg-red-50 rounded-lg p-2 text-center">
+                      <p className="text-xs text-red-600">Удалил</p>
+                      <p className="text-lg font-bold text-red-700">{u.delete || 0}</p>
+                    </div>
                   </div>
-                  <button onClick={() => { setFilterUser(u.email); setActiveTab('list'); }}
-                    className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors">
-                    Фильтр
-                  </button>
+                  {!noActions && (
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden flex">
+                      {u.create > 0 && <div className="bg-emerald-400 h-full" style={{ width: `${(u.create / u.total) * 100}%` }} />}
+                      {u.update > 0 && <div className="bg-blue-400 h-full" style={{ width: `${(u.update / u.total) * 100}%` }} />}
+                      {u.delete > 0 && <div className="bg-red-400 h-full" style={{ width: `${(u.delete / u.total) * 100}%` }} />}
+                    </div>
+                  )}
+                  {u.last && <p className="text-xs text-slate-400">Последнее: {format(u.last, 'dd MMM yyyy, HH:mm', { locale: ru })}</p>}
+                  {noActions && <p className="text-xs text-slate-300 text-center">— нет действий в системе —</p>}
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-emerald-50 rounded-lg p-2 text-center">
-                    <p className="text-xs text-emerald-600">Создал</p>
-                    <p className="text-lg font-bold text-emerald-700">{u.create || 0}</p>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg p-2 text-center">
-                    <p className="text-xs text-blue-600">Изменил</p>
-                    <p className="text-lg font-bold text-blue-700">{u.update || 0}</p>
-                  </div>
-                  <div className="bg-red-50 rounded-lg p-2 text-center">
-                    <p className="text-xs text-red-600">Удалил</p>
-                    <p className="text-lg font-bold text-red-700">{u.delete || 0}</p>
-                  </div>
-                </div>
-                {/* Activity bar */}
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden flex">
-                  {u.create > 0 && <div className="bg-emerald-400 h-full" style={{ width: `${(u.create / u.total) * 100}%` }} />}
-                  {u.update > 0 && <div className="bg-blue-400 h-full" style={{ width: `${(u.update / u.total) * 100}%` }} />}
-                  {u.delete > 0 && <div className="bg-red-400 h-full" style={{ width: `${(u.delete / u.total) * 100}%` }} />}
-                </div>
-                {u.last && <p className="text-xs text-slate-400">Последнее: {format(u.last, 'dd MMM yyyy, HH:mm', { locale: ru })}</p>}
-              </div>
-            ))}
+              );
+            })}
             {userStats.length === 0 && (
               <div className="col-span-3 text-center py-12 text-slate-400">
                 <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
