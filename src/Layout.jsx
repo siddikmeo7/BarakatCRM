@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import { t } from '@/components/i18n/translations';
-import { useEmployeeAccess, mergePermissions } from '@/components/permissions/useEmployeeAccess';
-import { mergePermissions as mergePerm } from '@/components/permissions/permissionsHelper';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import { mergePermissions } from '@/components/permissions/permissionsHelper';
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
