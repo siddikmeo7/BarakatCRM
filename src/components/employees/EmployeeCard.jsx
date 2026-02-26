@@ -261,5 +261,9 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
         </div>
       )}
     </div>
+
+    {showHistory && (
+      <EmployeeHistoryDialog employee={employee} onClose={() => setShowHistory(false)} />
+    )}
   );
 }
