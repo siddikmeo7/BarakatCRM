@@ -191,7 +191,19 @@ export default function Sales() {
     setSales(prev => [optimisticSale, ...prev]);
 
     try {
+      const user = await base44.auth.me();
       const createdSale = await base44.entities.Sale.create(saleData);
+
+      // Логируем создание продажи
+      await base44.entities.ActivityLog.create({
+        business_id: business.id,
+        action_type: 'create',
+        entity_type: 'Sale',
+        entity_id: createdSale.id,
+        entity_data: saleData,
+        user_email: user.email,
+        description: `Продажа: ${selectedProduct?.brand} ${selectedProduct?.model}, ${saleData.boxes_sold} кор. × ${saleData.sale_price?.toLocaleString()} с. = ${saleData.total_amount?.toLocaleString()} с.${saleData.is_debt ? ' (в долг)' : ''}`
+      });
 
       // Update product stock
       const newStock = Math.max(0, (selectedProduct.boxes_in_stock || 0) - parseInt(formData.boxes_sold));

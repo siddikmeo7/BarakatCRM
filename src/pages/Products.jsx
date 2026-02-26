@@ -235,7 +235,16 @@ export default function Products() {
           });
         }
       } else {
-        await base44.entities.Product.create(data);
+        const created = await base44.entities.Product.create(data);
+        await base44.entities.ActivityLog.create({
+          business_id: business.id,
+          action_type: 'create',
+          entity_type: 'Product',
+          entity_id: created.id,
+          entity_data: data,
+          user_email: user.email,
+          description: `Добавлен товар: ${data.brand} ${data.model} (${data.boxes_in_stock} кор., ${data.sale_price?.toLocaleString()} с.)`
+        });
       }
       await loadData();
     } catch (error) {
