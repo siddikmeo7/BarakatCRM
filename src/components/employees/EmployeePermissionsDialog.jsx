@@ -448,6 +448,30 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
           </div>
         </div>
 
+        {/* Role selector */}
+        {roles.length > 0 && (
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Tag className="w-4 h-4 text-purple-600" />
+              <p className="text-sm font-semibold text-purple-900">Роль сотрудника</p>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">Разрешения роли применяются как база. Персональные переключатели ниже перекрывают их.</p>
+            <Select value={selectedRoleId || 'none'} onValueChange={handleRoleChange}>
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Без роли (персональные права)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— Без роли (только персональные права)</SelectItem>
+                {roles.map(role => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.name}{role.description ? ` — ${role.description}` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         <div className="space-y-2 mb-4">
           <p className="text-sm text-slate-500">Быстрые пресеты:</p>
           <div className="flex flex-wrap gap-2">
