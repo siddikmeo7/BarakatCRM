@@ -113,58 +113,39 @@ export default function CustomerSegmentation({ customers, sales }) {
                     {seg.customers.length === 0 ? (
                       <p className="text-xs text-slate-400 text-center py-4">Нет клиентов</p>
                     ) : (
-                      <>
-                        <div className="divide-y divide-slate-100">
-                          {visibleCustomers.map(c => (
-                            <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 bg-white hover:bg-slate-50 transition-colors">
-                              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
-                                style={{ backgroundColor: seg.color }}>
-                                {c.name?.charAt(0)?.toUpperCase()}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-slate-800 truncate">{c.name}</p>
-                                {c.phone && (
-                                  <p className="text-xs text-slate-400 flex items-center gap-1">
-                                    <Phone className="w-2.5 h-2.5" />{c.phone}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                {c.totalSpent > 0 && (
-                                  <p className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                                    <TrendingUp className="w-3 h-3 text-emerald-500" />{c.totalSpent.toLocaleString()} с.
-                                  </p>
-                                )}
-                                {c.totalDebt > 0 && (
-                                  <p className="text-xs text-red-500 flex items-center gap-1">
-                                    <AlertCircle className="w-3 h-3" />долг: {c.totalDebt.toLocaleString()} с.
-                                  </p>
-                                )}
-                                {c.totalPurchases > 0 && (
-                                  <p className="text-xs text-slate-400">{c.totalPurchases} покупок</p>
-                                )}
-                              </div>
+                      <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                        {seg.customers.map(c => (
+                          <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 bg-white hover:bg-slate-50 transition-colors">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
+                              style={{ backgroundColor: seg.color }}>
+                              {c.name?.charAt(0)?.toUpperCase()}
                             </div>
-                          ))}
-                        </div>
-
-                        {/* Show more / show less */}
-                        {hasMore && (
-                          <div className="px-4 py-2 border-t border-slate-100 flex items-center justify-between">
-                            <p className="text-xs text-slate-400">
-                              {isShowingAll
-                                ? `Показано все ${seg.customers.length} клиентов`
-                                : `Показано ${INITIAL_VISIBLE} из ${seg.customers.length}`}
-                            </p>
-                            <button
-                              onClick={() => setShowAll(prev => ({ ...prev, [seg.name]: !isShowingAll }))}
-                              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
-                            >
-                              {isShowingAll ? `Скрыть (показать ${INITIAL_VISIBLE})` : `Показать все ${seg.customers.length}`}
-                            </button>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-800 truncate">{c.name}</p>
+                              {c.phone && (
+                                <p className="text-xs text-slate-400 flex items-center gap-1">
+                                  <Phone className="w-2.5 h-2.5" />{c.phone}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              {c.totalSpent > 0 && (
+                                <p className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                                  <TrendingUp className="w-3 h-3 text-emerald-500" />{c.totalSpent.toLocaleString()} с.
+                                </p>
+                              )}
+                              {c.totalDebt > 0 && (
+                                <p className="text-xs text-red-500 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />долг: {c.totalDebt.toLocaleString()} с.
+                                </p>
+                              )}
+                              {c.totalPurchases > 0 && (
+                                <p className="text-xs text-slate-400">{c.totalPurchases} покупок</p>
+                              )}
+                            </div>
                           </div>
-                        )}
-                      </>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}
