@@ -714,7 +714,7 @@ export default function Settings() {
         {/* Business Settings — только владелец/manage_settings */}
         {canPerm('manage_settings') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.business} onOpenChange={(open) => setExpandedSections({...expandedSections, business: open})}>
           <CollapsibleTrigger asChild>
-            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.business ? 'bg-blue-50' : 'hover:bg-slate-50'}`}>
+            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all rounded-t-2xl ${expandedSections.business ? 'bg-blue-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg transition-colors ${expandedSections.business ? 'bg-blue-600' : 'bg-blue-100'}`}>
                   <Building2 className={`w-5 h-5 ${expandedSections.business ? 'text-white' : 'text-blue-600'}`} />
