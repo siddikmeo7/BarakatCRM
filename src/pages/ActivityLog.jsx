@@ -236,19 +236,26 @@ export default function ActivityLog() {
     });
   }, [logs, search, filterAction, filterEntity, filterUser, dateRange, sortField, sortDir]);
 
-  // User stats for "by user" tab
+  // User stats for "by user" tab — показываем ВСЕХ сотрудников + системные записи
   const userStats = useMemo(() => {
     const map = {};
+
+    // Сначала добавляем всех сотрудников (даже без действий)
+    employees.forEach(emp => {
+      map[emp.user_email] = { email: emp.user_email, name: emp.name, total: 0, create: 0, update: 0, delete: 0, last: null };
+    });
+
+    // Потом заполняем данными из логов
     logs.forEach(log => {
       const u = log.user_email || 'Система';
-      if (!map[u]) map[u] = { email: u, total: 0, create: 0, update: 0, delete: 0, last: null };
+      if (!map[u]) map[u] = { email: u, name: null, total: 0, create: 0, update: 0, delete: 0, last: null };
       map[u].total++;
       map[u][log.action_type] = (map[u][log.action_type] || 0) + 1;
       const d = new Date(log.created_date);
       if (!map[u].last || d > map[u].last) map[u].last = d;
     });
     return Object.values(map).sort((a, b) => b.total - a.total);
-  }, [logs]);
+  }, [logs, employees]);
 
   const stats = useMemo(() => ({
     total: filteredLogs.length,
