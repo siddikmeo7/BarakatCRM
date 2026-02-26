@@ -76,6 +76,18 @@ export default function Layout({ children, currentPageName }) {
     return unsubscribe;
   }, [business?.id]);
 
+  // Heartbeat: обновляем last_login_at каждые 5 минут для сотрудника
+  useEffect(() => {
+    const emp = window.__barakatEmployee;
+    if (!emp?.id) return;
+    const interval = setInterval(async () => {
+      try {
+        await base44.entities.Employee.update(emp.id, { last_login_at: new Date().toISOString() });
+      } catch (_) {}
+    }, 5 * 60 * 1000); // каждые 5 минут
+    return () => clearInterval(interval);
+  }, [currentEmployee?.id]);
+
   // Close drawer on route change
   useEffect(() => {
     setDrawerOpen(false);
