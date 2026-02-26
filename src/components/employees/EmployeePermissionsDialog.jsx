@@ -190,14 +190,10 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
         login_session_token: loginCode,
       };
 
-      // Только если пароль отличается от исходного (и не выглядит как хеш) — хешируем и сохраняем
-      if (password && password !== employee?.password) {
-        if (!password.startsWith('$') && !password.match(/^[a-f0-9]{64}$/i)) {
-          const { data: { hash } } = await base44.functions.invoke('hashPassword', { password });
-          updateData.password = hash;
-        } else {
-          updateData.password = password;
-        }
+      // Если введён новый пароль — хешируем и сохраняем
+      if (password && password.trim().length > 0) {
+        const { data: { hash } } = await base44.functions.invoke('hashPassword', { password: password.trim() });
+        updateData.password = hash;
       }
 
       await base44.entities.Employee.update(employee.id, updateData);
