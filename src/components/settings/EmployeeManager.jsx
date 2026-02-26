@@ -492,9 +492,37 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
                       <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+992 XXX XX XX XX" className="mt-1.5" />
                     </div>
                     <div>
-                      <Label>Роль / Должность</Label>
+                      <Label>Должность</Label>
                       <Input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="Продавец, Менеджер..." className="mt-1.5" />
                     </div>
+                    {availableRoles.length > 0 && (
+                      <div className="sm:col-span-2">
+                        <Label>Кастомная роль (опционально)</Label>
+                        <Select
+                          value={form.role_id || 'none'}
+                          onValueChange={(val) => {
+                            const rid = val === 'none' ? '' : val;
+                            const role = availableRoles.find(r => r.id === rid);
+                            setForm(f => ({
+                              ...f,
+                              role_id: rid,
+                              permissions: role?.permissions ? mergePermissions(role.permissions, {}) : f.permissions,
+                            }));
+                          }}
+                        >
+                          <SelectTrigger className="mt-1.5">
+                            <SelectValue placeholder="Без роли" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">— Без роли (настроить вручную)</SelectItem>
+                            {availableRoles.map(r => (
+                              <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-slate-400 mt-1">Разрешения роли будут применены автоматически</p>
+                      </div>
+                    )}
                   </div>
 
                   <div>
