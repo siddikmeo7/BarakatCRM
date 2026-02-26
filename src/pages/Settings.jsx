@@ -554,43 +554,42 @@ export default function Settings() {
       />
 
       {/* Аккаунт карточка */}
-       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
-         <div className="flex items-center justify-between">
-           <div className="flex items-center gap-4">
-             <div className="relative group cursor-pointer">
-               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md group-hover:opacity-80 transition-opacity">
-                 <span className="text-white font-bold text-lg">
-                   {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
-                 </span>
-               </div>
-               <input
-                 type="file"
-                 accept="image/*"
-                 onChange={async (e) => {
-                   const file = e.target.files?.[0];
-                   if (file) {
-                     try {
-                       const res = await base44.integrations.Core.UploadFile({ file });
-                       if (res.data?.file_url) {
-                         await base44.auth.updateMe({ avatar_url: res.data.file_url });
-                         await loadData();
-                       }
-                     } catch (err) {
-                       console.error('Upload error:', err);
-                     }
-                   }
-                 }}
-                 className="absolute inset-0 opacity-0 cursor-pointer"
-                 title="Нажмите для изменения аватара"
-               />
-               <div className="absolute inset-0 rounded-full bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-medium">
-                 Изменить
-               </div>
-             </div>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative group cursor-pointer">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md group-hover:opacity-80 transition-opacity">
+                <span className="text-white font-bold text-lg">
+                  {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
+                </span>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    try {
+                      const res = await base44.integrations.Core.UploadFile({ file });
+                      if (res.data?.file_url) {
+                        await base44.auth.updateMe({ avatar_url: res.data.file_url });
+                        await loadData();
+                      }
+                    } catch (err) {
+                      console.error('Upload error:', err);
+                    }
+                  }
+                }}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                title="Нажмите для изменения аватара"
+              />
+              <div className="absolute inset-0 rounded-full bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-medium">
+                Изменить
+              </div>
+            </div>
             <div>
               <p className="font-semibold text-slate-900">{user?.full_name || t(lang,'settings_user')}</p>
               <p className="text-sm text-slate-500">{user?.email}</p>
-              {/* Статус пользователя */}
               {(() => {
                 const emp = window.__barakatEmployee;
                 if (!emp) {
@@ -615,6 +614,46 @@ export default function Settings() {
             <LogOut className="w-4 h-4" />
             {t(lang, 'settings_logout')}
           </Button>
+        </div>
+
+        {/* Информация об аккаунте — видна всем */}
+        <div className="border-t border-slate-100 pt-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-slate-50 rounded-xl p-3">
+              <p className="text-xs text-slate-400 mb-0.5">В системе с</p>
+              <p className="text-sm font-semibold text-slate-800">
+                {user?.created_date ? format(new Date(user.created_date), 'dd.MM.yyyy') : '—'}
+              </p>
+            </div>
+            <div className="bg-indigo-50 rounded-xl p-3">
+              <p className="text-xs text-slate-400 mb-0.5">Дней активности</p>
+              <p className="text-sm font-bold text-indigo-600">
+                {user?.created_date ? Math.floor((Date.now() - new Date(user.created_date).getTime()) / (1000 * 60 * 60 * 24)) + ' дн.' : '—'}
+              </p>
+            </div>
+            {(() => {
+              const emp = window.__barakatEmployee;
+              const lastLogin = emp?.last_login_at;
+              if (!lastLogin) return null;
+              const diff = Date.now() - new Date(lastLogin).getTime();
+              const mins = Math.floor(diff / 60000);
+              const hours = Math.floor(diff / 3600000);
+              const days = Math.floor(diff / 86400000);
+              const ago = days > 0 ? `${days} дн. назад` : hours > 0 ? `${hours} ч. назад` : `${mins} мин. назад`;
+              return (
+                <div className="col-span-2 bg-slate-50 rounded-xl p-3">
+                  <p className="text-xs text-slate-400 mb-0.5">Последний вход</p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    {format(new Date(lastLogin), 'dd.MM.yyyy HH:mm')} <span className="text-xs font-normal text-slate-400">({ago})</span>
+                  </p>
+                </div>
+              );
+            })()}
+            <div className="col-span-2 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs text-green-600 font-medium">Активен сейчас</span>
+            </div>
+          </div>
         </div>
 
         {/* Разрешения сотрудника */}
