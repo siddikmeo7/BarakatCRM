@@ -117,15 +117,38 @@ const PERMISSION_GROUPS = [
   },
 ];
 
-export default function EmployeePermissionsDialog({ employee, onClose, onSaved }) {
+export default function EmployeePermissionsDialog({ employee, onClose, onSaved, businessId }) {
   const [permissions, setPermissions] = useState(() => ({ ...(employee?.permissions || {}) }));
   const [isFrozen, setIsFrozen] = useState(employee?.is_frozen || false);
   const [isAdmin, setIsAdmin] = useState(employee?.is_admin || false);
   const [saving, setSaving] = useState(false);
   const [loginCode, setLoginCode] = useState(employee?.login_session_token || '');
-  const [password, setPassword] = useState(''); // Пустое — пользователь вводит новый пароль явно
+  const [password, setPassword] = useState('');
   const [copied, setCopied] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [roles, setRoles] = useState([]);
+  const [selectedRoleId, setSelectedRoleId] = useState(employee?.role_id || '');
+
+  useEffect(() => {
+    const bid = businessId || employee?.business_id;
+    if (bid) {
+      base44.entities.Role.filter({ business_id: bid }).then(setRoles).catch(() => {});
+    }
+  }, [businessId, employee?.business_id]);
+
+  // Когда выбирается роль — подтягиваем её разрешения как базу, но оставляем override пустым
+  const handleRoleChange = (roleId) => {
+    setSelectedRoleId(roleId);
+    if (roleId === 'none') {
+      setPermissions({ ...(employee?.permissions || {}) });
+      return;
+    }
+    const role = roles.find(r => r.id === roleId);
+    if (role?.permissions) {
+      // Мержим: разрешения роли как база, персональные override сверху
+      setPermissions(mergePermissions(role.permissions, employee?.permissions || {}));
+    }
+  };
 
   const toggle = (key) => {
     setPermissions(prev => ({ ...prev, [key]: !prev[key] }));
