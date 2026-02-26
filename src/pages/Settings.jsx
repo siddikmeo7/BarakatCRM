@@ -1370,10 +1370,10 @@ export default function Settings() {
               </Button>
             </div>
           </CollapsibleContent>
-        </Collapsible>
+        </Collapsible></div>
 
         {/* Security Section — view_settings_security */}
-        {canPerm('view_settings_security') ? <Collapsible open={expandedSections.security} onOpenChange={(open) => setExpandedSections({...expandedSections, security: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        {canPerm('view_settings_security') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.security} onOpenChange={(open) => setExpandedSections({...expandedSections, security: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.security ? 'bg-red-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
