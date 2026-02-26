@@ -146,7 +146,7 @@ export default function BusinessAccess() {
                 </div>
 
                 <Button
-                  onClick={() => { sessionStorage.removeItem('barakatcrm_mode'); navigate(createPageUrl('Dashboard')); }}
+                  onClick={() => { localStorage.removeItem('barakatcrm_mode'); sessionStorage.removeItem('barakatcrm_mode'); navigate(createPageUrl('Dashboard')); }}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 h-10"
                 >
                   Войти как владелец
