@@ -776,7 +776,7 @@ export default function Settings() {
               </div>
             </div>
           </CollapsibleContent>
-        </Collapsible> : null}
+        </Collapsible></div> : null}
 
         {/* Access Codes — только владелец/view_settings_codes */}
         {canPerm('view_settings_codes') ? <Collapsible open={expandedSections.access} onOpenChange={(open) => setExpandedSections({...expandedSections, access: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
