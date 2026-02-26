@@ -1359,10 +1359,45 @@ export default function Settings() {
                   <span className="text-sm text-slate-500">Имя</span>
                   <span className="text-sm font-medium text-slate-900">{user?.full_name || 'Не указано'}</span>
                 </div>
-                <div className="flex items-center justify-between py-1.5">
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-50">
                   <span className="text-sm text-slate-500">Роль</span>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${user?.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'}`}>
                     {user?.role === 'admin' ? '👑 Администратор' : '👤 Пользователь'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-50">
+                  <span className="text-sm text-slate-500">В системе с</span>
+                  <span className="text-sm font-medium text-slate-900">
+                    {user?.created_date ? format(new Date(user.created_date), 'dd.MM.yyyy') : '—'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-50">
+                  <span className="text-sm text-slate-500">Дней активности</span>
+                  <span className="text-sm font-semibold text-indigo-600">
+                    {user?.created_date ? Math.floor((Date.now() - new Date(user.created_date).getTime()) / (1000 * 60 * 60 * 24)) + ' дн.' : '—'}
+                  </span>
+                </div>
+                {(() => {
+                  const emp = window.__barakatEmployee;
+                  const lastLogin = emp?.last_login_at;
+                  if (!lastLogin) return null;
+                  const diff = Date.now() - new Date(lastLogin).getTime();
+                  const mins = Math.floor(diff / 60000);
+                  const hours = Math.floor(diff / 3600000);
+                  const days = Math.floor(diff / 86400000);
+                  const lastLoginStr = days > 0 ? `${days} дн. назад` : hours > 0 ? `${hours} ч. назад` : `${mins} мин. назад`;
+                  return (
+                    <div className="flex items-center justify-between py-1.5 border-b border-slate-50">
+                      <span className="text-sm text-slate-500">Последний вход</span>
+                      <span className="text-sm font-medium text-slate-900">{format(new Date(lastLogin), 'dd.MM.yyyy HH:mm')} <span className="text-xs text-slate-400">({lastLoginStr})</span></span>
+                    </div>
+                  );
+                })()}
+                <div className="flex items-center justify-between py-1.5">
+                  <span className="text-sm text-slate-500">Статус</span>
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    Активен сейчас
                   </span>
                 </div>
               </div>
