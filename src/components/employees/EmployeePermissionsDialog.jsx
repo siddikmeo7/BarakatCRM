@@ -180,6 +180,28 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
     }
   };
 
+  const buildChangeHistory = async () => {
+    const changes = [];
+    const prev = employee;
+
+    // is_frozen changed?
+    if (prev.is_frozen !== isFrozen) {
+      changes.push({ field: 'is_frozen', oldValue: prev.is_frozen, newValue: isFrozen });
+    }
+    // is_admin changed?
+    if (prev.is_admin !== isAdmin) {
+      changes.push({ field: 'is_admin', oldValue: prev.is_admin, newValue: isAdmin });
+    }
+    // permissions changed?
+    const prevPerms = prev.permissions || {};
+    const added = Object.keys(permissions).filter(k => permissions[k] && !prevPerms[k]);
+    const removed = Object.keys(permissions).filter(k => !permissions[k] && prevPerms[k]);
+    if (added.length > 0 || removed.length > 0) {
+      changes.push({ field: 'permissions', added, removed });
+    }
+    return changes;
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -197,6 +219,19 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved }
         const hash = resp?.data?.hash;
         if (!hash) throw new Error('Ошибка хеширования пароля');
         updateData.password = hash;
+      }
+
+      // Record change history
+      const changes = await buildChangeHistory();
+      if (changes.length > 0) {
+        const currentUser = await base44.auth.me();
+        const historyEntry = {
+          timestamp: new Date().toISOString(),
+          by_email: currentUser.email,
+          changes,
+        };
+        const existingHistory = employee.change_history || [];
+        updateData.change_history = [...existingHistory, historyEntry];
       }
 
       await base44.entities.Employee.update(employee.id, updateData);
