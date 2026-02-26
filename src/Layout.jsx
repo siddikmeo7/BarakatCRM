@@ -148,7 +148,20 @@ export default function Layout({ children, currentPageName }) {
                     setBusiness(biz);
                     setLang(biz.language || 'ru');
                     // Если сотрудник — администратор, даём полный доступ (null = как у владельца)
-                    setEmployeePermissions(emp.is_admin ? null : (emp.permissions || {}));
+                    if (emp.is_admin) {
+                      setEmployeePermissions(null);
+                    } else if (emp.role_id) {
+                      // Мержим разрешения роли + персональные переопределения
+                      try {
+                        const roleList = await base44.entities.Role.filter({ id: emp.role_id });
+                        const rolePerms = roleList[0]?.permissions || {};
+                        setEmployeePermissions(mergePermissions(rolePerms, emp.permissions || {}));
+                      } catch (_) {
+                        setEmployeePermissions(emp.permissions || {});
+                      }
+                    } else {
+                      setEmployeePermissions(emp.permissions || {});
+                    }
                     setCurrentEmployee(emp);
                     window.__barakatEmployee = emp;
                     window.__barakatBusiness = biz;
