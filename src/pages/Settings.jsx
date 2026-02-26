@@ -779,22 +779,22 @@ export default function Settings() {
         </Collapsible> : null}
 
         {/* Access Codes — только владелец/view_settings_codes */}
-        {canPerm('view_settings_codes') ? <Collapsible open={expandedSections.access} onOpenChange={(open) => setExpandedSections({...expandedSections, access: open})}>
+        {canPerm('view_settings_codes') ? <Collapsible open={expandedSections.access} onOpenChange={(open) => setExpandedSections({...expandedSections, access: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <CollapsibleTrigger asChild>
-            <div className={`rounded-xl p-4 cursor-pointer border flex items-center justify-between transition-all ${expandedSections.access ? 'bg-green-50 border-green-200 shadow-sm' : 'bg-white hover:bg-slate-50 border-slate-100'}`}>
+            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.access ? 'bg-emerald-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.access ? 'bg-green-600' : 'bg-green-100'}`}>
-                  <Lock className={`w-5 h-5 ${expandedSections.access ? 'text-white' : 'text-green-600'}`} />
+                <div className={`p-2 rounded-lg transition-colors ${expandedSections.access ? 'bg-emerald-600' : 'bg-emerald-100'}`}>
+                  <Lock className={`w-5 h-5 ${expandedSections.access ? 'text-white' : 'text-emerald-600'}`} />
                 </div>
                 <div>
-                  <h3 className={`font-semibold ${expandedSections.access ? 'text-green-700' : 'text-slate-900'}`}>Коды доступа</h3>
+                  <h3 className={`font-semibold ${expandedSections.access ? 'text-emerald-700' : 'text-slate-900'}`}>Коды доступа</h3>
                   <p className="text-xs text-slate-500">Управление кодами входа в бизнес</p>
                 </div>
               </div>
-              <ChevronDown className={`w-5 h-5 transition ${expandedSections.access ? 'rotate-180 text-green-600' : 'text-slate-500'}`} />
+              <ChevronDown className={`w-5 h-5 transition ${expandedSections.access ? 'rotate-180 text-emerald-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6 space-y-6">
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6 space-y-6">
             <div className="bg-white p-4 rounded-lg border border-slate-200">
               <p className="text-sm font-medium text-slate-700 mb-2">КОД БИЗНЕСА (для входа сотрудников)</p>
               <div className="flex items-center gap-2 mb-3">
