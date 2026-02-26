@@ -1276,7 +1276,7 @@ export default function Settings() {
               </div>
             </div>
           </CollapsibleContent>
-        </Collapsible> : null}
+        </Collapsible></div> : null}
 
         {/* History Section — view_activity_log */}
         {canPerm('view_activity_log') ? <div
