@@ -714,17 +714,17 @@ export default function Settings() {
         {/* Business Settings — только владелец/manage_settings */}
         {canPerm('manage_settings') ? <Collapsible open={expandedSections.business} onOpenChange={(open) => setExpandedSections({...expandedSections, business: open})}>
           <CollapsibleTrigger asChild>
-            <div className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition">
+            <div className={`rounded-xl p-4 cursor-pointer border flex items-center justify-between transition-all ${expandedSections.business ? 'bg-blue-50 border-blue-200 shadow-sm' : 'bg-white hover:bg-slate-50 border-slate-100'}`}>
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Building2 className="w-5 h-5 text-blue-600" />
+                <div className={`p-2 rounded-lg transition-colors ${expandedSections.business ? 'bg-blue-600' : 'bg-blue-100'}`}>
+                  <Building2 className={`w-5 h-5 ${expandedSections.business ? 'text-white' : 'text-blue-600'}`} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">{t(lang,'settings_biz_info')}</h3>
+                  <h3 className={`font-semibold ${expandedSections.business ? 'text-blue-700' : 'text-slate-900'}`}>{t(lang,'settings_biz_info')}</h3>
                   <p className="text-xs text-slate-500">Основные параметры бизнеса</p>
                 </div>
               </div>
-              <ChevronDown className={`w-5 h-5 text-slate-500 transition ${expandedSections.business ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-5 h-5 transition ${expandedSections.business ? 'rotate-180 text-blue-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6 space-y-4">
