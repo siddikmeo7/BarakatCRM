@@ -247,8 +247,11 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
         updateData.password = hash;
       }
 
-      // Record change history
+        // Record role_id change in history
       const changes = await buildChangeHistory();
+      if (selectedRoleId !== (employee?.role_id || '')) {
+        changes.push({ field: 'role_id', oldValue: employee?.role_id || null, newValue: selectedRoleId || null });
+      }
       if (changes.length > 0) {
         const currentUser = await base44.auth.me();
         const historyEntry = {
