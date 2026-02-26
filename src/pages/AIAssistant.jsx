@@ -34,11 +34,9 @@ export default function AIAssistant() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
-      const businesses = await base44.entities.Business.filter({ owner_email: user.email });
-      if (businesses.length === 0) return;
-
-      const biz = businesses[0];
+      // Поддержка как владельца, так и сотрудника
+      const biz = window.__barakatBusiness;
+      if (!biz) return;
       setBusiness(biz);
       setLang(biz.language || 'ru');
 
