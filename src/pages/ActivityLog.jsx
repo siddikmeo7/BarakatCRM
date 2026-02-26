@@ -196,6 +196,14 @@ export default function ActivityLog() {
     else { setSortField(field); setSortDir('desc'); }
   };
 
+  // Helper: get display name for a user email
+  const getUserLabel = (email) => {
+    if (!email) return 'Система';
+    const emp = employees.find(e => e.user_email === email);
+    if (emp) return `${emp.name} (${email})`;
+    return email;
+  };
+
   // Derived data
   const uniqueUsers = useMemo(() => [...new Set(logs.map(l => l.user_email).filter(Boolean))], [logs]);
 
