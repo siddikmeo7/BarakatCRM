@@ -857,7 +857,7 @@ export default function Settings() {
               </ol>
             </div>
           </CollapsibleContent>
-        </Collapsible> : null}
+        </Collapsible></div> : null}
 
         {/* Default Settings — view_settings_defaults */}
         {canPerm('view_settings_defaults') ? <Collapsible open={expandedSections.defaults} onOpenChange={(open) => setExpandedSections({...expandedSections, defaults: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
