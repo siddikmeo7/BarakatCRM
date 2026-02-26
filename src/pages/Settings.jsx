@@ -1281,7 +1281,7 @@ export default function Settings() {
         {/* History Section — view_activity_log */}
         {canPerm('view_activity_log') ? <div
           onClick={() => navigate(createPageUrl('ActivityLog'))}
-          className="bg-white hover:bg-slate-50 rounded-xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition"
+          className="bg-white hover:bg-indigo-50 rounded-2xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition-all shadow-sm"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-100 rounded-lg">
