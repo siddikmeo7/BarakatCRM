@@ -1512,7 +1512,7 @@ export default function Settings() {
       </div>
 
       {/* Save Button */}
-                  <div className="sticky bottom-0 bg-white border-t border-slate-200 p-4 flex justify-end gap-3 -mx-8 px-8">
+      <div className="sticky bottom-0 bg-white border-t border-slate-200 p-4 flex justify-end gap-3 -mx-8 px-8">
         <Button 
           onClick={handleSave}
           disabled={saving}
