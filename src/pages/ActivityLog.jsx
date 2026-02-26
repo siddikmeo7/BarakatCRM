@@ -35,6 +35,7 @@ export default function ActivityLog() {
   const navigate = useNavigate();
   const [business, setBusiness] = useState(null);
   const [logs, setLogs] = useState([]);
+  const [employees, setEmployees] = useState([]); // для имён сотрудников
   const [loading, setLoading] = useState(true);
 
   // Filters
@@ -87,8 +88,12 @@ export default function ActivityLog() {
 
       if (biz) {
         setBusiness(biz);
-        const logsData = await base44.entities.ActivityLog.filter({ business_id: biz.id });
+        const [logsData, employeesData] = await Promise.all([
+          base44.entities.ActivityLog.filter({ business_id: biz.id }),
+          base44.entities.Employee.filter({ business_id: biz.id })
+        ]);
         setLogs(logsData.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+        setEmployees(employeesData);
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
