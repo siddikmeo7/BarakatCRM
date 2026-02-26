@@ -315,7 +315,8 @@ export default function ActivityLog() {
                     <span className="text-white font-bold text-sm">{u.email.charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-900 text-sm truncate">{u.email}</p>
+                    <p className="font-semibold text-slate-900 text-sm truncate">{getUserLabel(u.email)}</p>
+                    <p className="text-xs text-slate-400 truncate">{u.email}</p>
                     <p className="text-xs text-slate-400">{u.total} действий</p>
                   </div>
                   <button onClick={() => { setFilterUser(u.email); setActiveTab('list'); }}
@@ -431,7 +432,7 @@ export default function ActivityLog() {
                 <SelectContent>
                   <SelectItem value="all">Все сотрудники</SelectItem>
                   {uniqueUsers.map(u => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
+                    <SelectItem key={u} value={u}>{getUserLabel(u)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -451,8 +452,8 @@ export default function ActivityLog() {
                   </span>
                 )}
                 {filterUser !== 'all' && (
-                  <span className="flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs max-w-[160px] truncate">
-                    {filterUser}
+                  <span className="flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs max-w-[200px] truncate">
+                    {getUserLabel(filterUser)}
                     <button onClick={() => setFilterUser('all')}><X className="w-3 h-3 flex-shrink-0" /></button>
                   </span>
                 )}
@@ -563,7 +564,7 @@ export default function ActivityLog() {
                             onClick={(e) => { e.stopPropagation(); setFilterUser(log.user_email); }}
                             className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
                             <User className="w-3 h-3" />
-                            {log.user_email || 'Система'}
+                            {getUserLabel(log.user_email)}
                           </button>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
@@ -622,7 +623,7 @@ export default function ActivityLog() {
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-slate-400" />
                   <span className="text-slate-500">Кто:</span>
-                  <span className="font-semibold text-slate-800">{detailLog.user_email || 'Система'}</span>
+                  <span className="font-semibold text-slate-800">{getUserLabel(detailLog.user_email)}</span>
                   <button onClick={() => { setFilterUser(detailLog.user_email); setDetailLog(null); }}
                     className="ml-auto text-xs text-indigo-500 hover:text-indigo-700 px-2 py-0.5 bg-indigo-50 rounded">
                     Фильтровать по сотруднику
