@@ -176,20 +176,23 @@ export default function Layout({ children, currentPageName }) {
               window.__barakatEmployee = null;
               window.__barakatBusiness = businesses[0];
             } else if (employeeRecords.length > 0) {
-              // Нет своего бизнеса — входим как сотрудник автоматически (только незамороженные)
-              const activeEmp = employeeRecords.find(e => !e.is_frozen);
-              if (activeEmp) {
-                const bizList = await base44.entities.Business.filter({ id: activeEmp.business_id });
-                if (bizList.length > 0) {
-                  setBusiness(bizList[0]);
-                  setLang(bizList[0].language || 'ru');
-                  setEmployeePermissions(activeEmp.is_admin ? null : (activeEmp.permissions || {}));
-                  window.__barakatEmployee = activeEmp;
-                  window.__barakatBusiness = bizList[0];
-                  // Обновляем last_login_at при входе
-                  await base44.entities.Employee.update(activeEmp.id, { last_login_at: new Date().toISOString() });
-                }
-              } else if (currentPageName !== 'BusinessAccess') {
+            // Нет своего бизнеса — входим как сотрудник автоматически (только незамороженные)
+            const activeEmp = employeeRecords.find(e => !e.is_frozen);
+            if (activeEmp) {
+              const bizList = await base44.entities.Business.filter({ id: activeEmp.business_id });
+              if (bizList.length > 0) {
+                setBusiness(bizList[0]);
+                setLang(bizList[0].language || 'ru');
+                setEmployeePermissions(activeEmp.is_admin ? null : (activeEmp.permissions || {}));
+                setCurrentEmployee(activeEmp);
+                window.__barakatEmployee = activeEmp;
+                window.__barakatBusiness = bizList[0];
+                // Сохраняем постоянно в localStorage чтобы не сбрасывалось
+                localStorage.setItem('barakatcrm_mode', `employee_${activeEmp.id}`);
+                // Обновляем last_login_at при входе
+                await base44.entities.Employee.update(activeEmp.id, { last_login_at: new Date().toISOString() });
+              }
+            } else if (currentPageName !== 'BusinessAccess') {
                 navigate(createPageUrl('BusinessAccess'));
                 setLoading(false);
                 return;
