@@ -357,7 +357,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
         password: hash,
         permissions: form.permissions,
         business_id: business.id,
-        role_id: 'custom',
+        role_id: form.role_id || null,
         is_active: true,
         login_session_token: finalCode,
       });
