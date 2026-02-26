@@ -970,24 +970,24 @@ export default function Settings() {
         </Collapsible> : null}
 
         {/* Employees — manage_employees */}
-        {canPerm('manage_employees') ? <Collapsible open={expandedSections.employees} onOpenChange={(open) => setExpandedSections({...expandedSections, employees: open})}>
+        {canPerm('manage_employees') ? <Collapsible open={expandedSections.employees} onOpenChange={(open) => setExpandedSections({...expandedSections, employees: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <CollapsibleTrigger asChild>
-            <div className={`rounded-xl p-4 cursor-pointer border flex items-center justify-between transition-all ${expandedSections.employees ? 'bg-emerald-50 border-emerald-200 shadow-sm' : 'bg-white hover:bg-slate-50 border-slate-100'}`}>
+            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.employees ? 'bg-green-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.employees ? 'bg-emerald-600' : 'bg-green-100'}`}>
+                <div className={`p-2 rounded-lg transition-colors ${expandedSections.employees ? 'bg-green-600' : 'bg-green-100'}`}>
                   <Users className={`w-5 h-5 ${expandedSections.employees ? 'text-white' : 'text-green-600'}`} />
                 </div>
                 <div>
-                   <h3 className={`font-semibold ${expandedSections.employees ? 'text-emerald-700' : 'text-slate-900'}`}>{t(lang,'settings_employees')}</h3>
+                   <h3 className={`font-semibold ${expandedSections.employees ? 'text-green-700' : 'text-slate-900'}`}>{t(lang,'settings_employees')}</h3>
                    <p className="text-xs text-slate-500">
                      {employees.length} сотрудник(ов) · <span className="text-emerald-600 font-medium">{employees.filter(e => e.last_login_at).length} входили</span>
                    </p>
                 </div>
               </div>
-              <ChevronDown className={`w-5 h-5 transition ${expandedSections.employees ? 'rotate-180 text-emerald-600' : 'text-slate-500'}`} />
+              <ChevronDown className={`w-5 h-5 transition ${expandedSections.employees ? 'rotate-180 text-green-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-4">
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4">
             {/* Add Employee Button */}
             <button
               onClick={() => setShowAddEmployeeForm(true)}
