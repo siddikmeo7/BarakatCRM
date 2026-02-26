@@ -231,7 +231,7 @@ export default function BusinessAccess() {
                   return (
                     <Button
                       key={emp.id}
-                      onClick={() => { sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); navigate(createPageUrl('Dashboard')); }}
+                      onClick={() => { localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); navigate(createPageUrl('Dashboard')); }}
                       className="w-full h-12 bg-indigo-600 hover:bg-indigo-700"
                     >
                       <Users className="w-4 h-4 mr-2" />
