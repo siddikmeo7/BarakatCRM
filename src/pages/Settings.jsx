@@ -860,9 +860,9 @@ export default function Settings() {
         </Collapsible> : null}
 
         {/* Default Settings — view_settings_defaults */}
-        {canPerm('view_settings_defaults') ? <Collapsible open={expandedSections.defaults} onOpenChange={(open) => setExpandedSections({...expandedSections, defaults: open})}>
+        {canPerm('view_settings_defaults') ? <Collapsible open={expandedSections.defaults} onOpenChange={(open) => setExpandedSections({...expandedSections, defaults: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <CollapsibleTrigger asChild>
-            <div className={`rounded-xl p-4 cursor-pointer border flex items-center justify-between transition-all ${expandedSections.defaults ? 'bg-purple-50 border-purple-200 shadow-sm' : 'bg-white hover:bg-slate-50 border-slate-100'}`}>
+            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.defaults ? 'bg-purple-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg transition-colors ${expandedSections.defaults ? 'bg-purple-600' : 'bg-purple-100'}`}>
                   <Palette className={`w-5 h-5 ${expandedSections.defaults ? 'text-white' : 'text-purple-600'}`} />
@@ -875,7 +875,7 @@ export default function Settings() {
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.defaults ? 'rotate-180 text-purple-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6">
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6">
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <Label>{t(lang,'settings_product_type')}</Label>
