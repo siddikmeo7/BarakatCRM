@@ -33,7 +33,8 @@ function getOnlineStatus(lastLoginAt) {
   if (!lastLoginAt) return { label: 'Не входил', color: 'bg-slate-300', textColor: 'text-slate-500' };
   const diff = Date.now() - new Date(lastLoginAt).getTime();
   const mins = diff / 60000;
-  if (mins < 15) return { label: 'Онлайн', color: 'bg-emerald-400', textColor: 'text-emerald-600', pulse: true };
+  // Онлайн если активен в течение 10 минут (heartbeat каждые 5 мин)
+  if (mins < 10) return { label: 'В сети', color: 'bg-emerald-400', textColor: 'text-emerald-600', pulse: true };
   if (mins < 60) return { label: `${Math.round(mins)} мин. назад`, color: 'bg-yellow-400', textColor: 'text-yellow-600' };
   if (mins < 1440) return { label: formatDistanceToNow(new Date(lastLoginAt), { addSuffix: true, locale: dateFnsRu }), color: 'bg-slate-400', textColor: 'text-slate-500' };
   return { label: formatDistanceToNow(new Date(lastLoginAt), { addSuffix: true, locale: dateFnsRu }), color: 'bg-slate-300', textColor: 'text-slate-400' };
