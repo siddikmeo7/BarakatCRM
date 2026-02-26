@@ -86,6 +86,7 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
       // Distribute partial payment proportionally across items
       const saleDate = new Date().toISOString();
       const createdSales = [];
+      const currentUser = await base44.auth.me();
 
       for (let i = 0; i < validItems.length; i++) {
         const item = validItems[i];
@@ -121,6 +122,17 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
 
         const created = await base44.entities.Sale.create(saleData);
         createdSales.push({ ...created, _partial: itemPartial });
+
+        // Логируем создание продажи
+        await base44.entities.ActivityLog.create({
+          business_id: business.id,
+          action_type: 'create',
+          entity_type: 'Sale',
+          entity_id: created.id,
+          entity_data: saleData,
+          user_email: currentUser.email,
+          description: `Продажа: ${product?.brand} ${product?.model}, ${saleData.boxes_sold} кор. × ${calc.price?.toLocaleString()} с. = ${calc.totalAmount?.toLocaleString()} с.${isDebt ? ' (в долг)' : ''}`
+        });
 
         // Update product stock
         const newStock = Math.max(0, (product?.boxes_in_stock || 0) - parseInt(item.boxes_sold));
