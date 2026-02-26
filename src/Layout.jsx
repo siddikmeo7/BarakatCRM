@@ -101,6 +101,14 @@ export default function Layout({ children, currentPageName }) {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
+      // Редирект на Products после первого входа
+      const firstLoginKey = `first_login_${currentUser.email}`;
+      if (!sessionStorage.getItem(firstLoginKey)) {
+        sessionStorage.setItem(firstLoginKey, '1');
+        // Редирект будет после загрузки бизнеса
+        window.__redirectToProducts = true;
+      }
+
       if (currentUser.email !== ADMIN_EMAIL) {
             // Проверяем: есть ли выбранный режим (сотрудник или владелец) в sessionStorage
             const savedMode = sessionStorage.getItem('barakatcrm_mode'); // 'owner' | 'employee_<empId>'
