@@ -967,7 +967,7 @@ export default function Settings() {
               </div>
             </div>
           </CollapsibleContent>
-        </Collapsible> : null}
+        </Collapsible></div> : null}
 
         {/* Employees — manage_employees */}
         {canPerm('manage_employees') ? <Collapsible open={expandedSections.employees} onOpenChange={(open) => setExpandedSections({...expandedSections, employees: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
