@@ -151,6 +151,20 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
         cancelled_at: new Date().toISOString()
       });
 
+      // Логируем отмену продажи
+      try {
+        const user = await base44.auth.me();
+        await base44.entities.ActivityLog.create({
+          business_id: sale.business_id,
+          action_type: 'delete',
+          entity_type: 'Sale',
+          entity_id: sale.id,
+          entity_data: sale,
+          user_email: user.email,
+          description: `Отменена продажа: ${product?.brand || ''} ${product?.model || ''}, ${sale.boxes_sold} кор., ${sale.total_amount?.toLocaleString()} с.`
+        });
+      } catch (_) {}
+
       // Возвращаем товар на склад
       if (product) {
         await base44.entities.Product.update(product.id, {
