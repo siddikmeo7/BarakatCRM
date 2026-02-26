@@ -1156,9 +1156,9 @@ export default function Settings() {
         </Collapsible>
 
         {/* Custom Fields — view_settings_custom */}
-        {canPerm('view_settings_custom') ? <Collapsible open={expandedSections.custom} onOpenChange={(open) => setExpandedSections({...expandedSections, custom: open})}>
+        {canPerm('view_settings_custom') ? <Collapsible open={expandedSections.custom} onOpenChange={(open) => setExpandedSections({...expandedSections, custom: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <CollapsibleTrigger asChild>
-            <div className={`rounded-xl p-4 cursor-pointer border flex items-center justify-between transition-all ${expandedSections.custom ? 'bg-pink-50 border-pink-200 shadow-sm' : 'bg-white hover:bg-slate-50 border-slate-100'}`}>
+            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.custom ? 'bg-pink-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg transition-colors ${expandedSections.custom ? 'bg-pink-600' : 'bg-pink-100'}`}>
                   <Palette className={`w-5 h-5 ${expandedSections.custom ? 'text-white' : 'text-pink-600'}`} />
@@ -1171,7 +1171,7 @@ export default function Settings() {
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.custom ? 'rotate-180 text-pink-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6">
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6">
             <div className="space-y-4">
               {/* Custom Colors */}
               <div className="p-4 bg-white rounded-lg border border-slate-200">
