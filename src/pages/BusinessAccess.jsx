@@ -217,6 +217,52 @@ export default function BusinessAccess() {
                   Выход
                 </button>
               </div>
+            ) : employeeRecords.length > 0 ? (
+              // Пользователь является сотрудником — показываем только кнопки входа как сотрудник
+              <div className="space-y-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-green-800">
+                  <p className="font-medium mb-1">✅ Вы добавлены как сотрудник</p>
+                  <p>Выберите бизнес для входа:</p>
+                </div>
+
+                {employeeRecords.map(emp => {
+                  const empBiz = employeeBusinesses[emp.id];
+                  if (emp.is_frozen) return null;
+                  return (
+                    <Button
+                      key={emp.id}
+                      onClick={() => { sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); navigate(createPageUrl('Dashboard')); }}
+                      className="w-full h-12 bg-indigo-600 hover:bg-indigo-700"
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      {empBiz ? empBiz.name : 'Войти как сотрудник'}
+                    </Button>
+                  );
+                })}
+
+                <div className="relative pt-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-slate-400">или</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setStep('create')}
+                  className="w-full text-sm text-slate-500 hover:text-slate-700 py-1"
+                >
+                  + Создать свой бизнес
+                </button>
+
+                <button
+                  onClick={() => base44.auth.logout()}
+                  className="w-full text-sm text-slate-400 hover:text-slate-600 font-medium py-1"
+                >
+                  Выход
+                </button>
+              </div>
             ) : (
               <div className="space-y-4">
                 <div>
