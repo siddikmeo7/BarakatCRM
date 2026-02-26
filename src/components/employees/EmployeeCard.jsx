@@ -144,6 +144,13 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
               <Shield className="w-4 h-4 text-indigo-400 group-hover:text-indigo-600" />
             </button>
             <button
+              onClick={() => setShowHistory(true)}
+              className="p-2 hover:bg-purple-50 rounded-xl transition-colors group"
+              title="История изменений"
+            >
+              <History className="w-4 h-4 text-purple-400 group-hover:text-purple-600" />
+            </button>
+            <button
               onClick={handleResendInviteEmail}
               disabled={sendingEmail}
               className="p-2 hover:bg-green-50 rounded-xl transition-colors group disabled:opacity-50"
