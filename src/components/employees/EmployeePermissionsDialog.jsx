@@ -235,6 +235,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
         is_frozen: isFrozen, 
         is_admin: isAdmin,
         login_session_token: loginCode,
+        role_id: selectedRoleId || null,
       };
 
       // Если введён новый пароль — хешируем и сохраняем
