@@ -44,6 +44,7 @@ function getOnlineStatus(lastLoginAt) {
 export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails, business }) {
   const [expanded, setExpanded] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const status = getOnlineStatus(employee.last_login_at);
   const grantedPerms = Object.entries(employee.permissions || {}).filter(([, v]) => v);
   const enabledCount = grantedPerms.length;
