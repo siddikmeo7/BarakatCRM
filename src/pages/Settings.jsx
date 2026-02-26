@@ -710,11 +710,11 @@ export default function Settings() {
         })()}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {/* Business Settings — только владелец/manage_settings */}
-        {canPerm('manage_settings') ? <Collapsible open={expandedSections.business} onOpenChange={(open) => setExpandedSections({...expandedSections, business: open})}>
+        {canPerm('manage_settings') ? <Collapsible open={expandedSections.business} onOpenChange={(open) => setExpandedSections({...expandedSections, business: open})} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <CollapsibleTrigger asChild>
-            <div className={`rounded-xl p-4 cursor-pointer border flex items-center justify-between transition-all ${expandedSections.business ? 'bg-blue-50 border-blue-200 shadow-sm' : 'bg-white hover:bg-slate-50 border-slate-100'}`}>
+            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.business ? 'bg-blue-50' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg transition-colors ${expandedSections.business ? 'bg-blue-600' : 'bg-blue-100'}`}>
                   <Building2 className={`w-5 h-5 ${expandedSections.business ? 'text-white' : 'text-blue-600'}`} />
@@ -727,7 +727,7 @@ export default function Settings() {
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.business ? 'rotate-180 text-blue-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent className="bg-slate-50 border-x border-b border-slate-100 p-6 space-y-4">
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6 space-y-4">
             <div className="grid gap-4 max-w-2xl">
               <div>
                 <Label>{t(lang,'settings_biz_name')}</Label>
