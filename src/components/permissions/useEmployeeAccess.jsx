@@ -10,6 +10,9 @@ export function useEmployeeAccess() {
   const can = (permKey) => {
     if (isOwner) return true;
     if (employee?.is_admin) return true; // администратор — полный доступ как у владельца
+    // Проверяем мержнутые разрешения (роль + переопределения), которые Layout записывает
+    const mergedPerms = window.__barakatMergedPermissions;
+    if (mergedPerms) return !!(mergedPerms[permKey]);
     return !!(employee?.permissions?.[permKey]);
   };
 
