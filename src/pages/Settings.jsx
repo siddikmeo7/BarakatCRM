@@ -1473,7 +1473,7 @@ export default function Settings() {
                       </div>
 
                       {selectedEmp?.id === emp.id && (
-                        <div className="mt-2 mb-1 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50 border border-indigo-100 p-4 space-y-3 shadow-sm">
+                        <div className="mt-2 mb-1 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50 border border-indigo-100 p-4 space-y-3 shadow-sm" onClick={e => e.stopPropagation()}>
                           {/* Info rows */}
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 text-xs">
