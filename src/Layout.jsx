@@ -97,6 +97,16 @@ export default function Layout({ children, currentPageName }) {
     setDrawerOpen(false);
   }, [currentPageName]);
 
+  // Редирект на Products при первом входе в мобильной версии
+  useEffect(() => {
+    if (loading || !business) return;
+    if (window.innerWidth >= 768) return; // только мобильная
+    if (window.__redirectToProducts && currentPageName !== 'Products') {
+      window.__redirectToProducts = false;
+      navigate(createPageUrl('Products'));
+    }
+  }, [loading, business, currentPageName]);
+
   // Если текущая страница недоступна сотруднику — редирект на первую доступную
   useEffect(() => {
     if (loading || !user) return;
