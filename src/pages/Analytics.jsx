@@ -52,6 +52,8 @@ export default function Analytics() {
     to: endOfMonth(new Date())
   });
   const [topProductsSort, setTopProductsSort] = useState('revenue'); // revenue, profit, boxes
+  const [mySalesOnly, setMySalesOnly] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState(null);
 
 
 
