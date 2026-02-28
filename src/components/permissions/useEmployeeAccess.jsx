@@ -6,26 +6,31 @@ import { useState, useEffect } from 'react';
  * Owner = null employee = all permissions granted.
  */
 export function useEmployeeAccess() {
-  const [, forceUpdate] = useState(0);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    const handler = () => forceUpdate(n => n + 1);
+    // If already ready when component mounts, trigger a re-render
+    if (window.__barakatAccessReady) {
+      setTick(n => n + 1);
+    }
+    const handler = () => setTick(n => n + 1);
     window.addEventListener('barakatAccessReady', handler);
     return () => window.removeEventListener('barakatAccessReady', handler);
   }, []);
 
+  const isReady = window.__barakatAccessReady || false;
   const employee = window.__barakatEmployee || null;
   const business = window.__barakatBusiness || null;
-  const isOwner = window.__barakatAccessReady ? !employee : false; // wait until ready
+  const isOwner = isReady ? !employee : false;
 
   const can = (permKey) => {
-    if (!window.__barakatAccessReady) return false; // still loading
-    if (!employee) return true; // owner
-    if (employee?.is_admin) return true;
+    if (!isReady) return false; // still loading
+    if (!employee) return true; // owner — full access
+    if (employee.is_admin) return true; // admin employee — full access
     const mergedPerms = window.__barakatMergedPermissions;
-    if (mergedPerms) return !!(mergedPerms[permKey]);
-    return !!(employee?.permissions?.[permKey]);
+    if (mergedPerms && mergedPerms[permKey] !== undefined) return mergedPerms[permKey] === true;
+    return employee?.permissions?.[permKey] === true;
   };
 
-  return { employee, business, isOwner, can };
+  return { employee, business, isOwner, can, isReady };
 }
