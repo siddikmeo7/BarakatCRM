@@ -1473,60 +1473,65 @@ export default function Settings() {
                       </div>
 
                       {selectedEmp?.id === emp.id && (
-                        <div className="mx-1 mb-1 p-3 bg-white border border-slate-200 border-t-0 rounded-b-xl space-y-3">
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="bg-slate-50 rounded-lg p-2">
-                              <p className="text-slate-400">Email</p>
-                              <p className="font-medium text-slate-700 truncate">{emp.user_email}</p>
+                        <div className="mt-2 mb-1 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50 border border-indigo-100 p-4 space-y-3 shadow-sm">
+                          {/* Info rows */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">✉️</span>
+                              <span className="text-slate-400 w-20 flex-shrink-0">Email</span>
+                              <span className="font-medium text-slate-700 truncate">{emp.user_email}</span>
                             </div>
-                            <div className="bg-slate-50 rounded-lg p-2">
-                              <p className="text-slate-400">Телефон</p>
-                              <p className="font-medium text-slate-700">{emp.phone || '—'}</p>
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">📞</span>
+                              <span className="text-slate-400 w-20 flex-shrink-0">Телефон</span>
+                              <span className="font-medium text-slate-700">{emp.phone || '—'}</span>
                             </div>
-                            <div className="bg-slate-50 rounded-lg p-2">
-                              <p className="text-slate-400">Последний вход</p>
-                              <p className="font-medium text-slate-700">{lastLogin ? lastLogin.toLocaleString('ru') : '—'}</p>
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">🕐</span>
+                              <span className="text-slate-400 w-20 flex-shrink-0">Вход</span>
+                              <span className="font-medium text-slate-700">{lastLogin ? lastLogin.toLocaleString('ru') : 'Не входил'}</span>
                             </div>
-                            <div className="bg-slate-50 rounded-lg p-2">
-                              <p className="text-slate-400">Статус</p>
-                              <p className={`font-medium ${emp.is_frozen ? 'text-blue-600' : isOnline ? 'text-emerald-600' : 'text-slate-600'}`}>
-                                {emp.is_frozen ? '🧊 Заморожен' : isOnline ? '● В сети' : 'Офлайн'}
-                              </p>
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">{emp.is_frozen ? '🧊' : isOnline ? '🟢' : '⚫'}</span>
+                              <span className="text-slate-400 w-20 flex-shrink-0">Статус</span>
+                              <span className={`font-semibold ${emp.is_frozen ? 'text-blue-600' : isOnline ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                {emp.is_frozen ? 'Заморожен' : isOnline ? 'В сети сейчас' : 'Офлайн'}
+                              </span>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            {!emp.is_frozen ? (
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  if (!confirm(`Завершить сеанс ${emp.name}? Он будет выброшен из системы и должен войти заново.`)) return;
-                                  await base44.entities.Employee.update(emp.id, {
-                                    is_frozen: true,
-                                    login_session_token: crypto.randomUUID()
-                                  });
-                                  setSelectedEmp(null);
-                                  await loadData();
-                                }}
-                                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors"
-                              >
-                                <LogOut className="w-3.5 h-3.5" />
-                                Завершить сеанс
-                              </button>
-                            ) : (
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  await base44.entities.Employee.update(emp.id, { is_frozen: false });
-                                  setSelectedEmp(null);
-                                  await loadData();
-                                }}
-                                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs font-medium hover:bg-emerald-100 transition-colors"
-                              >
-                                <RefreshCw className="w-3.5 h-3.5" />
-                                Разморозить
-                              </button>
-                            )}
-                          </div>
+
+                          {/* Action button */}
+                          {!emp.is_frozen ? (
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (!confirm(`Завершить сеанс ${emp.name}? Он будет выброшен из системы и должен войти заново.`)) return;
+                                await base44.entities.Employee.update(emp.id, {
+                                  is_frozen: true,
+                                  login_session_token: crypto.randomUUID()
+                                });
+                                setSelectedEmp(null);
+                                await loadData();
+                              }}
+                              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-semibold hover:from-red-600 hover:to-rose-600 transition-all shadow-sm shadow-red-200"
+                            >
+                              <LogOut className="w-3.5 h-3.5" />
+                              Завершить сеанс
+                            </button>
+                          ) : (
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                await base44.entities.Employee.update(emp.id, { is_frozen: false });
+                                setSelectedEmp(null);
+                                await loadData();
+                              }}
+                              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-semibold hover:from-emerald-600 hover:to-teal-600 transition-all shadow-sm shadow-emerald-200"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5" />
+                              Разморозить доступ
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
