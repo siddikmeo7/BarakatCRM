@@ -633,6 +633,11 @@ export default function Sales() {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="font-semibold text-slate-900 text-sm">{product?.brand} {product?.model}</p>
+                        {product && (
+                          <p className="text-xs text-slate-400">
+                            {[product.color, product.product_type, product.size_from && product.size_to ? `${product.size_from}–${product.size_to}` : null].filter(Boolean).join(' · ')}
+                          </p>
+                        )}
                         <p className="text-xs text-slate-400 mt-0.5">
                           {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
                         </p>
