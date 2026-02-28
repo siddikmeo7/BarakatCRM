@@ -117,7 +117,7 @@ export default function Settings() {
   const [editTypeDialog, setEditTypeDialog] = useState(false);
   const [newCustomPermission, setNewCustomPermission] = useState('');
   const [expandedSections, setExpandedSections] = useState({
-    business: true,
+    business: false,
     access: false,
     defaults: false,
     employees: false,
