@@ -141,7 +141,7 @@ export default function Dashboard() {
     })
     .filter(item => item.product);
 
-  if (loading) return <PageLoader message="Загрузка дашборда..." />;
+  if (loading || !isReady) return <PageLoader message="Загрузка дашборда..." />;
 
   const masked = '•••••';
 
