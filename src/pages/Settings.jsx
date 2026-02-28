@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import BackupExportPanel from '@/components/settings/BackupExportPanel';
+import DeviceSessionsPanel from '@/components/settings/DeviceSessionsPanel';
 import AvatarPicker, { AvatarDisplay } from '@/components/settings/AvatarPicker';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { ru as dateFnsRu } from 'date-fns/locale';
