@@ -4,6 +4,7 @@ import { ru as dateFnsRu } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { Shield, Trash2, Phone, Mail, Clock, LogIn, ChevronDown, ChevronUp, Copy, Send, History } from 'lucide-react';
 import EmployeeHistoryDialog from './EmployeeHistoryDialog';
+import { AvatarDisplay } from '@/components/settings/AvatarPicker';
 
 const PERM_LABELS = {
   view_dashboard: 'Дашборд', view_analytics: 'Аналитика', view_profit: 'Прибыль',
