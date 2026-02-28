@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format } from 'date-fns';
+import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format, startOfDay, endOfDay } from 'date-fns';
 import { t } from '@/components/i18n/translations';
 import SalesForecast from '@/components/analytics/SalesForecast';
 import CustomerSegmentation from '@/components/analytics/CustomerSegmentation';
