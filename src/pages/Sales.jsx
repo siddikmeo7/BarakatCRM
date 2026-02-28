@@ -322,6 +322,22 @@ export default function Sales() {
     (p.boxes_in_stock || 0) > 0
   );
 
+  if (!isReady) return <PageLoader message="Загрузка..." />;
+  if (!can('view_sales')) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+            <ShoppingCart className="w-8 h-8 text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Нет доступа</h3>
+            <p className="text-slate-600">У вас нет прав для просмотра продаж.<br/>Обратитесь к владельцу бизнеса.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (loading) return (
     <div className="flex items-center justify-center min-h-[50vh]">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
