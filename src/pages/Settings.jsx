@@ -437,6 +437,8 @@ export default function Settings() {
   const [activeSessions, setActiveSessions] = useState([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const currentSessionId = sessionStorage.getItem('barakat_session_id');
+  const [empRefreshing, setEmpRefreshing] = useState(false);
+  const [selectedEmp, setSelectedEmp] = useState(null);
 
   const loadActiveSessions = async () => {
     setSessionsLoading(true);
