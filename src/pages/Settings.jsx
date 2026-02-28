@@ -563,39 +563,54 @@ export default function Settings() {
 
       {/* Аккаунт карточка */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
-        {/* Top row: avatar + name + logout */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {(() => {
-              const emp = window.__barakatEmployee;
-              const avatarUrl = emp?.avatar_url || user?.avatar_url;
-              if (avatarUrl) {
-                return <AvatarDisplay avatarUrl={avatarUrl} name={user?.full_name} size="md" />;
-              }
-              return (
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md flex-shrink-0">
-                  <span className="text-white font-bold text-lg">{user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}</span>
-                </div>
-              );
-            })()}
-            <div>
-              <p className="font-semibold text-slate-900">{user?.full_name || t(lang,'settings_user')}</p>
-              <p className="text-sm text-slate-500">{user?.email}</p>
-              {(() => {
-                const emp = window.__barakatEmployee;
-                if (!emp) {
-                  return <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium mt-0.5">👑 Владелец</span>;
-                } else if (emp.is_admin) {
-                  return <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium mt-0.5">🛡️ Администратор</span>;
-                } else {
-                  return <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium mt-0.5">👤 Сотрудник</span>;
-                }
-              })()}
-            </div>
+        {/* Top row: avatar + name */}
+        <div className="flex items-center gap-3">
+          {(() => {
+            const avatarUrl = currentEmployee?.avatar_url || user?.avatar_url;
+            if (avatarUrl) {
+              return <AvatarDisplay avatarUrl={avatarUrl} name={user?.full_name} size="md" />;
+            }
+            return (
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md flex-shrink-0">
+                <span className="text-white font-bold text-lg">{user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}</span>
+              </div>
+            );
+          })()}
+          <div>
+            <p className="font-semibold text-slate-900">{user?.full_name || t(lang,'settings_user')}</p>
+            <p className="text-sm text-slate-500">{user?.email}</p>
+            {!currentEmployee ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium mt-0.5">👑 Владелец</span>
+            ) : currentEmployee.is_admin ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium mt-0.5">🛡️ Администратор</span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium mt-0.5">👤 Сотрудник</span>
+            )}
           </div>
+        </div>
+
+        {/* Avatar Picker */}
+        <div className="border-t border-slate-100 pt-3">
+          <AvatarPicker
+            key={currentEmployee?.avatar_url || user?.avatar_url || 'no-avatar'}
+            currentAvatar={currentEmployee?.avatar_url || user?.avatar_url || null}
+            onSave={async (newAvatarUrl) => {
+              if (currentEmployee) {
+                await base44.entities.Employee.update(currentEmployee.id, { avatar_url: newAvatarUrl });
+                window.__barakatEmployee = { ...currentEmployee, avatar_url: newAvatarUrl };
+              } else {
+                await base44.auth.updateMe({ avatar_url: newAvatarUrl });
+              }
+              await loadData();
+            }}
+          />
+        </div>
+
+        {/* Logout button */}
+        <div className="border-t border-slate-100 pt-3">
           <Button 
             variant="outline" 
-            className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+            className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 w-full"
             onClick={() => {
               if (confirm(t(lang, 'settings_logout_confirm'))) {
                 base44.auth.logout();
@@ -605,24 +620,6 @@ export default function Settings() {
             <LogOut className="w-4 h-4" />
             {t(lang, 'settings_logout')}
           </Button>
-        </div>
-
-        {/* Avatar Picker */}
-        <div className="border-t border-slate-100 pt-3">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">🖼️ Аватарка</p>
-          <AvatarPicker
-            currentAvatar={(() => { const emp = window.__barakatEmployee; return emp?.avatar_url || user?.avatar_url || null; })()}
-            onSave={async (newAvatarUrl) => {
-              const emp = window.__barakatEmployee;
-              if (emp) {
-                await base44.entities.Employee.update(emp.id, { avatar_url: newAvatarUrl });
-                window.__barakatEmployee = { ...emp, avatar_url: newAvatarUrl };
-              } else {
-                await base44.auth.updateMe({ avatar_url: newAvatarUrl });
-              }
-              await loadData();
-            }}
-          />
         </div>
 
         {/* Информация об аккаунте — видна всем */}
