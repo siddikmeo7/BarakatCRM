@@ -208,6 +208,8 @@ export default function Layout({ children, currentPageName }) {
                     window.__barakatMergedPermissions = mergedPerms;
                     window.__barakatAccessReady = true;
                     window.dispatchEvent(new Event('barakatAccessReady'));
+                    // Регистрируем сессию устройства
+                    await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
                     // Сохраняем режим сотрудника постоянно (переживает перезапуск браузера)
                     localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
                     // Показываем приветственный экран только при первом входе за сессию
