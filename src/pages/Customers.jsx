@@ -33,25 +33,7 @@ import { t } from '@/components/i18n/translations';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 export default function Customers() {
-  const { can } = useEmployeeAccess();
-  
-  // Блокировка страницы если нет доступа
-  if (!can('view_customers')) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-            <Users className="w-8 h-8 text-red-600" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">Нет доступа</h3>
-            <p className="text-slate-600">У вас нет прав для просмотра клиентов.<br/>Обратитесь к владельцу бизнеса.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
+  const { can, isReady } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
