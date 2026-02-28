@@ -563,47 +563,21 @@ export default function Settings() {
 
       {/* Аккаунт карточка */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
+        {/* Top row: avatar + name + logout */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative group cursor-pointer">
-              {(() => {
-                const emp = window.__barakatEmployee;
-                const avatarUrl = emp?.avatar_url || user?.avatar_url;
-                return avatarUrl ? (
-                  <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover shadow-md group-hover:opacity-80 transition-opacity" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md group-hover:opacity-80 transition-opacity">
-                    <span className="text-white font-bold text-lg">
-                      {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
-                    </span>
-                  </div>
-                );
-              })()}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const res = await base44.integrations.Core.UploadFile({ file });
-                  if (res.data?.file_url) {
-                    const emp = window.__barakatEmployee;
-                    if (emp) {
-                      await base44.entities.Employee.update(emp.id, { avatar_url: res.data.file_url });
-                      window.__barakatEmployee = { ...emp, avatar_url: res.data.file_url };
-                    } else {
-                      await base44.auth.updateMe({ avatar_url: res.data.file_url });
-                    }
-                    await loadData();
-                  }
-                }}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                title="Нажмите для изменения аватара"
-              />
-              <div className="absolute inset-0 rounded-full bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-medium pointer-events-none">
-                ✏️
-              </div>
-            </div>
+          <div className="flex items-center gap-3">
+            {(() => {
+              const emp = window.__barakatEmployee;
+              const avatarUrl = emp?.avatar_url || user?.avatar_url;
+              if (avatarUrl) {
+                return <AvatarDisplay avatarUrl={avatarUrl} name={user?.full_name} size="md" />;
+              }
+              return (
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md flex-shrink-0">
+                  <span className="text-white font-bold text-lg">{user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}</span>
+                </div>
+              );
+            })()}
             <div>
               <p className="font-semibold text-slate-900">{user?.full_name || t(lang,'settings_user')}</p>
               <p className="text-sm text-slate-500">{user?.email}</p>
@@ -631,6 +605,24 @@ export default function Settings() {
             <LogOut className="w-4 h-4" />
             {t(lang, 'settings_logout')}
           </Button>
+        </div>
+
+        {/* Avatar Picker */}
+        <div className="border-t border-slate-100 pt-3">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">🖼️ Аватарка</p>
+          <AvatarPicker
+            currentAvatar={(() => { const emp = window.__barakatEmployee; return emp?.avatar_url || user?.avatar_url || null; })()}
+            onSave={async (newAvatarUrl) => {
+              const emp = window.__barakatEmployee;
+              if (emp) {
+                await base44.entities.Employee.update(emp.id, { avatar_url: newAvatarUrl });
+                window.__barakatEmployee = { ...emp, avatar_url: newAvatarUrl };
+              } else {
+                await base44.auth.updateMe({ avatar_url: newAvatarUrl });
+              }
+              await loadData();
+            }}
+          />
         </div>
 
         {/* Информация об аккаунте — видна всем */}
