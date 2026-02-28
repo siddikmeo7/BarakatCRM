@@ -565,33 +565,42 @@ export default function Settings() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="relative group cursor-pointer">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md group-hover:opacity-80 transition-opacity">
-                <span className="text-white font-bold text-lg">
-                  {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
-                </span>
-              </div>
+              {(() => {
+                const emp = window.__barakatEmployee;
+                const avatarUrl = emp?.avatar_url || user?.avatar_url;
+                return avatarUrl ? (
+                  <img src={avatarUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover shadow-md group-hover:opacity-80 transition-opacity" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md group-hover:opacity-80 transition-opacity">
+                    <span className="text-white font-bold text-lg">
+                      {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
+                    </span>
+                  </div>
+                );
+              })()}
               <input
                 type="file"
                 accept="image/*"
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
-                  if (file) {
-                    try {
-                      const res = await base44.integrations.Core.UploadFile({ file });
-                      if (res.data?.file_url) {
-                        await base44.auth.updateMe({ avatar_url: res.data.file_url });
-                        await loadData();
-                      }
-                    } catch (err) {
-                      console.error('Upload error:', err);
+                  if (!file) return;
+                  const res = await base44.integrations.Core.UploadFile({ file });
+                  if (res.data?.file_url) {
+                    const emp = window.__barakatEmployee;
+                    if (emp) {
+                      await base44.entities.Employee.update(emp.id, { avatar_url: res.data.file_url });
+                      window.__barakatEmployee = { ...emp, avatar_url: res.data.file_url };
+                    } else {
+                      await base44.auth.updateMe({ avatar_url: res.data.file_url });
                     }
+                    await loadData();
                   }
                 }}
                 className="absolute inset-0 opacity-0 cursor-pointer"
                 title="Нажмите для изменения аватара"
               />
-              <div className="absolute inset-0 rounded-full bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-medium">
-                Изменить
+              <div className="absolute inset-0 rounded-full bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-medium pointer-events-none">
+                ✏️
               </div>
             </div>
             <div>
