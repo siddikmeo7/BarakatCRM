@@ -135,6 +135,38 @@ export default function Layout({ children, currentPageName }) {
               base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true })
             ]);
 
+            // Функция регистрации сессии устройства
+            const registerDeviceSession = async (bizId, userEmail, userName, role, empId = null) => {
+              try {
+                const ua = navigator.userAgent;
+                const sessionToken = `${userEmail}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                // Деактивируем старые сессии этого пользователя в этом бизнесе с этой ролью
+                const oldSessions = await base44.entities.DeviceSession.filter({ business_id: bizId, user_email: userEmail, role, is_active: true });
+                await Promise.all(oldSessions.map(s => base44.entities.DeviceSession.update(s.id, { is_active: false })));
+                // Создаём новую сессию
+                const newSession = await base44.entities.DeviceSession.create({
+                  business_id: bizId,
+                  user_email: userEmail,
+                  user_name: userName,
+                  role,
+                  employee_id: empId || '',
+                  device_info: ua,
+                  last_seen_at: new Date().toISOString(),
+                  session_token: sessionToken,
+                  is_active: true
+                });
+                localStorage.setItem('barakat_owner_session', sessionToken);
+                sessionStorage.setItem('barakat_owner_session', sessionToken);
+                // Хартбит — обновляем last_seen_at каждые 5 минут
+                const hb = setInterval(async () => {
+                  try {
+                    await base44.entities.DeviceSession.update(newSession.id, { last_seen_at: new Date().toISOString() });
+                  } catch (_) {}
+                }, 5 * 60 * 1000);
+                window.__barakatSessionHB = hb;
+              } catch (_) {}
+            };
+
             if (savedMode && savedMode.startsWith('employee_')) {
               // Режим сотрудника выбран явно
               const empId = savedMode.replace('employee_', '');
