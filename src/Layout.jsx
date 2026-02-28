@@ -240,8 +240,11 @@ export default function Layout({ children, currentPageName }) {
                 window.dispatchEvent(new Event('barakatAccessReady'));
                 // Сохраняем постоянно в localStorage чтобы не сбрасывалось
                 localStorage.setItem('barakatcrm_mode', `employee_${activeEmp.id}`);
-                // Обновляем last_login_at при входе
-                await base44.entities.Employee.update(activeEmp.id, { last_login_at: new Date().toISOString() });
+                // Обновляем last_login_at и device_info при входе
+                await base44.entities.Employee.update(activeEmp.id, {
+                  last_login_at: new Date().toISOString(),
+                  device_info: navigator.userAgent
+                });
               }
             } else if (currentPageName !== 'BusinessAccess') {
                 navigate(createPageUrl('BusinessAccess'));
