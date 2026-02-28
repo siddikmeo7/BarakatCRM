@@ -61,13 +61,13 @@ import Dashboard from './pages/Dashboard';
 import Debts from './pages/Debts';
 import ProductDetail from './pages/ProductDetail';
 import Products from './pages/Products';
+import Reports from './pages/Reports';
 import Returns from './pages/Returns';
 import Sales from './pages/Sales';
 import Settings from './pages/Settings';
 import UserProfile from './pages/UserProfile';
 import WarehouseSalesHistory from './pages/WarehouseSalesHistory';
 import Warehouses from './pages/Warehouses';
-import Reports from './pages/Reports';
 import __Layout from './Layout.jsx';
 
 
@@ -86,13 +86,13 @@ export const PAGES = {
     "Debts": Debts,
     "ProductDetail": ProductDetail,
     "Products": Products,
+    "Reports": Reports,
     "Returns": Returns,
     "Sales": Sales,
     "Settings": Settings,
     "UserProfile": UserProfile,
     "WarehouseSalesHistory": WarehouseSalesHistory,
     "Warehouses": Warehouses,
-    "Reports": Reports,
 }
 
 export const pagesConfig = {
