@@ -1411,69 +1411,93 @@ export default function Settings() {
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4 space-y-3">
 
-            {/* Активные устройства */}
+            {/* Активные сотрудники */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
               <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm font-semibold text-slate-700">Активные устройства</span>
+                  <Users className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm font-semibold text-slate-700">Активные сотрудники в системе</span>
                 </div>
-                <Button variant="outline" size="sm" onClick={loadActiveSessions} disabled={sessionsLoading} className="gap-1.5 text-xs h-7">
-                  {sessionsLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                <Button variant="outline" size="sm" onClick={loadData} disabled={loading} className="gap-1.5 text-xs h-7">
+                  {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                   Обновить
                 </Button>
               </div>
-              <div className="p-3">
-                {activeSessions.length === 0 && !sessionsLoading && (
+              <div className="p-3 space-y-2">
+                {employees.length === 0 && (
                   <div className="text-center py-5">
-                    <Shield className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-                    <p className="text-sm text-slate-400 mb-2">Нажмите «Обновить» чтобы загрузить список</p>
-                    <Button variant="outline" size="sm" onClick={loadActiveSessions}>Загрузить</Button>
+                    <Users className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+                    <p className="text-sm text-slate-400">Нет сотрудников</p>
                   </div>
                 )}
-                {sessionsLoading && (
-                  <div className="flex items-center justify-center py-5">
-                    <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                  </div>
-                )}
-                <div className="space-y-2">
-                  {activeSessions.map(session => {
-                    const isCurrent = session.session_id === currentSessionId;
-                    const lastSeen = session.last_seen ? new Date(session.last_seen) : null;
-                    const isOnline = lastSeen && (Date.now() - lastSeen.getTime()) < 5 * 60 * 1000;
-                    return (
-                      <div key={session.session_id} className={`flex items-center gap-3 p-3 rounded-xl border ${isCurrent ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-100'}`}>
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-lg ${isCurrent ? 'bg-indigo-100' : 'bg-white border border-slate-200'}`}>
-                          {session.device?.includes('iPhone') || session.device?.includes('Android') || session.device?.includes('iPad') ? '📱' : '🖥️'}
+                {employees.map(emp => {
+                  const lastLogin = emp.last_login_at ? new Date(emp.last_login_at) : null;
+                  const diffMs = lastLogin ? Date.now() - lastLogin.getTime() : null;
+                  const isOnline = diffMs !== null && diffMs < 10 * 60 * 1000;
+                  const lastSeenText = !lastLogin ? 'Не входил' :
+                    diffMs < 60000 ? 'только что' :
+                    diffMs < 3600000 ? `${Math.floor(diffMs / 60000)} мин. назад` :
+                    diffMs < 86400000 ? `${Math.floor(diffMs / 3600000)} ч. назад` :
+                    `${Math.floor(diffMs / 86400000)} дн. назад`;
+
+                  return (
+                    <div key={emp.id} className={`flex items-center gap-3 p-3 rounded-xl border ${emp.is_frozen ? 'bg-blue-50 border-blue-200 opacity-70' : isOnline ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-100'}`}>
+                      <div className="relative flex-shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                          {emp.name?.charAt(0)?.toUpperCase() || '?'}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-medium text-slate-900 truncate">{session.device || 'Устройство'}</p>
-                            {isCurrent && <span className="px-2 py-0.5 bg-indigo-600 text-white rounded-full text-xs font-medium">Это устройство</span>}
-                            {isOnline && !isCurrent && <span className="flex items-center gap-1 text-xs text-green-600"><span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />Онлайн</span>}
-                          </div>
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            {session.browser} · {lastSeen ? `${Math.round((Date.now() - lastSeen.getTime()) / 60000)} мин. назад` : 'Неизвестно'}
-                          </p>
-                        </div>
-                        {!isCurrent && (
-                          <button
-                            onClick={() => handleRevokeOneSession(session.session_id)}
-                            className="p-1.5 rounded-lg hover:bg-red-100 text-slate-300 hover:text-red-600 transition-colors flex-shrink-0"
-                            title="Завершить сессию"
-                          >
-                            <LogOut className="w-4 h-4" />
-                          </button>
-                        )}
+                        <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300'}`} />
                       </div>
-                    );
-                  })}
-                </div>
-                {activeSessions.length > 1 && (
-                  <div className="mt-3 pt-3 border-t border-slate-100">
-                    <Button variant="outline" size="sm" className="w-full text-orange-600 border-orange-200 hover:bg-orange-50 gap-2" onClick={handleRevokeAllSessions}>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-900 truncate">{emp.name}</p>
+                        <p className="text-xs text-slate-400 truncate">
+                          {isOnline ? <span className="text-emerald-600 font-medium">● В сети сейчас</span> : lastSeenText}
+                        </p>
+                      </div>
+                      {emp.is_frozen ? (
+                        <span className="text-xs text-blue-600 font-medium flex-shrink-0">🧊 Заморожен</span>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Заморозить аккаунт сотрудника ${emp.name}? Он не сможет войти в систему.`)) return;
+                            await base44.entities.Employee.update(emp.id, { is_frozen: true });
+                            await loadData();
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-red-100 text-slate-300 hover:text-red-600 transition-colors flex-shrink-0"
+                          title="Заморозить (заблокировать вход)"
+                        >
+                          <LogOut className="w-4 h-4" />
+                        </button>
+                      )}
+                      {emp.is_frozen && (
+                        <button
+                          onClick={async () => {
+                            await base44.entities.Employee.update(emp.id, { is_frozen: false });
+                            await loadData();
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-emerald-100 text-slate-300 hover:text-emerald-600 transition-colors flex-shrink-0"
+                          title="Разморозить"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                {employees.filter(e => !e.is_frozen).length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-slate-100">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-orange-600 border-orange-200 hover:bg-orange-50 gap-2"
+                      onClick={async () => {
+                        if (!confirm('Заморозить ВСЕХ сотрудников? Они не смогут войти в систему до разморозки.')) return;
+                        await Promise.all(employees.filter(e => !e.is_frozen).map(e => base44.entities.Employee.update(e.id, { is_frozen: true })));
+                        await loadData();
+                      }}
+                    >
                       <LogOut className="w-4 h-4" />
-                      Выйти со всех других устройств
+                      Заморозить всех сотрудников
                     </Button>
                   </div>
                 )}
