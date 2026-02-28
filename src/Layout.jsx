@@ -149,26 +149,30 @@ export default function Layout({ children, currentPageName }) {
                     setBusiness(biz);
                     setLang(biz.language || 'ru');
                     // Если сотрудник — администратор, даём полный доступ (null = как у владельца)
+                    let mergedPerms = null;
                     if (emp.is_admin) {
                       setEmployeePermissions(null);
+                      mergedPerms = null;
                     } else if (emp.role_id) {
                       // Мержим разрешения роли + персональные переопределения
                       try {
                         const roleList = await base44.entities.Role.filter({ id: emp.role_id });
                         const rolePerms = roleList[0]?.permissions || {};
-                        setEmployeePermissions(mergePermissions(rolePerms, emp.permissions || {}));
+                        mergedPerms = mergePermissions(rolePerms, emp.permissions || {});
+                        setEmployeePermissions(mergedPerms);
                       } catch (_) {
-                        setEmployeePermissions(emp.permissions || {});
+                        mergedPerms = emp.permissions || {};
+                        setEmployeePermissions(mergedPerms);
                       }
                     } else {
-                      setEmployeePermissions(emp.permissions || {});
+                      mergedPerms = emp.permissions || {};
+                      setEmployeePermissions(mergedPerms);
                     }
                     setCurrentEmployee(emp);
                     window.__barakatEmployee = emp;
                     window.__barakatBusiness = biz;
                     // Сохраняем мержнутые разрешения для useEmployeeAccess
-                    window.__barakatMergedPermissions = emp.is_admin ? null : (window.__pendingMergedPerms || emp.permissions || {});
-                    window.__pendingMergedPerms = null;
+                    window.__barakatMergedPermissions = mergedPerms;
                     // Сохраняем режим сотрудника постоянно (переживает перезапуск браузера)
                     localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
                     // Показываем приветственный экран только при первом входе за сессию
