@@ -862,6 +862,9 @@ export default function Sales() {
                       )}
                       <div className="flex-1">
                         <p className="font-medium text-slate-900">{product.brand} {product.model}</p>
+                        <p className="text-xs text-slate-400">
+                          {[product.color, product.size_from && product.size_to ? `${product.size_from}–${product.size_to}` : null].filter(Boolean).join(' · ')}
+                        </p>
                         <p className="text-sm text-slate-500">
                           {product.boxes_in_stock} {t(lang,'sales_boxes_label').toLowerCase()} • {product.sale_price?.toLocaleString()} с.
                         </p>
