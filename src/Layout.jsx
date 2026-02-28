@@ -205,22 +205,28 @@ export default function Layout({ children, currentPageName }) {
               if (bizList.length > 0) {
                 setBusiness(bizList[0]);
                 setLang(bizList[0].language || 'ru');
+                let mergedPerms2 = null;
                 if (activeEmp.is_admin) {
                   setEmployeePermissions(null);
+                  mergedPerms2 = null;
                 } else if (activeEmp.role_id) {
                   try {
                     const roleList = await base44.entities.Role.filter({ id: activeEmp.role_id });
                     const rolePerms = roleList[0]?.permissions || {};
-                    setEmployeePermissions(mergePermissions(rolePerms, activeEmp.permissions || {}));
+                    mergedPerms2 = mergePermissions(rolePerms, activeEmp.permissions || {});
+                    setEmployeePermissions(mergedPerms2);
                   } catch (_) {
-                    setEmployeePermissions(activeEmp.permissions || {});
+                    mergedPerms2 = activeEmp.permissions || {};
+                    setEmployeePermissions(mergedPerms2);
                   }
                 } else {
-                  setEmployeePermissions(activeEmp.permissions || {});
+                  mergedPerms2 = activeEmp.permissions || {};
+                  setEmployeePermissions(mergedPerms2);
                 }
                 setCurrentEmployee(activeEmp);
                 window.__barakatEmployee = activeEmp;
                 window.__barakatBusiness = bizList[0];
+                window.__barakatMergedPermissions = mergedPerms2;
                 // Сохраняем постоянно в localStorage чтобы не сбрасывалось
                 localStorage.setItem('barakatcrm_mode', `employee_${activeEmp.id}`);
                 // Обновляем last_login_at при входе
