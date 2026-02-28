@@ -31,7 +31,7 @@ import PageLoader from '@/components/ui/PageLoader';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { can } = useEmployeeAccess();
+  const { can, isReady } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
