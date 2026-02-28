@@ -242,13 +242,13 @@ export default function Analytics() {
          {/* Top row: Hide button */}
          <div className="flex items-center justify-end gap-2">
            <Button
-             variant={mySalesOnly ? "default" : "outline"}
+             variant={mySalesOnly ? "default" : "default"}
              size="sm"
              onClick={() => setMySalesOnly(v => !v)}
-             className={`gap-2 ${mySalesOnly ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : ''}`}
+             className={`gap-2 ${mySalesOnly ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
            >
              <User className="w-4 h-4" />
-             {mySalesOnly ? 'Мои продажи' : 'Все продажи'}
+             {mySalesOnly ? '👤 Мои продажи' : '👥 Все продажи'}
            </Button>
            <Button
              variant="outline"
