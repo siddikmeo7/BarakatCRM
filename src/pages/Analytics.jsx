@@ -15,7 +15,9 @@ import {
   Settings2,
   RefreshCw,
   Eye,
-  EyeOff
+  EyeOff,
+  User,
+  Users
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -27,7 +29,6 @@ import SalesForecast from '@/components/analytics/SalesForecast';
 import CustomerSegmentation from '@/components/analytics/CustomerSegmentation';
 import ReportBuilder from '@/components/analytics/ReportBuilder';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
-import { User } from 'lucide-react';
 
 const DEFAULT_RATES = { TJS: 1, USD: 0.091, RUB: 8.5, EUR: 0.084, CNY: 0.66 };
 const RATES_CACHE_KEY = 'exchange_rates_cache';
