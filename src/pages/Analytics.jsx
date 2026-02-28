@@ -105,6 +105,7 @@ export default function Analytics() {
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
+      setCurrentUserEmail(user.email);
       let biz = null;
       const savedMode = sessionStorage.getItem('barakatcrm_mode');
       if (savedMode && savedMode.startsWith('employee_')) {
