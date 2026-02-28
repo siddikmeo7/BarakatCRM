@@ -91,11 +91,15 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
         <div className="flex items-start gap-3">
           {/* Avatar with online dot */}
           <div className="relative flex-shrink-0">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-lg">
-                {employee.name?.charAt(0)?.toUpperCase()}
-              </span>
-            </div>
+            {employee.avatar_url ? (
+              <img src={employee.avatar_url} alt={employee.name} className="w-12 h-12 rounded-2xl object-cover shadow-md" />
+            ) : (
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-lg">
+                  {employee.name?.charAt(0)?.toUpperCase()}
+                </span>
+              </div>
+            )}
             <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${status.color} ${status.pulse ? 'animate-pulse' : ''}`} />
           </div>
 
