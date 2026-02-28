@@ -63,8 +63,13 @@ export default function AvatarPicker({ currentAvatar, onSave }) {
     if (!file) return;
     setUploading(true);
     const res = await base44.integrations.Core.UploadFile({ file });
-    if (res.data?.file_url) {
-      setSelected(res.data.file_url);
+    const url = res?.file_url || res?.data?.file_url;
+    if (url) {
+      setSelected(url);
+      setSaving(true);
+      await onSave(url);
+      setSaving(false);
+      setOpen(false);
     }
     setUploading(false);
   };
