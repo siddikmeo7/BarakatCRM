@@ -891,6 +891,9 @@ export default function Sales() {
                   )}
                   <div>
                     <p className="font-semibold text-slate-900">{selectedProduct.brand} {selectedProduct.model}</p>
+                    <p className="text-xs text-slate-500">
+                      {[selectedProduct.color, selectedProduct.size_from && selectedProduct.size_to ? `${selectedProduct.size_from}–${selectedProduct.size_to}` : null].filter(Boolean).join(' · ')}
+                    </p>
                     <p className="text-sm text-slate-600">
                       {t(lang,'sales_on_stock')}: {selectedProduct.boxes_in_stock} {t(lang,'sales_boxes_label').toLowerCase()}
                     </p>
