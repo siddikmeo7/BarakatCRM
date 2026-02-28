@@ -198,6 +198,8 @@ export default function Layout({ children, currentPageName }) {
               setEmployeePermissions(null);
               window.__barakatEmployee = null;
               window.__barakatBusiness = businesses[0];
+              window.__barakatAccessReady = true;
+              window.dispatchEvent(new Event('barakatAccessReady'));
             } else if (employeeRecords.length > 0) {
             // Нет своего бизнеса — входим как сотрудник автоматически (только незамороженные)
             const activeEmp = employeeRecords.find(e => !e.is_frozen);
