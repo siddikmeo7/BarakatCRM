@@ -93,7 +93,7 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
           {/* Avatar with online dot */}
           <div className="relative flex-shrink-0">
             {employee.avatar_url ? (
-              <img src={employee.avatar_url} alt={employee.name} className="w-12 h-12 rounded-2xl object-cover shadow-md" />
+              <AvatarDisplay avatarUrl={employee.avatar_url} name={employee.name} size="md" />
             ) : (
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
                 <span className="text-white font-bold text-lg">
