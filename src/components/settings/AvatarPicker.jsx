@@ -52,6 +52,7 @@ export default function AvatarPicker({ currentAvatar, onSave }) {
   const [selected, setSelected] = useState(currentAvatar || null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const handleEmojiSelect = (id) => {
     setSelected('emoji:' + id);
