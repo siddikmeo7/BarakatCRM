@@ -77,7 +77,7 @@ export default function Debts() {
     try {
       const user = await base44.auth.me();
       let biz = null;
-      const savedMode = sessionStorage.getItem('barakatcrm_mode');
+      const savedMode = localStorage.getItem('barakatcrm_mode') || sessionStorage.getItem('barakatcrm_mode');
       if (savedMode && savedMode.startsWith('employee_')) {
         const empId = savedMode.replace('employee_', '');
         const empRecords = await base44.entities.Employee.filter({ user_email: user.email, is_active: true });
