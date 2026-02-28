@@ -147,6 +147,7 @@ export default function Analytics() {
   // Фильтрация продаж по дате (исключаем отменённые!)
   const filteredSales = sales.filter(sale => {
     if (sale.is_cancelled) return false; // КРИТИЧНО: не считать отменённые продажи
+    if (mySalesOnly && currentUserEmail && sale.created_by !== currentUserEmail) return false;
     if (!dateRange?.from) return true;
     const saleDate = parseISO(sale.sale_date || sale.created_date);
     return isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to || dateRange.from });
