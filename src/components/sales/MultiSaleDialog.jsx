@@ -280,6 +280,9 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
                             )}
                             <div>
                               <p className="text-sm font-medium text-slate-900">{p.brand} {p.model}</p>
+                              <p className="text-xs text-slate-400">
+                                {[p.color, p.size_from && p.size_to ? `${p.size_from}–${p.size_to}` : null].filter(Boolean).join(' · ')}
+                              </p>
                               <p className="text-xs text-slate-500">{p.boxes_in_stock} кор. • {p.sale_price?.toLocaleString()} с.</p>
                             </div>
                           </div>
