@@ -727,8 +727,13 @@ export default function Sales() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-slate-900 text-sm truncate">{product?.brand} {product?.model}</p>
+                  {product && (
+                   <p className="text-xs text-slate-400 truncate">
+                     {[product.color, product.product_type, product.size_from && product.size_to ? `${product.size_from}–${product.size_to}` : null].filter(Boolean).join(' · ')}
+                   </p>
+                  )}
                   <p className="text-xs text-slate-500">
-                    {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy')}
+                   {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy')}
                   </p>
                 </div>
               </div>
