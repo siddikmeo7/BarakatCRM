@@ -240,7 +240,16 @@ export default function Analytics() {
       {/* Date Filter & Hide button */}
        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
          {/* Top row: Hide button */}
-         <div className="flex items-center justify-end">
+         <div className="flex items-center justify-end gap-2">
+           <Button
+             variant={mySalesOnly ? "default" : "outline"}
+             size="sm"
+             onClick={() => setMySalesOnly(v => !v)}
+             className={`gap-2 ${mySalesOnly ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : ''}`}
+           >
+             <User className="w-4 h-4" />
+             {mySalesOnly ? 'Мои продажи' : 'Все продажи'}
+           </Button>
            <Button
              variant="outline"
              size="sm"
