@@ -150,8 +150,14 @@ export default function Analytics() {
     if (sale.is_cancelled) return false; // КРИТИЧНО: не считать отменённые продажи
     if (mySalesOnly && currentUserEmail && sale.created_by !== currentUserEmail) return false;
     if (!dateRange?.from) return true;
-    const saleDate = parseISO(sale.sale_date || sale.created_date);
-    return isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to || dateRange.from });
+    try {
+      const saleDate = parseISO(sale.sale_date || sale.created_date);
+      const startDate = startOfDay(dateRange.from);
+      const endDate = endOfDay(dateRange.to || dateRange.from);
+      return isWithinInterval(saleDate, { start: startDate, end: endDate });
+    } catch (e) {
+      return false;
+    }
   });
 
   // Расчёты
