@@ -1529,9 +1529,9 @@ export default function Settings() {
                                   if (!confirm(`Заморозить ${emp.name}? Он не сможет войти в систему.`)) return;
                                   const history = emp.change_history || [];
                                   await base44.entities.Employee.update(emp.id, {
-                                    is_frozen: true,
-                                    login_session_token: crypto.randomUUID(),
-                                    change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: false, newValue: true }] }]
+                                   is_frozen: true,
+                                   login_session_token: crypto.randomUUID(),
+                                   change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: 'false', newValue: 'true' }] }]
                                   });
                                   setSelectedEmp(null);
                                   await loadData();
@@ -1546,8 +1546,8 @@ export default function Settings() {
                                   e.stopPropagation();
                                   const history = emp.change_history || [];
                                   await base44.entities.Employee.update(emp.id, {
-                                    is_frozen: false,
-                                    change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: true, newValue: false }] }]
+                                   is_frozen: false,
+                                   change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: 'true', newValue: 'false' }] }]
                                   });
                                   setSelectedEmp(null);
                                   await loadData();
