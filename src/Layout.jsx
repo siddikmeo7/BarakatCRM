@@ -180,8 +180,12 @@ export default function Layout({ children, currentPageName }) {
                     localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
                     // Показываем приветственный экран только при первом входе за сессию
                     const welcomeKey = `welcomed_${emp.id}`;
-                    // Обновляем last_login_at при входе
-                    await base44.entities.Employee.update(emp.id, { last_login_at: new Date().toISOString() });
+                    // Обновляем last_login_at и device_info при входе
+                    const deviceInfo = `${navigator.userAgent}`;
+                    await base44.entities.Employee.update(emp.id, {
+                      last_login_at: new Date().toISOString(),
+                      device_info: deviceInfo
+                    });
 
                     if (!sessionStorage.getItem(welcomeKey)) {
                       setShowWelcome(true);
