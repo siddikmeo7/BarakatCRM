@@ -1414,6 +1414,9 @@ export default function Settings() {
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4 space-y-3">
 
+            {/* Все устройства в системе */}
+            <DeviceSessionsPanel business={business} currentUserEmail={user?.email} />
+
             {/* Активные сотрудники */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
               <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
