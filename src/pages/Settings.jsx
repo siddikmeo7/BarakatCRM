@@ -1500,38 +1500,93 @@ export default function Settings() {
                             </div>
                           </div>
 
-                          {/* Action button */}
-                          {!emp.is_frozen ? (
+                          {/* Action buttons */}
+                          <div className="flex gap-2">
+                            {/* Завершить сеанс — только сбрасывает токен, не замораживает */}
                             <button
                               onClick={async (e) => {
                                 e.stopPropagation();
-                                if (!confirm(`Завершить сеанс ${emp.name}? Он будет выброшен из системы и должен войти заново.`)) return;
+                                if (!confirm(`Сбросить сеанс ${emp.name}? Он будет выброшен с сайта и должен войти заново.`)) return;
+                                const history = emp.change_history || [];
                                 await base44.entities.Employee.update(emp.id, {
-                                  is_frozen: true,
-                                  login_session_token: crypto.randomUUID()
+                                  login_session_token: crypto.randomUUID(),
+                                  change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'session', newValue: 'reset', oldValue: null }] }]
                                 });
                                 setSelectedEmp(null);
                                 await loadData();
                               }}
-                              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-semibold hover:from-red-600 hover:to-rose-600 transition-all shadow-sm shadow-red-200"
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-sm"
                             >
                               <LogOut className="w-3.5 h-3.5" />
-                              Завершить сеанс
+                              Сбросить сеанс
                             </button>
-                          ) : (
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                await base44.entities.Employee.update(emp.id, { is_frozen: false });
-                                setSelectedEmp(null);
-                                await loadData();
-                              }}
-                              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-semibold hover:from-emerald-600 hover:to-teal-600 transition-all shadow-sm shadow-emerald-200"
-                            >
-                              <RefreshCw className="w-3.5 h-3.5" />
-                              Разморозить доступ
-                            </button>
-                          )}
+
+                            {/* Заморозить / Разморозить */}
+                            {!emp.is_frozen ? (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (!confirm(`Заморозить ${emp.name}? Он не сможет войти в систему.`)) return;
+                                  const history = emp.change_history || [];
+                                  await base44.entities.Employee.update(emp.id, {
+                                    is_frozen: true,
+                                    login_session_token: crypto.randomUUID(),
+                                    change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: false, newValue: true }] }]
+                                  });
+                                  setSelectedEmp(null);
+                                  await loadData();
+                                }}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all shadow-sm"
+                              >
+                                🧊 Заморозить
+                              </button>
+                            ) : (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  const history = emp.change_history || [];
+                                  await base44.entities.Employee.update(emp.id, {
+                                    is_frozen: false,
+                                    change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: true, newValue: false }] }]
+                                  });
+                                  setSelectedEmp(null);
+                                  await loadData();
+                                }}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-semibold hover:from-emerald-600 hover:to-teal-600 transition-all shadow-sm"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5" />
+                                Разморозить
+                              </button>
+                            )}
+                          </div>
+
+                          {/* История заморозок */}
+                          {(() => {
+                            const freezeHistory = (emp.change_history || []).filter(h =>
+                              h.changes?.some(c => c.field === 'is_frozen' || c.field === 'session')
+                            ).slice(-5).reverse();
+                            if (freezeHistory.length === 0) return null;
+                            return (
+                              <div className="border-t border-indigo-100 pt-3">
+                                <p className="text-xs font-semibold text-slate-500 mb-2">📋 История действий</p>
+                                <div className="space-y-1.5">
+                                  {freezeHistory.map((h, i) => {
+                                    const change = h.changes?.[0];
+                                    const label = change?.field === 'is_frozen'
+                                      ? (change.newValue ? '🧊 Заморожен' : '✅ Разморожен')
+                                      : '🔄 Сеанс сброшен';
+                                    const date = h.timestamp ? new Date(h.timestamp).toLocaleString('ru') : '—';
+                                    return (
+                                      <div key={i} className="flex items-center justify-between text-xs bg-white rounded-lg px-2.5 py-1.5 border border-slate-100">
+                                        <span className="font-medium text-slate-700">{label}</span>
+                                        <span className="text-slate-400">{date}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
