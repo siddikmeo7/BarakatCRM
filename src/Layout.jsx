@@ -230,6 +230,8 @@ export default function Layout({ children, currentPageName }) {
                 window.__barakatEmployee = activeEmp;
                 window.__barakatBusiness = bizList[0];
                 window.__barakatMergedPermissions = mergedPerms2;
+                window.__barakatAccessReady = true;
+                window.dispatchEvent(new Event('barakatAccessReady'));
                 // Сохраняем постоянно в localStorage чтобы не сбрасывалось
                 localStorage.setItem('barakatcrm_mode', `employee_${activeEmp.id}`);
                 // Обновляем last_login_at при входе
