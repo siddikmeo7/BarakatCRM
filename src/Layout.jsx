@@ -274,6 +274,8 @@ export default function Layout({ children, currentPageName }) {
                 window.__barakatMergedPermissions = mergedPerms2;
                 window.__barakatAccessReady = true;
                 window.dispatchEvent(new Event('barakatAccessReady'));
+                // Регистрируем сессию устройства
+                await registerDeviceSession(bizList[0].id, currentUser.email, activeEmp.name || currentUser.full_name, activeEmp.is_admin ? 'admin' : 'employee', activeEmp.id);
                 // Сохраняем постоянно в localStorage чтобы не сбрасывалось
                 localStorage.setItem('barakatcrm_mode', `employee_${activeEmp.id}`);
                 // Обновляем last_login_at и device_info при входе
