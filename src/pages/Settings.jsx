@@ -1418,12 +1418,20 @@ export default function Settings() {
               <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm font-semibold text-slate-700">Активные сотрудники в системе</span>
+                  <span className="text-sm font-semibold text-slate-700">Сотрудники в системе</span>
                 </div>
-                <Button variant="outline" size="sm" onClick={loadData} disabled={loading} className="gap-1.5 text-xs h-7">
-                  {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                <button
+                  onClick={async () => {
+                    setEmpRefreshing(true);
+                    await loadData();
+                    setEmpRefreshing(false);
+                  }}
+                  disabled={empRefreshing}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-medium text-slate-600 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3 h-3 ${empRefreshing ? 'animate-spin' : ''}`} />
                   Обновить
-                </Button>
+                </button>
               </div>
               <div className="p-3 space-y-2">
                 {employees.length === 0 && (
@@ -1443,45 +1451,83 @@ export default function Settings() {
                     `${Math.floor(diffMs / 86400000)} дн. назад`;
 
                   return (
-                    <div key={emp.id} className={`flex items-center gap-3 p-3 rounded-xl border ${emp.is_frozen ? 'bg-blue-50 border-blue-200 opacity-70' : isOnline ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-100'}`}>
-                      <div className="relative flex-shrink-0">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
-                          {emp.name?.charAt(0)?.toUpperCase() || '?'}
+                    <div key={emp.id}>
+                      <div
+                        onClick={() => setSelectedEmp(selectedEmp?.id === emp.id ? null : emp)}
+                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${emp.is_frozen ? 'bg-blue-50 border-blue-200 opacity-70' : isOnline ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-100'} ${selectedEmp?.id === emp.id ? 'ring-2 ring-indigo-300' : ''}`}
+                      >
+                        <div className="relative flex-shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                            {emp.name?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
+                          <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300'}`} />
                         </div>
-                        <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300'}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-900 truncate">{emp.name}</p>
+                          <p className="text-xs text-slate-400 truncate">
+                            {isOnline ? <span className="text-emerald-600 font-medium">● В сети сейчас</span> : lastSeenText}
+                          </p>
+                        </div>
+                        {emp.is_frozen && <span className="text-xs text-blue-600 font-medium flex-shrink-0">🧊 Заморожен</span>}
+                        <ChevronDown className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${selectedEmp?.id === emp.id ? 'rotate-180' : ''}`} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 truncate">{emp.name}</p>
-                        <p className="text-xs text-slate-400 truncate">
-                          {isOnline ? <span className="text-emerald-600 font-medium">● В сети сейчас</span> : lastSeenText}
-                        </p>
-                      </div>
-                      {emp.is_frozen ? (
-                        <span className="text-xs text-blue-600 font-medium flex-shrink-0">🧊 Заморожен</span>
-                      ) : (
-                        <button
-                          onClick={async () => {
-                            if (!confirm(`Заморозить аккаунт сотрудника ${emp.name}? Он не сможет войти в систему.`)) return;
-                            await base44.entities.Employee.update(emp.id, { is_frozen: true });
-                            await loadData();
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-red-100 text-slate-300 hover:text-red-600 transition-colors flex-shrink-0"
-                          title="Заморозить (заблокировать вход)"
-                        >
-                          <LogOut className="w-4 h-4" />
-                        </button>
-                      )}
-                      {emp.is_frozen && (
-                        <button
-                          onClick={async () => {
-                            await base44.entities.Employee.update(emp.id, { is_frozen: false });
-                            await loadData();
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-emerald-100 text-slate-300 hover:text-emerald-600 transition-colors flex-shrink-0"
-                          title="Разморозить"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                        </button>
+
+                      {selectedEmp?.id === emp.id && (
+                        <div className="mx-1 mb-1 p-3 bg-white border border-slate-200 border-t-0 rounded-b-xl space-y-3">
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="bg-slate-50 rounded-lg p-2">
+                              <p className="text-slate-400">Email</p>
+                              <p className="font-medium text-slate-700 truncate">{emp.user_email}</p>
+                            </div>
+                            <div className="bg-slate-50 rounded-lg p-2">
+                              <p className="text-slate-400">Телефон</p>
+                              <p className="font-medium text-slate-700">{emp.phone || '—'}</p>
+                            </div>
+                            <div className="bg-slate-50 rounded-lg p-2">
+                              <p className="text-slate-400">Последний вход</p>
+                              <p className="font-medium text-slate-700">{lastLogin ? lastLogin.toLocaleString('ru') : '—'}</p>
+                            </div>
+                            <div className="bg-slate-50 rounded-lg p-2">
+                              <p className="text-slate-400">Статус</p>
+                              <p className={`font-medium ${emp.is_frozen ? 'text-blue-600' : isOnline ? 'text-emerald-600' : 'text-slate-600'}`}>
+                                {emp.is_frozen ? '🧊 Заморожен' : isOnline ? '● В сети' : 'Офлайн'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            {!emp.is_frozen ? (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (!confirm(`Завершить сеанс ${emp.name}? Он будет выброшен из системы и должен войти заново.`)) return;
+                                  await base44.entities.Employee.update(emp.id, {
+                                    is_frozen: true,
+                                    login_session_token: crypto.randomUUID()
+                                  });
+                                  setSelectedEmp(null);
+                                  await loadData();
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors"
+                              >
+                                <LogOut className="w-3.5 h-3.5" />
+                                Завершить сеанс
+                              </button>
+                            ) : (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  await base44.entities.Employee.update(emp.id, { is_frozen: false });
+                                  setSelectedEmp(null);
+                                  await loadData();
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs font-medium hover:bg-emerald-100 transition-colors"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5" />
+                                Разморозить
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       )}
                     </div>
                   );
@@ -1493,13 +1539,15 @@ export default function Settings() {
                       size="sm"
                       className="w-full text-orange-600 border-orange-200 hover:bg-orange-50 gap-2"
                       onClick={async () => {
-                        if (!confirm('Заморозить ВСЕХ сотрудников? Они не смогут войти в систему до разморозки.')) return;
-                        await Promise.all(employees.filter(e => !e.is_frozen).map(e => base44.entities.Employee.update(e.id, { is_frozen: true })));
+                        if (!confirm('Завершить сеансы ВСЕХ сотрудников? Они будут выброшены из системы.')) return;
+                        await Promise.all(employees.filter(e => !e.is_frozen).map(e =>
+                          base44.entities.Employee.update(e.id, { is_frozen: true, login_session_token: crypto.randomUUID() })
+                        ));
                         await loadData();
                       }}
                     >
                       <LogOut className="w-4 h-4" />
-                      Заморозить всех сотрудников
+                      Завершить все сеансы
                     </Button>
                   </div>
                 )}
