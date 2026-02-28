@@ -1441,64 +1441,99 @@ export default function Settings() {
                   </div>
                 )}
                 {employees.map(emp => {
-                  const lastLogin = emp.last_login_at ? new Date(emp.last_login_at) : null;
-                  const diffMs = lastLogin ? Date.now() - lastLogin.getTime() : null;
-                  const isOnline = diffMs !== null && diffMs < 10 * 60 * 1000;
-                  const lastSeenText = !lastLogin ? 'Не входил' :
-                    diffMs < 60000 ? 'только что' :
-                    diffMs < 3600000 ? `${Math.floor(diffMs / 60000)} мин. назад` :
-                    diffMs < 86400000 ? `${Math.floor(diffMs / 3600000)} ч. назад` :
-                    `${Math.floor(diffMs / 86400000)} дн. назад`;
+                const lastLogin = emp.last_login_at ? new Date(emp.last_login_at) : null;
+                const diffMs = lastLogin ? Date.now() - lastLogin.getTime() : null;
+                const isOnline = diffMs !== null && diffMs < 10 * 60 * 1000;
+                const lastSeenText = !lastLogin ? 'Не входил' :
+                  diffMs < 60000 ? 'только что' :
+                  diffMs < 3600000 ? `${Math.floor(diffMs / 60000)} мин. назад` :
+                  diffMs < 86400000 ? `${Math.floor(diffMs / 3600000)} ч. назад` :
+                  `${Math.floor(diffMs / 86400000)} дн. назад`;
 
-                  return (
-                    <div key={emp.id}>
-                      <div
-                        onClick={() => setSelectedEmp(selectedEmp?.id === emp.id ? null : emp)}
-                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${emp.is_frozen ? 'bg-blue-50 border-blue-200 opacity-70' : isOnline ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-100'} ${selectedEmp?.id === emp.id ? 'ring-2 ring-indigo-300' : ''}`}
-                      >
-                        <div className="relative flex-shrink-0">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
-                            {emp.name?.charAt(0)?.toUpperCase() || '?'}
-                          </div>
-                          <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300'}`} />
+                // Parse device info
+                const getDeviceLabel = (ua) => {
+                  if (!ua) return '—';
+                  const isMobile = /iPhone|Android.*Mobile|Mobile.*Android/i.test(ua);
+                  const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
+                  const isWindows = /Windows/i.test(ua);
+                  const isMac = /Mac OS X/i.test(ua) && !/iPhone|iPad/i.test(ua);
+                  const isLinux = /Linux/i.test(ua) && !/Android/i.test(ua);
+                  const isAndroid = /Android/i.test(ua);
+                  const isIOS = /iPhone|iPad/i.test(ua);
+                  const isChrome = /Chrome/i.test(ua) && !/Edge|OPR/i.test(ua);
+                  const isFirefox = /Firefox/i.test(ua);
+                  const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
+                  const isEdge = /Edg/i.test(ua);
+                  let device = isMobile ? '📱 Телефон' : isTablet ? '📱 Планшет' : '💻 Компьютер';
+                  let os = isIOS ? 'iOS' : isAndroid ? 'Android' : isWindows ? 'Windows' : isMac ? 'macOS' : isLinux ? 'Linux' : '';
+                  let browser = isEdge ? 'Edge' : isChrome ? 'Chrome' : isFirefox ? 'Firefox' : isSafari ? 'Safari' : '';
+                  return `${device}${os ? ' · ' + os : ''}${browser ? ' · ' + browser : ''}`;
+                };
+
+                 return (
+                  <div key={emp.id}>
+                    <div
+                      onClick={() => setSelectedEmp(selectedEmp?.id === emp.id ? null : emp)}
+                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${emp.is_frozen ? 'bg-blue-50 border-blue-200 opacity-70' : isOnline ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-100'} ${selectedEmp?.id === emp.id ? 'ring-2 ring-indigo-300' : ''}`}
+                    >
+                      <div className="relative flex-shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                          {emp.name?.charAt(0)?.toUpperCase() || '?'}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-900 truncate">{emp.name}</p>
-                          <p className="text-xs text-slate-400 truncate">
-                            {isOnline ? <span className="text-emerald-600 font-medium">● В сети сейчас</span> : lastSeenText}
-                          </p>
-                        </div>
-                        {emp.is_frozen && <span className="text-xs text-blue-600 font-medium flex-shrink-0">🧊 Заморожен</span>}
-                        <ChevronDown className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${selectedEmp?.id === emp.id ? 'rotate-180' : ''}`} />
+                        <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300'}`} />
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-900 truncate">{emp.name}</p>
+                        <p className="text-xs text-slate-400 truncate">
+                          {isOnline ? <span className="text-emerald-600 font-medium">● В сети сейчас</span> : lastSeenText}
+                        </p>
+                        {emp.device_info && (
+                          <p className="text-xs text-slate-400 truncate">{getDeviceLabel(emp.device_info)}</p>
+                        )}
+                      </div>
+                      {emp.is_frozen && <span className="text-xs text-blue-600 font-medium flex-shrink-0">🧊 Заморожен</span>}
+                      <ChevronDown className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${selectedEmp?.id === emp.id ? 'rotate-180' : ''}`} />
+                    </div>
 
-                      {selectedEmp?.id === emp.id && (
-                        <div className="mt-2 mb-1 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50 border border-indigo-100 p-4 space-y-3 shadow-sm" onClick={e => e.stopPropagation()}>
-                          {/* Info rows */}
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">✉️</span>
-                              <span className="text-slate-400 w-20 flex-shrink-0">Email</span>
-                              <span className="font-medium text-slate-700 truncate">{emp.user_email}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">📞</span>
-                              <span className="text-slate-400 w-20 flex-shrink-0">Телефон</span>
-                              <span className="font-medium text-slate-700">{emp.phone || '—'}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">🕐</span>
-                              <span className="text-slate-400 w-20 flex-shrink-0">Вход</span>
-                              <span className="font-medium text-slate-700">{lastLogin ? lastLogin.toLocaleString('ru') : 'Не входил'}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">{emp.is_frozen ? '🧊' : isOnline ? '🟢' : '⚫'}</span>
-                              <span className="text-slate-400 w-20 flex-shrink-0">Статус</span>
-                              <span className={`font-semibold ${emp.is_frozen ? 'text-blue-600' : isOnline ? 'text-emerald-600' : 'text-slate-500'}`}>
-                                {emp.is_frozen ? 'Заморожен' : isOnline ? 'В сети сейчас' : 'Офлайн'}
-                              </span>
-                            </div>
+                    {selectedEmp?.id === emp.id && (
+                      <div className="mt-2 mb-1 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50 border border-indigo-100 p-4 space-y-3 shadow-sm" onClick={e => e.stopPropagation()}>
+                        {/* Info rows */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">✉️</span>
+                            <span className="text-slate-400 w-20 flex-shrink-0">Email</span>
+                            <span className="font-medium text-slate-700 truncate">{emp.user_email}</span>
                           </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">📞</span>
+                            <span className="text-slate-400 w-20 flex-shrink-0">Телефон</span>
+                            <span className="font-medium text-slate-700">{emp.phone || '—'}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">🕐</span>
+                            <span className="text-slate-400 w-20 flex-shrink-0">Вход</span>
+                            <span className="font-medium text-slate-700">{lastLogin ? lastLogin.toLocaleString('ru') : 'Не входил'}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">💻</span>
+                            <span className="text-slate-400 w-20 flex-shrink-0">Устройство</span>
+                            <span className="font-medium text-slate-700 truncate">{getDeviceLabel(emp.device_info)}</span>
+                          </div>
+                          {emp.device_info && (
+                            <div className="flex items-start gap-2 text-xs">
+                              <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">🔍</span>
+                              <span className="text-slate-400 w-20 flex-shrink-0">UA</span>
+                              <span className="text-slate-400 break-all leading-relaxed" style={{fontSize:'10px'}}>{emp.device_info.substring(0,120)}{emp.device_info.length > 120 ? '...' : ''}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">{emp.is_frozen ? '🧊' : isOnline ? '🟢' : '⚫'}</span>
+                            <span className="text-slate-400 w-20 flex-shrink-0">Статус</span>
+                            <span className={`font-semibold ${emp.is_frozen ? 'text-blue-600' : isOnline ? 'text-emerald-600' : 'text-slate-500'}`}>
+                              {emp.is_frozen ? 'Заморожен' : isOnline ? 'В сети сейчас' : 'Офлайн'}
+                            </span>
+                          </div>
+                        </div>
 
                           {/* Action buttons */}
                           <div className="flex gap-2">
