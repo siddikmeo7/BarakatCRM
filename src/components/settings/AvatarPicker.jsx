@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Camera, Check, Loader2 } from 'lucide-react';
+import { Camera, Check, Loader2, ChevronDown, Pencil } from 'lucide-react';
 
 const DEFAULT_AVATARS = [
   { id: 'cat', emoji: '🐱', label: 'Кот', bg: 'from-orange-400 to-amber-500' },
