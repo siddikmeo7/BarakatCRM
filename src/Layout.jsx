@@ -240,6 +240,8 @@ export default function Layout({ children, currentPageName }) {
               window.__barakatBusiness = businesses[0];
               window.__barakatAccessReady = true;
               window.dispatchEvent(new Event('barakatAccessReady'));
+              // Регистрируем сессию владельца
+              await registerDeviceSession(businesses[0].id, currentUser.email, currentUser.full_name || currentUser.email, 'owner');
             } else if (employeeRecords.length > 0) {
             // Нет своего бизнеса — входим как сотрудник автоматически (только незамороженные)
             const activeEmp = employeeRecords.find(e => !e.is_frozen);
