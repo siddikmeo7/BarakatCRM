@@ -166,6 +166,9 @@ export default function Layout({ children, currentPageName }) {
                     setCurrentEmployee(emp);
                     window.__barakatEmployee = emp;
                     window.__barakatBusiness = biz;
+                    // Сохраняем мержнутые разрешения для useEmployeeAccess
+                    window.__barakatMergedPermissions = emp.is_admin ? null : (window.__pendingMergedPerms || emp.permissions || {});
+                    window.__pendingMergedPerms = null;
                     // Сохраняем режим сотрудника постоянно (переживает перезапуск браузера)
                     localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
                     // Показываем приветственный экран только при первом входе за сессию
