@@ -579,6 +579,11 @@ export default function Sales() {
                         )}
                         <div>
                           <p className="font-medium text-slate-900 text-sm">{product?.brand || t(lang,'sales_deleted')} {product?.model}</p>
+                          {product && (
+                            <p className="text-xs text-slate-400">
+                              {[product.color, product.product_type, product.size_from && product.size_to ? `${product.size_from}–${product.size_to}` : null].filter(Boolean).join(' · ')}
+                            </p>
+                          )}
                           {sale.is_cancelled && <span className="text-xs text-red-500">{t(lang,'sales_cancelled')}</span>}
                         </div>
                       </div>
