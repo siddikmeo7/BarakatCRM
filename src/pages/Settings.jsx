@@ -1654,6 +1654,9 @@ export default function Settings() {
               </div>
             </div>
 
+            {/* Автоматизация */}
+            {business && <AutomationPanel business={business} />}
+
             {/* Резервное копирование и Экспорт */}
             <BackupExportPanel business={business} onBackupJSON={handleBackup} />
 
