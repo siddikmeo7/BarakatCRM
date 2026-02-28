@@ -589,6 +589,28 @@ export default function Settings() {
           </div>
         </div>
 
+        {/* Текущий бизнес (для сотрудников) */}
+        {currentEmployee && business && (
+          <div className="border-t border-slate-100 pt-3">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">🏢 Текущий бизнес</p>
+            <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <span className="text-white font-bold text-base">{business.name?.charAt(0)?.toUpperCase()}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-slate-900 truncate">{business.name}</p>
+                {currentEmployee.name && (
+                  <p className="text-xs text-slate-500 truncate">Вы вошли как: <span className="font-medium text-indigo-600">{currentEmployee.name}</span></p>
+                )}
+              </div>
+              <span className="flex items-center gap-1 text-xs text-green-600 font-medium flex-shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse" />
+                Активен
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Avatar Picker */}
         <div className="border-t border-slate-100 pt-3">
           <AvatarPicker
