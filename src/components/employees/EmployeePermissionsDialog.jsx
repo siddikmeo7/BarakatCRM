@@ -211,11 +211,11 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
 
     // is_frozen changed?
     if (prev.is_frozen !== isFrozen) {
-      changes.push({ field: 'is_frozen', oldValue: prev.is_frozen, newValue: isFrozen });
+      changes.push({ field: 'is_frozen', oldValue: String(prev.is_frozen ?? false), newValue: String(isFrozen) });
     }
     // is_admin changed?
     if (prev.is_admin !== isAdmin) {
-      changes.push({ field: 'is_admin', oldValue: prev.is_admin, newValue: isAdmin });
+      changes.push({ field: 'is_admin', oldValue: String(prev.is_admin ?? false), newValue: String(isAdmin) });
     }
     // permissions changed?
     const prevPerms = prev.permissions || {};
