@@ -468,7 +468,6 @@ export default function Analytics() {
 
         <SalesForecast sales={filteredSales} days={30} />
         <CustomerSegmentation customers={customers} sales={filteredSales} />
-        <ReportBuilder sales={filteredSales} customers={customers} products={products} business={business} lang={lang} />
       </div>
 
       {/* Top Products by Revenue - Moved to End */}
