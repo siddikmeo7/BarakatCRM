@@ -176,6 +176,52 @@ export default function Warehouses() {
     }
   };
 
+  // Получаем ID товаров которые НЕ продавались
+  const getUnsoldProductIds = (productList) => {
+    const soldProductIds = new Set(sales.map(s => s.product_id));
+    return productList.filter(p => !soldProductIds.has(p.id)).map(p => p.id);
+  };
+
+  const handleDeleteProducts = async () => {
+    if (!deleteConfirmDialog) return;
+    setDeletingProducts(true);
+    try {
+      let idsToDelete = [];
+      if (deleteConfirmDialog.type === 'one') {
+        idsToDelete = [deleteConfirmDialog.productId];
+      } else if (deleteConfirmDialog.type === 'selected') {
+        idsToDelete = selectedProductIds;
+      } else if (deleteConfirmDialog.type === 'warehouse') {
+        const whProds = products.filter(p => p.warehouse_id === selectedWarehouse?.id);
+        idsToDelete = getUnsoldProductIds(whProds);
+      } else if (deleteConfirmDialog.type === 'all') {
+        idsToDelete = getUnsoldProductIds(products);
+      }
+      await Promise.all(idsToDelete.map(id => base44.entities.Product.delete(id)));
+      setSelectedProductIds([]);
+      setSelectMode(false);
+      setDeleteConfirmDialog(null);
+      await loadData();
+    } finally {
+      setDeletingProducts(false);
+    }
+  };
+
+  const toggleSelectProduct = (id) => {
+    setSelectedProductIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const toggleSelectAll = () => {
+    const visibleIds = warehouseProducts.map(p => p.id);
+    const unsoldIds = getUnsoldProductIds(warehouseProducts);
+    const allSelected = unsoldIds.every(id => selectedProductIds.includes(id));
+    if (allSelected) {
+      setSelectedProductIds(prev => prev.filter(id => !unsoldIds.includes(id)));
+    } else {
+      setSelectedProductIds(prev => [...new Set([...prev, ...unsoldIds])]);
+    }
+  };
+
   // Расчёты для каждого склада
   const getWarehouseStats = (warehouseId) => {
     const warehouseProducts = products.filter(p => p.warehouse_id === warehouseId);
