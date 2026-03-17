@@ -703,13 +703,23 @@ export default function Warehouses() {
               <table className="w-full">
                 <thead className="bg-slate-50">
                   <tr>
+                    {selectMode && (
+                      <th className="px-3 py-3 w-10">
+                        <button onClick={toggleSelectAll}>
+                          {getUnsoldProductIds(warehouseProducts).every(id => selectedProductIds.includes(id)) && getUnsoldProductIds(warehouseProducts).length > 0
+                            ? <CheckSquare className="w-4 h-4 text-indigo-600" />
+                            : <Square className="w-4 h-4 text-slate-400" />}
+                        </button>
+                      </th>
+                    )}
                     <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Коробок</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Пар</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Штук</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Оптовая стоимость</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Потенц. прибыль</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Стоимость продажи</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Опт.</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Прибыль</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Продажа</th>
+                    {can('delete_products') && <th className="px-3 py-3 w-10"></th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
