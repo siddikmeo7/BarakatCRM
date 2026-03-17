@@ -830,6 +830,37 @@ export default function Warehouses() {
         </div>
       )}
 
+      {/* Delete Products Confirm Dialog */}
+      <Dialog open={!!deleteConfirmDialog} onOpenChange={(open) => !open && setDeleteConfirmDialog(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Подтвердите удаление
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-3">
+            <p className="text-sm text-slate-700">
+              Будет удалено: <span className="font-semibold">{deleteConfirmDialog?.label}</span>
+            </p>
+            <p className="text-xs text-slate-400 mt-2">
+              ⚠️ Удаляются только товары, которые <strong>не участвовали в продажах</strong>. Это действие необратимо.
+            </p>
+          </div>
+          <div className="flex gap-3 justify-end">
+            <Button variant="outline" onClick={() => setDeleteConfirmDialog(null)}>Отмена</Button>
+            <Button
+              onClick={handleDeleteProducts}
+              disabled={deletingProducts}
+              className="bg-red-600 hover:bg-red-700 text-white gap-2"
+            >
+              {deletingProducts ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              Удалить
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
