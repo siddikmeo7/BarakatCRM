@@ -27,7 +27,10 @@ import {
   List,
   Calendar,
   Search,
-  X as XIcon
+  X as XIcon,
+  CheckSquare,
+  Square,
+  AlertTriangle
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import ViewToggle from '@/components/ui/ViewToggle';
