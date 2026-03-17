@@ -733,12 +733,23 @@ export default function Warehouses() {
                    const lowStock = boxes > 0 && boxes <= (business?.low_stock_limit || 2);
                    const noStock = boxes === 0;
 
+                   const isSold = sales.some(s => s.product_id === product.id);
+                   const isSelected = selectedProductIds.includes(product.id);
                    return (
                      <tr 
                        key={product.id} 
-                       className={`cursor-pointer transition-colors ${noStock ? 'bg-red-50 hover:bg-red-100' : lowStock ? 'bg-orange-50 hover:bg-orange-100' : 'hover:bg-slate-50'}`}
-                       onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + product.id + '&from=' + encodeURIComponent(createPageUrl('Warehouses') + '?warehouseId=' + selectedWarehouse.id)}
+                       className={`transition-colors ${isSelected ? 'bg-indigo-50' : noStock ? 'bg-red-50 hover:bg-red-100' : lowStock ? 'bg-orange-50 hover:bg-orange-100' : 'hover:bg-slate-50'} ${!selectMode ? 'cursor-pointer' : ''}`}
+                       onClick={() => selectMode && !isSold ? toggleSelectProduct(product.id) : (!selectMode && (window.location.href = createPageUrl('ProductDetail') + '?id=' + product.id + '&from=' + encodeURIComponent(createPageUrl('Warehouses') + '?warehouseId=' + selectedWarehouse.id)))}
                      >
+                       {selectMode && (
+                         <td className="px-3 py-3" onClick={e => { e.stopPropagation(); if (!isSold) toggleSelectProduct(product.id); }}>
+                           {isSold
+                             ? <span title="Нельзя удалить — товар был продан"><Square className="w-4 h-4 text-slate-200" /></span>
+                             : isSelected
+                               ? <CheckSquare className="w-4 h-4 text-indigo-600" />
+                               : <Square className="w-4 h-4 text-slate-400" />}
+                         </td>
+                       )}
                        <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             {product.photo_url ? (
@@ -751,8 +762,9 @@ export default function Warehouses() {
                             <div>
                               <p className="font-medium text-slate-900">{product.brand}</p>
                               <p className="text-sm text-slate-500">{product.model}</p>
-                              {lowStock && <span className="text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">⚠️ Осталось мало</span>}
-                              {noStock && <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">❌ Нет в наличии</span>}
+                              {isSold && <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">продавался</span>}
+                              {lowStock && !isSold && <span className="text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">⚠️ Мало</span>}
+                              {noStock && <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">❌ Нет</span>}
                             </div>
                           </div>
                         </td>
@@ -762,14 +774,26 @@ export default function Warehouses() {
                        <td className="px-4 py-3 text-center text-slate-600">{pairs}</td>
                        <td className="px-4 py-3 text-center text-slate-600">{items}</td>
                        <td className="px-4 py-3 text-right font-semibold text-slate-700">
-                          {can('view_stock_value') ? `${wholesaleValue.toLocaleString()} с.` : '••••• с.'}
+                          {can('view_stock_value') ? `${wholesaleValue.toLocaleString()} с.` : '•••••'}
                         </td>
                         <td className="px-4 py-3 text-right font-semibold text-emerald-600">
-                          {can('view_profit') ? `+${potentialProfit.toLocaleString()} с.` : '••••• с.'}
+                          {can('view_profit') ? `+${potentialProfit.toLocaleString()} с.` : '•••••'}
                         </td>
                         <td className="px-4 py-3 text-right font-semibold text-blue-600">
-                          {can('view_stock_value') ? `${saleValue.toLocaleString()} с.` : '••••• с.'}
+                          {can('view_stock_value') ? `${saleValue.toLocaleString()} с.` : '•••••'}
                         </td>
+                        {can('delete_products') && (
+                          <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                            {!isSold && (
+                              <button
+                                onClick={() => setDeleteConfirmDialog({ type: 'one', productId: product.id, label: `«${product.brand} ${product.model}»` })}
+                                className="p-1.5 hover:bg-red-50 rounded-lg"
+                              >
+                                <Trash2 className="w-4 h-4 text-red-400 hover:text-red-600" />
+                              </button>
+                            )}
+                          </td>
+                        )}
                      </tr>
                    );
                   })}
