@@ -629,8 +629,61 @@ export default function Warehouses() {
 
           {/* Products Table */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-3">
-              <h3 className="font-semibold text-slate-900">Товары на складе</h3>
+            <div className="p-4 border-b border-slate-100 space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <h3 className="font-semibold text-slate-900">Товары на складе</h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {can('delete_products') && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => { setSelectMode(v => !v); setSelectedProductIds([]); }}
+                        className={`gap-1.5 text-xs ${selectMode ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : ''}`}
+                      >
+                        <CheckSquare className="w-3.5 h-3.5" />
+                        {selectMode ? 'Отмена выбора' : 'Выбрать'}
+                      </Button>
+                      {selectMode && selectedProductIds.length > 0 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setDeleteConfirmDialog({ type: 'selected', label: `${selectedProductIds.length} выбранных товаров` })}
+                          className="gap-1.5 text-xs text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Удалить выбранные ({selectedProductIds.length})
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const whProds = products.filter(p => p.warehouse_id === selectedWarehouse?.id);
+                          const unsold = getUnsoldProductIds(whProds);
+                          setDeleteConfirmDialog({ type: 'warehouse', label: `${unsold.length} непроданных товаров этого склада` });
+                        }}
+                        className="gap-1.5 text-xs text-orange-600 border-orange-200 hover:bg-orange-50"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Удалить непроданные склада
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const unsold = getUnsoldProductIds(products);
+                          setDeleteConfirmDialog({ type: 'all', label: `${unsold.length} непроданных товаров всех складов` });
+                        }}
+                        className="gap-1.5 text-xs text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Удалить все непроданные
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
               <div className="relative max-w-xs w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
