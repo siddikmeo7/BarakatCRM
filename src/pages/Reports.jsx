@@ -261,14 +261,12 @@ export default function Reports() {
     sep();
 
     h2('📊 Общая сводка');
-    li(`Всего продаж: **${totalCount}**`);
+    li(`Продаж: **${totalCount}**`);
     li(`Выручка: **${Math.round(totalRevenue).toLocaleString()} с.**`);
     li(`Прибыль: **${Math.round(totalProfit).toLocaleString()} с.**`);
-    li(`Маржа прибыли: **${marginPct}%**`);
-    li(`Коробок продано: **${totalBoxes} кор.**`);
-    li(`Пар продано: **${filteredSales.reduce((s,x) => s+(x.pairs_sold||0),0)}**`);
+    li(`Маржа: **${marginPct}%**`);
+    li(`Коробок продано: **${totalBoxes}**`);
     li(`Средний чек: **${Math.round(avgSale).toLocaleString()} с.**`);
-    li(`Средн. коробок за продажу: **${totalCount > 0 ? (totalBoxes/totalCount).toFixed(1) : 0} кор.**`);
     li(`Наличные: **${Math.round(cashRevenue).toLocaleString()} с.** (${cashSales.length} продаж)`);
     li(`В долг: **${Math.round(debtRevenue).toLocaleString()} с.** (${debtSales.length} продаж)`);
     sep();
@@ -588,7 +586,7 @@ export default function Reports() {
         {[
           { label: 'Выручка', value: `${Math.round(totalRevenue).toLocaleString()} с.`, sub: `Ср. чек: ${Math.round(avgSale).toLocaleString()} с.`, icon: TrendingUp, color: 'from-blue-400 to-indigo-500' },
           { label: 'Прибыль', value: `${Math.round(totalProfit).toLocaleString()} с.`, sub: `Маржа: ${marginPct}%`, icon: ArrowUpRight, color: 'from-emerald-400 to-teal-500' },
-          { label: 'Коробок / Продаж', value: `${totalBoxes}`, sub: `${totalCount} продаж`, icon: Package, color: 'from-amber-400 to-orange-500' },
+          { label: 'Коробок продано', value: totalBoxes, sub: `${totalCount} продаж`, icon: Package, color: 'from-amber-400 to-orange-500' },
           { label: 'Долг клиентов', value: `${Math.round(totalDebt).toLocaleString()} с.`, sub: `${debtors.length} должников`, icon: CreditCard, color: 'from-red-400 to-rose-500' },
         ].map((card, i) => (
           <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
