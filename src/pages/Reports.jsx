@@ -808,8 +808,9 @@ export default function Reports() {
                           <span className="text-sm font-bold text-slate-900 ml-2 flex-shrink-0">{Math.round(tp.revenue).toLocaleString()} с.</span>
                         </div>
                         <div className="w-full bg-slate-100 rounded-full h-1.5 mb-1"><div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full" style={{ width: `${pct}%` }} /></div>
-                        <div className="flex gap-3 text-xs text-slate-400">
-                          <span>{tp.boxes} кор.</span>
+                        <div className="flex gap-3 text-xs text-slate-400 flex-wrap">
+                          <span className="font-semibold text-indigo-600">{tp.boxes} кор.</span>
+                          <span>{tp.boxes * (tp.product.pairs_per_box || 6)} пар</span>
                           <span>{tp.count} прод.</span>
                           <span className="text-emerald-600">+{Math.round(tp.profit).toLocaleString()} с.</span>
                           <span>{tp.revenue > 0 ? ((tp.profit / tp.revenue) * 100).toFixed(1) : 0}% маржа</span>
