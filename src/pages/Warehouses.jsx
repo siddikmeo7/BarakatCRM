@@ -197,7 +197,26 @@ export default function Warehouses() {
       } else if (deleteConfirmDialog.type === 'all') {
         idsToDelete = getUnsoldProductIds(products);
       }
-      await Promise.all(idsToDelete.map(id => base44.entities.Product.delete(id)));
+
+      // Логируем каждое удаление в ActivityLog
+      const user = await base44.auth.me();
+      const prodsToDelete = products.filter(p => idsToDelete.includes(p.id));
+      await Promise.all([
+        ...idsToDelete.map(id => base44.entities.Product.delete(id)),
+        ...prodsToDelete.map(p =>
+          base44.entities.ActivityLog.create({
+            business_id: business.id,
+            action_type: 'delete',
+            entity_type: 'Product',
+            entity_id: p.id,
+            entity_data: p,
+            user_email: user.email,
+            description: `Удалён товар: ${p.brand} ${p.model} (со склада, непроданный)`,
+            is_restored: false,
+          })
+        )
+      ]);
+
       setSelectedProductIds([]);
       setSelectMode(false);
       setDeleteConfirmDialog(null);
