@@ -261,12 +261,14 @@ export default function Reports() {
     sep();
 
     h2('📊 Общая сводка');
-    li(`Продаж: **${totalCount}**`);
+    li(`Всего продаж: **${totalCount}**`);
     li(`Выручка: **${Math.round(totalRevenue).toLocaleString()} с.**`);
     li(`Прибыль: **${Math.round(totalProfit).toLocaleString()} с.**`);
-    li(`Маржа: **${marginPct}%**`);
-    li(`Коробок продано: **${totalBoxes}**`);
+    li(`Маржа прибыли: **${marginPct}%**`);
+    li(`Коробок продано: **${totalBoxes} кор.**`);
+    li(`Пар продано: **${filteredSales.reduce((s,x) => s+(x.pairs_sold||0),0)}**`);
     li(`Средний чек: **${Math.round(avgSale).toLocaleString()} с.**`);
+    li(`Средн. коробок за продажу: **${totalCount > 0 ? (totalBoxes/totalCount).toFixed(1) : 0} кор.**`);
     li(`Наличные: **${Math.round(cashRevenue).toLocaleString()} с.** (${cashSales.length} продаж)`);
     li(`В долг: **${Math.round(debtRevenue).toLocaleString()} с.** (${debtSales.length} продаж)`);
     sep();
