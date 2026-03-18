@@ -261,24 +261,29 @@ export default function Reports() {
     sep();
 
     h2('📊 Общая сводка');
-    li(`Всего продаж: **${totalCount}**`);
-    li(`Выручка: **${Math.round(totalRevenue).toLocaleString()} с.**`);
-    li(`Прибыль: **${Math.round(totalProfit).toLocaleString()} с.**`);
-    li(`Маржа прибыли: **${marginPct}%**`);
-    li(`Коробок продано: **${totalBoxes} кор.**`);
-    li(`Пар продано: **${filteredSales.reduce((s,x) => s+(x.pairs_sold||0),0)}**`);
-    li(`Средний чек: **${Math.round(avgSale).toLocaleString()} с.**`);
-    li(`Средн. коробок за продажу: **${totalCount > 0 ? (totalBoxes/totalCount).toFixed(1) : 0} кор.**`);
-    li(`Наличные: **${Math.round(cashRevenue).toLocaleString()} с.** (${cashSales.length} продаж)`);
-    li(`В долг: **${Math.round(debtRevenue).toLocaleString()} с.** (${debtSales.length} продаж)`);
+    const totalPairs = filteredSales.reduce((s, x) => s + (x.pairs_sold || (x.boxes_sold || 0) * 6), 0);
+    const totalItems = filteredSales.reduce((s, x) => s + (x.items_sold || (x.boxes_sold || 0) * 12), 0);
+    row('Метрика', 'Значение');
+    divider(2);
+    row('Продаж', totalCount);
+    row('Выручка', `**${Math.round(totalRevenue).toLocaleString()} с.**`);
+    row('Прибыль', `**${Math.round(totalProfit).toLocaleString()} с.**`);
+    row('Маржа', `${marginPct}%`);
+    row('Коробок продано', `**${totalBoxes}**`);
+    row('Пар продано', totalPairs);
+    row('Штук продано', totalItems);
+    row('Средний чек', `${Math.round(avgSale).toLocaleString()} с.`);
+    row('Наличные', `${Math.round(cashRevenue).toLocaleString()} с. (${cashSales.length} продаж)`);
+    row('В долг', `${Math.round(debtRevenue).toLocaleString()} с. (${debtSales.length} продаж)`);
     sep();
 
-    h2('🛒 Топ товаров по продажам');
-    row('#', 'Товар', 'Тип', 'Выручка (с.)', 'Прибыль (с.)', 'Маржа %', 'Коробок', 'Продаж');
-    divider(8);
+    h2('🛒 Топ товаров');
+    row('#', 'Товар', 'Тип', 'Выручка', 'Прибыль', 'Маржа', 'Коробок', 'Пар', 'Продаж');
+    divider(9);
     topProducts.slice(0, 15).forEach((tp, i) => {
       const m = tp.revenue > 0 ? ((tp.profit / tp.revenue) * 100).toFixed(1) : 0;
-      row(i + 1, `${tp.product.brand} ${tp.product.model}`, tp.product.product_type || '—', `${Math.round(tp.revenue).toLocaleString()} с.`, `${Math.round(tp.profit).toLocaleString()} с.`, `${m}%`, `${tp.boxes} кор.`, tp.count);
+      const pairs = tp.boxes * (tp.product.pairs_per_box || 6);
+      row(i + 1, `${tp.product.brand} ${tp.product.model}`, tp.product.product_type || '—', `${Math.round(tp.revenue).toLocaleString()} с.`, `${Math.round(tp.profit).toLocaleString()} с.`, `${m}%`, tp.boxes, pairs, tp.count);
     });
     sep();
 
@@ -310,26 +315,27 @@ export default function Reports() {
     sep();
 
     h2('🏭 Склады');
-    row('Склад', 'Товаров', 'Коробок в наличии', 'Стоимость (с.)', 'Коробок продано', 'Продаж', 'Выручка (с.)');
-    divider(7);
+    row('Склад', 'Товаров', 'Коробок', 'Стоимость', 'Продаж', 'Выручка');
+    divider(6);
     warehouseStats.forEach(w => {
-      const soldBoxesWh = filteredSales.filter(s => s.warehouse_id === w.id).reduce((s,x) => s+(x.boxes_sold||0),0);
-      row(w.name, w.productsCount, `${w.boxes} кор.`, `${Math.round(w.value).toLocaleString()} с.`, `${soldBoxesWh} кор.`, w.salesCount, `${Math.round(w.salesRevenue).toLocaleString()} с.`);
+      row(w.name, w.productsCount, w.boxes, `${Math.round(w.value).toLocaleString()} с.`, w.salesCount, `${Math.round(w.salesRevenue).toLocaleString()} с.`);
     });
     sep();
 
     h2('📦 Остатки товаров на складе');
     const stockProds = [...products].sort((a, b) => (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0));
-    const totalStockBoxesMd = stockProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0);
-    li(`Итого на складе: **${totalStockBoxesMd} коробок**`);
+    const stockTotalBoxes = stockProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0);
+    const stockTotalPairs = stockProds.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.pairs_per_box || 6), 0);
+    li(`Всего коробок на складах: **${stockTotalBoxes}**`);
+    li(`Всего пар на складах: **${stockTotalPairs}**`);
     sep();
-    row('Товар', 'Тип', 'Цвет', 'Склад', 'Коробок', 'Пар', 'Цена закупки (с.)', 'Цена продажи (с.)', 'Стоимость (с.)');
+    row('Товар', 'Тип', 'Цвет', 'Склад', 'Коробок', 'Пар', 'Закупка/кор.', 'Продажа/кор.', 'Стоимость');
     divider(9);
     stockProds.forEach(p => {
       const wh = warehouses.find(w => w.id === p.warehouse_id);
       const pairs = (p.boxes_in_stock || 0) * (p.pairs_per_box || 6);
       const val = (p.boxes_in_stock || 0) * (p.sale_price || 0);
-      row(`${p.brand} ${p.model}`, p.product_type || '—', p.color || '—', wh?.name || '—', `${p.boxes_in_stock || 0} кор.`, pairs, `${p.purchase_price || 0} с.`, `${p.sale_price || 0} с.`, `${Math.round(val).toLocaleString()} с.`);
+      row(`${p.brand} ${p.model}`, p.product_type || '—', p.color || '—', wh?.name || '—', `${p.boxes_in_stock || 0}`, pairs, `${p.purchase_price || 0} с.`, `${p.sale_price || 0} с.`, `${Math.round(val).toLocaleString()} с.`);
     });
     sep();
 
@@ -339,12 +345,13 @@ export default function Reports() {
     sep();
 
     h2('📈 Динамика по периодам');
-    row('Период', 'Выручка (с.)', 'Прибыль (с.)', 'Маржа %', 'Коробок продано', 'Продаж', 'Ср. чек (с.)');
-    divider(7);
+    row('Период', 'Выручка', 'Прибыль', 'Маржа', 'Коробок', 'Пар', 'Продаж', 'Ср. чек');
+    divider(8);
     chartData.forEach(r => {
       const m = r.revenue > 0 ? ((r.profit / r.revenue) * 100).toFixed(1) : 0;
-      const avg = r.count > 0 ? Math.round(r.revenue / r.count) : 0;
-      row(r.period, `${Math.round(r.revenue).toLocaleString()} с.`, `${Math.round(r.profit).toLocaleString()} с.`, `${m}%`, `${r.boxes} кор.`, r.count, `${avg.toLocaleString()} с.`);
+      const avgChk = r.count > 0 ? Math.round(r.revenue / r.count) : 0;
+      const pairsR = r.boxes * 6;
+      row(r.period, `${Math.round(r.revenue).toLocaleString()} с.`, `${Math.round(r.profit).toLocaleString()} с.`, `${m}%`, r.boxes, pairsR, r.count, `${avgChk.toLocaleString()} с.`);
     });
 
     const md = lines.join('\n');
@@ -597,7 +604,7 @@ export default function Reports() {
         {[
           { label: 'Выручка', value: `${Math.round(totalRevenue).toLocaleString()} с.`, sub: `Ср. чек: ${Math.round(avgSale).toLocaleString()} с.`, icon: TrendingUp, color: 'from-blue-400 to-indigo-500' },
           { label: 'Прибыль', value: `${Math.round(totalProfit).toLocaleString()} с.`, sub: `Маржа: ${marginPct}%`, icon: ArrowUpRight, color: 'from-emerald-400 to-teal-500' },
-          { label: 'Коробок / Продаж', value: `${totalBoxes}`, sub: `${totalCount} продаж`, icon: Package, color: 'from-amber-400 to-orange-500' },
+          { label: 'Коробок продано', value: totalBoxes, sub: `${totalCount} продаж`, icon: Package, color: 'from-amber-400 to-orange-500' },
           { label: 'Долг клиентов', value: `${Math.round(totalDebt).toLocaleString()} с.`, sub: `${debtors.length} должников`, icon: CreditCard, color: 'from-red-400 to-rose-500' },
         ].map((card, i) => (
           <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
