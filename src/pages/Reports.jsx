@@ -247,6 +247,7 @@ export default function Reports() {
   // === EXPORT MARKDOWN ===
   const exportMarkdown = () => {
     const lines = [];
+    // warehouses available via closure
     const sep = () => lines.push('');
     const h1 = (t) => lines.push(`# ${t}`);
     const h2 = (t) => lines.push(`## ${t}`);
