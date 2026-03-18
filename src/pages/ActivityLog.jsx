@@ -58,7 +58,9 @@ export default function ActivityLog() {
   const [detailLog, setDetailLog] = useState(null);
   const [restoring, setRestoring] = useState(null);
   const [deleting, setDeleting] = useState(null);
-  const [activeTab, setActiveTab] = useState('list'); // 'list' | 'users'
+  const [activeTab, setActiveTab] = useState('list'); // 'list' | 'users' | 'trash'
+  const [trashSearch, setTrashSearch] = useState('');
+  const [trashEntity, setTrashEntity] = useState('all');
   const [bulkLoading, setBulkLoading] = useState(false);
 
   useEffect(() => { loadData(); }, []);
