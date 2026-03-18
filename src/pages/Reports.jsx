@@ -261,29 +261,24 @@ export default function Reports() {
     sep();
 
     h2('📊 Общая сводка');
-    const totalPairs = filteredSales.reduce((s, x) => s + (x.pairs_sold || (x.boxes_sold || 0) * 6), 0);
-    const totalItems = filteredSales.reduce((s, x) => s + (x.items_sold || (x.boxes_sold || 0) * 12), 0);
-    row('Метрика', 'Значение');
-    divider(2);
-    row('Продаж', totalCount);
-    row('Выручка', `**${Math.round(totalRevenue).toLocaleString()} с.**`);
-    row('Прибыль', `**${Math.round(totalProfit).toLocaleString()} с.**`);
-    row('Маржа', `${marginPct}%`);
-    row('Коробок продано', `**${totalBoxes}**`);
-    row('Пар продано', totalPairs);
-    row('Штук продано', totalItems);
-    row('Средний чек', `${Math.round(avgSale).toLocaleString()} с.`);
-    row('Наличные', `${Math.round(cashRevenue).toLocaleString()} с. (${cashSales.length} продаж)`);
-    row('В долг', `${Math.round(debtRevenue).toLocaleString()} с. (${debtSales.length} продаж)`);
+    li(`Всего продаж: **${totalCount}**`);
+    li(`Выручка: **${Math.round(totalRevenue).toLocaleString()} с.**`);
+    li(`Прибыль: **${Math.round(totalProfit).toLocaleString()} с.**`);
+    li(`Маржа прибыли: **${marginPct}%**`);
+    li(`Коробок продано: **${totalBoxes} кор.**`);
+    li(`Пар продано: **${filteredSales.reduce((s,x) => s+(x.pairs_sold||0),0)}**`);
+    li(`Средний чек: **${Math.round(avgSale).toLocaleString()} с.**`);
+    li(`Средн. коробок за продажу: **${totalCount > 0 ? (totalBoxes/totalCount).toFixed(1) : 0} кор.**`);
+    li(`Наличные: **${Math.round(cashRevenue).toLocaleString()} с.** (${cashSales.length} продаж)`);
+    li(`В долг: **${Math.round(debtRevenue).toLocaleString()} с.** (${debtSales.length} продаж)`);
     sep();
 
-    h2('🛒 Топ товаров');
-    row('#', 'Товар', 'Тип', 'Выручка', 'Прибыль', 'Маржа', 'Коробок', 'Пар', 'Продаж');
-    divider(9);
+    h2('🛒 Топ товаров по продажам');
+    row('#', 'Товар', 'Тип', 'Выручка (с.)', 'Прибыль (с.)', 'Маржа %', 'Коробок', 'Продаж');
+    divider(8);
     topProducts.slice(0, 15).forEach((tp, i) => {
       const m = tp.revenue > 0 ? ((tp.profit / tp.revenue) * 100).toFixed(1) : 0;
-      const pairs = tp.boxes * (tp.product.pairs_per_box || 6);
-      row(i + 1, `${tp.product.brand} ${tp.product.model}`, tp.product.product_type || '—', `${Math.round(tp.revenue).toLocaleString()} с.`, `${Math.round(tp.profit).toLocaleString()} с.`, `${m}%`, tp.boxes, pairs, tp.count);
+      row(i + 1, `${tp.product.brand} ${tp.product.model}`, tp.product.product_type || '—', `${Math.round(tp.revenue).toLocaleString()} с.`, `${Math.round(tp.profit).toLocaleString()} с.`, `${m}%`, `${tp.boxes} кор.`, tp.count);
     });
     sep();
 
@@ -315,27 +310,26 @@ export default function Reports() {
     sep();
 
     h2('🏭 Склады');
-    row('Склад', 'Товаров', 'Коробок', 'Стоимость', 'Продаж', 'Выручка');
-    divider(6);
+    row('Склад', 'Товаров', 'Коробок в наличии', 'Стоимость (с.)', 'Коробок продано', 'Продаж', 'Выручка (с.)');
+    divider(7);
     warehouseStats.forEach(w => {
-      row(w.name, w.productsCount, w.boxes, `${Math.round(w.value).toLocaleString()} с.`, w.salesCount, `${Math.round(w.salesRevenue).toLocaleString()} с.`);
+      const soldBoxesWh = filteredSales.filter(s => s.warehouse_id === w.id).reduce((s,x) => s+(x.boxes_sold||0),0);
+      row(w.name, w.productsCount, `${w.boxes} кор.`, `${Math.round(w.value).toLocaleString()} с.`, `${soldBoxesWh} кор.`, w.salesCount, `${Math.round(w.salesRevenue).toLocaleString()} с.`);
     });
     sep();
 
     h2('📦 Остатки товаров на складе');
     const stockProds = [...products].sort((a, b) => (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0));
-    const stockTotalBoxes = stockProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0);
-    const stockTotalPairs = stockProds.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.pairs_per_box || 6), 0);
-    li(`Всего коробок на складах: **${stockTotalBoxes}**`);
-    li(`Всего пар на складах: **${stockTotalPairs}**`);
+    const totalStockBoxesMd = stockProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0);
+    li(`Итого на складе: **${totalStockBoxesMd} коробок**`);
     sep();
-    row('Товар', 'Тип', 'Цвет', 'Склад', 'Коробок', 'Пар', 'Закупка/кор.', 'Продажа/кор.', 'Стоимость');
+    row('Товар', 'Тип', 'Цвет', 'Склад', 'Коробок', 'Пар', 'Цена закупки (с.)', 'Цена продажи (с.)', 'Стоимость (с.)');
     divider(9);
     stockProds.forEach(p => {
       const wh = warehouses.find(w => w.id === p.warehouse_id);
       const pairs = (p.boxes_in_stock || 0) * (p.pairs_per_box || 6);
       const val = (p.boxes_in_stock || 0) * (p.sale_price || 0);
-      row(`${p.brand} ${p.model}`, p.product_type || '—', p.color || '—', wh?.name || '—', `${p.boxes_in_stock || 0}`, pairs, `${p.purchase_price || 0} с.`, `${p.sale_price || 0} с.`, `${Math.round(val).toLocaleString()} с.`);
+      row(`${p.brand} ${p.model}`, p.product_type || '—', p.color || '—', wh?.name || '—', `${p.boxes_in_stock || 0} кор.`, pairs, `${p.purchase_price || 0} с.`, `${p.sale_price || 0} с.`, `${Math.round(val).toLocaleString()} с.`);
     });
     sep();
 
@@ -345,13 +339,12 @@ export default function Reports() {
     sep();
 
     h2('📈 Динамика по периодам');
-    row('Период', 'Выручка', 'Прибыль', 'Маржа', 'Коробок', 'Пар', 'Продаж', 'Ср. чек');
-    divider(8);
+    row('Период', 'Выручка (с.)', 'Прибыль (с.)', 'Маржа %', 'Коробок продано', 'Продаж', 'Ср. чек (с.)');
+    divider(7);
     chartData.forEach(r => {
       const m = r.revenue > 0 ? ((r.profit / r.revenue) * 100).toFixed(1) : 0;
-      const avgChk = r.count > 0 ? Math.round(r.revenue / r.count) : 0;
-      const pairsR = r.boxes * 6;
-      row(r.period, `${Math.round(r.revenue).toLocaleString()} с.`, `${Math.round(r.profit).toLocaleString()} с.`, `${m}%`, r.boxes, pairsR, r.count, `${avgChk.toLocaleString()} с.`);
+      const avg = r.count > 0 ? Math.round(r.revenue / r.count) : 0;
+      row(r.period, `${Math.round(r.revenue).toLocaleString()} с.`, `${Math.round(r.profit).toLocaleString()} с.`, `${m}%`, `${r.boxes} кор.`, r.count, `${avg.toLocaleString()} с.`);
     });
 
     const md = lines.join('\n');
@@ -371,74 +364,62 @@ export default function Reports() {
     const wb = XLSX.utils.book_new();
 
     // Summary
-    const exTotalPairs = filteredSales.reduce((s, x) => s + (x.pairs_sold || (x.boxes_sold || 0) * 6), 0);
-    const exTotalItems = filteredSales.reduce((s, x) => s + (x.items_sold || (x.boxes_sold || 0) * 12), 0);
-    const stockTotalBoxesEx = products.reduce((s, p) => s + (p.boxes_in_stock || 0), 0);
-    const stockTotalPairsEx = products.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.pairs_per_box || 6), 0);
+    const totalPairsSold = filteredSales.reduce((s,x) => s+(x.pairs_sold||0), 0);
+    const totalStockBoxes = products.reduce((s,p) => s+(p.boxes_in_stock||0), 0);
+    const totalStockValue = products.reduce((s,p) => s+(p.boxes_in_stock||0)*(p.sale_price||0), 0);
     const summaryRows = [
-      ['Отчёт', business?.name || '', '', 'Период', formatDate(), '', 'Дата создания', format(new Date(), 'dd.MM.yyyy HH:mm')],
+      ['📊 ОТЧЁТ БИЗНЕСА', business?.name || '', '', '', 'Период:', formatDate()],
+      ['Дата создания:', format(new Date(), 'dd.MM.yyyy HH:mm'), '', '', 'Группировка:', groupBy === 'day' ? 'По дням' : groupBy === 'week' ? 'По неделям' : 'По месяцам'],
       [],
-      ['=== ПРОДАЖИ ==='],
-      ['Метрика', 'Значение'],
-      ['Продаж', totalCount],
-      ['Выручка (с.)', Math.round(totalRevenue)],
-      ['Прибыль (с.)', Math.round(totalProfit)],
-      ['Маржа (%)', Number(marginPct)],
-      ['Коробок продано', totalBoxes],
-      ['Пар продано', exTotalPairs],
-      ['Штук продано', exTotalItems],
-      ['Средний чек (с.)', Math.round(avgSale)],
-      ['Наличные (с.)', Math.round(cashRevenue)],
-      ['Наличных продаж', cashSales.length],
-      ['В долг (с.)', Math.round(debtRevenue)],
-      ['Долговых продаж', debtSales.length],
+      ['═══ ПРОДАЖИ ═══'],
+      ['Метрика', 'Значение', 'Пояснение'],
+      ['Всего продаж', totalCount, 'кол-во транзакций'],
+      ['Выручка', Math.round(totalRevenue), 'сомони'],
+      ['Прибыль', Math.round(totalProfit), 'сомони'],
+      ['Маржа прибыли', Number(marginPct), '%'],
+      ['Коробок продано', totalBoxes, 'кор.'],
+      ['Пар продано', totalPairsSold, 'пар'],
+      ['Средний чек', Math.round(avgSale), 'сомони за продажу'],
+      ['Ср. коробок за продажу', totalCount > 0 ? (totalBoxes/totalCount).toFixed(1) : 0, 'кор.'],
+      ['Наличные', Math.round(cashRevenue), `сомони (${cashSales.length} продаж)`],
+      ['В долг', Math.round(debtRevenue), `сомони (${debtSales.length} продаж)`],
       [],
-      ['=== СКЛАД ==='],
-      ['Метрика', 'Значение'],
-      ['Товаров на складах', products.length],
-      ['Коробок на складах', stockTotalBoxesEx],
-      ['Пар на складах', stockTotalPairsEx],
+      ['═══ СКЛАД ═══'],
+      ['Метрика', 'Значение', 'Пояснение'],
+      ['Всего товаров', products.length, 'позиций'],
+      ['Коробок на складе', totalStockBoxes, 'кор.'],
+      ['Стоимость склада', Math.round(totalStockValue), 'сомони (по цене продажи)'],
       [],
-      ['=== ВОЗВРАТЫ ==='],
-      ['Метрика', 'Значение'],
-      ['Возвратов', filteredReturns.length],
-      ['Сумма возвратов (с.)', Math.round(totalRefund)],
-      [],
-      ['=== КЛИЕНТЫ И ДОЛГИ ==='],
-      ['Метрика', 'Значение'],
-      ['Клиентов всего', customers.length],
-      ['Должников', debtors.length],
-      ['Общий долг (с.)', Math.round(totalDebt)],
-      ['Средний долг (с.)', debtors.length > 0 ? Math.round(totalDebt / debtors.length) : 0],
-    ];
+      ['═══ ДОЛГИ И ВОЗВРАТЫ ═══'],
+      ['Метрика', 'Значение', 'Пояснение'],
+      ['Возвратов за период', filteredReturns.length, 'шт.'],
+      ['Сумма возвратов', Math.round(totalRefund), 'сомони'],
+      ['Клиентов всего', customers.length, 'чел.'],
+      ['Должников', debtors.length, 'чел.'],
+      ['Общий долг', Math.round(totalDebt), 'сомони'],
+      debtors.length > 0 ? ['Средний долг', Math.round(totalDebt/debtors.length), 'сомони'] : [],
+    ].filter(r => r.length > 0 || r === []);
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryRows), 'Сводка');
 
     // Sales by period
-    const periodRows = [['Период', 'Выручка (с.)', 'Прибыль (с.)', 'Маржа %', 'Коробок', 'Пар', 'Продаж', 'Ср. чек (с.)']];
+    const periodRows = [['Период', 'Выручка (с.)', 'Прибыль (с.)', 'Маржа %', 'Коробок', 'Продаж', 'Ср. чек (с.)']];
     chartData.forEach(r => {
       const m = r.revenue > 0 ? ((r.profit / r.revenue) * 100).toFixed(1) : 0;
-      const avgChk = r.count > 0 ? Math.round(r.revenue / r.count) : 0;
-      const pairsR = r.boxes * 6;
-      periodRows.push([r.period, Math.round(r.revenue), Math.round(r.profit), Number(m), r.boxes, pairsR, r.count, avgChk]);
+      const avgP = r.count > 0 ? Math.round(r.revenue/r.count) : 0;
+      periodRows.push([r.period, Math.round(r.revenue), Math.round(r.profit), Number(m), r.boxes, r.count, avgP]);
     });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(periodRows), 'По периодам');
 
     // All sales detail
-    const salesRows = [['Дата', 'Товар', 'Тип товара', 'Склад', 'Коробок', 'Пар', 'Штук', 'Выручка (с.)', 'Прибыль (с.)', 'Тип оплаты', 'Клиент', 'Сотрудник']];
+    const salesRows = [['Дата', 'Товар', 'Склад', 'Коробок', 'Выручка', 'Прибыль', 'Тип', 'Клиент', 'Сотрудник']];
     filteredSales.forEach(s => {
       const prod = products.find(p => p.id === s.product_id);
       const wh = warehouses.find(w => w.id === s.warehouse_id);
-      const boxes = s.boxes_sold || 0;
-      const pairs = s.pairs_sold || boxes * (prod?.pairs_per_box || 6);
-      const items = s.items_sold || pairs * 2;
       salesRows.push([
         format(parseISO(s.sale_date || s.created_date), 'dd.MM.yyyy HH:mm'),
         prod ? `${prod.brand} ${prod.model}` : '—',
-        prod?.product_type || '—',
         wh?.name || '—',
-        boxes,
-        pairs,
-        items,
+        s.boxes_sold || 0,
         s.total_amount || 0,
         s.profit || 0,
         s.is_debt ? 'В долг' : 'Наличные',
@@ -449,35 +430,43 @@ export default function Reports() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(salesRows), 'Все продажи');
 
     // Top products
-    const prodRows = [['#', 'Товар', 'Тип', 'Выручка (с.)', 'Прибыль (с.)', 'Маржа %', 'Коробок', 'Пар', 'Продаж']];
+    const prodRows = [['#', 'Товар', 'Тип', 'Выручка', 'Прибыль', 'Маржа %', 'Коробок', 'Продаж']];
     topProducts.forEach((tp, i) => {
       const m = tp.revenue > 0 ? ((tp.profit / tp.revenue) * 100).toFixed(1) : 0;
-      const pairs = tp.boxes * (tp.product.pairs_per_box || 6);
-      prodRows.push([i + 1, `${tp.product.brand} ${tp.product.model}`, tp.product.product_type || '—', Math.round(tp.revenue), Math.round(tp.profit), Number(m), tp.boxes, pairs, tp.count]);
+      prodRows.push([i + 1, `${tp.product.brand} ${tp.product.model}`, tp.product.product_type || '—', Math.round(tp.revenue), Math.round(tp.profit), Number(m), tp.boxes, tp.count]);
     });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(prodRows), 'Топ товаров');
 
     // Stock
-    const stockRows = [['Товар', 'Тип', 'Цвет', 'Склад', 'Коробок', 'Пар', 'Штук', 'Закупка/кор. (с.)', 'Продажа/кор. (с.)', 'Стоимость оптовая (с.)', 'Стоимость розничная (с.)']];
-    [...products].sort((a, b) => (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0)).forEach(p => {
+    const stockRows = [['Товар', 'Бренд', 'Модель', 'Тип', 'Цвет', 'Размер от', 'Размер до', 'Склад', 'Коробок', 'Пар в коробке', 'Итого пар', 'Цена закупки (с.)', 'Цена продажи (с.)', 'Стоимость по закупке (с.)', 'Стоимость по продаже (с.)']];
+    [...products].sort((a,b) => (b.boxes_in_stock||0) - (a.boxes_in_stock||0)).forEach(p => {
       const wh = warehouses.find(w => w.id === p.warehouse_id);
-      const boxes = p.boxes_in_stock || 0;
-      const pairs = boxes * (p.pairs_per_box || 6);
-      const items = pairs * 2;
+      const pairs = (p.boxes_in_stock||0) * (p.pairs_per_box||6);
       stockRows.push([
         `${p.brand} ${p.model}`,
+        p.brand || '—',
+        p.model || '—',
         p.product_type || '—',
         p.color || '—',
+        p.size_from || '—',
+        p.size_to || '—',
         wh?.name || '—',
-        boxes,
+        p.boxes_in_stock || 0,
+        p.pairs_per_box || 6,
         pairs,
-        items,
         p.purchase_price || 0,
         p.sale_price || 0,
-        boxes * (p.purchase_price || 0),
-        boxes * (p.sale_price || 0),
+        Math.round((p.boxes_in_stock||0) * (p.purchase_price||0)),
+        Math.round((p.boxes_in_stock||0) * (p.sale_price||0)),
       ]);
     });
+    // Итого строка
+    stockRows.push(['ИТОГО', '', '', '', '', '', '', '',
+      products.reduce((s,p) => s+(p.boxes_in_stock||0), 0), '', 
+      products.reduce((s,p) => s+(p.boxes_in_stock||0)*(p.pairs_per_box||6), 0), '', '',
+      Math.round(products.reduce((s,p) => s+(p.boxes_in_stock||0)*(p.purchase_price||0), 0)),
+      Math.round(products.reduce((s,p) => s+(p.boxes_in_stock||0)*(p.sale_price||0), 0)),
+    ]);
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stockRows), 'Остатки');
 
     // Customers
@@ -495,9 +484,10 @@ export default function Reports() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(debtRows), 'Должники');
 
     // Warehouses
-    const whRows = [['Склад', 'Товаров', 'Коробок', 'Стоимость склада', 'Продаж за период', 'Выручка за период']];
+    const whRows = [['Склад', 'Адрес', 'Товаров', 'Коробок в наличии', 'Стоимость склада (с.)', 'Коробок продано', 'Продаж за период', 'Выручка за период (с.)']];
     warehouseStats.forEach(w => {
-      whRows.push([w.name, w.productsCount, w.boxes, Math.round(w.value), w.salesCount, Math.round(w.salesRevenue)]);
+      const soldBoxesW = filteredSales.filter(s => s.warehouse_id === w.id).reduce((s,x) => s+(x.boxes_sold||0),0);
+      whRows.push([w.name, w.address || '—', w.productsCount, w.boxes, Math.round(w.value), soldBoxesW, w.salesCount, Math.round(w.salesRevenue)]);
     });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(whRows), 'Склады');
 
@@ -641,7 +631,7 @@ export default function Reports() {
         {[
           { label: 'Выручка', value: `${Math.round(totalRevenue).toLocaleString()} с.`, sub: `Ср. чек: ${Math.round(avgSale).toLocaleString()} с.`, icon: TrendingUp, color: 'from-blue-400 to-indigo-500' },
           { label: 'Прибыль', value: `${Math.round(totalProfit).toLocaleString()} с.`, sub: `Маржа: ${marginPct}%`, icon: ArrowUpRight, color: 'from-emerald-400 to-teal-500' },
-          { label: 'Коробок продано', value: totalBoxes, sub: `${totalCount} продаж`, icon: Package, color: 'from-amber-400 to-orange-500' },
+          { label: 'Коробок / Продаж', value: `${totalBoxes}`, sub: `${totalCount} продаж`, icon: Package, color: 'from-amber-400 to-orange-500' },
           { label: 'Долг клиентов', value: `${Math.round(totalDebt).toLocaleString()} с.`, sub: `${debtors.length} должников`, icon: CreditCard, color: 'from-red-400 to-rose-500' },
         ].map((card, i) => (
           <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
@@ -743,45 +733,46 @@ export default function Reports() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-slate-800">Все продажи ({filteredSales.length})</h2>
+            <div className="text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg">
+              Коробок: <span className="font-bold text-indigo-700">{totalBoxes} кор.</span>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="border-b border-slate-100">
-               <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Дата</th>
-               <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Товар</th>
-               <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Кор.</th>
-               <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Пар</th>
-               <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Выручка</th>
-               <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Прибыль</th>
-               <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Тип</th>
-               <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Клиент</th>
+              <thead><tr className="border-b border-slate-100 bg-slate-50">
+                <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Дата</th>
+                <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Товар</th>
+                <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Кор.</th>
+                <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Пар</th>
+                <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Выручка</th>
+                <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Прибыль</th>
+                <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Тип</th>
+                <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Клиент</th>
               </tr></thead>
               <tbody>
-               {filteredSales.slice(0, 100).map((s, i) => {
-                 const prod = products.find(p => p.id === s.product_id);
-                 const boxes = s.boxes_sold || 0;
-                 const pairs = s.pairs_sold || boxes * (prod?.pairs_per_box || 6);
-                 return (
-                   <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50">
-                     <td className="py-1.5 px-2 text-xs text-slate-500">{s.sale_date ? format(parseISO(s.sale_date), 'dd.MM HH:mm') : '—'}</td>
-                     <td className="py-1.5 px-2 text-xs font-medium text-slate-700 max-w-[120px] truncate">{prod ? `${prod.brand} ${prod.model}` : '—'}</td>
-                     <td className="py-1.5 px-2 text-xs text-right font-semibold text-indigo-700">{boxes}</td>
-                     <td className="py-1.5 px-2 text-xs text-right text-slate-500">{pairs}</td>
-                     <td className="py-1.5 px-2 text-xs text-right text-indigo-600 font-semibold">{Math.round(s.total_amount || 0).toLocaleString()} с.</td>
-                     <td className="py-1.5 px-2 text-xs text-right text-emerald-600">{Math.round(s.profit || 0).toLocaleString()} с.</td>
-                     <td className="py-1.5 px-2"><span className={`text-xs px-1.5 py-0.5 rounded-full ${s.is_debt ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{s.is_debt ? 'Долг' : 'Нал'}</span></td>
-                     <td className="py-1.5 px-2 text-xs text-slate-500 max-w-[80px] truncate">{s.customer_name || '—'}</td>
-                   </tr>
-                 );
-               })}
+                {filteredSales.slice(0, 100).map((s, i) => {
+                  const prod = products.find(p => p.id === s.product_id);
+                  return (
+                    <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50">
+                      <td className="py-1.5 px-2 text-xs text-slate-500">{s.sale_date ? format(parseISO(s.sale_date), 'dd.MM HH:mm') : '—'}</td>
+                      <td className="py-1.5 px-2 text-xs font-medium text-slate-700 max-w-[120px] truncate">{prod ? `${prod.brand} ${prod.model}` : '—'}</td>
+                      <td className="py-1.5 px-2 text-xs text-right font-bold text-indigo-700">{s.boxes_sold || 0}</td>
+                      <td className="py-1.5 px-2 text-xs text-right text-slate-500">{s.pairs_sold || 0}</td>
+                      <td className="py-1.5 px-2 text-xs text-right text-indigo-600 font-semibold">{Math.round(s.total_amount || 0).toLocaleString()} с.</td>
+                      <td className="py-1.5 px-2 text-xs text-right text-emerald-600">{Math.round(s.profit || 0).toLocaleString()} с.</td>
+                      <td className="py-1.5 px-2"><span className={`text-xs px-1.5 py-0.5 rounded-full ${s.is_debt ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{s.is_debt ? 'Долг' : 'Нал'}</span></td>
+                      <td className="py-1.5 px-2 text-xs text-slate-500 max-w-[80px] truncate">{s.customer_name || '—'}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot><tr className="bg-slate-50 font-semibold">
-               <td colSpan={2} className="py-2 px-2 text-xs">Итого</td>
-               <td className="py-2 px-2 text-xs text-right text-indigo-700">{totalBoxes} кор.</td>
-               <td className="py-2 px-2 text-xs text-right text-slate-500">{filteredSales.reduce((s, x) => s + (x.pairs_sold || (x.boxes_sold||0)*6), 0)} пар</td>
-               <td className="py-2 px-2 text-xs text-right text-indigo-700">{Math.round(totalRevenue).toLocaleString()} с.</td>
-               <td className="py-2 px-2 text-xs text-right text-emerald-700">{Math.round(totalProfit).toLocaleString()} с.</td>
-               <td colSpan={2}></td>
+                <td colSpan={2} className="py-2 px-2 text-xs">Итого</td>
+                <td className="py-2 px-2 text-xs text-right text-indigo-700">{totalBoxes} кор.</td>
+                <td className="py-2 px-2 text-xs text-right text-slate-600">{filteredSales.reduce((s,x)=>s+(x.pairs_sold||0),0)} пар</td>
+                <td className="py-2 px-2 text-xs text-right text-indigo-700">{Math.round(totalRevenue).toLocaleString()} с.</td>
+                <td className="py-2 px-2 text-xs text-right text-emerald-700">{Math.round(totalProfit).toLocaleString()} с.</td>
+                <td colSpan={2}></td>
               </tr></tfoot>
             </table>
             {filteredSales.length > 100 && <p className="text-xs text-slate-400 text-center mt-2">Показано 100 из {filteredSales.length}. Скачайте Excel для полного отчёта.</p>}
@@ -822,29 +813,49 @@ export default function Reports() {
             )}
           </div>
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-            <h2 className="font-semibold text-slate-800 mb-4">Остатки на складах ({products.length} товаров)</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-slate-800">Остатки на складах ({products.length} товаров)</h2>
+              <div className="text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg">
+                Итого: <span className="font-bold text-slate-700">{products.reduce((s,p)=>s+(p.boxes_in_stock||0),0)} кор.</span> / <span className="font-bold text-emerald-600">{Math.round(products.reduce((s,p)=>s+(p.boxes_in_stock||0)*(p.sale_price||0),0)).toLocaleString()} с.</span>
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead><tr className="border-b border-slate-100">
+                <thead><tr className="border-b border-slate-100 bg-slate-50">
                   <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Товар</th>
                   <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Тип</th>
-                  <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">На складе</th>
+                  <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Склад</th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Коробок</th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Пар</th>
                   <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Закупка</th>
                   <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Продажа</th>
                   <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Стоимость</th>
                 </tr></thead>
                 <tbody>
-                  {[...products].sort((a, b) => (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0)).map((p, i) => (
-                    <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
-                      <td className="py-1.5 px-2 text-xs font-medium text-slate-700">{p.brand} {p.model}</td>
-                      <td className="py-1.5 px-2 text-xs text-slate-500">{p.product_type || '—'}</td>
-                      <td className="py-1.5 px-2 text-xs text-right font-semibold">{p.boxes_in_stock || 0} кор.</td>
-                      <td className="py-1.5 px-2 text-xs text-right text-slate-500">{p.purchase_price || 0} с.</td>
-                      <td className="py-1.5 px-2 text-xs text-right text-indigo-600">{p.sale_price || 0} с.</td>
-                      <td className="py-1.5 px-2 text-xs text-right text-emerald-600 font-semibold">{Math.round((p.boxes_in_stock || 0) * (p.sale_price || 0)).toLocaleString()} с.</td>
-                    </tr>
-                  ))}
+                  {[...products].sort((a, b) => (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0)).map((p, i) => {
+                    const wh = warehouses.find(w => w.id === p.warehouse_id);
+                    const pairs = (p.boxes_in_stock||0) * (p.pairs_per_box||6);
+                    return (
+                      <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
+                        <td className="py-1.5 px-2 text-xs font-medium text-slate-700">{p.brand} {p.model}</td>
+                        <td className="py-1.5 px-2 text-xs text-slate-500">{p.product_type || '—'}</td>
+                        <td className="py-1.5 px-2 text-xs text-slate-500">{wh?.name || '—'}</td>
+                        <td className="py-1.5 px-2 text-xs text-right font-bold text-indigo-700">{p.boxes_in_stock || 0} кор.</td>
+                        <td className="py-1.5 px-2 text-xs text-right text-slate-600">{pairs} пар</td>
+                        <td className="py-1.5 px-2 text-xs text-right text-slate-500">{p.purchase_price || 0} с.</td>
+                        <td className="py-1.5 px-2 text-xs text-right text-indigo-600">{p.sale_price || 0} с.</td>
+                        <td className="py-1.5 px-2 text-xs text-right text-emerald-600 font-semibold">{Math.round((p.boxes_in_stock || 0) * (p.sale_price || 0)).toLocaleString()} с.</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
+                <tfoot><tr className="bg-slate-50 font-semibold">
+                  <td colSpan={3} className="py-2 px-2 text-xs">Итого</td>
+                  <td className="py-2 px-2 text-xs text-right text-indigo-700">{products.reduce((s,p)=>s+(p.boxes_in_stock||0),0)} кор.</td>
+                  <td className="py-2 px-2 text-xs text-right text-slate-600">{products.reduce((s,p)=>s+(p.boxes_in_stock||0)*(p.pairs_per_box||6),0)} пар</td>
+                  <td colSpan={2}></td>
+                  <td className="py-2 px-2 text-xs text-right text-emerald-700">{Math.round(products.reduce((s,p)=>s+(p.boxes_in_stock||0)*(p.sale_price||0),0)).toLocaleString()} с.</td>
+                </tr></tfoot>
               </table>
             </div>
           </div>
@@ -927,16 +938,17 @@ export default function Reports() {
                   {w.address && <p className="text-xs text-slate-400">{w.address}</p>}
                 </div>
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                 {[
-                  { label: 'Товаров', value: w.productsCount },
-                  { label: 'Коробок', value: w.boxes },
-                  { label: 'Стоимость склада', value: `${Math.round(w.value).toLocaleString()} с.` },
-                  { label: 'Выручка за период', value: `${Math.round(w.salesRevenue).toLocaleString()} с.` },
+                  { label: 'Товаров', value: w.productsCount, color: 'text-slate-900' },
+                  { label: 'Коробок в наличии', value: `${w.boxes} кор.`, color: 'text-indigo-700' },
+                  { label: 'Коробок продано', value: `${filteredSales.filter(s=>s.warehouse_id===w.id).reduce((s,x)=>s+(x.boxes_sold||0),0)} кор.`, color: 'text-blue-700' },
+                  { label: 'Стоимость склада', value: `${Math.round(w.value).toLocaleString()} с.`, color: 'text-orange-600' },
+                  { label: 'Выручка за период', value: `${Math.round(w.salesRevenue).toLocaleString()} с.`, color: 'text-emerald-600' },
                 ].map((stat, i) => (
                   <div key={i} className="bg-slate-50 rounded-xl p-3">
                     <p className="text-xs text-slate-400">{stat.label}</p>
-                    <p className="text-lg font-bold text-slate-900">{stat.value}</p>
+                    <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
                   </div>
                 ))}
               </div>
