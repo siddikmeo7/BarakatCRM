@@ -301,160 +301,20 @@ export default function ActivityLog() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit overflow-x-auto">
+      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
         {[
-          { key: 'list', label: 'История', icon: History },
-          { key: 'trash', label: `Корзина (${logs.filter(l => l.action_type === 'delete').length})`, icon: Trash2 },
+          { key: 'list', label: 'Список', icon: History },
           { key: 'users', label: 'По сотрудникам', icon: BarChart2 },
+          { key: 'trash', label: `Корзина (${logs.filter(l => l.action_type === 'delete' && !l.is_restored).length})`, icon: Trash2 },
         ].map(tab => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.key ? 'bg-white shadow text-indigo-700' : 'text-slate-600 hover:text-slate-800'}`}>
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.key ? 'bg-white shadow text-indigo-700' : 'text-slate-600 hover:text-slate-800'}`}>
             <tab.icon className="w-4 h-4" /> {tab.label}
           </button>
         ))}
       </div>
 
-      {activeTab === 'trash' ? (
-        /* ── TRASH TAB ── */
-        (() => {
-          const trashLogs = logs.filter(l => l.action_type === 'delete');
-          const filtered = trashLogs.filter(l => {
-            const matchSearch = !trashSearch ||
-              l.description?.toLowerCase().includes(trashSearch.toLowerCase()) ||
-              l.entity_type?.toLowerCase().includes(trashSearch.toLowerCase()) ||
-              l.user_email?.toLowerCase().includes(trashSearch.toLowerCase());
-            const matchEntity = trashEntity === 'all' || l.entity_type === trashEntity;
-            return matchSearch && matchEntity;
-          });
-          const notRestored = filtered.filter(l => !l.is_restored);
-          const restored = filtered.filter(l => l.is_restored);
-          return (
-            <div className="space-y-4">
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-red-50 border border-red-100 rounded-2xl p-4">
-                  <p className="text-xs text-slate-500">Всего удалено</p>
-                  <p className="text-2xl font-bold text-red-600">{trashLogs.length}</p>
-                </div>
-                <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
-                  <p className="text-xs text-slate-500">Ожидают восстановления</p>
-                  <p className="text-2xl font-bold text-orange-600">{trashLogs.filter(l => !l.is_restored).length}</p>
-                </div>
-                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
-                  <p className="text-xs text-slate-500">Восстановлено</p>
-                  <p className="text-2xl font-bold text-emerald-600">{trashLogs.filter(l => l.is_restored).length}</p>
-                </div>
-              </div>
-
-              {/* Filters */}
-              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-                <div className="flex flex-wrap gap-2 items-center">
-                  <div className="relative flex-1 min-w-[200px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <Input className="pl-9" placeholder="Поиск в корзине..." value={trashSearch} onChange={e => setTrashSearch(e.target.value)} />
-                    {trashSearch && <button onClick={() => setTrashSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-slate-400" /></button>}
-                  </div>
-                  <Select value={trashEntity} onValueChange={setTrashEntity}>
-                    <SelectTrigger className="w-44">
-                      <SelectValue placeholder="Раздел" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Все разделы</SelectItem>
-                      <SelectItem value="Product">📦 Товары</SelectItem>
-                      <SelectItem value="Sale">🛒 Продажи</SelectItem>
-                      <SelectItem value="Customer">👤 Клиенты</SelectItem>
-                      <SelectItem value="Warehouse">🏭 Склады</SelectItem>
-                      <SelectItem value="Employee">👥 Сотрудники</SelectItem>
-                      <SelectItem value="Return">↩️ Возвраты</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {(trashSearch || trashEntity !== 'all') && (
-                    <button onClick={() => { setTrashSearch(''); setTrashEntity('all'); }}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-red-500 border border-red-200 hover:bg-red-50">
-                      <X className="w-3 h-3" /> Сбросить
-                    </button>
-                  )}
-                </div>
-                <p className="text-xs text-slate-400">{filtered.length} записей найдено · Можно восстановить {notRestored.length} из них</p>
-              </div>
-
-              {/* Trash items */}
-              {filtered.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm text-center py-16">
-                  <Trash2 className="w-14 h-14 text-slate-200 mx-auto mb-3" />
-                  <p className="text-slate-500 font-medium">Корзина пуста</p>
-                  <p className="text-slate-400 text-sm mt-1">Удалённые данные будут появляться здесь</p>
-                </div>
-              ) : (
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                  <div className="px-4 py-2 border-b border-slate-100 bg-red-50 flex items-center gap-2">
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                    <span className="text-xs font-semibold text-red-600">{filtered.length} удалённых записей</span>
-                  </div>
-                  <div className="divide-y divide-slate-100">
-                    {filtered.map(log => {
-                      const Icon = ENTITY_ICONS[log.entity_type] || AlertCircle;
-                      return (
-                        <div key={log.id} className={`p-3 sm:p-4 flex items-start gap-3 ${log.is_restored ? 'bg-emerald-50/40' : 'hover:bg-red-50/30'} transition-colors`}>
-                          <div className="p-2 rounded-xl flex-shrink-0 border bg-red-100 text-red-700 border-red-200">
-                            <Icon className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                <Icon className="w-3 h-3" />
-                                {ENTITY_LABELS[log.entity_type] || log.entity_type}
-                              </span>
-                              {log.is_restored && (
-                                <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md text-xs border border-emerald-200">
-                                  <CheckCircle2 className="w-3 h-3" /> Восстановлено
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm text-slate-700">{log.description}</p>
-                            <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 flex-wrap">
-                              <span className="flex items-center gap-1"><User className="w-3 h-3" />{getUserLabel(log.user_email)}</span>
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{format(parseISO(log.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}</span>
-                            </div>
-                            {/* Preview данных */}
-                            {log.entity_data && !log.is_restored && (
-                              <div className="mt-2 flex flex-wrap gap-1">
-                                {Object.entries(log.entity_data)
-                                  .filter(([k, v]) => !['id','created_date','updated_date','business_id','photo_url','changes','edit_history','permissions','change_history'].includes(k) && v != null && v !== '')
-                                  .slice(0, 5)
-                                  .map(([k, v]) => (
-                                    <span key={k} className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
-                                      <span className="text-slate-400">{k}:</span> {typeof v === 'object' ? '...' : String(v).slice(0, 20)}
-                                    </span>
-                                  ))}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {log.entity_data && (
-                              <button onClick={() => setDetailLog(log)} className="p-2 hover:bg-indigo-50 rounded-lg" title="Подробности">
-                                <Eye className="w-4 h-4 text-indigo-500" />
-                              </button>
-                            )}
-                            {!log.is_restored && log.entity_data && (
-                              <button onClick={() => handleRestore(log)} disabled={restoring === log.id} className="p-2 hover:bg-emerald-50 rounded-lg" title="Восстановить">
-                                <RotateCcw className={`w-4 h-4 text-emerald-600 ${restoring === log.id ? 'animate-spin' : ''}`} />
-                              </button>
-                            )}
-                            <button onClick={() => handleDeleteLog(log.id)} disabled={deleting === log.id} className="p-2 hover:bg-red-50 rounded-lg" title="Удалить навсегда">
-                              <Trash2 className={`w-4 h-4 text-red-400 ${deleting === log.id ? 'animate-pulse' : ''}`} />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })()
-      ) : activeTab === 'users' ? (
+      {activeTab === 'users' ? (
         /* ── USER STATS TAB ── */
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -515,6 +375,143 @@ export default function ActivityLog() {
             )}
           </div>
         </div>
+      ) : activeTab === 'trash' ? (
+        /* ── TRASH TAB ── */
+        (() => {
+          const trashLogs = logs.filter(l => {
+            if (l.action_type !== 'delete') return false;
+            if (trashEntity !== 'all' && l.entity_type !== trashEntity) return false;
+            if (trashSearch) {
+              const q = trashSearch.toLowerCase();
+              if (!l.description?.toLowerCase().includes(q) && !l.entity_type?.toLowerCase().includes(q) && !l.user_email?.toLowerCase().includes(q)) return false;
+            }
+            return true;
+          }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+
+          const restored = trashLogs.filter(l => l.is_restored);
+          const notRestored = trashLogs.filter(l => !l.is_restored);
+
+          return (
+            <div className="space-y-4">
+              {/* Trash stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-center">
+                  <p className="text-xs text-slate-500">Всего удалено</p>
+                  <p className="text-2xl font-bold text-red-600">{trashLogs.length}</p>
+                </div>
+                <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
+                  <p className="text-xs text-slate-500">Можно восстановить</p>
+                  <p className="text-2xl font-bold text-amber-600">{notRestored.filter(l => l.entity_data).length}</p>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center">
+                  <p className="text-xs text-slate-500">Восстановлено</p>
+                  <p className="text-2xl font-bold text-emerald-600">{restored.length}</p>
+                </div>
+              </div>
+
+              {/* Filters */}
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-wrap gap-2 items-center">
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input className="pl-9" placeholder="Поиск..." value={trashSearch} onChange={e => setTrashSearch(e.target.value)} />
+                  {trashSearch && <button onClick={() => setTrashSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-slate-400" /></button>}
+                </div>
+                <Select value={trashEntity} onValueChange={setTrashEntity}>
+                  <SelectTrigger className="w-40"><SelectValue placeholder="Тип" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Все типы</SelectItem>
+                    <SelectItem value="Product">📦 Товары</SelectItem>
+                    <SelectItem value="Sale">🛒 Продажи</SelectItem>
+                    <SelectItem value="Customer">👤 Клиенты</SelectItem>
+                    <SelectItem value="Warehouse">🏭 Склады</SelectItem>
+                    <SelectItem value="Employee">👥 Сотрудники</SelectItem>
+                    <SelectItem value="Return">↩️ Возвраты</SelectItem>
+                  </SelectContent>
+                </Select>
+                {notRestored.filter(l => l.entity_data).length > 0 && (
+                  <Button size="sm" variant="outline"
+                    className="gap-1 text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                    onClick={async () => {
+                      if (!confirm(`Восстановить всё (${notRestored.filter(l => l.entity_data).length} записей)?`)) return;
+                      setBulkLoading(true);
+                      for (const log of notRestored.filter(l => l.entity_data)) await handleRestoreSilent(log);
+                      setBulkLoading(false);
+                    }}
+                    disabled={bulkLoading}>
+                    <RotateCcw className="w-3.5 h-3.5" /> Восстановить всё
+                  </Button>
+                )}
+              </div>
+
+              {trashLogs.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-slate-100 text-center py-16">
+                  <Trash2 className="w-14 h-14 text-slate-200 mx-auto mb-3" />
+                  <p className="text-slate-500 font-medium">Корзина пуста</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
+                  {trashLogs.map(log => {
+                    const Icon = ENTITY_ICONS[log.entity_type] || AlertCircle;
+                    const data = log.entity_data;
+                    return (
+                      <div key={log.id} className={`p-3 sm:p-4 flex items-start gap-3 ${log.is_restored ? 'bg-emerald-50/40 opacity-60' : 'hover:bg-slate-50'}`}>
+                        <div className={`p-2 rounded-xl flex-shrink-0 border ${log.is_restored ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                              {ENTITY_LABELS[log.entity_type] || log.entity_type}
+                            </span>
+                            {log.is_restored && (
+                              <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md text-xs border border-emerald-200">
+                                <CheckCircle2 className="w-3 h-3" /> Восстановлено
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-700 font-medium">
+                            {data ? (
+                              log.entity_type === 'Product' ? `${data.brand || ''} ${data.model || ''}`.trim() :
+                              log.entity_type === 'Customer' ? data.name || '—' :
+                              log.entity_type === 'Sale' ? `Продажа ${data.boxes_sold || 0} кор. — ${data.total_amount || 0} с.` :
+                              log.entity_type === 'Warehouse' ? data.name || '—' :
+                              log.description
+                            ) : log.description}
+                          </p>
+                          {data && log.entity_type === 'Product' && (
+                            <p className="text-xs text-slate-400 mt-0.5">{data.color} · {data.product_type} · {data.boxes_in_stock || 0} кор. в наличии</p>
+                          )}
+                          <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <User className="w-3 h-3" />{getUserLabel(log.user_email)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {format(parseISO(log.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {!log.is_restored && data && (
+                            <button onClick={() => handleRestore(log)} disabled={restoring === log.id}
+                              className="px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 flex items-center gap-1 font-medium">
+                              <RotateCcw className={`w-3.5 h-3.5 ${restoring === log.id ? 'animate-spin' : ''}`} />
+                              Восстановить
+                            </button>
+                          )}
+                          <button onClick={() => handleDeleteLog(log.id)} disabled={deleting === log.id}
+                            className="p-1.5 hover:bg-red-50 rounded-lg">
+                            <Trash2 className={`w-4 h-4 text-red-400 ${deleting === log.id ? 'animate-pulse' : ''}`} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()
       ) : (
         /* ── LIST TAB ── */
         <>
