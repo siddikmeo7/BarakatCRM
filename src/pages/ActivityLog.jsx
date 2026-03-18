@@ -305,6 +305,7 @@ export default function ActivityLog() {
         {[
           { key: 'list', label: 'Список', icon: History },
           { key: 'users', label: 'По сотрудникам', icon: BarChart2 },
+          { key: 'trash', label: `Корзина (${logs.filter(l => l.action_type === 'delete' && !l.is_restored).length})`, icon: Trash2 },
         ].map(tab => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.key ? 'bg-white shadow text-indigo-700' : 'text-slate-600 hover:text-slate-800'}`}>
