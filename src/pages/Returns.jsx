@@ -26,24 +26,7 @@ const CONDITIONS = ['Новый', 'Хорошее', 'Среднее', 'Плох�
 
 export default function Returns() {
   const { can } = useEmployeeAccess();
-  
-  // Блокировка страницы если нет доступа
-  if (!can('manage_returns')) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-            <RotateCcw className="w-8 h-8 text-red-600" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">Нет доступа</h3>
-            <p className="text-slate-600">У вас нет прав для просмотра возвратов.<br/>Обратитесь к владельцу бизнеса.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
+
   const [business, setBusiness] = useState(null);
   const [returns, setReturns] = useState([]);
   const [products, setProducts] = useState([]);
@@ -207,6 +190,22 @@ export default function Returns() {
     condition,
     count: filteredReturns.filter(r => r.condition === condition).length
   }));
+
+  if (!can('manage_returns')) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+            <RotateCcw className="w-8 h-8 text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Нет доступа</h3>
+            <p className="text-slate-600">У вас нет прав для просмотра возвратов.<br/>Обратитесь к владельцу бизнеса.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

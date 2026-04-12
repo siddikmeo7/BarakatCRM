@@ -244,91 +244,270 @@ export default function Reports() {
     return `${format(dateRange.from, 'dd MMM', { locale: ru })} — ${format(dateRange.to, 'dd MMM yyyy', { locale: ru })}`;
   };
 
+  // === EXPORT PDF ===
+  const exportPDF = async () => {
+    setExportingPDF(true);
+    try {
+      const totalPairs = filteredSales.reduce((s, x) => s + (x.pairs_sold || (x.boxes_sold || 0) * 6), 0);
+      const stockTotalBoxes = products.reduce((s, p) => s + (p.boxes_in_stock || 0), 0);
+      const stockTotalPairs = products.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.pairs_per_box || 6), 0);
+
+      const tS = 'padding:5px 8px;border:1px solid #e2e8f0;font-size:10px;';
+      const hS = 'background:#f1f5f9;padding:6px 8px;text-align:left;border:1px solid #e2e8f0;font-weight:700;font-size:10px;';
+      const tableS = 'width:100%;border-collapse:collapse;margin-bottom:16px;';
+      const h2S = 'font-size:13px;font-weight:700;margin:18px 0 8px;color:#1e293b;padding-bottom:4px;border-bottom:2px solid #6366f1;';
+
+      const html = `
+        <div style="font-family:Arial,Helvetica,sans-serif;color:#1e293b;padding:24px;width:780px;">
+          <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:20px;border-radius:8px;margin-bottom:20px;">
+            <h1 style="font-size:20px;margin:0 0 6px;">${business?.name || 'Бизнес'} — Отчёт</h1>
+            <p style="margin:0 0 2px;font-size:12px;opacity:0.9;">Период: <b>${formatDate()}</b></p>
+            <p style="margin:0;font-size:11px;opacity:0.7;">Создан: ${format(new Date(), 'dd.MM.yyyy HH:mm')}</p>
+          </div>
+
+          <h2 style="${h2S}">📊 Сводка продаж</h2>
+          <table style="${tableS}">
+            <tr><th style="${hS}">Метрика</th><th style="${hS}">Значение</th></tr>
+            <tr><td style="${tS}">Всего продаж</td><td style="${tS}"><b>${totalCount}</b></td></tr>
+            <tr><td style="${tS}">Выручка</td><td style="${tS}"><b>${Math.round(totalRevenue).toLocaleString()} с.</b></td></tr>
+            <tr><td style="${tS}">Прибыль</td><td style="${tS}"><b>${Math.round(totalProfit).toLocaleString()} с.</b></td></tr>
+            <tr><td style="${tS}">Маржа прибыли</td><td style="${tS}">${marginPct}%</td></tr>
+            <tr><td style="${tS}">Средний чек</td><td style="${tS}">${Math.round(avgSale).toLocaleString()} с.</td></tr>
+            <tr><td style="${tS}">Коробок продано</td><td style="${tS}"><b>${totalBoxes}</b></td></tr>
+            <tr><td style="${tS}">Пар продано</td><td style="${tS}">${totalPairs}</td></tr>
+            <tr><td style="${tS}">Наличные</td><td style="${tS}">${Math.round(cashRevenue).toLocaleString()} с. (${cashSales.length} прод.)</td></tr>
+            <tr><td style="${tS}">В долг</td><td style="${tS}">${Math.round(debtRevenue).toLocaleString()} с. (${debtSales.length} прод.)</td></tr>
+          </table>
+
+          <h2 style="${h2S}">🛒 Топ товаров по выручке</h2>
+          <table style="${tableS}">
+            <tr>
+              <th style="${hS}">#</th><th style="${hS}">Товар</th><th style="${hS}">Тип</th>
+              <th style="${hS}">Выручка</th><th style="${hS}">Прибыль</th><th style="${hS}">Маржа</th>
+              <th style="${hS}">Коробок</th><th style="${hS}">Пар</th>
+            </tr>
+            ${topProducts.slice(0, 15).map((tp, i) => {
+              const m = tp.revenue > 0 ? ((tp.profit / tp.revenue) * 100).toFixed(1) : 0;
+              const pairs = tp.boxes * (tp.product.pairs_per_box || 6);
+              return `<tr>
+                <td style="${tS}">${i + 1}</td>
+                <td style="${tS}"><b>${tp.product.brand} ${tp.product.model}</b></td>
+                <td style="${tS}">${tp.product.product_type || '—'}</td>
+                <td style="${tS}">${Math.round(tp.revenue).toLocaleString()} с.</td>
+                <td style="${tS}">${Math.round(tp.profit).toLocaleString()} с.</td>
+                <td style="${tS}">${m}%</td>
+                <td style="${tS}">${tp.boxes}</td>
+                <td style="${tS}">${pairs}</td>
+              </tr>`;
+            }).join('')}
+          </table>
+
+          <h2 style="${h2S}">🏭 Склады</h2>
+          <table style="${tableS}">
+            <tr>
+              <th style="${hS}">Склад</th><th style="${hS}">Товаров</th><th style="${hS}">Коробок</th>
+              <th style="${hS}">Стоимость склада</th><th style="${hS}">Продаж</th><th style="${hS}">Выручка за период</th>
+            </tr>
+            ${warehouseStats.map(w => `<tr>
+              <td style="${tS}"><b>${w.name}</b></td>
+              <td style="${tS}">${w.productsCount}</td>
+              <td style="${tS}">${w.boxes}</td>
+              <td style="${tS}">${Math.round(w.value).toLocaleString()} с.</td>
+              <td style="${tS}">${w.salesCount}</td>
+              <td style="${tS}">${Math.round(w.salesRevenue).toLocaleString()} с.</td>
+            </tr>`).join('')}
+          </table>
+
+          <h2 style="${h2S}">💳 Должники (${debtors.length})</h2>
+          ${debtors.length > 0 ? `<table style="${tableS}">
+            <tr>
+              <th style="${hS}">#</th><th style="${hS}">Клиент</th><th style="${hS}">Телефон</th>
+              <th style="${hS}">Долг</th><th style="${hS}">Оплачено</th>
+            </tr>
+            ${debtors.slice(0, 20).map((c, i) => `<tr>
+              <td style="${tS}">${i + 1}</td>
+              <td style="${tS}"><b>${c.name}</b></td>
+              <td style="${tS}">${c.phone || '—'}</td>
+              <td style="${tS};color:#ef4444;font-weight:700;">${Math.round(c.total_debt || 0).toLocaleString()} с.</td>
+              <td style="${tS}">${Math.round(c.total_paid || 0).toLocaleString()} с.</td>
+            </tr>`).join('')}
+            <tr style="background:#fef2f2;">
+              <td style="${tS}" colspan="3"><b>ИТОГО ДОЛГ</b></td>
+              <td style="${tS};color:#ef4444;font-weight:700;">${Math.round(totalDebt).toLocaleString()} с.</td>
+              <td style="${tS}"></td>
+            </tr>
+          </table>` : '<p style="color:#94a3b8;font-size:12px;">Должников нет</p>'}
+
+          <h2 style="${h2S}">📦 Остатки товаров на складах</h2>
+          <p style="font-size:11px;color:#64748b;margin:0 0 8px;">Всего: ${stockTotalBoxes} коробок · ${stockTotalPairs} пар</p>
+          <table style="${tableS}">
+            <tr>
+              <th style="${hS}">Товар</th><th style="${hS}">Тип</th><th style="${hS}">Склад</th>
+              <th style="${hS}">Коробок</th><th style="${hS}">Пар</th>
+              <th style="${hS}">Закупка/кор.</th><th style="${hS}">Продажа/кор.</th><th style="${hS}">Стоимость</th>
+            </tr>
+            ${[...products].sort((a, b) => (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0)).map(p => {
+              const wh = warehouses.find(w => w.id === p.warehouse_id);
+              const boxes = p.boxes_in_stock || 0;
+              const pairs = boxes * (p.pairs_per_box || 6);
+              return `<tr>
+                <td style="${tS}"><b>${p.brand} ${p.model}</b></td>
+                <td style="${tS}">${p.product_type || '—'}</td>
+                <td style="${tS}">${wh?.name || '—'}</td>
+                <td style="${tS}">${boxes}</td>
+                <td style="${tS}">${pairs}</td>
+                <td style="${tS}">${p.purchase_price || 0} с.</td>
+                <td style="${tS}">${p.sale_price || 0} с.</td>
+                <td style="${tS}">${Math.round(boxes * (p.sale_price || 0)).toLocaleString()} с.</td>
+              </tr>`;
+            }).join('')}
+            <tr style="background:#f1f5f9;font-weight:700;">
+              <td style="${tS}" colspan="3">ИТОГО</td>
+              <td style="${tS}">${stockTotalBoxes}</td>
+              <td style="${tS}">${stockTotalPairs}</td>
+              <td style="${tS}" colspan="2"></td>
+              <td style="${tS}">${Math.round(products.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.sale_price || 0), 0)).toLocaleString()} с.</td>
+            </tr>
+          </table>
+
+          ${filteredReturns.length > 0 ? `
+          <h2 style="${h2S}">↩️ Возвраты (${filteredReturns.length})</h2>
+          <table style="${tableS}">
+            <tr>
+              <th style="${hS}">Дата</th><th style="${hS}">Товар</th><th style="${hS}">Клиент</th>
+              <th style="${hS}">Коробок</th><th style="${hS}">Сумма возврата</th><th style="${hS}">Причина</th>
+            </tr>
+            ${filteredReturns.map(r => {
+              const prod = products.find(p => p.id === r.product_id);
+              const cust = customers.find(c => c.id === r.customer_id);
+              return `<tr>
+                <td style="${tS}">${r.return_date ? format(parseISO(r.return_date), 'dd.MM.yyyy') : '—'}</td>
+                <td style="${tS}">${prod ? `${prod.brand} ${prod.model}` : '—'}</td>
+                <td style="${tS}">${cust?.name || '—'}</td>
+                <td style="${tS}">${r.boxes_returned || 0}</td>
+                <td style="${tS};color:#ef4444;">${Math.round(r.refund_amount || 0).toLocaleString()} с.</td>
+                <td style="${tS}">${r.reason || '—'}</td>
+              </tr>`;
+            }).join('')}
+          </table>` : ''}
+        </div>
+      `;
+
+      const el = document.createElement('div');
+      el.innerHTML = html;
+      el.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:white;';
+      document.body.appendChild(el);
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      await doc.html(el, {
+        callback: (doc) => {
+          doc.save(`report_${business?.name || 'business'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`);
+          document.body.removeChild(el);
+          setExportingPDF(false);
+        },
+        x: 5, y: 5, width: 200, windowWidth: 800, autoPaging: 'text'
+      });
+    } catch (e) {
+      console.error('PDF export error:', e);
+      setExportingPDF(false);
+    }
+  };
+
   // === EXPORT MARKDOWN ===
   const exportMarkdown = () => {
     const lines = [];
-    // warehouses available via closure
     const sep = () => lines.push('');
     const h1 = (t) => lines.push(`# ${t}`);
-    const h2 = (t) => lines.push(`## ${t}`);
-    const h3 = (t) => lines.push(`### ${t}`);
+    const h2 = (t) => lines.push(`\n## ${t}`);
     const li = (t) => lines.push(`- ${t}`);
     const row = (...cols) => lines.push(`| ${cols.join(' | ')} |`);
     const divider = (n) => lines.push(`| ${Array(n).fill('---').join(' | ')} |`);
+    const hr = () => lines.push('---');
 
-    h1(`Отчёт бизнеса: ${business?.name || '—'}`);
+    h1(`Отчёт: ${business?.name || '—'}`);
     li(`Период: **${formatDate()}**`);
     li(`Дата создания: **${format(new Date(), 'dd.MM.yyyy HH:mm')}**`);
     sep();
+    hr();
 
-    h2('📊 Общая сводка');
+    h2('📊 ОБЩАЯ СВОДКА ПРОДАЖ');
     const totalPairs = filteredSales.reduce((s, x) => s + (x.pairs_sold || (x.boxes_sold || 0) * 6), 0);
     const totalItems = filteredSales.reduce((s, x) => s + (x.items_sold || (x.boxes_sold || 0) * 12), 0);
     row('Метрика', 'Значение');
     divider(2);
-    row('Продаж', totalCount);
+    row('Всего продаж', `**${totalCount}**`);
     row('Выручка', `**${Math.round(totalRevenue).toLocaleString()} с.**`);
     row('Прибыль', `**${Math.round(totalProfit).toLocaleString()} с.**`);
-    row('Маржа', `${marginPct}%`);
-    row('Коробок продано', `**${totalBoxes}**`);
-    row('Пар продано', totalPairs);
-    row('Штук продано', totalItems);
+    row('Маржа прибыли', `**${marginPct}%**`);
     row('Средний чек', `${Math.round(avgSale).toLocaleString()} с.`);
+    row('Коробок продано', `**${totalBoxes}**`);
+    row('Пар продано', `**${totalPairs}**`);
+    row('Штук продано', totalItems);
     row('Наличные', `${Math.round(cashRevenue).toLocaleString()} с. (${cashSales.length} продаж)`);
     row('В долг', `${Math.round(debtRevenue).toLocaleString()} с. (${debtSales.length} продаж)`);
     sep();
+    hr();
 
-    h2('🛒 Топ товаров');
+    h2('🛒 ТОП ТОВАРОВ ПО ВЫРУЧКЕ');
     row('#', 'Товар', 'Тип', 'Выручка', 'Прибыль', 'Маржа', 'Коробок', 'Пар', 'Продаж');
     divider(9);
     topProducts.slice(0, 15).forEach((tp, i) => {
       const m = tp.revenue > 0 ? ((tp.profit / tp.revenue) * 100).toFixed(1) : 0;
       const pairs = tp.boxes * (tp.product.pairs_per_box || 6);
-      row(i + 1, `${tp.product.brand} ${tp.product.model}`, tp.product.product_type || '—', `${Math.round(tp.revenue).toLocaleString()} с.`, `${Math.round(tp.profit).toLocaleString()} с.`, `${m}%`, tp.boxes, pairs, tp.count);
+      row(i + 1, `${tp.product.brand} ${tp.product.model}`, tp.product.product_type || '—',
+        `${Math.round(tp.revenue).toLocaleString()} с.`, `${Math.round(tp.profit).toLocaleString()} с.`,
+        `${m}%`, tp.boxes, pairs, tp.count);
     });
     sep();
+    hr();
 
-    h2('👥 Клиенты за период');
+    h2('👥 КЛИЕНТЫ ЗА ПЕРИОД');
     if (topCustomers.length === 0) {
-      li('Нет данных о клиентах');
+      li('Нет данных о клиентах за период');
     } else {
       row('#', 'Клиент', 'Выручка', 'Покупок', 'Долг');
       divider(5);
       topCustomers.slice(0, 15).forEach((c, i) => {
-        row(i + 1, c.name, `${Math.round(c.revenue).toLocaleString()} с.`, c.count, c.debt > 0 ? `${Math.round(c.debt).toLocaleString()} с.` : '—');
+        row(i + 1, c.name, `${Math.round(c.revenue).toLocaleString()} с.`, c.count,
+          c.debt > 0 ? `**${Math.round(c.debt).toLocaleString()} с.**` : '—');
       });
     }
     sep();
+    hr();
 
-    h2('💳 Должники');
-    li(`Всего должников: **${debtors.length}** из ${customers.length}`);
+    h2('💳 ДОЛЖНИКИ');
+    li(`Всего должников: **${debtors.length}** из ${customers.length} клиентов`);
     li(`Общий долг: **${Math.round(totalDebt).toLocaleString()} с.**`);
     if (debtors.length > 0) {
       li(`Средний долг: **${Math.round(totalDebt / debtors.length).toLocaleString()} с.**`);
       li(`Максимальный долг: **${Math.round(debtors[0]?.total_debt || 0).toLocaleString()} с.** (${debtors[0]?.name})`);
       sep();
-      row('#', 'Клиент', 'Долг', 'Телефон');
-      divider(4);
+      row('#', 'Клиент', 'Долг', 'Оплачено', 'Телефон');
+      divider(5);
       debtors.slice(0, 20).forEach((c, i) => {
-        row(i + 1, c.name, `${Math.round(c.total_debt || 0).toLocaleString()} с.`, c.phone || '—');
+        row(i + 1, c.name, `**${Math.round(c.total_debt || 0).toLocaleString()} с.**`,
+          `${Math.round(c.total_paid || 0).toLocaleString()} с.`, c.phone || '—');
       });
     }
     sep();
+    hr();
 
-    h2('🏭 Склады');
-    row('Склад', 'Товаров', 'Коробок', 'Стоимость', 'Продаж', 'Выручка');
+    h2('🏭 СКЛАДЫ');
+    row('Склад', 'Товаров', 'Коробок', 'Стоимость склада', 'Продаж за период', 'Выручка за период');
     divider(6);
     warehouseStats.forEach(w => {
-      row(w.name, w.productsCount, w.boxes, `${Math.round(w.value).toLocaleString()} с.`, w.salesCount, `${Math.round(w.salesRevenue).toLocaleString()} с.`);
+      row(w.name, w.productsCount, w.boxes, `${Math.round(w.value).toLocaleString()} с.`,
+        w.salesCount, `${Math.round(w.salesRevenue).toLocaleString()} с.`);
     });
     sep();
+    hr();
 
-    h2('📦 Остатки товаров на складе');
+    h2('📦 ОСТАТКИ ТОВАРОВ НА СКЛАДАХ');
     const stockProds = [...products].sort((a, b) => (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0));
-    const stockTotalBoxes = stockProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0);
-    const stockTotalPairs = stockProds.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.pairs_per_box || 6), 0);
-    li(`Всего коробок на складах: **${stockTotalBoxes}**`);
-    li(`Всего пар на складах: **${stockTotalPairs}**`);
+    const stockTotalBoxesMd = stockProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0);
+    const stockTotalPairsMd = stockProds.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.pairs_per_box || 6), 0);
+    li(`Всего коробок: **${stockTotalBoxesMd}** | Всего пар: **${stockTotalPairsMd}**`);
+    li(`Общая стоимость: **${Math.round(products.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.sale_price || 0), 0)).toLocaleString()} с.**`);
     sep();
     row('Товар', 'Тип', 'Цвет', 'Склад', 'Коробок', 'Пар', 'Закупка/кор.', 'Продажа/кор.', 'Стоимость');
     divider(9);
@@ -336,24 +515,43 @@ export default function Reports() {
       const wh = warehouses.find(w => w.id === p.warehouse_id);
       const pairs = (p.boxes_in_stock || 0) * (p.pairs_per_box || 6);
       const val = (p.boxes_in_stock || 0) * (p.sale_price || 0);
-      row(`${p.brand} ${p.model}`, p.product_type || '—', p.color || '—', wh?.name || '—', `${p.boxes_in_stock || 0}`, pairs, `${p.purchase_price || 0} с.`, `${p.sale_price || 0} с.`, `${Math.round(val).toLocaleString()} с.`);
+      row(`${p.brand} ${p.model}`, p.product_type || '—', p.color || '—', wh?.name || '—',
+        `${p.boxes_in_stock || 0}`, pairs, `${p.purchase_price || 0} с.`, `${p.sale_price || 0} с.`,
+        `${Math.round(val).toLocaleString()} с.`);
     });
     sep();
+    hr();
 
-    h2('↩️ Возвраты за период');
+    h2('↩️ ВОЗВРАТЫ ЗА ПЕРИОД');
     li(`Всего возвратов: **${filteredReturns.length}**`);
     li(`Общая сумма возвратов: **${Math.round(totalRefund).toLocaleString()} с.**`);
+    if (filteredReturns.length > 0) {
+      sep();
+      row('Дата', 'Товар', 'Клиент', 'Коробок', 'Сумма возврата', 'Причина');
+      divider(6);
+      filteredReturns.forEach(r => {
+        const prod = products.find(p => p.id === r.product_id);
+        const cust = customers.find(c => c.id === r.customer_id);
+        row(r.return_date ? format(parseISO(r.return_date), 'dd.MM.yyyy') : '—',
+          prod ? `${prod.brand} ${prod.model}` : '—',
+          cust?.name || '—', r.boxes_returned || 0,
+          `${Math.round(r.refund_amount || 0).toLocaleString()} с.`, r.reason || '—');
+      });
+    }
     sep();
+    hr();
 
-    h2('📈 Динамика по периодам');
+    h2('📈 ДИНАМИКА ПО ПЕРИОДАМ');
     row('Период', 'Выручка', 'Прибыль', 'Маржа', 'Коробок', 'Пар', 'Продаж', 'Ср. чек');
     divider(8);
     chartData.forEach(r => {
       const m = r.revenue > 0 ? ((r.profit / r.revenue) * 100).toFixed(1) : 0;
       const avgChk = r.count > 0 ? Math.round(r.revenue / r.count) : 0;
       const pairsR = r.boxes * 6;
-      row(r.period, `${Math.round(r.revenue).toLocaleString()} с.`, `${Math.round(r.profit).toLocaleString()} с.`, `${m}%`, r.boxes, pairsR, r.count, `${avgChk.toLocaleString()} с.`);
+      row(r.period, `${Math.round(r.revenue).toLocaleString()} с.`, `${Math.round(r.profit).toLocaleString()} с.`,
+        `${m}%`, r.boxes, pairsR, r.count, `${avgChk.toLocaleString()} с.`);
     });
+    sep();
 
     const md = lines.join('\n');
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
@@ -369,6 +567,7 @@ export default function Reports() {
 
   // === EXPORT EXCEL ===
   const exportExcel = () => {
+
     const wb = XLSX.utils.book_new();
 
     // Summary
@@ -547,11 +746,11 @@ export default function Reports() {
           <p className="text-slate-500 text-sm mt-0.5">{formatDate()} · {totalCount} продаж</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={exportMarkdown} className="gap-2 text-slate-600 border-slate-200 hover:bg-slate-50">
-            <FileText className="w-4 h-4" />
-            Markdown
+          <Button variant="outline" onClick={exportPDF} disabled={exportingPDF} className="gap-2 text-red-600 border-red-200 hover:bg-red-50">
+            {exportingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+            {exportingPDF ? 'Генерация...' : 'PDF'}
           </Button>
-          <Button variant="outline" onClick={exportExcel} className="gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50">
+          <Button variant="outline" onClick={exportMarkdown} className="gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50">
             <FileSpreadsheet className="w-4 h-4" />
             Excel
           </Button>

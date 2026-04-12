@@ -10,7 +10,7 @@ import {
   Plus, Trash2, Edit2, Mail, Phone, User,
   Eye, EyeOff, ShoppingCart, Package, Warehouse,
   Users, CreditCard, BarChart2, Shield, Check, X,
-  RotateCcw, ChevronDown, ChevronUp, Send, UserCheck, Copy
+  RotateCcw, ChevronDown, ChevronUp, Send, UserCheck, Copy, LayoutDashboard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import EmployeeDetailDialog from '../employees/EmployeeDetailDialog';
