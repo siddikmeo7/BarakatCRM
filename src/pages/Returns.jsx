@@ -216,68 +216,46 @@ export default function Returns() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader 
-        title="Возвраты"
-        subtitle={`${totalReturns} возвратов`}
-        actions={
-          can('manage_returns') && (
-            <Button onClick={() => setDialogOpen(true)} className="bg-orange-600 hover:bg-orange-700 gap-2">
-              <Plus className="w-4 h-4" />
-              Оформить возврат
-            </Button>
-          )
-        }
-      />
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">Возвраты</h1>
+          <p className="text-xs text-slate-400">{totalReturns} · {totalRefund.toLocaleString()} с.</p>
+        </div>
+        {can('manage_returns') && (
+          <Button onClick={() => setDialogOpen(true)} size="sm" className="bg-orange-600 hover:bg-orange-700 gap-1.5 text-xs">
+            <Plus className="w-3.5 h-3.5" /> Оформить
+          </Button>
+        )}
+      </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <p className="text-sm text-slate-500">Всего возвратов</p>
-          <p className="text-2xl font-bold text-slate-900">{totalReturns}</p>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100 text-center">
+          <p className="text-xs text-slate-400">Возвратов</p>
+          <p className="text-lg font-bold text-slate-900">{totalReturns}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <p className="text-sm text-slate-500">Коробок возвращено</p>
-          <p className="text-2xl font-bold text-orange-600">{totalBoxes}</p>
+        <div className="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100 text-center">
+          <p className="text-xs text-slate-400">Коробок</p>
+          <p className="text-lg font-bold text-orange-600">{totalBoxes}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <p className="text-sm text-slate-500">Сумма возвратов</p>
-          <p className="text-2xl font-bold text-red-600">{totalRefund.toLocaleString()} с.</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {conditionStats.slice(0, 4).map(stat => (
-              <div key={stat.condition}>
-                <p className="text-slate-500">{stat.condition}</p>
-                <p className="font-bold text-slate-900">{stat.count}</p>
-              </div>
-            ))}
-          </div>
+        <div className="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100 text-center">
+          <p className="text-xs text-slate-400">Сумма</p>
+          <p className="text-lg font-bold text-red-600">{totalRefund.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-4">
+      <div className="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100 flex flex-wrap gap-2">
+        <SearchInput value={search} onChange={setSearch} placeholder="Поиск..." className="flex-1 min-w-32" />
+        <Select value={filterCondition} onValueChange={setFilterCondition}>
+          <SelectTrigger className="w-28 h-8 text-xs"><SelectValue placeholder="Состояние" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все</SelectItem>
+            {CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
-        <div className="flex flex-wrap items-center gap-4">
-          <SearchInput 
-            value={search} 
-            onChange={setSearch} 
-            placeholder="Поиск по товару или клиенту..."
-            className="w-full sm:w-64"
-          />
-          <Select value={filterCondition} onValueChange={setFilterCondition}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Состояние" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все</SelectItem>
-              {CONDITIONS.map(condition => (
-                <SelectItem key={condition} value={condition}>{condition}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       {/* Returns Cards */}

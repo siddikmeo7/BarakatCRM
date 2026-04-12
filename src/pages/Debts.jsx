@@ -754,48 +754,21 @@ export default function Debts() {
 
   // === СПИСОК КЛИЕНТОВ ===
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t(lang, 'debts_title')}
-        subtitle={t(lang, 'debts_subtitle')}
-        actions={
-          <Button onClick={() => setAddDebtOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-            <PlusCircle className="w-4 h-4" /> Добавить долг
-          </Button>
-        }
-      />
-
-      {/* Статистика */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <div className="flex items-center gap-2 mb-2">
-            <CreditCard className="w-5 h-5 text-orange-600" />
-            <span className="text-sm text-slate-500">{t(lang, 'debts_total')}</span>
-          </div>
-          <p className="text-2xl font-bold text-orange-600">{totalDebt.toLocaleString()} с.</p>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">{t(lang,'debts_title')}</h1>
+          <p className="text-xs text-slate-400">{totalDebtors} должников · {totalDebt.toLocaleString()} с.</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <div className="flex items-center gap-2 mb-2">
-            <User className="w-5 h-5 text-indigo-600" />
-            <span className="text-sm text-slate-500">{t(lang, 'debts_debtors')}</span>
-          </div>
-          <p className="text-2xl font-bold text-slate-900">{totalDebtors}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="w-5 h-5 text-emerald-600" />
-            <span className="text-sm text-slate-500">Погашенных</span>
-          </div>
-          <p className="text-2xl font-bold text-emerald-600">
-            {debtorList.filter(d => d.remaining <= 0).length}
-          </p>
-        </div>
+        <Button onClick={() => setAddDebtOpen(true)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
+          <PlusCircle className="w-3.5 h-3.5" /> Добавить
+        </Button>
       </div>
 
       {/* Поиск и сортировка */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-        <SearchInput value={search} onChange={setSearch} placeholder={t(lang, 'debts_search')} />
-        <div className="flex gap-2 flex-wrap">
+      <div className="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100 flex flex-wrap gap-2">
+        <SearchInput value={search} onChange={setSearch} placeholder={t(lang, 'debts_search')} className="flex-1 min-w-32" />
+        <div className="flex gap-1 flex-wrap">
           {[
             { value: 'remaining_desc', label: 'Долг ↓' },
             { value: 'remaining_asc', label: 'Долг ↑' },
@@ -803,7 +776,7 @@ export default function Debts() {
             { value: 'purchases_desc', label: 'Покупок ↓' },
           ].map(opt => (
             <button key={opt.value} onClick={() => setSortDebtors(opt.value)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${sortDebtors === opt.value ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}>
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${sortDebtors === opt.value ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}>
               {opt.label}
             </button>
           ))}
@@ -811,102 +784,48 @@ export default function Debts() {
       </div>
 
       {/* Список клиентов */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         {debtorList.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
+          <div className="text-center py-12 text-slate-400">
             <CreditCard className="w-12 h-12 mx-auto mb-4 text-slate-300" />
             <p>{t(lang, 'debts_not_found')}</p>
           </div>
         ) : (
-        <div className="overflow-y-auto max-h-[600px]">
           <div className="divide-y divide-slate-100">
-        {debtorList.map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }, idx) => {
-          const isPaid = remaining <= 0;
-          const unpaidSales = cSales.filter(s => {
-            const paid = getSalePaidAmount(s.id);
-            return (s.total_amount || 0) - paid > 0;
-          });
-          const dueDateStatus = !isPaid ? getDueDateStatus(unpaidSales) : null;
-          const isOverdue = dueDateStatus === 'overdue';
-          const isDueToday = dueDateStatus === 'today';
-
-          return (
-            <div key={c.id}
-              onClick={() => setSelectedCustomer(c)}
-              className={`p-4 cursor-pointer transition-all ${
-                isOverdue
-                  ? 'bg-red-50 hover:bg-red-100'
-                  : isDueToday
-                  ? 'bg-amber-50 hover:bg-amber-100'
-                  : 'bg-white hover:bg-slate-50'
-              }`}>
-              {/* Номер строки + баннер срока */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold text-slate-300 w-6 text-right flex-shrink-0">{idx + 1}</span>
-                {(isOverdue || isDueToday) && (
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-semibold flex-1 ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
-                  <Clock className="w-3.5 h-3.5" />
-                  {isOverdue ? '🔴 Просрочен срок оплаты!' : '🟡 Сегодня последний день оплаты!'}
-                </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-4 pl-8">
-                {/* Аватар */}
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+          {debtorList.map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }, idx) => {
+            const isPaid = remaining <= 0;
+            const unpaidSales = cSales.filter(s => {
+              const paid = getSalePaidAmount(s.id);
+              return (s.total_amount || 0) - paid > 0;
+            });
+            const dueDateStatus = !isPaid ? getDueDateStatus(unpaidSales) : null;
+            const isOverdue = dueDateStatus === 'overdue';
+            const isDueToday = dueDateStatus === 'today';
+            return (
+              <div key={c.id} onClick={() => setSelectedCustomer(c)}
+                className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer ${isOverdue ? 'bg-red-50' : isDueToday ? 'bg-amber-50' : 'bg-white hover:bg-slate-50'}`}>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
                   isOverdue ? 'bg-red-200' : isDueToday ? 'bg-amber-200' : isPaid ? 'bg-emerald-100' : 'bg-orange-100'
                 }`}>
-                  <span className={`text-lg font-bold ${isOverdue ? 'text-red-700' : isDueToday ? 'text-amber-700' : isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
+                  <span className={`text-sm font-bold ${isOverdue ? 'text-red-700' : isDueToday ? 'text-amber-700' : isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
                     {c.name?.charAt(0)?.toUpperCase()}
                   </span>
                 </div>
-
-                {/* Инфо */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-slate-900">{c.name}</p>
-                    {isPaid && <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium">Погашено</span>}
-                  </div>
-                  {c.phone && <p className="text-sm text-slate-400">{c.phone}</p>}
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-xs text-slate-400">{cSales.length} покупок</span>
-                    {unpaidSales.length > 0 && (
-                      <span className="text-xs text-orange-500 font-medium">{unpaidSales.length} не оплачено</span>
-                    )}
-                  </div>
+                  <p className="text-sm font-semibold text-slate-900 truncate">{c.name}</p>
+                  <p className="text-xs text-slate-400">{c.phone} · {cSales.length} пок.</p>
                 </div>
-
-                {/* Долг */}
                 <div className="text-right flex-shrink-0">
-                  <p className={`text-lg font-bold ${isOverdue ? 'text-red-600' : isDueToday ? 'text-amber-600' : isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
+                  <p className={`text-sm font-bold ${isOverdue ? 'text-red-600' : isDueToday ? 'text-amber-600' : isPaid ? 'text-emerald-600' : 'text-orange-600'}`}>
                     {remaining.toLocaleString()} с.
                   </p>
-                  <p className="text-xs text-slate-400">из {totalAmount.toLocaleString()} с.</p>
-                  <button
-                    onClick={e => { e.stopPropagation(); setAddDebtData({ customer_id: c.id, new_customer_name: '', new_customer_phone: '', amount: '', note: '', is_new_customer: false }); setAddDebtOpen(true); }}
-                    className="mt-1 text-xs text-orange-500 hover:text-orange-700 font-medium flex items-center gap-0.5 ml-auto"
-                  >
-                    <Plus className="w-3 h-3" /> долг
-                  </button>
+                  {isOverdue && <p className="text-xs text-red-500">Просрочен!</p>}
                 </div>
-
-                <ChevronRight className="w-5 h-5 text-slate-300 flex-shrink-0" />
+                <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
               </div>
-
-              {/* Прогресс-бар */}
-              {totalAmount > 0 && (
-                <div className="mt-3 ml-8 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${isOverdue ? 'bg-red-500' : isDueToday ? 'bg-amber-500' : isPaid ? 'bg-emerald-500' : 'bg-orange-400'}`}
-                    style={{ width: `${Math.min(100, (totalPaid / totalAmount) * 100)}%` }}
-                  />
-                </div>
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
           </div>
-        </div>
         )}
       </div>
 
