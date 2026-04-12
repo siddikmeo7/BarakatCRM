@@ -180,8 +180,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="space-y-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {(widgets.length === 0 ? ['sales', 'profit', 'boxes', 'stock'] : widgets.filter(w => ['sales', 'profit', 'boxes', 'pairs', 'stock', 'debt', 'customers'].includes(w.widget_type))).map((widget) => {
           const widgetType = typeof widget === 'string' ? widget : widget.widget_type;
           const widgetConfigs = {
@@ -201,42 +201,37 @@ export default function Dashboard() {
 
       {/* Charts & Analytics */}
       {(widgets.length === 0 || widgets.some(w => ['chart_sales', 'sales_type'].includes(w.widget_type))) && (
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-2 gap-3">
           {(widgets.length === 0 || widgets.some(w => w.widget_type === 'chart_sales')) && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-              <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'dash_dynamics')}</h3>
+            <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">{t(lang,'dash_dynamics')}</h3>
               <SalesChart sales={filteredSales} days={7} showProfit={can('view_profit')} />
             </div>
           )}
-          
           {(widgets.length === 0 || widgets.some(w => w.widget_type === 'sales_type')) && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-              <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'dash_cash_vs_debt')}</h3>
-              <div className="h-64">
+            <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
+              <h3 className="text-sm font-semibold text-slate-900 mb-2">{t(lang,'dash_cash_vs_debt')}</h3>
+              <div className="h-48">
                 <SalesTypeChart sales={filteredSales} />
               </div>
-              <div className="grid grid-cols-2 gap-6 mt-6 pt-6 border-t border-slate-100">
-                <div className="text-center p-4 bg-emerald-50 rounded-xl">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                    <p className="text-sm font-medium text-slate-600">{t(lang,'dash_cash')}</p>
+              <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">
+                <div className="text-center p-2 bg-emerald-50 rounded-lg">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <p className="text-xs font-medium text-slate-600">{t(lang,'dash_cash')}</p>
                   </div>
-                  <p className="text-3xl font-bold text-emerald-600">
-                    {hideData ? masked : `${totalSalesValue ? ((cashAmount / totalSalesValue) * 100).toFixed(1) : 0}%`}
-                  </p>
-                  <p className="text-sm text-slate-500 mt-1">{cashSales.length} {t(lang,'dash_sales_count')}</p>
-                  <p className="text-lg font-semibold text-slate-900 mt-2">{hideData ? masked : `${cashAmount.toLocaleString()} с.`}</p>
+                  <p className="text-lg font-bold text-emerald-600">{hideData ? masked : `${totalSalesValue ? ((cashAmount / totalSalesValue) * 100).toFixed(1) : 0}%`}</p>
+                  <p className="text-xs text-slate-500">{cashSales.length} {t(lang,'dash_sales_count')}</p>
+                  <p className="text-sm font-semibold text-slate-900">{hideData ? masked : `${cashAmount.toLocaleString()} с.`}</p>
                 </div>
-                <div className="text-center p-4 bg-amber-50 rounded-xl">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <div className="w-3 h-3 rounded-full bg-amber-500" />
-                    <p className="text-sm font-medium text-slate-600">{t(lang,'dash_in_debt')}</p>
+                <div className="text-center p-2 bg-amber-50 rounded-lg">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                    <p className="text-xs font-medium text-slate-600">{t(lang,'dash_in_debt')}</p>
                   </div>
-                  <p className="text-3xl font-bold text-amber-600">
-                    {hideData ? masked : `${totalSalesValue ? ((debtAmount / totalSalesValue) * 100).toFixed(1) : 0}%`}
-                  </p>
-                  <p className="text-sm text-slate-500 mt-1">{debtSales.length} {t(lang,'dash_sales_count')}</p>
-                  <p className="text-lg font-semibold text-slate-900 mt-2">{hideData ? masked : `${debtAmount.toLocaleString()} с.`}</p>
+                  <p className="text-lg font-bold text-amber-600">{hideData ? masked : `${totalSalesValue ? ((debtAmount / totalSalesValue) * 100).toFixed(1) : 0}%`}</p>
+                  <p className="text-xs text-slate-500">{debtSales.length} {t(lang,'dash_sales_count')}</p>
+                  <p className="text-sm font-semibold text-slate-900">{hideData ? masked : `${debtAmount.toLocaleString()} с.`}</p>
                 </div>
               </div>
             </div>
@@ -246,73 +241,58 @@ export default function Dashboard() {
 
       {/* Top Products & Quick Actions */}
       {(widgets.length === 0 || widgets.some(w => w.widget_type === 'top_products')) && (
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-3">
 
         {/* Top Products */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-900">{t(lang,'dash_top_products')}</h3>
-            <Link to={createPageUrl('Products')} className="text-sm text-indigo-600 hover:text-indigo-700">
+        <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-slate-900">{t(lang,'dash_top_products')}</h3>
+            <Link to={createPageUrl('Products')} className="text-xs text-indigo-600 hover:text-indigo-700">
               {t(lang,'dash_all_products')}
             </Link>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-1.5">
             {topProducts.length > 0 ? topProducts.map((item, index) => (
-              <div key={item.product.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
-                <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold">
+              <div key={item.product.id} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
+                <div className="w-6 h-6 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0">
                   {index + 1}
                 </div>
                 {item.product.photo_url ? (
-                  <img src={item.product.photo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                  <img src={item.product.photo_url} alt="" className="w-8 h-8 rounded-md object-cover flex-shrink-0" />
                 ) : (
-                  <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center">
-                    <Package className="w-6 h-6 text-slate-400" />
+                  <div className="w-8 h-8 rounded-md bg-slate-200 flex items-center justify-center flex-shrink-0">
+                    <Package className="w-4 h-4 text-slate-400" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 truncate">{item.product.brand} {item.product.model}</p>
-                  <p className="text-sm text-slate-500">{item.boxes} {t(lang,'dash_boxes')}</p>
+                  <p className="text-xs font-medium text-slate-900 truncate">{item.product.brand} {item.product.model}</p>
+                  <p className="text-xs text-slate-400">{item.boxes} {t(lang,'dash_boxes')}</p>
                 </div>
-                <p className="font-semibold text-slate-900">{(hideData || !can('view_stock_value')) ? masked : `${item.revenue.toLocaleString()} с.`}</p>
+                <p className="text-xs font-semibold text-slate-900 flex-shrink-0">{(hideData || !can('view_stock_value')) ? masked : `${item.revenue.toLocaleString()} с.`}</p>
               </div>
             )) : (
-              <p className="text-center text-slate-500 py-8">{t(lang,'dash_no_sales')}</p>
+              <p className="text-center text-slate-400 py-4 text-xs">{t(lang,'dash_no_sales')}</p>
             )}
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 mb-4">{t(lang,'dash_quick_actions')}</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <Link to={createPageUrl('Products')}>
-              <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
-                <Package className="w-8 h-8 text-indigo-600 mb-2" />
-                <p className="font-medium text-slate-900">{t(lang,'dash_add_product')}</p>
-                <ArrowRight className="w-4 h-4 text-indigo-600 mt-2 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-            <Link to={createPageUrl('Sales')}>
-              <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
-                <ShoppingCart className="w-8 h-8 text-emerald-600 mb-2" />
-                <p className="font-medium text-slate-900">{t(lang,'dash_new_sale')}</p>
-                <ArrowRight className="w-4 h-4 text-emerald-600 mt-2 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-            <Link to={createPageUrl('Warehouses')}>
-              <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
-                <Warehouse className="w-8 h-8 text-purple-600 mb-2" />
-                <p className="font-medium text-slate-900">{t(lang,'dash_warehouses')}</p>
-                <ArrowRight className="w-4 h-4 text-purple-600 mt-2 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-            <Link to={createPageUrl('Customers')}>
-              <div className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl hover:shadow-md transition-shadow cursor-pointer group">
-                <Users className="w-8 h-8 text-amber-600 mb-2" />
-                <p className="font-medium text-slate-900">{t(lang,'dash_clients')}</p>
-                <ArrowRight className="w-4 h-4 text-amber-600 mt-2 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
+        <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
+          <h3 className="text-sm font-semibold text-slate-900 mb-2">{t(lang,'dash_quick_actions')}</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { to: 'Products', icon: Package, label: t(lang,'dash_add_product'), from: 'from-indigo-50', to2: 'to-indigo-100', tc: 'text-indigo-600' },
+              { to: 'Sales', icon: ShoppingCart, label: t(lang,'dash_new_sale'), from: 'from-emerald-50', to2: 'to-emerald-100', tc: 'text-emerald-600' },
+              { to: 'Warehouses', icon: Warehouse, label: t(lang,'dash_warehouses'), from: 'from-purple-50', to2: 'to-purple-100', tc: 'text-purple-600' },
+              { to: 'Customers', icon: Users, label: t(lang,'dash_clients'), from: 'from-amber-50', to2: 'to-amber-100', tc: 'text-amber-600' },
+            ].map(item => (
+              <Link key={item.to} to={createPageUrl(item.to)}>
+                <div className={`flex items-center gap-2 p-2.5 bg-gradient-to-br ${item.from} ${item.to2} rounded-lg hover:shadow-sm transition-all cursor-pointer`}>
+                  <item.icon className={`w-5 h-5 ${item.tc} flex-shrink-0`} />
+                  <p className="text-xs font-medium text-slate-800 leading-tight">{item.label}</p>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </div>
