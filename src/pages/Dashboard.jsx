@@ -153,15 +153,16 @@ export default function Dashboard() {
         actions={
           <div className="flex gap-2">
             <Link to={createPageUrl('CustomizeDashboard')}>
-              <Button variant="outline" className="gap-2">
-                <LayoutDashboard className="w-4 h-4" />
-                {t(lang, 'dash_customize')}
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs px-2 sm:px-3">
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{t(lang, 'dash_customize')}</span>
               </Button>
             </Link>
             <Link to={createPageUrl('Sales')}>
-              <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-                <Plus className="w-4 h-4" />
-                {t(lang, 'dash_new_sale')}
+              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs px-2 sm:px-3">
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{t(lang, 'dash_new_sale')}</span>
+                <span className="sm:hidden">+ Продажа</span>
               </Button>
             </Link>
           </div>

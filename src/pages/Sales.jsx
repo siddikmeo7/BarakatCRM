@@ -353,13 +353,13 @@ export default function Sales() {
         actions={
           can('add_sales') && (
             <div className="flex gap-2">
-              <Button onClick={() => setDialogOpen(true)} variant="outline" className="gap-2 border-indigo-300 text-indigo-600 hover:bg-indigo-50">
-                <Plus className="w-4 h-4" />
-                1 товар
+              <Button onClick={() => setDialogOpen(true)} variant="outline" size="sm" className="gap-1.5 text-xs border-indigo-300 text-indigo-600 hover:bg-indigo-50 px-2 sm:px-3">
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">1 товар</span>
               </Button>
-              <Button onClick={() => setMultiDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-                <ShoppingCart className="w-4 h-4" />
-                Несколько товаров
+              <Button onClick={() => setMultiDialogOpen(true)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs px-2 sm:px-3">
+                <ShoppingCart className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline sm:inline">Продажа</span>
               </Button>
             </div>
           )
@@ -367,75 +367,76 @@ export default function Sales() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Box className="w-5 h-5 text-indigo-600" />
-            <span className="text-sm text-slate-500">{t(lang,'sales_boxes_label')}</span>
+      <div className="grid grid-cols-3 lg:grid-cols-5 gap-2">
+        <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Box className="w-4 h-4 text-indigo-600" />
+            <span className="text-xs text-slate-500 truncate">{t(lang,'sales_boxes_label')}</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900">{totals.boxes}</p>
+          <p className="text-xl font-bold text-slate-900">{totals.boxes}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Layers className="w-5 h-5 text-purple-600" />
-            <span className="text-sm text-slate-500">{t(lang,'sales_pairs_label')}</span>
+        <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Layers className="w-4 h-4 text-purple-600" />
+            <span className="text-xs text-slate-500 truncate">{t(lang,'sales_pairs_label')}</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900">{totals.pairs}</p>
+          <p className="text-xl font-bold text-slate-900">{totals.pairs}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Hash className="w-5 h-5 text-amber-600" />
-            <span className="text-sm text-slate-500">{t(lang,'sales_items_label')}</span>
+        <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 hidden sm:block lg:block">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Hash className="w-4 h-4 text-amber-600" />
+            <span className="text-xs text-slate-500 truncate">{t(lang,'sales_items_label')}</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900">{totals.items}</p>
+          <p className="text-xl font-bold text-slate-900">{totals.items}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <div className="flex items-center gap-2 mb-2">
-            <ShoppingCart className="w-5 h-5 text-blue-600" />
-            <span className="text-sm text-slate-500">{t(lang,'sales_revenue')}</span>
+        <div className="col-span-2 sm:col-span-1 bg-white rounded-xl p-3 shadow-sm border border-slate-100">
+          <div className="flex items-center gap-1.5 mb-1">
+            <ShoppingCart className="w-4 h-4 text-blue-600" />
+            <span className="text-xs text-slate-500 truncate">{t(lang,'sales_revenue')}</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900">{totals.revenue.toLocaleString()}</p>
+          <p className="text-xl font-bold text-slate-900">{totals.revenue.toLocaleString()}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-5 h-5 text-emerald-600" />
-            <span className="text-sm text-slate-500">{t(lang,'sales_profit')}</span>
+        <div className="col-span-1 lg:col-span-1 bg-white rounded-xl p-3 shadow-sm border border-slate-100">
+          <div className="flex items-center gap-1.5 mb-1">
+            <TrendingUp className="w-4 h-4 text-emerald-600" />
+            <span className="text-xs text-slate-500 truncate">{t(lang,'sales_profit')}</span>
           </div>
           {can('view_profit') ? (
-            <p className="text-2xl font-bold text-emerald-600">{totals.profit.toLocaleString()}</p>
+            <p className="text-xl font-bold text-emerald-600">{totals.profit.toLocaleString()}</p>
           ) : (
-            <p className="text-2xl font-bold text-slate-300">••••• с.</p>
+            <p className="text-xl font-bold text-slate-300">•••</p>
           )}
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+      <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 space-y-2">
         {/* Quick period buttons */}
-        <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-wrap gap-1.5 items-center">
           {[
             { key: 'today', label: 'Сегодня' },
             { key: 'week', label: 'Неделя' },
             { key: 'month', label: 'Месяц' },
           ].map(f => (
             <button key={f.key} onClick={() => setSalesQuickPeriod(f.key)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium border bg-white text-slate-600 border-slate-200 hover:border-indigo-400 transition-all">
+              className="px-2.5 py-1 rounded-lg text-xs font-medium border bg-white text-slate-600 border-slate-200 hover:border-indigo-400 transition-all">
               {f.label}
             </button>
           ))}
           <DateFilter dateRange={dateRange} onDateRangeChange={r => { setDateRange(r); setSalesPage(1); }} />
-          <span className="ml-auto text-xs text-slate-400">{filteredSales.length} продаж</span>
           <ViewToggle view={view} onChange={setView} />
+          <span className="ml-auto text-xs text-slate-400">{filteredSales.length}</span>
         </div>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2">
           <SearchInput 
             value={search} 
             onChange={setSearch} 
             placeholder={t(lang,'sales_search')}
-            className="w-full sm:w-64"
+            className="w-full sm:w-56"
           />
+          <div className="flex flex-wrap gap-1.5">
           <Select value={filterWarehouse} onValueChange={setFilterWarehouse}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-28 h-8 text-xs">
               <SelectValue placeholder={t(lang,'prod_warehouse')} />
             </SelectTrigger>
             <SelectContent>
@@ -446,7 +447,7 @@ export default function Sales() {
             </SelectContent>
           </Select>
           <Select value={displayUnit} onValueChange={setDisplayUnit}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-24 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -457,74 +458,41 @@ export default function Sales() {
           </Select>
           <div className="relative customer-filter-dropdown">
             <div
-              className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-1.5 bg-white cursor-pointer w-48 text-sm"
+              className="flex items-center gap-1 border border-slate-200 rounded-lg px-2 py-1 bg-white cursor-pointer w-32 text-xs h-8"
               onClick={() => setShowCustomerDropdown(v => !v)}
             >
               <span className="flex-1 truncate text-slate-700">
-                {filterCustomer === 'all' ? 'Все клиенты' : customers.find(c => c.id === filterCustomer)?.name || 'Клиент'}
+                {filterCustomer === 'all' ? 'Клиенты' : customers.find(c => c.id === filterCustomer)?.name || 'Клиент'}
               </span>
               {filterCustomer !== 'all' && (
-                <button onClick={e => { e.stopPropagation(); setFilterCustomer('all'); setFilterCustomerSearch(''); setSalesPage(1); }} className="text-slate-400 hover:text-slate-600">✕</button>
+                <button onClick={e => { e.stopPropagation(); setFilterCustomer('all'); setFilterCustomerSearch(''); setSalesPage(1); }} className="text-slate-400">✕</button>
               )}
             </div>
             {showCustomerDropdown && (
-              <div className="absolute z-50 top-full mt-1 left-0 w-56 bg-white border border-slate-200 rounded-xl shadow-lg">
+              <div className="absolute z-50 top-full mt-1 left-0 w-48 bg-white border border-slate-200 rounded-xl shadow-lg">
                 <div className="p-2">
-                  <input
-                    autoFocus
-                    className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
-                    placeholder="Поиск клиента..."
-                    value={filterCustomerSearch}
-                    onChange={e => setFilterCustomerSearch(e.target.value)}
-                    onClick={e => e.stopPropagation()}
-                  />
+                  <input autoFocus className="w-full border border-slate-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-indigo-400" placeholder="Поиск клиента..." value={filterCustomerSearch} onChange={e => setFilterCustomerSearch(e.target.value)} onClick={e => e.stopPropagation()} />
                 </div>
-                <div className="max-h-48 overflow-y-auto pb-1">
-                  <div
-                    className={`px-3 py-2 text-sm cursor-pointer hover:bg-slate-50 ${filterCustomer === 'all' ? 'text-indigo-600 font-medium' : 'text-slate-700'}`}
-                    onClick={() => { setFilterCustomer('all'); setFilterCustomerSearch(''); setShowCustomerDropdown(false); setSalesPage(1); }}
-                  >
-                    Все клиенты
-                  </div>
-                  {customers
-                    .filter(c => sales.some(s => s.customer_id === c.id))
-                    .filter(c => !filterCustomerSearch || c.name?.toLowerCase().includes(filterCustomerSearch.toLowerCase()))
-                    .map(c => (
-                      <div
-                        key={c.id}
-                        className={`px-3 py-2 text-sm cursor-pointer hover:bg-slate-50 ${filterCustomer === c.id ? 'text-indigo-600 font-medium bg-indigo-50' : 'text-slate-700'}`}
-                        onClick={() => { setFilterCustomer(c.id); setFilterCustomerSearch(''); setShowCustomerDropdown(false); setSalesPage(1); }}
-                      >
-                        {c.name}
-                      </div>
-                    ))
-                  }
+                <div className="max-h-40 overflow-y-auto pb-1">
+                  <div className={`px-3 py-1.5 text-xs cursor-pointer hover:bg-slate-50 ${filterCustomer === 'all' ? 'text-indigo-600 font-medium' : 'text-slate-700'}`} onClick={() => { setFilterCustomer('all'); setFilterCustomerSearch(''); setShowCustomerDropdown(false); setSalesPage(1); }}>Все клиенты</div>
+                  {customers.filter(c => sales.some(s => s.customer_id === c.id)).filter(c => !filterCustomerSearch || c.name?.toLowerCase().includes(filterCustomerSearch.toLowerCase())).map(c => (
+                    <div key={c.id} className={`px-3 py-1.5 text-xs cursor-pointer hover:bg-slate-50 ${filterCustomer === c.id ? 'text-indigo-600 font-medium bg-indigo-50' : 'text-slate-700'}`} onClick={() => { setFilterCustomer(c.id); setFilterCustomerSearch(''); setShowCustomerDropdown(false); setSalesPage(1); }}>{c.name}</div>
+                  ))}
                 </div>
               </div>
             )}
           </div>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-28 h-8 text-xs">
               <SelectValue placeholder="Сортировка" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="date">По дате (новые)</SelectItem>
+              <SelectItem value="date">По дате</SelectItem>
               <SelectItem value="amount">По сумме</SelectItem>
               <SelectItem value="profit">По прибыли</SelectItem>
               <SelectItem value="boxes">По коробкам</SelectItem>
             </SelectContent>
           </Select>
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
-            <input
-              type="time"
-              value={filterTime}
-              onChange={(e) => { setFilterTime(e.target.value); setSalesPage(1); }}
-              className="border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-400 bg-white"
-            />
-            {filterTime && (
-              <button onClick={() => { setFilterTime(''); setSalesPage(1); }} className="text-slate-400 hover:text-slate-600 text-xs">✕</button>
-            )}
           </div>
         </div>
       </div>

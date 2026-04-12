@@ -368,41 +368,42 @@ export default function Products() {
       />
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+      <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 space-y-2">
         {/* Date filter tabs */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {[
             { key: 'all', label: 'Все' },
             { key: 'today', label: 'Сегодня' },
-            { key: 'week', label: 'Неделя' },
-            { key: 'month', label: 'Месяц' },
-            { key: 'custom', label: '📅 Период' },
+            { key: 'week', label: 'Нед.' },
+            { key: 'month', label: 'Мес.' },
+            { key: 'custom', label: '📅' },
           ].map(f => (
             <button
               key={f.key}
               onClick={() => { setDateFilter(f.key); setPage(1); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${dateFilter === f.key ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${dateFilter === f.key ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
             >
               {f.label}
             </button>
           ))}
           {dateFilter === 'custom' && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <Input type="date" value={customDateFrom} onChange={e => { setCustomDateFrom(e.target.value); setPage(1); }} className="h-8 text-xs w-36" />
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Input type="date" value={customDateFrom} onChange={e => { setCustomDateFrom(e.target.value); setPage(1); }} className="h-7 text-xs w-32" />
               <span className="text-xs text-slate-400">—</span>
-              <Input type="date" value={customDateTo} onChange={e => { setCustomDateTo(e.target.value); setPage(1); }} className="h-8 text-xs w-36" />
+              <Input type="date" value={customDateTo} onChange={e => { setCustomDateTo(e.target.value); setPage(1); }} className="h-7 text-xs w-32" />
             </div>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <SearchInput 
             value={search} 
             onChange={v => { setSearch(v); setPage(1); }} 
             placeholder={t(lang,'prod_search')}
-            className="w-full sm:w-64"
+            className="w-full sm:w-56"
           />
+          <div className="flex flex-wrap gap-2">
           <Select value={filterType} onValueChange={v => { setFilterType(v); setPage(1); }}>
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="w-32 h-8 text-xs">
               <SelectValue placeholder={t(lang,'prod_type')} />
             </SelectTrigger>
             <SelectContent>
@@ -413,7 +414,7 @@ export default function Products() {
             </SelectContent>
           </Select>
           <Select value={filterWarehouse} onValueChange={v => { setFilterWarehouse(v); setPage(1); }}>
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="w-32 h-8 text-xs">
               <SelectValue placeholder={t(lang,'prod_warehouse')} />
             </SelectTrigger>
             <SelectContent>
@@ -424,7 +425,7 @@ export default function Products() {
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="w-32 h-8 text-xs">
               <SelectValue placeholder="Сортировка" />
             </SelectTrigger>
             <SelectContent>
@@ -438,12 +439,13 @@ export default function Products() {
           <ViewToggle view={view} onChange={setView} />
           <button
             onClick={() => setHideImages(h => !h)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${hideImages ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all ${hideImages ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
           >
-            <Package className="w-3.5 h-3.5" />
-            {hideImages ? 'С фото' : 'Без фото'}
+            <Package className="w-3 h-3" />
+            <span className="hidden sm:inline">{hideImages ? 'С фото' : 'Без фото'}</span>
           </button>
-          <span className="text-xs text-slate-400 ml-auto">{filteredProducts.length} товаров</span>
+          <span className="text-xs text-slate-400">{filteredProducts.length}</span>
+          </div>
         </div>
       </div>
 
