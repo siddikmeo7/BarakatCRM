@@ -46,6 +46,7 @@ const TABS = [
   { id: 'sales', label: '🛒 Продажи', icon: ShoppingCart },
   { id: 'products', label: '📦 Товары', icon: Package },
   { id: 'customers', label: '👥 Клиенты', icon: Users },
+  { id: 'employees', label: '🧑‍💼 Сотрудники', icon: Users },
   { id: 'debts', label: '💳 Долги', icon: CreditCard },
   { id: 'warehouses', label: '🏭 Склады', icon: Warehouse },
   { id: 'returns', label: '↩️ Возвраты', icon: RotateCcw },
@@ -71,6 +72,7 @@ export default function Reports() {
   const [chartType, setChartType] = useState('bar');
   const [exportingPDF, setExportingPDF] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showComparison, setShowComparison] = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
@@ -120,6 +122,19 @@ export default function Reports() {
     setCalendarOpen(false);
   };
 
+  // Previous period for comparison
+  const prevPeriodSales = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return [];
+    const duration = dateRange.to.getTime() - dateRange.from.getTime();
+    const prevFrom = new Date(dateRange.from.getTime() - duration - 86400000);
+    const prevTo = new Date(dateRange.from.getTime() - 86400000);
+    return sales.filter(s => {
+      if (s.is_cancelled) return false;
+      const d = parseISO(s.sale_date || s.created_date);
+      return d >= startOfDay(prevFrom) && d <= endOfDay(prevTo);
+    });
+  }, [sales, dateRange]);
+
   const filteredSales = useMemo(() => {
     return sales.filter(s => {
       if (s.is_cancelled) return false;
@@ -164,6 +179,23 @@ export default function Reports() {
   const debtRevenue = debtSales.reduce((s, x) => s + (x.total_amount || 0), 0);
   const marginPct = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0;
   const avgSale = totalCount > 0 ? totalRevenue / totalCount : 0;
+
+  // Employee stats
+  const employeeStats = useMemo(() => {
+    const map = {};
+    filteredSales.forEach(s => {
+      const email = s.created_by || 'unknown';
+      if (!map[email]) map[email] = { email, revenue: 0, profit: 0, boxes: 0, count: 0, debtCount: 0 };
+      map[email].revenue += s.total_amount || 0;
+      map[email].profit += s.profit || 0;
+      map[email].boxes += s.boxes_sold || 0;
+      map[email].count += 1;
+      if (s.is_debt) map[email].debtCount += 1;
+    });
+    return Object.values(map)
+      .map(stat => ({ ...stat, employee: employees.find(e => e.user_email === stat.email) }))
+      .sort((a, b) => b.revenue - a.revenue);
+  }, [filteredSales, employees]);
 
   // Products
   const topProducts = useMemo(() => {
@@ -750,9 +782,13 @@ export default function Reports() {
             {exportingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
             {exportingPDF ? 'Генерация...' : 'PDF'}
           </Button>
-          <Button variant="outline" onClick={exportMarkdown} className="gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50">
+          <Button variant="outline" onClick={exportExcel} className="gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50">
             <FileSpreadsheet className="w-4 h-4" />
             Excel
+          </Button>
+          <Button variant="outline" onClick={exportMarkdown} className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50">
+            <FileText className="w-4 h-4" />
+            Markdown
           </Button>
         </div>
       </div>
@@ -838,23 +874,50 @@ export default function Reports() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: 'Выручка', value: `${Math.round(totalRevenue).toLocaleString()} с.`, sub: `Ср. чек: ${Math.round(avgSale).toLocaleString()} с.`, icon: TrendingUp, color: 'from-blue-400 to-indigo-500' },
-          { label: 'Прибыль', value: `${Math.round(totalProfit).toLocaleString()} с.`, sub: `Маржа: ${marginPct}%`, icon: ArrowUpRight, color: 'from-emerald-400 to-teal-500' },
-          { label: 'Коробок продано', value: totalBoxes, sub: `${totalCount} продаж`, icon: Package, color: 'from-amber-400 to-orange-500' },
-          { label: 'Долг клиентов', value: `${Math.round(totalDebt).toLocaleString()} с.`, sub: `${debtors.length} должников`, icon: CreditCard, color: 'from-red-400 to-rose-500' },
-        ].map((card, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center flex-shrink-0`}>
-                <card.icon className="w-4 h-4 text-white" />
+        {(() => {
+          const prevRevenue = prevPeriodSales.reduce((s, x) => s + (x.total_amount || 0), 0);
+          const prevProfit = prevPeriodSales.reduce((s, x) => s + (x.profit || 0), 0);
+          const prevBoxes = prevPeriodSales.reduce((s, x) => s + (x.boxes_sold || 0), 0);
+          const delta = (cur, prev) => {
+            if (!prev || !showComparison) return null;
+            const pct = ((cur - prev) / prev * 100).toFixed(1);
+            return { pct, positive: cur >= prev };
+          };
+          return [
+            { label: 'Выручка', value: `${Math.round(totalRevenue).toLocaleString()} с.`, sub: `Ср. чек: ${Math.round(avgSale).toLocaleString()} с.`, icon: TrendingUp, color: 'from-blue-400 to-indigo-500', d: delta(totalRevenue, prevRevenue) },
+            { label: 'Прибыль', value: `${Math.round(totalProfit).toLocaleString()} с.`, sub: `Маржа: ${marginPct}%`, icon: ArrowUpRight, color: 'from-emerald-400 to-teal-500', d: delta(totalProfit, prevProfit) },
+            { label: 'Коробок продано', value: totalBoxes, sub: `${totalCount} продаж`, icon: Package, color: 'from-amber-400 to-orange-500', d: delta(totalBoxes, prevBoxes) },
+            { label: 'Долг клиентов', value: `${Math.round(totalDebt).toLocaleString()} с.`, sub: `${debtors.length} должников`, icon: CreditCard, color: 'from-red-400 to-rose-500', d: null },
+          ].map((card, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center flex-shrink-0`}>
+                  <card.icon className="w-4 h-4 text-white" />
+                </div>
+                <p className="text-xs text-slate-400">{card.label}</p>
               </div>
-              <p className="text-xs text-slate-400">{card.label}</p>
+              <p className="text-xl font-bold text-slate-900">{card.value}</p>
+              <div className="flex items-center justify-between mt-0.5">
+                <p className="text-xs text-slate-400">{card.sub}</p>
+                {card.d && (
+                  <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${card.d.positive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                    {card.d.positive ? '▲' : '▼'} {Math.abs(card.d.pct)}%
+                  </span>
+                )}
+              </div>
             </div>
-            <p className="text-xl font-bold text-slate-900">{card.value}</p>
-            <p className="text-xs text-slate-400 mt-0.5">{card.sub}</p>
-          </div>
-        ))}
+          ));
+        })()}
+      </div>
+      {/* Comparison toggle */}
+      <div className="flex items-center gap-3">
+        <button onClick={() => setShowComparison(v => !v)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${showComparison ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}>
+          {showComparison ? '✓ ' : ''}Сравнение с пред. периодом
+        </button>
+        {showComparison && prevPeriodSales.length > 0 && (
+          <span className="text-xs text-slate-400">Пред. период: {prevPeriodSales.length} продаж · {Math.round(prevPeriodSales.reduce((s,x)=>s+(x.total_amount||0),0)).toLocaleString()} с.</span>
+        )}
       </div>
 
       {/* Tabs */}
@@ -992,6 +1055,23 @@ export default function Reports() {
       {/* PRODUCTS TAB */}
       {activeTab === 'products' && (
         <div className="space-y-4">
+          {/* Low stock warning */}
+          {(() => {
+            const lowStock = products.filter(p => (p.boxes_in_stock || 0) <= 2 && p.boxes_in_stock !== undefined);
+            if (lowStock.length === 0) return null;
+            return (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                <p className="text-sm font-semibold text-red-700 mb-2">⚠️ Мало на складе ({lowStock.length} товаров)</p>
+                <div className="flex flex-wrap gap-2">
+                  {lowStock.map(p => (
+                    <span key={p.id} className="px-2.5 py-1 bg-red-100 border border-red-200 text-red-700 rounded-lg text-xs font-medium">
+                      {p.brand} {p.model} — {p.boxes_in_stock} кор.
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <h2 className="font-semibold text-slate-800 mb-4">Топ товаров по продажам</h2>
             {topProducts.length === 0 ? <p className="text-slate-400 text-sm text-center py-8">Нет данных</p> : (
@@ -1025,7 +1105,7 @@ export default function Reports() {
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-slate-800">Остатки на складах ({products.length} товаров)</h2>
-              <div className="flex gap-4 text-sm">
+              <div className="flex gap-2 text-sm">
                 <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg font-semibold">{products.reduce((s, p) => s + (p.boxes_in_stock || 0), 0)} кор.</span>
                 <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg font-semibold">{products.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.pairs_per_box || 6), 0)} пар</span>
               </div>
@@ -1042,19 +1122,19 @@ export default function Reports() {
                   <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Стоимость</th>
                 </tr></thead>
                 <tbody>
-                  {[...products].sort((a, b) => (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0)).map((p, i) => {
+                  {[...products].sort((a, b) => (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0)).map((p) => {
                     const boxes = p.boxes_in_stock || 0;
                     const pairs = boxes * (p.pairs_per_box || 6);
                     return (
-                    <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
-                      <td className="py-1.5 px-2 text-xs font-medium text-slate-700">{p.brand} {p.model}</td>
-                      <td className="py-1.5 px-2 text-xs text-slate-500">{p.product_type || '—'}</td>
-                      <td className="py-1.5 px-2 text-xs text-right font-semibold text-indigo-700">{boxes}</td>
-                      <td className="py-1.5 px-2 text-xs text-right text-slate-500">{pairs}</td>
-                      <td className="py-1.5 px-2 text-xs text-right text-slate-500">{p.purchase_price || 0} с.</td>
-                      <td className="py-1.5 px-2 text-xs text-right text-indigo-600">{p.sale_price || 0} с.</td>
-                      <td className="py-1.5 px-2 text-xs text-right text-emerald-600 font-semibold">{Math.round(boxes * (p.sale_price || 0)).toLocaleString()} с.</td>
-                    </tr>
+                      <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
+                        <td className="py-1.5 px-2 text-xs font-medium text-slate-700">{p.brand} {p.model}</td>
+                        <td className="py-1.5 px-2 text-xs text-slate-500">{p.product_type || '—'}</td>
+                        <td className="py-1.5 px-2 text-xs text-right font-semibold text-indigo-700">{boxes}</td>
+                        <td className="py-1.5 px-2 text-xs text-right text-slate-500">{pairs}</td>
+                        <td className="py-1.5 px-2 text-xs text-right text-slate-500">{p.purchase_price || 0} с.</td>
+                        <td className="py-1.5 px-2 text-xs text-right text-indigo-600">{p.sale_price || 0} с.</td>
+                        <td className="py-1.5 px-2 text-xs text-right text-emerald-600 font-semibold">{Math.round(boxes * (p.sale_price || 0)).toLocaleString()} с.</td>
+                      </tr>
                     );
                   })}
                 </tbody>
@@ -1068,6 +1148,70 @@ export default function Reports() {
               </table>
             </div>
           </div>
+          </div>
+          )}
+
+      {/* EMPLOYEES TAB */}
+      {activeTab === 'employees' && (
+        <div className="space-y-4">
+          {employeeStats.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center text-slate-400">
+              <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
+              <p>Нет данных о продажах сотрудников за период</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+              <h2 className="font-semibold text-slate-800 mb-4">Статистика по сотрудникам ({employeeStats.length})</h2>
+              <div className="space-y-3">
+                {employeeStats.map((stat, i) => {
+                  const name = stat.employee?.name || stat.email || 'Неизвестно';
+                  const pct = Math.round((stat.revenue / (employeeStats[0]?.revenue || 1)) * 100);
+                  const margin = stat.revenue > 0 ? ((stat.profit / stat.revenue) * 100).toFixed(1) : 0;
+                  return (
+                    <div key={stat.email} className="border border-slate-100 rounded-xl p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 ${
+                          i === 0 ? 'bg-amber-400' : i === 1 ? 'bg-slate-400' : 'bg-indigo-400'
+                        }`}>{i + 1}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-900 truncate">{name}</p>
+                          <p className="text-xs text-slate-400">{stat.email}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-slate-900">{Math.round(stat.revenue).toLocaleString()} с.</p>
+                          <p className="text-xs text-emerald-600">+{Math.round(stat.profit).toLocaleString()} с. прибыль</p>
+                        </div>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2">
+                        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="grid grid-cols-4 gap-2 text-xs text-center">
+                        <div className="bg-slate-50 rounded-lg p-2"><p className="text-slate-400">Продаж</p><p className="font-bold text-slate-700">{stat.count}</p></div>
+                        <div className="bg-slate-50 rounded-lg p-2"><p className="text-slate-400">Коробок</p><p className="font-bold text-indigo-700">{stat.boxes}</p></div>
+                        <div className="bg-slate-50 rounded-lg p-2"><p className="text-slate-400">Маржа</p><p className="font-bold text-emerald-700">{margin}%</p></div>
+                        <div className="bg-slate-50 rounded-lg p-2"><p className="text-slate-400">В долг</p><p className={`font-bold ${stat.debtCount > 0 ? 'text-amber-600' : 'text-slate-500'}`}>{stat.debtCount}</p></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Summary */}
+              <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-3 gap-3 text-center">
+                <div className="bg-indigo-50 rounded-xl p-3">
+                  <p className="text-xs text-slate-400">Сотрудников</p>
+                  <p className="text-xl font-bold text-indigo-700">{employeeStats.length}</p>
+                </div>
+                <div className="bg-emerald-50 rounded-xl p-3">
+                  <p className="text-xs text-slate-400">Лидер по выручке</p>
+                  <p className="text-sm font-bold text-emerald-700 truncate">{employeeStats[0]?.employee?.name || employeeStats[0]?.email || '—'}</p>
+                </div>
+                <div className="bg-amber-50 rounded-xl p-3">
+                  <p className="text-xs text-slate-400">Ср. выручка/чел.</p>
+                  <p className="text-sm font-bold text-amber-700">{Math.round(totalRevenue / (employeeStats.length || 1)).toLocaleString()} с.</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
