@@ -38,7 +38,7 @@ const ALL_MENU_ITEMS = [
   { name: 'Returns',     icon: RotateCcw,        labelKey: 'nav_returns',   color: 'text-yellow-500',  activeBg: 'bg-yellow-500',  activeText: 'text-yellow-600', permKey: 'manage_returns' },
   { name: 'Customers',   icon: Users,            labelKey: 'nav_customers', color: 'text-pink-500',    activeBg: 'bg-pink-500',    activeText: 'text-pink-600', permKey: 'view_customers' },
   { name: 'Debts',       icon: CreditCard,       labelKey: 'nav_debts',     color: 'text-red-500',     activeBg: 'bg-red-500',     activeText: 'text-red-600', permKey: 'view_debts' },
-  { name: 'Reports',     icon: FileText,         labelKey: 'nav_reports',   color: 'text-violet-500',  activeBg: 'bg-violet-500',  activeText: 'text-violet-600', permKey: 'view_analytics' },
+  { name: 'Reports',     icon: FileText,         labelKey: 'nav_reports',   color: 'text-violet-500',  activeBg: 'bg-violet-500',  activeText: 'text-violet-600', permKey: 'view_reports' },
   { name: 'AIAssistant', icon: Bot,              labelKey: 'nav_ai',        color: 'text-purple-500',  activeBg: 'bg-purple-500',  activeText: 'text-purple-600', permKey: null },
   { name: 'Settings',    icon: Settings,         labelKey: 'nav_settings',  color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600', permKey: null },
 ];

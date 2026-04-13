@@ -88,11 +88,12 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    label: 'История и экспорт',
+    label: 'История и отчёты',
     icon: History,
     color: 'text-slate-600',
     bg: 'bg-slate-50',
     permissions: [
+      { key: 'view_reports',      label: 'Видеть раздел «Отчёты»',  desc: 'Доступ к разделу отчётов и статистики' },
       { key: 'view_activity_log', label: 'Видеть историю действий', desc: 'Просматривать лог активности' },
       { key: 'export_reports',    label: 'Экспортировать отчёты',   desc: 'Скачивать данные в Excel/PDF' },
     ]

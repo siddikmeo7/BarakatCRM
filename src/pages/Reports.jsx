@@ -23,6 +23,7 @@ import { ru } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 const DATE_PRESETS = [
   { label: 'Сегодня', getValue: () => ({ from: startOfDay(new Date()), to: endOfDay(new Date()) }) },
@@ -53,6 +54,7 @@ const TABS = [
 ];
 
 export default function Reports() {
+  const { can, isOwner, isReady } = useEmployeeAccess();
   const [loading, setLoading] = useState(true);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -756,10 +758,22 @@ export default function Reports() {
   const ChartComp = chartType === 'line' ? LineChart : chartType === 'area' ? AreaChart : BarChart;
   const DataComp = chartType === 'line' ? Line : chartType === 'area' ? Area : Bar;
 
-  if (loading) {
+  if (!isReady || loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600" />
+      </div>
+    );
+  }
+
+  if (!can('view_reports')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+        <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
+          <FileText className="w-10 h-10 text-slate-300" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-700">Нет доступа</h2>
+        <p className="text-slate-400 max-w-sm">У вас нет разрешения на просмотр раздела «Отчёты». Обратитесь к владельцу бизнеса.</p>
       </div>
     );
   }
