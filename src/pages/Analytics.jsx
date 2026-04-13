@@ -59,8 +59,15 @@ export default function Analytics() {
 
 
   useEffect(() => {
-    loadData();
     loadExchangeRates(false);
+    // Wait for Layout to finish loading business data before fetching
+    if (window.__barakatAccessReady) {
+      loadData();
+    } else {
+      const handler = () => loadData();
+      window.addEventListener('barakatAccessReady', handler);
+      return () => window.removeEventListener('barakatAccessReady', handler);
+    }
   }, []);
 
   const loadExchangeRates = async (forceRefresh = false) => {
