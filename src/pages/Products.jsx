@@ -74,53 +74,39 @@ export default function Products() {
   });
 
   useEffect(() => {
-    loadData();
+    if (window.__barakatAccessReady) {
+      loadData();
+    } else {
+      const handler = () => loadData();
+      window.addEventListener('barakatAccessReady', handler);
+      return () => window.removeEventListener('barakatAccessReady', handler);
+    }
   }, []);
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
-      let biz = window.__barakatBusiness;
-      if (!biz) {
-        // Сначала проверяем режим сотрудника
-        const savedMode = localStorage.getItem('barakatcrm_mode') || sessionStorage.getItem('barakatcrm_mode');
-        if (savedMode && savedMode.startsWith('employee_')) {
-          const empId = savedMode.replace('employee_', '');
-          const empRecords = await base44.entities.Employee.filter({ user_email: user.email, is_active: true });
-          const emp = empRecords.find(e => e.id === empId) || empRecords[0];
-          if (emp) {
-            const bizList = await base44.entities.Business.filter({ id: emp.business_id });
-            if (bizList.length > 0) biz = bizList[0];
-          }
-        }
-        if (!biz) {
-          const businesses = await base44.entities.Business.filter({ owner_email: user.email });
-          if (businesses.length > 0) biz = businesses[0];
-        }
-      }
-      
-      if (biz) {
-        setBusiness(biz);
-        setLang(biz.language || 'ru');
-        
-        const [productsData, warehousesData] = await Promise.all([
-          base44.entities.Product.filter({ business_id: biz.id }),
-          base44.entities.Warehouse.filter({ business_id: biz.id })
-        ]);
-        
-        setProducts(productsData);
-        setWarehouses(warehousesData);
-        
-        // Установить значения по умолчанию из бизнеса
-        setFormData(prev => ({
-          ...prev,
-          color: biz.default_color || 'Чёрный',
-          size_from: biz.default_size_from || 39,
-          size_to: biz.default_size_to || 44,
-          pairs_per_box: biz.default_pairs_per_box || 6,
-          product_type: biz.default_product_type || 'Туфли'
-        }));
-      }
+      const biz = window.__barakatBusiness;
+      if (!biz) return;
+
+      setBusiness(biz);
+      setLang(biz.language || 'ru');
+
+      const [productsData, warehousesData] = await Promise.all([
+        base44.entities.Product.filter({ business_id: biz.id }),
+        base44.entities.Warehouse.filter({ business_id: biz.id })
+      ]);
+
+      setProducts(productsData);
+      setWarehouses(warehousesData);
+
+      setFormData(prev => ({
+        ...prev,
+        color: biz.default_color || 'Чёрный',
+        size_from: biz.default_size_from || 39,
+        size_to: biz.default_size_to || 44,
+        pairs_per_box: biz.default_pairs_per_box || 6,
+        product_type: biz.default_product_type || 'Туфли'
+      }));
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -189,7 +175,7 @@ export default function Products() {
     );
 
     try {
-      const user = await base44.auth.me();
+      const user = await base44.auth.me().catch(() => ({ email: 'unknown' }));
       if (editingProduct) {
         // Вычисляем diff — что изменилось
         const changedFields = {};
@@ -584,7 +570,7 @@ export default function Products() {
                           <p className="text-slate-400">Склад</p>
                           <p className="font-semibold text-slate-800 truncate">{warehouse?.name || '—'}</p>
                         </div>
-                        {can('view_stock_value') && (
+                        {can('view_purchase_price') && (
                           <>
                             <div className="bg-white rounded-xl p-2 border border-slate-100">
                               <p className="text-slate-400">Закупка / кор.</p>
@@ -794,6 +780,7 @@ export default function Products() {
             </div>
 
             <div className="grid grid-cols-3 gap-4">
+              {can('view_purchase_price') && (
               <div>
                 <Label>{t(lang,'prod_purchase_price')} *</Label>
                 <Input 
@@ -809,6 +796,7 @@ export default function Products() {
                   className="mt-1.5"
                 />
               </div>
+              )}
               <div>
                 <Label>{t(lang,'prod_sale_price')} *</Label>
                 <Input 
