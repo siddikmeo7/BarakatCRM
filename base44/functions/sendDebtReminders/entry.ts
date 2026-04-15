@@ -1,4 +1,15 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
+const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
+
+async function sendTelegram(chatId, text) {
+  if (!chatId || !botToken) return;
+  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
+  });
+}
 
 Deno.serve(async (req) => {
   try {
@@ -24,8 +35,31 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, sent: 0, message: 'No debtors found' });
     }
 
-    const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
     const results = [];
+
+    // --- Send summary to owner & admins via Telegram ---
+    const adminRecipients = [];
+    if (business.owner_email) {
+      adminRecipients.push({ email: business.owner_email, telegram: business.owner_telegram || null });
+    }
+    const employees = await base44.asServiceRole.entities.Employee.filter({ business_id, is_active: true });
+    for (const emp of employees) {
+      if (emp.is_admin && emp.user_email && emp.user_email !== business.owner_email) {
+        adminRecipients.push({ email: emp.user_email, telegram: emp.telegram || null });
+      }
+    }
+
+    const topDebtors = [...debtors].sort((a, b) => (b.total_debt || 0) - (a.total_debt || 0)).slice(0, 15);
+    const totalDebt = debtors.reduce((s, c) => s + (c.total_debt || 0), 0);
+    const tgSummaryLines = topDebtors.map(c => `• *${c.name}* — ${Math.round(c.total_debt || 0).toLocaleString('ru-RU')} с.`);
+    const tgSummary = `📋 *Сводка по долгам — ${business.name}*\n\n💳 Должников: *${debtors.length}*\n💰 Общий долг: *${Math.round(totalDebt).toLocaleString('ru-RU')} с.*\n\n${tgSummaryLines.join('\n')}${debtors.length > 15 ? `\n_...и ещё ${debtors.length - 15}_` : ''}`;
+
+    for (const admin of adminRecipients) {
+      if (admin.telegram) {
+        await sendTelegram(admin.telegram, tgSummary);
+      }
+    }
+    // --- End summary ---
 
     for (const customer of debtors) {
       const debt = customer.total_debt || 0;
