@@ -23,7 +23,14 @@ import {
   Calendar,
   History,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  CheckSquare,
+  Square,
+  X,
+  Tag,
+  Warehouse,
+  DollarSign,
+  CheckCheck
 } from 'lucide-react';
 import { format, parseISO, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -57,6 +64,14 @@ export default function Products() {
   const [customDateTo, setCustomDateTo] = useState('');
   const [page, setPage] = useState(1);
   const [expandedRow, setExpandedRow] = useState(null);
+
+  // Режим выбора
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkAction, setBulkAction] = useState(null); // 'brand'|'model'|'type'|'color'|'warehouse'|'sale_price'|'purchase_price'|'delete'
+  const [bulkValue, setBulkValue] = useState('');
+  const [bulkSaving, setBulkSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     brand: '',
@@ -261,6 +276,75 @@ export default function Products() {
     }
   };
 
+  const toggleSelectMode = () => {
+    setSelectMode(v => !v);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedIds(new Set(paginatedProducts.map(p => p.id)));
+  };
+
+  const deselectAll = () => setSelectedIds(new Set());
+
+  const openBulkAction = (action) => {
+    setBulkAction(action);
+    setBulkValue('');
+    setBulkDialogOpen(true);
+  };
+
+  const handleBulkSave = async () => {
+    if (bulkAction === 'delete') {
+      if (!confirm(`Удалить ${selectedIds.size} товаров?`)) return;
+    }
+    setBulkSaving(true);
+    try {
+      const user = await base44.auth.me().catch(() => ({ email: 'unknown' }));
+      const ids = [...selectedIds];
+      if (bulkAction === 'delete') {
+        await Promise.all(ids.map(async id => {
+          const product = products.find(p => p.id === id);
+          await base44.entities.Product.delete(id);
+          await base44.entities.ActivityLog.create({
+            business_id: business.id, action_type: 'delete', entity_type: 'Product',
+            entity_id: id, entity_data: product, user_email: user.email,
+            description: `Удалён товар: ${product?.brand} ${product?.model}`
+          });
+        }));
+      } else {
+        const fieldMap = {
+          brand: 'brand', model: 'model', type: 'product_type', color: 'color',
+          warehouse: 'warehouse_id', sale_price: 'sale_price', purchase_price: 'purchase_price'
+        };
+        const field = fieldMap[bulkAction];
+        const val = (bulkAction === 'sale_price' || bulkAction === 'purchase_price')
+          ? parseFloat(bulkValue) || 0
+          : bulkValue;
+        await Promise.all(ids.map(async id => {
+          await base44.entities.Product.update(id, { [field]: val });
+        }));
+        await base44.entities.ActivityLog.create({
+          business_id: business.id, action_type: 'update', entity_type: 'Product',
+          entity_id: ids[0], entity_data: { ids, field, value: val }, user_email: user.email,
+          description: `Массовое изменение ${ids.length} товаров: ${field} = ${val}`
+        });
+      }
+      await loadData();
+      setBulkDialogOpen(false);
+      setSelectedIds(new Set());
+      setSelectMode(false);
+    } catch (e) { console.error(e); }
+    finally { setBulkSaving(false); }
+  };
+
   // Все типы и цвета (базовые + кастомные)
   const allProductTypes = [...BASE_PRODUCT_TYPES, ...(business?.custom_product_types || [])];
   const allColors = [...BASE_COLORS, ...(business?.custom_colors || [])];
@@ -432,9 +516,44 @@ export default function Products() {
             <span className="hidden sm:inline">{hideImages ? 'С фото' : 'Без фото'}</span>
           </button>
           <span className="text-xs text-slate-400">{filteredProducts.length}</span>
+          <button
+            onClick={toggleSelectMode}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all ${selectMode ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
+          >
+            <CheckSquare className="w-3 h-3" />
+            <span>Выбрать</span>
+          </button>
           </div>
         </div>
       </div>
+
+      {/* Bulk action bar */}
+      {selectMode && (
+        <div className="bg-indigo-600 text-white rounded-2xl p-3 shadow-lg flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 mr-2">
+            <button onClick={selectAll} className="text-xs underline opacity-80 hover:opacity-100">Все</button>
+            <button onClick={deselectAll} className="text-xs underline opacity-80 hover:opacity-100">Снять</button>
+            <span className="text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full">{selectedIds.size} выбрано</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5 flex-1">
+            {can('edit_products') && (<>
+              <button onClick={() => openBulkAction('brand')} className="px-2.5 py-1 bg-white/15 hover:bg-white/25 rounded-lg text-xs font-medium transition-all">✏️ Бренд</button>
+              <button onClick={() => openBulkAction('model')} className="px-2.5 py-1 bg-white/15 hover:bg-white/25 rounded-lg text-xs font-medium transition-all">✏️ Модель</button>
+              <button onClick={() => openBulkAction('type')} className="px-2.5 py-1 bg-white/15 hover:bg-white/25 rounded-lg text-xs font-medium transition-all">🏷️ Тип</button>
+              <button onClick={() => openBulkAction('color')} className="px-2.5 py-1 bg-white/15 hover:bg-white/25 rounded-lg text-xs font-medium transition-all">🎨 Цвет</button>
+              <button onClick={() => openBulkAction('warehouse')} className="px-2.5 py-1 bg-white/15 hover:bg-white/25 rounded-lg text-xs font-medium transition-all">🏭 Склад</button>
+              <button onClick={() => openBulkAction('sale_price')} className="px-2.5 py-1 bg-white/15 hover:bg-white/25 rounded-lg text-xs font-medium transition-all">💰 Цена прод.</button>
+              {can('view_purchase_price') && <button onClick={() => openBulkAction('purchase_price')} className="px-2.5 py-1 bg-white/15 hover:bg-white/25 rounded-lg text-xs font-medium transition-all">💳 Цена заку.</button>}
+            </>)}
+            {can('delete_products') && (
+              <button onClick={() => openBulkAction('delete')} disabled={selectedIds.size === 0} className="px-2.5 py-1 bg-red-500 hover:bg-red-600 rounded-lg text-xs font-medium transition-all disabled:opacity-40">🗑️ Удалить</button>
+            )}
+          </div>
+          <button onClick={toggleSelectMode} className="p-1.5 hover:bg-white/20 rounded-lg transition-all ml-auto">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Products Grid/List */}
       {view === 'grid' ? (
@@ -446,26 +565,34 @@ export default function Products() {
             const isLowStock = (product.boxes_in_stock || 0) <= lowStockLimit;
             return hideImages ? (
               // Компактная карточка без фото
-              <div key={product.id} className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-shadow ${isLowStock ? 'border-red-300 bg-red-50' : 'border-slate-100 shadow-sm'}`}>
+              <div key={product.id} onClick={() => selectMode && toggleSelect(product.id)}
+                className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-shadow cursor-pointer ${isLowStock ? 'border-red-300 bg-red-50' : 'border-slate-100 shadow-sm'} ${selectMode && selectedIds.has(product.id) ? 'ring-2 ring-indigo-500' : ''}`}>
                 <div className={`flex items-center justify-between px-3 pt-2.5 pb-1 ${isLowStock ? 'border-b border-red-200' : 'border-b border-slate-100'}`}>
+                  <div className="min-w-0 flex-1 flex items-start gap-1">
+                  {selectMode && (
+                    <div className={`w-4 h-4 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center ${selectedIds.has(product.id) ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'}`}>
+                      {selectedIds.has(product.id) && <span className="text-white text-[8px] font-bold">✓</span>}
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                   <span className="text-[10px] font-mono text-slate-300 select-none">{idx + 1}</span>
                     <p className={`font-bold text-sm truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand}</p>
                     <p className={`text-xs truncate ${isLowStock ? 'text-red-500' : 'text-slate-500'}`}>{product.model}</p>
-                  </div>
-                  <div className="flex gap-1 ml-1 flex-shrink-0">
+                    </div>
+                    </div>
+                    {!selectMode && <div className="flex gap-1 ml-1 flex-shrink-0">
                     {can('edit_products') && (
-                      <button onClick={() => handleOpenDialog(product)} className="p-1 bg-slate-100 rounded-lg hover:bg-slate-200">
+                      <button onClick={(e) => { e.stopPropagation(); handleOpenDialog(product); }} className="p-1 bg-slate-100 rounded-lg hover:bg-slate-200">
                         <Edit2 className="w-3 h-3 text-slate-600" />
                       </button>
                     )}
                     {can('delete_products') && (
-                      <button onClick={() => handleDelete(product.id)} className="p-1 bg-slate-100 rounded-lg hover:bg-red-100">
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }} className="p-1 bg-slate-100 rounded-lg hover:bg-red-100">
                         <Trash2 className="w-3 h-3 text-red-500" />
                       </button>
                     )}
-                  </div>
-                </div>
+                    </div>}
+                    </div>
                 <div className="px-3 py-2">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${isLowStock ? 'bg-red-100 text-red-700' : 'bg-indigo-50 text-indigo-700'}`}>
@@ -483,8 +610,8 @@ export default function Products() {
               </div>
             ) : (
               <div key={product.id}
-                onClick={() => handleOpenDialog(product)}
-                className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer ${isLowStock ? 'border-red-400 animate-pulse-border' : 'border-slate-100'}`}>
+                onClick={() => selectMode ? toggleSelect(product.id) : handleOpenDialog(product)}
+                className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer ${isLowStock ? 'border-red-400 animate-pulse-border' : 'border-slate-100'} ${selectMode && selectedIds.has(product.id) ? 'ring-2 ring-indigo-500' : ''}`}>
                 <div className="aspect-square bg-slate-100 relative">
                   {product.photo_url ? (
                     <img src={product.photo_url} alt="" className="w-full h-full object-cover" />
@@ -496,7 +623,11 @@ export default function Products() {
                   {isLowStock && (
                     <div className="absolute top-1 left-1 bg-red-500 text-white text-[9px] font-bold px-1 py-0.5 rounded-full">⚠️</div>
                   )}
-                  {can('delete_products') && (
+                  {selectMode ? (
+                    <div className={`absolute top-1 right-1 w-5 h-5 rounded border-2 flex items-center justify-center ${selectedIds.has(product.id) ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
+                      {selectedIds.has(product.id) && <span className="text-white text-[10px] font-bold">✓</span>}
+                    </div>
+                  ) : can('delete_products') && (
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }} className="absolute top-1 right-1 p-1 bg-white rounded-lg shadow hover:bg-red-50">
                       <Trash2 className="w-3 h-3 text-red-500" />
                     </button>
@@ -527,8 +658,13 @@ export default function Products() {
               return (
                 <div key={product.id}>
                   <div
-                    onClick={() => setExpandedRow(isExpanded ? null : product.id)}
-                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${isLowStock ? 'bg-red-50' : 'hover:bg-slate-50'}`}>
+                    onClick={() => selectMode ? toggleSelect(product.id) : setExpandedRow(isExpanded ? null : product.id)}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${isLowStock ? 'bg-red-50' : 'hover:bg-slate-50'} ${selectMode && selectedIds.has(product.id) ? 'bg-indigo-50' : ''}`}>
+                    {selectMode && (
+                      <div className={`w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center ${selectedIds.has(product.id) ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white'}`}>
+                        {selectedIds.has(product.id) && <span className="text-white text-[10px] font-bold">✓</span>}
+                      </div>
+                    )}
                     {product.photo_url ? (
                       <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                     ) : (
@@ -929,6 +1065,77 @@ export default function Products() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Edit Dialog */}
+      <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {bulkAction === 'delete' ? `Удалить ${selectedIds.size} товаров` :
+               bulkAction === 'brand' ? 'Изменить бренд' :
+               bulkAction === 'model' ? 'Изменить модель' :
+               bulkAction === 'type' ? 'Изменить тип товара' :
+               bulkAction === 'color' ? 'Изменить цвет' :
+               bulkAction === 'warehouse' ? 'Переместить на склад' :
+               bulkAction === 'sale_price' ? 'Изменить цену продажи' :
+               bulkAction === 'purchase_price' ? 'Изменить цену закупки' : ''}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-500 mb-4">Изменение применится к <b>{selectedIds.size}</b> выбранным товарам</p>
+
+          {bulkAction === 'delete' && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+              ⚠️ Это действие нельзя отменить. Все {selectedIds.size} товаров будут удалены безвозвратно.
+            </div>
+          )}
+          {(bulkAction === 'brand' || bulkAction === 'model') && (
+            <Input value={bulkValue} onChange={e => setBulkValue(e.target.value)}
+              placeholder={bulkAction === 'brand' ? 'Новый бренд...' : 'Новая модель...'}
+              className="mb-2" autoFocus />
+          )}
+          {bulkAction === 'type' && (
+            <Select value={bulkValue} onValueChange={setBulkValue}>
+              <SelectTrigger><SelectValue placeholder="Выберите тип..." /></SelectTrigger>
+              <SelectContent>
+                {allProductTypes.map(pt => <SelectItem key={pt} value={pt}>{pt}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+          {bulkAction === 'color' && (
+            <Select value={bulkValue} onValueChange={setBulkValue}>
+              <SelectTrigger><SelectValue placeholder="Выберите цвет..." /></SelectTrigger>
+              <SelectContent>
+                {allColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+          {bulkAction === 'warehouse' && (
+            <Select value={bulkValue} onValueChange={setBulkValue}>
+              <SelectTrigger><SelectValue placeholder="Выберите склад..." /></SelectTrigger>
+              <SelectContent>
+                {warehouses.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+          {(bulkAction === 'sale_price' || bulkAction === 'purchase_price') && (
+            <Input type="text" inputMode="decimal" pattern="[0-9.]*"
+              value={bulkValue} onChange={e => setBulkValue(e.target.value.replace(/[^0-9.]/g, ''))}
+              placeholder="0" className="mb-2" autoFocus />
+          )}
+
+          <div className="flex gap-2 mt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setBulkDialogOpen(false)}>Отмена</Button>
+            <Button
+              onClick={handleBulkSave}
+              disabled={bulkSaving || (bulkAction !== 'delete' && !bulkValue) || selectedIds.size === 0}
+              className={bulkAction === 'delete' ? 'flex-1 bg-red-600 hover:bg-red-700' : 'flex-1 bg-indigo-600 hover:bg-indigo-700'}
+            >
+              {bulkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : bulkAction === 'delete' ? 'Удалить' : 'Применить'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       </div>
       </PullToRefresh>
       );
