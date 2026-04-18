@@ -112,6 +112,7 @@ export default function Layout({ children, currentPageName }) {
     if (loading || !user) return;
     if (user.email === ADMIN_EMAIL) return;
     if (employeePermissions === null) return; // владелец — полный доступ
+    if (currentEmployee?.is_admin) return; // сотрудник-администратор — полный доступ
     const activeItem = ALL_MENU_ITEMS.find(item => item.name === currentPageName);
     if (!activeItem) return;
     if (activeItem.permKey && !employeePermissions?.[activeItem.permKey]) {
@@ -120,7 +121,7 @@ export default function Layout({ children, currentPageName }) {
         navigate(createPageUrl(firstAvailable.name));
       }
     }
-  }, [loading, currentPageName, employeePermissions, user]);
+  }, [loading, currentPageName, employeePermissions, currentEmployee, user]);
 
   const loadUserAndBusiness = async () => {
     try {
@@ -327,13 +328,16 @@ export default function Layout({ children, currentPageName }) {
   const canAccess = (permKey) => {
     if (isOwner) return true;
     if (!permKey) return true;
+    if (currentEmployee?.is_admin) return true; // admin employee — full access
     // Если разрешение явно не задано (undefined) — считаем запрещённым для сотрудников
     return employeePermissions?.[permKey] === true;
   };
 
   const MENU_ITEMS = ALL_MENU_ITEMS.filter(item => {
+    // Сотрудник-администратор видит всё
+    if (currentEmployee?.is_admin) return true;
     // Settings — только для владельца или у кого есть view_settings_language
-      if (item.name === 'Settings' && !isOwner && !employeePermissions?.view_settings_language && !employeePermissions?.view_settings_defaults && !employeePermissions?.manage_settings_defaults && !employeePermissions?.view_settings_custom && !employeePermissions?.manage_settings_custom && !employeePermissions?.view_settings_security && !employeePermissions?.view_settings_codes && !employeePermissions?.manage_settings && !employeePermissions?.manage_employees && !employeePermissions?.manage_roles && !employeePermissions?.view_activity_log) return false;
+    if (item.name === 'Settings' && !isOwner && !employeePermissions?.view_settings_language && !employeePermissions?.view_settings_defaults && !employeePermissions?.manage_settings_defaults && !employeePermissions?.view_settings_custom && !employeePermissions?.manage_settings_custom && !employeePermissions?.view_settings_security && !employeePermissions?.view_settings_codes && !employeePermissions?.manage_settings && !employeePermissions?.manage_employees && !employeePermissions?.manage_roles && !employeePermissions?.view_activity_log) return false;
     return canAccess(item.permKey);
   });
 
