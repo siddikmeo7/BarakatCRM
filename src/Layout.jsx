@@ -7,6 +7,7 @@ import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
 
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
+import { saveBusinessToHistory } from '@/components/settings/RecentBusinessesPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -223,6 +224,8 @@ export default function Layout({ children, currentPageName }) {
                     await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
                     // Сохраняем режим сотрудника постоянно (переживает перезапуск браузера)
                     localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
+                    // Сохраняем в историю бизнесов
+                    saveBusinessToHistory(biz.id, biz.name, emp.id, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee');
                     // Показываем приветственный экран только при первом входе за сессию
                     const welcomeKey = `welcomed_${emp.id}`;
                     // Обновляем last_login_at и device_info при входе
@@ -289,6 +292,8 @@ export default function Layout({ children, currentPageName }) {
                 await registerDeviceSession(bizList[0].id, currentUser.email, activeEmp.name || currentUser.full_name, activeEmp.is_admin ? 'admin' : 'employee', activeEmp.id);
                 // Сохраняем постоянно в localStorage чтобы не сбрасывалось
                 localStorage.setItem('barakatcrm_mode', `employee_${activeEmp.id}`);
+                // Сохраняем в историю бизнесов
+                saveBusinessToHistory(bizList[0].id, bizList[0].name, activeEmp.id, activeEmp.name || currentUser.full_name, activeEmp.is_admin ? 'admin' : 'employee');
                 // Обновляем last_login_at и device_info при входе
                 await base44.entities.Employee.update(activeEmp.id, {
                   last_login_at: new Date().toISOString(),

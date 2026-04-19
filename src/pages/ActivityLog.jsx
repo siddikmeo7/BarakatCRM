@@ -62,6 +62,7 @@ export default function ActivityLog() {
   const [trashSearch, setTrashSearch] = useState('');
   const [trashEntity, setTrashEntity] = useState('all');
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [selectedUserEmail, setSelectedUserEmail] = useState(null); // для детального просмотра действий по сотруднику
 
   useEffect(() => { loadData(); }, []);
 
@@ -335,9 +336,9 @@ export default function ActivityLog() {
                       </p>
                     </div>
                     {!noActions && (
-                      <button onClick={() => { setFilterUser(u.email); setActiveTab('list'); }}
+                      <button onClick={() => setSelectedUserEmail(selectedUserEmail === u.email ? null : u.email)}
                         className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors flex-shrink-0">
-                        Фильтр
+                        {selectedUserEmail === u.email ? 'Скрыть' : 'Детали'}
                       </button>
                     )}
                   </div>
@@ -364,6 +365,37 @@ export default function ActivityLog() {
                   )}
                   {u.last && <p className="text-xs text-slate-400">Последнее: {format(u.last, 'dd MMM yyyy, HH:mm', { locale: ru })}</p>}
                   {noActions && <p className="text-xs text-slate-300 text-center">— нет действий в системе —</p>}
+
+                  {/* Детальный список последних действий */}
+                  {selectedUserEmail === u.email && !noActions && (() => {
+                    const userLogs = logs
+                      .filter(l => l.user_email === u.email)
+                      .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
+                      .slice(0, 15);
+                    return (
+                      <div className="mt-3 border-t border-slate-100 pt-3 space-y-1.5">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-semibold text-slate-600">Последние действия ({userLogs.length}):</p>
+                          <button onClick={() => { setFilterUser(u.email); setActiveTab('list'); }}
+                            className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100">
+                            Все → Список
+                          </button>
+                        </div>
+                        {userLogs.map(log => {
+                          const ActionIcon = ACTION_ICONS[log.action_type] || AlertCircle;
+                          return (
+                            <div key={log.id} className={`flex items-start gap-2 p-2 rounded-lg border text-xs ${ACTION_COLORS[log.action_type]}`}>
+                              <ActionIcon className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{log.description || `${ENTITY_LABELS[log.entity_type] || log.entity_type}`}</p>
+                                <p className="opacity-70">{format(new Date(log.created_date), 'dd MMM, HH:mm', { locale: ru })}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}

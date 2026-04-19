@@ -13,6 +13,7 @@ import BackupExportPanel from '@/components/settings/BackupExportPanel';
 import DeviceSessionsPanel from '@/components/settings/DeviceSessionsPanel';
 import AutomationPanel from '@/components/settings/AutomationPanel';
 import AvatarPicker, { AvatarDisplay } from '@/components/settings/AvatarPicker';
+import RecentBusinessesPanel, { saveBusinessToHistory } from '@/components/settings/RecentBusinessesPanel';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { ru as dateFnsRu } from 'date-fns/locale';
 import { ru } from 'date-fns/locale';
@@ -127,7 +128,8 @@ export default function Settings() {
     custom: false,
     history: false,
     security: false,
-    employee_login: false
+    employee_login: false,
+    recent_businesses: false
   });
 
   // Employee login state
@@ -1379,7 +1381,10 @@ export default function Settings() {
                       setEmpLoginError('Вы не добавлены как сотрудник этого бизнеса. Попросите владельца добавить вас.');
                       return;
                     }
+                    localStorage.setItem('barakatcrm_mode', `employee_${emp[0].id}`);
                     sessionStorage.setItem('barakatcrm_mode', `employee_${emp[0].id}`);
+                    // Сохраняем в историю
+                    saveBusinessToHistory(biz.id, biz.name, emp[0].id, emp[0].name || '', 'employee');
                     navigate(createPageUrl('Dashboard'));
                   } catch (e) {
                     setEmpLoginError('Ошибка: ' + e.message);
@@ -1394,6 +1399,27 @@ export default function Settings() {
                 Войти как сотрудник
               </Button>
             </div>
+          </CollapsibleContent>
+        </Collapsible></div>
+
+        {/* Recent Businesses — для всех */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.recent_businesses} onOpenChange={(open) => setExpandedSections({...expandedSections, recent_businesses: open})}>
+          <CollapsibleTrigger asChild>
+            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.recent_businesses ? 'bg-teal-50' : 'hover:bg-slate-50'}`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg transition-colors ${expandedSections.recent_businesses ? 'bg-teal-600' : 'bg-teal-100'}`}>
+                  <History className={`w-5 h-5 ${expandedSections.recent_businesses ? 'text-white' : 'text-teal-600'}`} />
+                </div>
+                <div>
+                  <h3 className={`font-semibold ${expandedSections.recent_businesses ? 'text-teal-700' : 'text-slate-900'}`}>Недавние бизнесы</h3>
+                  <p className="text-xs text-slate-500">Быстрый вход в бизнесы, в которых вы работали</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 transition ${expandedSections.recent_businesses ? 'rotate-180 text-teal-600' : 'text-slate-500'}`} />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4">
+            <RecentBusinessesPanel currentUser={user} />
           </CollapsibleContent>
         </Collapsible></div>
 
