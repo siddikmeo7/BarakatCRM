@@ -48,6 +48,7 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import AIAssistant from './pages/AIAssistant';
+import EmployeeAnalytics from './pages/EmployeeAnalytics';
 import ActivityLog from './pages/ActivityLog';
 import AdminBusinesses from './pages/AdminBusinesses';
 import AdminDashboard from './pages/AdminDashboard';
@@ -73,6 +74,7 @@ import __Layout from './Layout.jsx';
 
 export const PAGES = {
     "AIAssistant": AIAssistant,
+    "EmployeeAnalytics": EmployeeAnalytics,
     "ActivityLog": ActivityLog,
     "AdminBusinesses": AdminBusinesses,
     "AdminDashboard": AdminDashboard,

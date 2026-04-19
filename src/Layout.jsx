@@ -40,8 +40,9 @@ const ALL_MENU_ITEMS = [
   { name: 'Customers',   icon: Users,            labelKey: 'nav_customers', color: 'text-pink-500',    activeBg: 'bg-pink-500',    activeText: 'text-pink-600', permKey: 'view_customers' },
   { name: 'Debts',       icon: CreditCard,       labelKey: 'nav_debts',     color: 'text-red-500',     activeBg: 'bg-red-500',     activeText: 'text-red-600', permKey: 'view_debts' },
   { name: 'Reports',     icon: FileText,         labelKey: 'nav_reports',   color: 'text-violet-500',  activeBg: 'bg-violet-500',  activeText: 'text-violet-600', permKey: 'view_reports' },
-  { name: 'AIAssistant', icon: Bot,              labelKey: 'nav_ai',        color: 'text-purple-500',  activeBg: 'bg-purple-500',  activeText: 'text-purple-600', permKey: null },
-  { name: 'Settings',    icon: Settings,         labelKey: 'nav_settings',  color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600', permKey: null },
+  { name: 'AIAssistant',       icon: Bot,              labelKey: 'nav_ai',           color: 'text-purple-500',  activeBg: 'bg-purple-500',  activeText: 'text-purple-600', permKey: null },
+  { name: 'EmployeeAnalytics', icon: Users,            labelKey: 'nav_emp_analytics', color: 'text-rose-500',    activeBg: 'bg-rose-500',    activeText: 'text-rose-600', permKey: null, ownerOnly: true },
+  { name: 'Settings',          icon: Settings,         labelKey: 'nav_settings',     color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600', permKey: null },
 ];
 
 const ADMIN_MENU_ITEMS = [
@@ -341,6 +342,8 @@ export default function Layout({ children, currentPageName }) {
   const MENU_ITEMS = ALL_MENU_ITEMS.filter(item => {
     // Сотрудник-администратор видит всё
     if (currentEmployee?.is_admin) return true;
+    // EmployeeAnalytics — только для владельца
+    if (item.ownerOnly && !isOwner) return false;
     // Settings — только для владельца или у кого есть view_settings_language
     if (item.name === 'Settings' && !isOwner && !employeePermissions?.view_settings_language && !employeePermissions?.view_settings_defaults && !employeePermissions?.manage_settings_defaults && !employeePermissions?.view_settings_custom && !employeePermissions?.manage_settings_custom && !employeePermissions?.view_settings_security && !employeePermissions?.view_settings_codes && !employeePermissions?.manage_settings && !employeePermissions?.manage_employees && !employeePermissions?.manage_roles && !employeePermissions?.view_activity_log) return false;
     return canAccess(item.permKey);
