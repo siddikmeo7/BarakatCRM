@@ -66,6 +66,11 @@ export default function Products() {
   const [expandedRow, setExpandedRow] = useState(null);
 
   // Режим выбора
+  const [filterColor, setFilterColor] = useState('all');
+  const [filterPriceMin, setFilterPriceMin] = useState('');
+  const [filterPriceMax, setFilterPriceMax] = useState('');
+  const [filterStock, setFilterStock] = useState('all');
+
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
@@ -352,12 +357,24 @@ export default function Products() {
 
   // Фильтрация
   let filteredProducts = products.filter(product => {
-    const matchesSearch = 
-      product.brand?.toLowerCase().includes(search.toLowerCase()) ||
-      product.model?.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase().trim();
+    const fullName = `${product.brand || ''} ${product.model || ''}`.toLowerCase();
+    const matchesSearch = !q ||
+      fullName.includes(q) ||
+      product.brand?.toLowerCase().includes(q) ||
+      product.model?.toLowerCase().includes(q) ||
+      product.color?.toLowerCase().includes(q) ||
+      product.product_type?.toLowerCase().includes(q);
     const matchesType = filterType === 'all' || product.product_type === filterType;
     const matchesWarehouse = filterWarehouse === 'all' || product.warehouse_id === filterWarehouse;
-    return matchesSearch && matchesType && matchesWarehouse;
+    const matchesColor = !filterColor || filterColor === 'all' || product.color === filterColor;
+    const matchesPriceMin = !filterPriceMin || (product.sale_price || 0) >= parseFloat(filterPriceMin);
+    const matchesPriceMax = !filterPriceMax || (product.sale_price || 0) <= parseFloat(filterPriceMax);
+    const matchesStock = filterStock === 'all' ||
+      (filterStock === 'low' && (product.boxes_in_stock || 0) <= lowStockLimit) ||
+      (filterStock === 'instock' && (product.boxes_in_stock || 0) > 0) ||
+      (filterStock === 'empty' && (product.boxes_in_stock || 0) === 0);
+    return matchesSearch && matchesType && matchesWarehouse && matchesColor && matchesPriceMin && matchesPriceMax && matchesStock;
   });
 
   // Сортировка
@@ -516,6 +533,14 @@ export default function Products() {
             <span className="hidden sm:inline">{hideImages ? 'С фото' : 'Без фото'}</span>
           </button>
           <span className="text-xs text-slate-400">{filteredProducts.length}</span>
+          {(filterColor !== 'all' || filterStock !== 'all' || filterPriceMin || filterPriceMax) && (
+            <button
+              onClick={() => { setFilterColor('all'); setFilterStock('all'); setFilterPriceMin(''); setFilterPriceMax(''); }}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium"
+            >
+              <X className="w-3 h-3" /> Сбросить
+            </button>
+          )}
           <button
             onClick={toggleSelectMode}
             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all ${selectMode ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
@@ -523,6 +548,46 @@ export default function Products() {
             <CheckSquare className="w-3 h-3" />
             <span>Выбрать</span>
           </button>
+          </div>
+        </div>
+        {/* Дополнительные фильтры */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+          <Select value={filterColor} onValueChange={v => { setFilterColor(v); setPage(1); }}>
+            <SelectTrigger className="w-32 h-8 text-xs">
+              <SelectValue placeholder="Цвет" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все цвета</SelectItem>
+              {allColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterStock} onValueChange={v => { setFilterStock(v); setPage(1); }}>
+            <SelectTrigger className="w-32 h-8 text-xs">
+              <SelectValue placeholder="Остаток" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все остатки</SelectItem>
+              <SelectItem value="instock">В наличии</SelectItem>
+              <SelectItem value="low">⚠️ Мало</SelectItem>
+              <SelectItem value="empty">Нет в наличии</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-1">
+            <Input
+              type="text" inputMode="numeric" pattern="[0-9]*"
+              value={filterPriceMin}
+              onChange={e => { setFilterPriceMin(e.target.value.replace(/[^0-9]/g, '')); setPage(1); }}
+              placeholder="Цена от"
+              className="h-8 text-xs w-20"
+            />
+            <span className="text-xs text-slate-400">—</span>
+            <Input
+              type="text" inputMode="numeric" pattern="[0-9]*"
+              value={filterPriceMax}
+              onChange={e => { setFilterPriceMax(e.target.value.replace(/[^0-9]/g, '')); setPage(1); }}
+              placeholder="до"
+              className="h-8 text-xs w-20"
+            />
           </div>
         </div>
       </div>

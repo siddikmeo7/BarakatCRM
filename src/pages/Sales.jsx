@@ -262,11 +262,14 @@ export default function Sales() {
   let filteredSales = sales.filter(sale => {
     const product = products.find(p => p.id === sale.product_id);
     const customer = customers.find(c => c.id === sale.customer_id);
-    const matchesSearch = !search ||
-      product?.brand?.toLowerCase().includes(search.toLowerCase()) ||
-      product?.model?.toLowerCase().includes(search.toLowerCase()) ||
-      customer?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      sale.customer_name?.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase().trim();
+    const fullProductName = `${product?.brand || ''} ${product?.model || ''}`.toLowerCase();
+    const matchesSearch = !q ||
+      fullProductName.includes(q) ||
+      product?.brand?.toLowerCase().includes(q) ||
+      product?.model?.toLowerCase().includes(q) ||
+      customer?.name?.toLowerCase().includes(q) ||
+      sale.customer_name?.toLowerCase().includes(q);
     const matchesWarehouse = filterWarehouse === 'all' || sale.warehouse_id === filterWarehouse;
     const matchesCustomer = filterCustomer === 'all' || sale.customer_id === filterCustomer;
     
@@ -315,12 +318,14 @@ export default function Sales() {
     profit: acc.profit + (sale.profit || 0)
   }), { boxes: 0, pairs: 0, items: 0, revenue: 0, profit: 0 });
 
-  // Поиск товаров для выбора
-  const filteredProducts = products.filter(p => 
-    (p.brand?.toLowerCase().includes(productSearch.toLowerCase()) ||
-    p.model?.toLowerCase().includes(productSearch.toLowerCase())) &&
-    (p.boxes_in_stock || 0) > 0
-  );
+  // Поиск товаров для выбора (поиск по бренду+модели вместе или по отдельности)
+  const filteredProducts = products.filter(p => {
+    if ((p.boxes_in_stock || 0) === 0) return false;
+    const q = productSearch.toLowerCase().trim();
+    if (!q) return true;
+    const fullName = `${p.brand || ''} ${p.model || ''}`.toLowerCase();
+    return fullName.includes(q) || p.brand?.toLowerCase().includes(q) || p.model?.toLowerCase().includes(q);
+  });
 
   if (!isReady) return <PageLoader message="Загрузка..." />;
   if (!can('view_sales')) {

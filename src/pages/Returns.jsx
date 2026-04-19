@@ -55,9 +55,24 @@ export default function Returns() {
   });
   const [returnWarning, setReturnWarning] = useState('');
   const [warehouses, setWarehouses] = useState([]);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [productSearchReturn, setProductSearchReturn] = useState('');
+  const [showCustomerList, setShowCustomerList] = useState(false);
+  const [showProductList, setShowProductList] = useState(false);
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (!e.target.closest('.return-search-dropdown')) {
+        setShowCustomerList(false);
+        setShowProductList(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   const loadData = async () => {
@@ -348,36 +363,85 @@ export default function Returns() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Клиент с поиском */}
             <div>
               <Label>Клиент *</Label>
-              <Select value={formData.customer_id} onValueChange={(v) => setFormData({ ...formData, customer_id: v })}>
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Выберите клиента" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map(customer => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      {customer.name} ({customer.phone})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative mt-1.5 return-search-dropdown">
+                <input
+                  className="w-full border border-input rounded-md px-3 py-2 text-sm bg-transparent focus:outline-none focus:ring-1 focus:ring-ring"
+                  placeholder="Поиск клиента по имени, телефону..."
+                  value={customerSearch}
+                  onChange={e => { setCustomerSearch(e.target.value); setShowCustomerList(true); }}
+                  onFocus={() => setShowCustomerList(true)}
+                />
+                {formData.customer_id && (
+                  <div className="mt-1 px-2 py-1 bg-indigo-50 rounded-lg text-xs text-indigo-700 font-medium flex items-center justify-between">
+                    <span>✓ {customers.find(c => c.id === formData.customer_id)?.name}</span>
+                    <button onClick={() => { setFormData({ ...formData, customer_id: '' }); setCustomerSearch(''); }} className="text-indigo-400 hover:text-red-500">✕</button>
+                  </div>
+                )}
+                {showCustomerList && customerSearch && (
+                  <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                    {customers
+                      .filter(c => {
+                        const q = customerSearch.toLowerCase();
+                        return c.name?.toLowerCase().includes(q) || c.phone?.toLowerCase().includes(q);
+                      })
+                      .map(c => (
+                        <div key={c.id} className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
+                          onMouseDown={() => { setFormData({ ...formData, customer_id: c.id }); setCustomerSearch(c.name); setShowCustomerList(false); }}>
+                          <p className="font-medium text-slate-900">{c.name}</p>
+                          {c.phone && <p className="text-xs text-slate-400">{c.phone}</p>}
+                        </div>
+                      ))
+                    }
+                    {customers.filter(c => { const q = customerSearch.toLowerCase(); return c.name?.toLowerCase().includes(q) || c.phone?.toLowerCase().includes(q); }).length === 0 && (
+                      <p className="px-3 py-2 text-sm text-slate-400">Клиент не найден</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
+            {/* Товар с поиском */}
             <div>
               <Label>Товар *</Label>
-              <Select value={formData.product_id} onValueChange={(v) => { setFormData({ ...formData, product_id: v, sale_id: '', boxes_returned: 1 }); setReturnWarning(''); }}>
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Выберите товар" />
-                </SelectTrigger>
-                <SelectContent>
-                  {products.map(product => (
-                    <SelectItem key={product.id} value={product.id}>
-                      {product.brand} {product.model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative mt-1.5 return-search-dropdown">
+                <input
+                  className="w-full border border-input rounded-md px-3 py-2 text-sm bg-transparent focus:outline-none focus:ring-1 focus:ring-ring"
+                  placeholder="Поиск товара по бренду, модели, типу..."
+                  value={productSearchReturn}
+                  onChange={e => { setProductSearchReturn(e.target.value); setShowProductList(true); }}
+                  onFocus={() => setShowProductList(true)}
+                />
+                {formData.product_id && (
+                  <div className="mt-1 px-2 py-1 bg-indigo-50 rounded-lg text-xs text-indigo-700 font-medium flex items-center justify-between">
+                    <span>✓ {(() => { const p = products.find(x => x.id === formData.product_id); return p ? `${p.brand} ${p.model}` : ''; })()}</span>
+                    <button onClick={() => { setFormData({ ...formData, product_id: '', sale_id: '', boxes_returned: 1 }); setProductSearchReturn(''); setReturnWarning(''); }} className="text-indigo-400 hover:text-red-500">✕</button>
+                  </div>
+                )}
+                {showProductList && productSearchReturn && (
+                  <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                    {products
+                      .filter(p => {
+                        const q = productSearchReturn.toLowerCase();
+                        const full = `${p.brand || ''} ${p.model || ''}`.toLowerCase();
+                        return full.includes(q) || p.brand?.toLowerCase().includes(q) || p.model?.toLowerCase().includes(q) || p.product_type?.toLowerCase().includes(q) || p.color?.toLowerCase().includes(q);
+                      })
+                      .map(p => (
+                        <div key={p.id} className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
+                          onMouseDown={() => { setFormData({ ...formData, product_id: p.id, sale_id: '', boxes_returned: 1 }); setProductSearchReturn(`${p.brand} ${p.model}`); setShowProductList(false); setReturnWarning(''); }}>
+                          <p className="font-medium text-slate-900">{p.brand} {p.model}</p>
+                          <p className="text-xs text-slate-400">{[p.product_type, p.color, p.boxes_in_stock !== undefined ? `${p.boxes_in_stock} кор.` : null].filter(Boolean).join(' · ')}</p>
+                        </div>
+                      ))
+                    }
+                    {products.filter(p => { const q = productSearchReturn.toLowerCase(); const full = `${p.brand || ''} ${p.model || ''}`.toLowerCase(); return full.includes(q) || p.brand?.toLowerCase().includes(q) || p.model?.toLowerCase().includes(q) || p.product_type?.toLowerCase().includes(q) || p.color?.toLowerCase().includes(q); }).length === 0 && (
+                      <p className="px-3 py-2 text-sm text-slate-400">Товар не найден</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Оригинальная продажа — для валидации */}
