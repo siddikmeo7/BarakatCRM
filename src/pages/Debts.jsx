@@ -70,6 +70,10 @@ export default function Debts() {
 
   const [sendingMsg, setSendingMsg] = useState(null);
   const [sortDebtors, setSortDebtors] = useState('remaining_desc');
+  const [filterOverdue, setFilterOverdue] = useState('all'); // all | overdue | today | active
+  const [minDebt, setMinDebt] = useState('');
+  const [notifyingAll, setNotifyingAll] = useState(false);
+  const [notifyChannel, setNotifyChannel] = useState('whatsapp');
 
   useEffect(() => { loadData(); }, []);
 
@@ -263,6 +267,30 @@ export default function Debts() {
     }
   };
 
+  const notifyAllDebtors = async () => {
+    setNotifyingAll(true);
+    try {
+      const toNotify = debtorList.filter(d => d.remaining > 0);
+      for (const { customer: c, remaining } of toNotify) {
+        if (notifyChannel === 'whatsapp' && c.phone) {
+          const phone = c.phone.replace(/[^0-9]/g, '');
+          const msg = `👋 Здравствуйте, ${c.name}!\n\n📌 Напоминание о задолженности\n\n💼 ${business?.name}\n💳 Задолженность: ${remaining.toLocaleString()} сомони\n\nПожалуйста, погасите долг в ближайшее время. Спасибо!`;
+          window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+          await new Promise(r => setTimeout(r, 800));
+        } else if (notifyChannel === 'telegram' && c.telegram) {
+          try {
+            await base44.functions.invoke('sendTelegramMessage', {
+              telegram_id: c.telegram, customer_name: c.name,
+              remaining_debt: remaining, business_name: business?.name, type: 'reminder'
+            });
+          } catch {}
+        }
+      }
+    } finally {
+      setNotifyingAll(false);
+    }
+  };
+
   const openWhatsApp = async (customer) => {
     if (!customer?.phone) return alert(t(lang, 'debts_no_phone'));
     setSendingMsg(customer.id);
@@ -306,6 +334,17 @@ export default function Debts() {
       setAddDebtOpen(false);
       setAddDebtData({ customer_id: '', new_customer_name: '', new_customer_phone: '', amount: '', note: '', is_new_customer: false });
     } finally { setSaving(false); }
+  };
+
+  // Фильтрация должников по просрочке/мин.долгу
+  const applyDebtorFilters = (list) => {
+    return list.filter(d => {
+      if (minDebt && parseFloat(minDebt) > 0 && d.remaining < parseFloat(minDebt)) return false;
+      if (filterOverdue === 'overdue') return getDueDateStatus(d.sales) === 'overdue';
+      if (filterOverdue === 'today') return getDueDateStatus(d.sales) === 'today';
+      if (filterOverdue === 'active') return d.remaining > 0;
+      return true;
+    });
   };
 
   // Группируем продажи по клиентам
@@ -765,10 +804,31 @@ export default function Debts() {
         </Button>
       </div>
 
-      {/* Поиск и сортировка */}
-      <div className="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100 flex flex-wrap gap-2">
-        <SearchInput value={search} onChange={setSearch} placeholder={t(lang, 'debts_search')} className="flex-1 min-w-32" />
-        <div className="flex gap-1 flex-wrap">
+      {/* Поиск, сортировка, фильтры */}
+      <div className="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100 space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <SearchInput value={search} onChange={setSearch} placeholder={t(lang, 'debts_search')} className="flex-1 min-w-32" />
+          <input
+            type="text" inputMode="numeric" pattern="[0-9]*"
+            value={minDebt}
+            onChange={e => setMinDebt(e.target.value.replace(/[^0-9]/g, ''))}
+            placeholder="Мин. долг (с.)"
+            className="h-9 px-3 text-xs border border-slate-200 rounded-lg w-28 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+          />
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {[
+            { value: 'all', label: 'Все' },
+            { value: 'overdue', label: '🔴 Просрочен' },
+            { value: 'today', label: '🟡 Сегодня' },
+            { value: 'active', label: 'Активные' },
+          ].map(opt => (
+            <button key={opt.value} onClick={() => setFilterOverdue(opt.value)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${filterOverdue === opt.value ? 'bg-red-600 text-white border-red-600' : 'bg-white text-slate-600 border-slate-200 hover:border-red-300'}`}>
+              {opt.label}
+            </button>
+          ))}
+          <div className="ml-auto flex gap-1 flex-wrap">
           {[
             { value: 'remaining_desc', label: 'Долг ↓' },
             { value: 'remaining_asc', label: 'Долг ↑' },
@@ -780,19 +840,39 @@ export default function Debts() {
               {opt.label}
             </button>
           ))}
+          </div>
+        </div>
+        {/* Уведомить всех */}
+        <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+          <span className="text-xs text-slate-500">Уведомить всех должников:</span>
+          <div className="flex gap-1">
+            {[{ value: 'whatsapp', label: '💬 WA' }, { value: 'telegram', label: '✈️ TG' }].map(c => (
+              <button key={c.value} onClick={() => setNotifyChannel(c.value)}
+                className={`px-2 py-1 rounded-lg text-xs font-medium border transition-all ${notifyChannel === c.value ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600 border-slate-200'}`}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={notifyAllDebtors}
+            disabled={notifyingAll || applyDebtorFilters(debtorList).filter(d => d.remaining > 0).length === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-lg text-xs font-medium transition-all">
+            {notifyingAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+            Отправить всем ({applyDebtorFilters(debtorList).filter(d => d.remaining > 0).length})
+          </button>
         </div>
       </div>
 
       {/* Список клиентов */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        {debtorList.length === 0 ? (
+        {applyDebtorFilters(debtorList).length === 0 ? (
           <div className="text-center py-12 text-slate-400">
             <CreditCard className="w-12 h-12 mx-auto mb-4 text-slate-300" />
             <p>{t(lang, 'debts_not_found')}</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-          {debtorList.map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }, idx) => {
+          {applyDebtorFilters(debtorList).map(({ customer: c, sales: cSales, totalAmount, totalPaid, remaining }, idx) => {
             const isPaid = remaining <= 0;
             const unpaidSales = cSales.filter(s => {
               const paid = getSalePaidAmount(s.id);

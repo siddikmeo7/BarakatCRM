@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
-import { Users, ChevronDown, ChevronUp, Phone, TrendingUp, AlertCircle } from 'lucide-react';
+import { Users, ChevronDown, ChevronUp, Phone, TrendingUp, AlertCircle, ExternalLink, Search } from 'lucide-react';
 
 export default function CustomerSegmentation({ customers, sales }) {
   const [expandedSeg, setExpandedSeg] = useState(null); // which segment is expanded
@@ -44,6 +44,7 @@ export default function CustomerSegmentation({ customers, sales }) {
     ].filter(s => s.value > 0);
   }, [customers, sales]);
 
+  const [segSearch, setSegSearch] = useState('');
   const INITIAL_VISIBLE = 5;
 
   const toggleSeg = (name) => {
@@ -113,15 +114,33 @@ export default function CustomerSegmentation({ customers, sales }) {
                     {seg.customers.length === 0 ? (
                       <p className="text-xs text-slate-400 text-center py-4">Нет клиентов</p>
                     ) : (
-                      <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
-                        {seg.customers.map(c => (
-                          <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 bg-white hover:bg-slate-50 transition-colors">
+                      <div>
+                        {/* Поиск внутри сегмента */}
+                        {isOpen && seg.customers.length > 3 && (
+                          <div className="px-4 py-2 border-b border-slate-100 relative">
+                            <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                            <input
+                              value={segSearch}
+                              onChange={e => setSegSearch(e.target.value)}
+                              placeholder="Поиск клиента..."
+                              className="w-full pl-7 pr-3 h-7 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                              onClick={e => e.stopPropagation()}
+                            />
+                          </div>
+                        )}
+                        <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                        {seg.customers
+                          .filter(c => !segSearch || c.name?.toLowerCase().includes(segSearch.toLowerCase()) || c.phone?.includes(segSearch))
+                          .map(c => (
+                          <div key={c.id}
+                            onClick={() => window.location.href = '/Customers'}
+                            className="flex items-center gap-3 px-4 py-2.5 bg-white hover:bg-indigo-50 cursor-pointer group transition-colors">
                             <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
                               style={{ backgroundColor: seg.color }}>
                               {c.name?.charAt(0)?.toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-800 truncate">{c.name}</p>
+                              <p className="text-sm font-medium text-slate-800 truncate group-hover:text-indigo-700">{c.name}</p>
                               {c.phone && (
                                 <p className="text-xs text-slate-400 flex items-center gap-1">
                                   <Phone className="w-2.5 h-2.5" />{c.phone}
@@ -143,8 +162,10 @@ export default function CustomerSegmentation({ customers, sales }) {
                                 <p className="text-xs text-slate-400">{c.totalPurchases} покупок</p>
                               )}
                             </div>
+                            <ExternalLink className="w-3 h-3 text-slate-300 group-hover:text-indigo-400 flex-shrink-0" />
                           </div>
                         ))}
+                        </div>
                       </div>
                     )}
                   </div>

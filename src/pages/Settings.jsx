@@ -14,6 +14,7 @@ import DeviceSessionsPanel from '@/components/settings/DeviceSessionsPanel';
 import AutomationPanel from '@/components/settings/AutomationPanel';
 import AvatarPicker, { AvatarDisplay } from '@/components/settings/AvatarPicker';
 import RecentBusinessesPanel, { saveBusinessToHistory } from '@/components/settings/RecentBusinessesPanel';
+import TelegramNotificationsPanel from '@/components/settings/TelegramNotificationsPanel';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { ru as dateFnsRu } from 'date-fns/locale';
 import { ru } from 'date-fns/locale';
@@ -1144,6 +1145,11 @@ export default function Settings() {
                 </div>
               </div>
 
+              {/* Telegram уведомления для владельца */}
+              {!currentEmployee && business && (
+                <TelegramNotificationsPanel business={business} onUpdate={setBusiness} />
+              )}
+
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
                 <div className="flex items-start gap-3">
                   <Bell className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -1153,6 +1159,7 @@ export default function Settings() {
                       <li>• При продаже товара в долг клиенту</li>
                       <li>• При частичной оплате долга</li>
                       <li>• При полном погашении долга</li>
+                      <li>• При малом остатке товаров (Telegram)</li>
                     </ul>
                   </div>
                 </div>
