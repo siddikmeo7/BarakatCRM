@@ -972,11 +972,20 @@ export default function Products() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="4">{t(lang,'prod_pairs_4')}</SelectItem>
-                    <SelectItem value="6">{t(lang,'prod_pairs_6')}</SelectItem>
-                    <SelectItem value="8">{t(lang,'prod_pairs_8')}</SelectItem>
+                    {[4, 6, 8, ...(business?.custom_pairs_per_box || [])].sort((a, b) => a - b).map(v => (
+                      <SelectItem key={v} value={String(v)}>
+                        {v} пар в коробке
+                        {formData.sale_price ? ` — ${(parseFloat(formData.sale_price) / v).toFixed(1)} с./пара` : ''}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                {formData.sale_price && formData.pairs_per_box && (
+                  <div className="mt-1.5 flex gap-3 text-xs text-slate-500">
+                    <span>1 пара = <strong className="text-indigo-600">{(parseFloat(formData.sale_price) / formData.pairs_per_box).toFixed(1)} с.</strong></span>
+                    <span>1 штук = <strong className="text-indigo-600">{(parseFloat(formData.sale_price) / formData.pairs_per_box / 2).toFixed(1)} с.</strong></span>
+                  </div>
+                )}
               </div>
             </div>
 

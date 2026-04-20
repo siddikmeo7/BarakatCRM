@@ -82,6 +82,14 @@
       },
       "default": []
     },
+    "custom_pairs_per_box": {
+      "type": "array",
+      "description": "\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c\u0441\u043a\u0438\u0435 \u0432\u0430\u0440\u0438\u0430\u043d\u0442\u044b \u043f\u0430\u0440 \u0432 \u043a\u043e\u0440\u043e\u0431\u043a\u0435 (\u0447\u0438\u0441\u043b\u043e \u043f\u0430\u0440)",
+      "items": {
+        "type": "number"
+      },
+      "default": []
+    },
     "low_stock_limit": {
       "type": "number",
       "default": 2,

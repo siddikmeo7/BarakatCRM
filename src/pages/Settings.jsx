@@ -15,6 +15,7 @@ import AutomationPanel from '@/components/settings/AutomationPanel';
 import AvatarPicker, { AvatarDisplay } from '@/components/settings/AvatarPicker';
 import RecentBusinessesPanel, { saveBusinessToHistory } from '@/components/settings/RecentBusinessesPanel';
 import TelegramNotificationsPanel from '@/components/settings/TelegramNotificationsPanel';
+import CustomFieldsPanel from '@/components/settings/CustomFieldsPanel';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { ru as dateFnsRu } from 'date-fns/locale';
 import { ru } from 'date-fns/locale';
@@ -113,8 +114,6 @@ export default function Settings() {
     },
     custom_permissions: []
   });
-  const [newColor, setNewColor] = useState('');
-  const [newProductType, setNewProductType] = useState('');
   const [editingColor, setEditingColor] = useState(null);
   const [editingType, setEditingType] = useState(null);
   const [editColorDialog, setEditColorDialog] = useState(false);
@@ -966,9 +965,9 @@ export default function Settings() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="4">{t(lang,'prod_pairs_4')}</SelectItem>
-                    <SelectItem value="6">{t(lang,'prod_pairs_6')}</SelectItem>
-                    <SelectItem value="8">{t(lang,'prod_pairs_8')}</SelectItem>
+                    {[4, 6, 8, ...(business?.custom_pairs_per_box || [])].sort((a, b) => a - b).map(v => (
+                      <SelectItem key={v} value={String(v)}>{v} пар в коробке</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1206,109 +1205,13 @@ export default function Settings() {
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6">
-            <div className="space-y-4">
-              {/* Custom Colors */}
-              <div className="p-4 bg-white rounded-lg border border-slate-200">
-                <h4 className="font-medium text-slate-900 mb-3">{t(lang,'settings_custom_colors')}</h4>
-                <div className="flex gap-2 mb-3">
-                  <Input
-                    value={newColor}
-                    onChange={(e) => setNewColor(e.target.value)}
-                    placeholder="Например: Золотой"
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={async () => {
-                      if (newColor.trim()) {
-                        const updatedColors = [...(business.custom_colors || []), newColor.trim()];
-                        await base44.entities.Business.update(business.id, { custom_colors: updatedColors });
-                        await loadData();
-                        setNewColor('');
-                      }
-                    }}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {(business?.custom_colors || []).map((color, i) => (
-                    <div key={i} className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-2">
-                      <span className="text-sm">{color}</span>
-                      <button
-                        onClick={() => {
-                          setEditingColor({ index: i, value: color });
-                          setEditColorDialog(true);
-                        }}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={async () => {
-                          const updatedColors = business.custom_colors.filter((_, idx) => idx !== i);
-                          await base44.entities.Business.update(business.id, { custom_colors: updatedColors });
-                          await loadData();
-                        }}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Custom Product Types */}
-              <div className="p-4 bg-white rounded-lg border border-slate-200">
-                <h4 className="font-medium text-slate-900 mb-3">{t(lang,'settings_custom_types')}</h4>
-                <div className="flex gap-2 mb-3">
-                  <Input
-                    value={newProductType}
-                    onChange={(e) => setNewProductType(e.target.value)}
-                    placeholder="Например: Кроссовки"
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={async () => {
-                      if (newProductType.trim()) {
-                        const updatedTypes = [...(business.custom_product_types || []), newProductType.trim()];
-                        await base44.entities.Business.update(business.id, { custom_product_types: updatedTypes });
-                        await loadData();
-                        setNewProductType('');
-                      }
-                    }}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {(business?.custom_product_types || []).map((type, i) => (
-                    <div key={i} className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-2">
-                      <span className="text-sm">{type}</span>
-                      <button
-                        onClick={() => {
-                          setEditingType({ index: i, value: type });
-                          setEditTypeDialog(true);
-                        }}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={async () => {
-                          const updatedTypes = business.custom_product_types.filter((_, idx) => idx !== i);
-                          await base44.entities.Business.update(business.id, { custom_product_types: updatedTypes });
-                          await loadData();
-                        }}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            {business && (
+              <CustomFieldsPanel
+                business={business}
+                onUpdate={setBusiness}
+                lang={lang}
+              />
+            )}
           </CollapsibleContent>
         </Collapsible></div> : null}
 
