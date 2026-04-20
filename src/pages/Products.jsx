@@ -105,17 +105,19 @@ export default function Products() {
 
   const loadData = async () => {
     try {
-      const biz = window.__barakatBusiness;
-      if (!biz) return;
+      const cachedBiz = window.__barakatBusiness;
+      if (!cachedBiz) return;
 
-      setBusiness(biz);
-      setLang(biz.language || 'ru');
-
-      const [productsData, warehousesData] = await Promise.all([
-        base44.entities.Product.filter({ business_id: biz.id }),
-        base44.entities.Warehouse.filter({ business_id: biz.id })
+      // Загружаем свежие данные бизнеса из БД, чтобы custom_pairs_per_box и другие поля были актуальны
+      const [bizList, productsData, warehousesData] = await Promise.all([
+        base44.entities.Business.filter({ id: cachedBiz.id }),
+        base44.entities.Product.filter({ business_id: cachedBiz.id }),
+        base44.entities.Warehouse.filter({ business_id: cachedBiz.id })
       ]);
 
+      const biz = bizList[0] || cachedBiz;
+      setBusiness(biz);
+      setLang(biz.language || 'ru');
       setProducts(productsData);
       setWarehouses(warehousesData);
 
