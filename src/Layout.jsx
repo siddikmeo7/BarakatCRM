@@ -181,14 +181,34 @@ export default function Layout({ children, currentPageName }) {
             };
 
             if (savedMode && savedMode.startsWith('employee_')) {
-              // Режим сотрудника выбран явно
+              // Режим сотрудника выбран явно — ищем сначала среди загруженных, потом в БД напрямую
               const empId = savedMode.replace('employee_', '');
-              const emp = employeeRecords.find(e => e.id === empId) || employeeRecords[0];
+              let emp = employeeRecords.find(e => e.id === empId);
+              // Если не нашли среди активных записей этого пользователя — пробуем загрузить напрямую
+              // (сотрудник может быть из другого бизнеса)
+              if (!emp) {
+                try {
+                  const directList = await base44.entities.Employee.filter({ id: empId });
+                  if (directList.length > 0) emp = directList[0];
+                } catch (_) {}
+              }
               if (emp) {
+                // Проверяем токен персистентной сессии
+                const savedToken = localStorage.getItem(`barakat_emp_token_${empId}`);
+                const tokenValid = !savedToken || !emp.login_session_token || emp.login_session_token === savedToken;
+
                 if (emp.is_frozen) {
-                  // Аккаунт заморожен — НЕ сбрасываем режим, просто показываем сообщение
+                  // Аккаунт заморожен — сбрасываем сессию
+                  localStorage.removeItem('barakatcrm_mode');
+                  localStorage.removeItem(`barakat_emp_token_${empId}`);
                   alert('Аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.');
                   // Не возвращаемся — продолжаем загрузку ниже (владелец или BusinessAccess)
+                } else if (!tokenValid) {
+                  // Токен сброшен администратором — выходим
+                  localStorage.removeItem('barakatcrm_mode');
+                  localStorage.removeItem(`barakat_emp_token_${empId}`);
+                  alert('Ваша сессия была завершена администратором. Войдите снова.');
+                  // Продолжаем как гость/владелец
                 } else {
                   const bizList = await base44.entities.Business.filter({ id: emp.business_id });
                   if (bizList.length > 0) {
@@ -225,9 +245,13 @@ export default function Layout({ children, currentPageName }) {
                     await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
                     // Сохраняем режим сотрудника постоянно (переживает перезапуск браузера)
                     localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
+                    // Сохраняем токен сессии для персистентности
+                    if (emp.login_session_token) {
+                      localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
+                    }
                     // Сохраняем в историю бизнесов
                     saveBusinessToHistory(biz.id, biz.name, emp.id, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee');
-                    // Показываем приветственный экран только при первом входе за сессию
+                    // Показываем приветственный экран только при первом входе за браузерную сессию
                     const welcomeKey = `welcomed_${emp.id}`;
                     // Обновляем last_login_at и device_info при входе
                     const deviceInfo = `${navigator.userAgent}`;

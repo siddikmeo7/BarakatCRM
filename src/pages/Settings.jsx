@@ -641,6 +641,13 @@ export default function Settings() {
             className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 w-full"
             onClick={() => {
               if (confirm(t(lang, 'settings_logout_confirm'))) {
+                // Очищаем токен персистентной сессии сотрудника перед выходом
+                const mode = localStorage.getItem('barakatcrm_mode');
+                if (mode && mode.startsWith('employee_')) {
+                  const empId = mode.replace('employee_', '');
+                  localStorage.removeItem(`barakat_emp_token_${empId}`);
+                  localStorage.removeItem('barakatcrm_mode');
+                }
                 base44.auth.logout();
               }
             }}
@@ -1291,10 +1298,15 @@ export default function Settings() {
                       setEmpLoginError('Вы не добавлены как сотрудник этого бизнеса. Попросите владельца добавить вас.');
                       return;
                     }
-                    localStorage.setItem('barakatcrm_mode', `employee_${emp[0].id}`);
-                    sessionStorage.setItem('barakatcrm_mode', `employee_${emp[0].id}`);
+                    const empRecord = emp[0];
+                    localStorage.setItem('barakatcrm_mode', `employee_${empRecord.id}`);
+                    sessionStorage.setItem('barakatcrm_mode', `employee_${empRecord.id}`);
+                    // Сохраняем токен для персистентной сессии
+                    if (empRecord.login_session_token) {
+                      localStorage.setItem(`barakat_emp_token_${empRecord.id}`, empRecord.login_session_token);
+                    }
                     // Сохраняем в историю
-                    saveBusinessToHistory(biz.id, biz.name, emp[0].id, emp[0].name || '', 'employee');
+                    saveBusinessToHistory(biz.id, biz.name, empRecord.id, empRecord.name || '', 'employee');
                     navigate(createPageUrl('Dashboard'));
                   } catch (e) {
                     setEmpLoginError('Ошибка: ' + e.message);
@@ -1484,10 +1496,13 @@ export default function Settings() {
                                 e.stopPropagation();
                                 if (!confirm(`Сбросить сеанс ${emp.name}? Он будет выброшен с сайта и должен войти заново.`)) return;
                                 const history = emp.change_history || [];
+                                const newToken = crypto.randomUUID();
                                 await base44.entities.Employee.update(emp.id, {
-                                  login_session_token: crypto.randomUUID(),
+                                  login_session_token: newToken,
                                   change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'session', newValue: 'reset', oldValue: null }] }]
                                 });
+                                // Удаляем токен из localStorage (на этом же устройстве, если он вошёл тут)
+                                localStorage.removeItem(`barakat_emp_token_${emp.id}`);
                                 setSelectedEmp(null);
                                 await loadData();
                               }}
@@ -1504,11 +1519,13 @@ export default function Settings() {
                                   e.stopPropagation();
                                   if (!confirm(`Заморозить ${emp.name}? Он не сможет войти в систему.`)) return;
                                   const history = emp.change_history || [];
+                                  const frozenToken = crypto.randomUUID();
                                   await base44.entities.Employee.update(emp.id, {
                                    is_frozen: true,
-                                   login_session_token: crypto.randomUUID(),
+                                   login_session_token: frozenToken,
                                    change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: 'false', newValue: 'true' }] }]
                                   });
+                                  localStorage.removeItem(`barakat_emp_token_${emp.id}`);
                                   setSelectedEmp(null);
                                   await loadData();
                                 }}
@@ -1576,9 +1593,10 @@ export default function Settings() {
                       className="w-full text-orange-600 border-orange-200 hover:bg-orange-50 gap-2"
                       onClick={async () => {
                         if (!confirm('Завершить сеансы ВСЕХ сотрудников? Они будут выброшены из системы.')) return;
-                        await Promise.all(employees.filter(e => !e.is_frozen).map(e =>
-                          base44.entities.Employee.update(e.id, { is_frozen: true, login_session_token: crypto.randomUUID() })
-                        ));
+                        await Promise.all(employees.filter(e => !e.is_frozen).map(e => {
+                          localStorage.removeItem(`barakat_emp_token_${e.id}`);
+                          return base44.entities.Employee.update(e.id, { is_frozen: true, login_session_token: crypto.randomUUID() });
+                        }));
                         await loadData();
                       }}
                     >
