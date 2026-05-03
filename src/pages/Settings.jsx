@@ -16,46 +16,18 @@ import AvatarPicker, { AvatarDisplay } from '@/components/settings/AvatarPicker'
 import RecentBusinessesPanel, { saveBusinessToHistory } from '@/components/settings/RecentBusinessesPanel';
 import TelegramNotificationsPanel from '@/components/settings/TelegramNotificationsPanel';
 import CustomFieldsPanel from '@/components/settings/CustomFieldsPanel';
-import { format, parseISO, formatDistanceToNow } from 'date-fns';
-import { ru as dateFnsRu } from 'date-fns/locale';
-import { ru } from 'date-fns/locale';
+import { format } from 'date-fns';
 import { 
-  Settings as SettingsIcon, 
-  Building2, 
-  Palette,
-  Users,
-  Plus,
-  Trash2,
-  Loader2,
-  Save,
-  CheckCircle,
-  MessageCircle,
-  Mail,
-  Bell,
-  Edit2,
-  LogOut,
-  History,
-  Download,
-  Shield,
-  RotateCcw,
-  AlertCircle,
-  RefreshCw,
-  ChevronDown,
-  Lock,
-  Database,
-  Zap,
-  Package,
-  ShoppingCart,
-  Eye,
-  Search,
-  Check,
-  Copy,
-  ArrowLeftRight
+  Settings as SettingsIcon, Building2, Palette, Users, Plus, Trash2, Loader2, Save,
+  CheckCircle, MessageCircle, Mail, Bell, Edit2, LogOut, History, Download, Shield,
+  RotateCcw, AlertCircle, RefreshCw, ChevronDown, Lock, Database, Zap, Package,
+  ShoppingCart, Eye, Search, Check, Copy, ArrowLeftRight
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
 import EmployeeCard from '@/components/employees/EmployeeCard';
 import SwitchAccountDialog from '@/components/settings/SwitchAccountDialog';
+import EmployeeProfilePanel from '@/components/settings/EmployeeProfilePanel';
 
 const LANGUAGES = [
   { value: 'ru', label: 'Русский' },
@@ -556,12 +528,96 @@ export default function Settings() {
     );
   }
 
-  // Хелпер проверки разрешений — всегда читает актуальный currentEmployee из state
+  // Хелпер проверки разрешений
   const canPerm = (key) => {
-    if (!currentEmployee) return true; // владелец
-    if (currentEmployee.is_admin) return true; // администратор
+    if (!currentEmployee) return true;
+    if (currentEmployee.is_admin) return true;
     return !!(currentEmployee.permissions?.[key]);
   };
+
+  // Обычный сотрудник (не admin, не owner) — упрощённая страница
+  if (currentEmployee && !currentEmployee.is_admin) {
+    return (
+      <div className="space-y-5">
+        <PageHeader title="Настройки" subtitle="Ваш профиль и аккаунт" />
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
+          <div className="flex items-center gap-3">
+            {currentEmployee?.avatar_url ? (
+              <AvatarDisplay avatarUrl={currentEmployee.avatar_url} name={user?.full_name} size="md" />
+            ) : (
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md flex-shrink-0">
+                <span className="text-white font-bold text-lg">{user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}</span>
+              </div>
+            )}
+            <div>
+              <p className="font-semibold text-slate-900">{user?.full_name || 'Пользователь'}</p>
+              <p className="text-sm text-slate-500">{user?.email}</p>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium mt-0.5">👤 Сотрудник</span>
+            </div>
+          </div>
+          <div className="border-t border-slate-100 pt-3">
+            <AvatarPicker key={currentEmployee?.avatar_url || 'no-avatar'} currentAvatar={currentEmployee?.avatar_url || null}
+              onSave={async (url) => {
+                await base44.entities.Employee.update(currentEmployee.id, { avatar_url: url });
+                window.__barakatEmployee = { ...currentEmployee, avatar_url: url };
+                await loadData();
+              }} />
+          </div>
+          <div className="border-t border-slate-100 pt-3">
+            <Button variant="outline" className="gap-2 text-indigo-600 hover:bg-indigo-50 border-indigo-200 w-full" onClick={() => setSwitchAccountOpen(true)}>
+              <ArrowLeftRight className="w-4 h-4" /> Переключить аккаунт
+            </Button>
+          </div>
+          <div className="border-t border-slate-100 pt-3">
+            <Button variant="outline" className="gap-2 text-red-600 hover:bg-red-50 border-red-200 w-full"
+              onClick={() => {
+                if (confirm('Выйти из аккаунта?')) {
+                  const mode = localStorage.getItem('barakatcrm_mode');
+                  if (mode?.startsWith('employee_')) {
+                    const empId = mode.replace('employee_', '');
+                    localStorage.removeItem(`barakat_emp_token_${empId}`);
+                    localStorage.removeItem('barakatcrm_mode');
+                  }
+                  base44.auth.logout();
+                }
+              }}>
+              <LogOut className="w-4 h-4" /> Выйти
+            </Button>
+          </div>
+        </div>
+        <EmployeeProfilePanel employee={currentEmployee} business={business} user={user} mergedPermissions={window.__barakatMergedPermissions} />
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+          <p className="text-sm font-semibold text-slate-700 mb-3">🌐 Язык интерфейса</p>
+          <Select value={lang} onValueChange={async (v) => { setLang(v); if (business) await base44.entities.Business.update(business.id, { language: v }); }}>
+            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+            <SelectContent>{LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <Collapsible open={expandedSections.recent_businesses} onOpenChange={(open) => setExpandedSections({...expandedSections, recent_businesses: open})}>
+            <CollapsibleTrigger asChild>
+              <div className={`p-4 cursor-pointer flex items-center justify-between ${expandedSections.recent_businesses ? 'bg-teal-50' : 'hover:bg-slate-50'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${expandedSections.recent_businesses ? 'bg-teal-600' : 'bg-teal-100'}`}>
+                    <History className={`w-5 h-5 ${expandedSections.recent_businesses ? 'text-white' : 'text-teal-600'}`} />
+                  </div>
+                  <div>
+                    <h3 className={`font-semibold ${expandedSections.recent_businesses ? 'text-teal-700' : 'text-slate-900'}`}>Недавние бизнесы</h3>
+                    <p className="text-xs text-slate-500">Быстрый вход в бизнесы</p>
+                  </div>
+                </div>
+                <ChevronDown className={`w-5 h-5 transition ${expandedSections.recent_businesses ? 'rotate-180 text-teal-600' : 'text-slate-500'}`} />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4">
+              <RecentBusinessesPanel currentUser={user} />
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+        <SwitchAccountDialog open={switchAccountOpen} onClose={() => setSwitchAccountOpen(false)} currentUser={user} currentEmployeeId={currentEmployee?.id} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -712,51 +768,14 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* Разрешения сотрудника */}
-        {(() => {
-          const emp = window.__barakatEmployee;
-          if (!emp) return null;
-          const PERM_LABELS = {
-            view_dashboard: 'Дашборд', view_analytics: 'Аналитика', view_profit: 'Прибыль',
-            view_stock_value: 'Стоимость склада', view_purchase_price: 'Цена закупки',
-            view_products: 'Просмотр товаров', add_products: 'Добавление товаров',
-            edit_products: 'Редакт. товары', delete_products: 'Удаление товаров', move_products: 'Перемещение',
-            view_sales: 'Просмотр продаж', add_sales: 'Продажи', edit_sales: 'Редакт. продаж',
-            cancel_sales: 'Отмена продаж', manage_discounts: 'Скидки',
-            view_warehouses: 'Склады', manage_warehouses: 'Управление складами',
-            view_customers: 'Клиенты', manage_customers: 'Управление клиентами',
-            view_debts: 'Долги', manage_debts: 'Управление долгами',
-            manage_returns: 'Возвраты', view_activity_log: 'История',
-            export_reports: 'Экспорт', manage_employees: 'Сотрудники',
-            manage_roles: 'Роли', manage_settings: 'Настройки',
-          };
-          if (emp.is_admin) {
-            return (
-              <div className="border-t border-slate-100 pt-3">
-                <p className="text-xs font-medium text-slate-500 mb-2">Разрешения:</p>
-                <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-                  <p className="text-xs text-emerald-700 font-medium">✅ Полный доступ — все разрешения как у владельца</p>
-                </div>
-              </div>
-            );
-          }
-          const granted = Object.entries(emp.permissions || {}).filter(([, v]) => v);
-          const denied = Object.entries(emp.permissions || {}).filter(([, v]) => !v);
-          return (
-            <div className="border-t border-slate-100 pt-3">
-              <p className="text-xs font-medium text-slate-500 mb-2">Ваши разрешения:</p>
-              <div className="flex flex-wrap gap-1.5">
-                {granted.length === 0 && <span className="text-xs text-slate-400 italic">Нет разрешений</span>}
-                {granted.map(([k]) => (
-                  <span key={k} className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">{PERM_LABELS[k] || k}</span>
-                ))}
-                {denied.map(([k]) => (
-                  <span key={k} className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded text-xs line-through">{PERM_LABELS[k] || k}</span>
-                ))}
-              </div>
+        {/* Разрешения — только для admin-сотрудника */}
+        {currentEmployee?.is_admin && (
+          <div className="border-t border-slate-100 pt-3">
+            <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <p className="text-xs text-emerald-700 font-medium">✅ Полный доступ — все разрешения как у владельца</p>
             </div>
-          );
-        })()}
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">
