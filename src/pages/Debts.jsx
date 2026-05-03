@@ -848,8 +848,8 @@ export default function Debts() {
           ))}
           </div>
         </div>
-        {/* Уведомить всех */}
-        <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+        {/* Уведомить всех — только при наличии разрешения */}
+        {can('send_debt_reminders') && <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
           <span className="text-xs text-slate-500">Уведомить всех должников:</span>
           <div className="flex gap-1">
             {[{ value: 'whatsapp', label: '💬 WA' }, { value: 'telegram', label: '✈️ TG' }].map(c => (
@@ -866,7 +866,7 @@ export default function Debts() {
             {notifyingAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             Отправить всем ({applyDebtorFilters(debtorList).filter(d => d.remaining > 0).length})
           </button>
-        </div>
+        </div>}
       </div>
 
       {/* Список клиентов */}

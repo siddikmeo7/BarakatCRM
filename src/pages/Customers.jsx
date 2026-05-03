@@ -271,21 +271,29 @@ export default function Customers() {
             )}
           </div>
         </div>
-        <div className="bg-white rounded-xl p-3 border border-slate-100 space-y-2">
-          {c.phone && <p className="flex items-center gap-2 text-sm text-slate-600"><Phone className="w-4 h-4 text-slate-400" />{c.phone}</p>}
-          {c.email && <p className="flex items-center gap-2 text-sm text-slate-600"><Mail className="w-4 h-4 text-slate-400" />{c.email}</p>}
-          {c.address && <p className="flex items-center gap-2 text-sm text-slate-600"><MapPin className="w-4 h-4 text-slate-400" />{c.address}</p>}
-        </div>
-        <div className="flex gap-2">
-          <a href={`https://wa.me/${whatsappNum?.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-green-50 hover:bg-green-100 rounded-xl text-green-700 text-sm font-medium">
-            <MessageCircle className="w-4 h-4" /> WhatsApp
-          </a>
-          <a href={`https://t.me/${telegramNum?.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 hover:bg-blue-100 rounded-xl text-blue-700 text-sm font-medium">
-            <Send className="w-4 h-4" /> Telegram
-          </a>
-        </div>
+        {can('view_customer_contacts') ? (
+          <>
+            <div className="bg-white rounded-xl p-3 border border-slate-100 space-y-2">
+              {c.phone && <p className="flex items-center gap-2 text-sm text-slate-600"><Phone className="w-4 h-4 text-slate-400" />{c.phone}</p>}
+              {c.email && <p className="flex items-center gap-2 text-sm text-slate-600"><Mail className="w-4 h-4 text-slate-400" />{c.email}</p>}
+              {c.address && <p className="flex items-center gap-2 text-sm text-slate-600"><MapPin className="w-4 h-4 text-slate-400" />{c.address}</p>}
+            </div>
+            <div className="flex gap-2">
+              <a href={`https://wa.me/${whatsappNum?.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-green-50 hover:bg-green-100 rounded-xl text-green-700 text-sm font-medium">
+                <MessageCircle className="w-4 h-4" /> WhatsApp
+              </a>
+              <a href={`https://t.me/${telegramNum?.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 hover:bg-blue-100 rounded-xl text-blue-700 text-sm font-medium">
+                <Send className="w-4 h-4" /> Telegram
+              </a>
+            </div>
+          </>
+        ) : (
+          <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
+            <p className="text-xs text-slate-400">🔒 Контакты скрыты</p>
+          </div>
+        )}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent>
             <DialogHeader><DialogTitle>{editingCustomer ? 'Редактировать' : 'Добавить'}</DialogTitle></DialogHeader>
@@ -359,7 +367,7 @@ export default function Customers() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-900 truncate">{customer.name}</p>
-              <p className="text-xs text-slate-400 truncate">{customer.phone}</p>
+              <p className="text-xs text-slate-400 truncate">{can('view_customer_contacts') ? customer.phone : '•••'}</p>
             </div>
             <div className="text-right flex-shrink-0">
               {can('view_customer_debt') ? (

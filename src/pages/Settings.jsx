@@ -1166,8 +1166,8 @@ export default function Settings() {
                 </div>
               </div>
 
-              {/* Telegram уведомления для владельца */}
-              {!currentEmployee && business && (
+              {/* Telegram уведомления — для владельца или при наличии разрешения */}
+              {(!currentEmployee || canPerm('manage_telegram')) && business && (
                 <TelegramNotificationsPanel business={business} onUpdate={setBusiness} />
               )}
 
@@ -1626,8 +1626,8 @@ export default function Settings() {
             {/* Автоматизация */}
             {business && <AutomationPanel business={business} />}
 
-            {/* Резервное копирование и Экспорт */}
-            <BackupExportPanel business={business} onBackupJSON={handleBackup} />
+            {/* Резервное копирование и Экспорт — только с разрешением */}
+            {canPerm('backup_data') && <BackupExportPanel business={business} onBackupJSON={handleBackup} />}
 
             {/* Очистить кэш */}
             <div className="bg-white rounded-xl border border-blue-100 overflow-hidden">
@@ -1644,8 +1644,8 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Опасная зона */}
-            <div className="bg-white rounded-xl border border-red-100 overflow-hidden">
+            {/* Опасная зона — только с разрешением delete_all_data */}
+            {canPerm('delete_all_data') && <div className="bg-white rounded-xl border border-red-100 overflow-hidden">
               <div className="px-4 py-3 bg-red-50 border-b border-red-100 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-red-500" />
                 <span className="text-sm font-semibold text-red-700">Опасная зона</span>
@@ -1672,11 +1672,11 @@ export default function Settings() {
                   </Button>
                 </div>
               </div>
-            </div>
+              </div>}
 
-          </CollapsibleContent>
-        </Collapsible></div> : null}
-      </div>
+              </CollapsibleContent>
+              </Collapsible></div> : null}
+              </div>
 
       {/* Save Button */}
       <div className="sticky bottom-0 bg-white border-t border-slate-200 p-4 flex justify-end gap-3 -mx-8 px-8">

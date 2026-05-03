@@ -258,8 +258,15 @@ export default function Sales() {
     setSalesPage(1);
   };
 
+  // Если у сотрудника view_own_sales_only — показываем только его продажи
+  const currentUserEmail = window.__barakatEmployee?.user_email || null;
+
   // Фильтрация продаж для отображения в списке (все, включая отменённые)
   let filteredSales = sales.filter(sale => {
+    // Если включен режим "только свои продажи"
+    if (can('view_own_sales_only') && !can('view_sales') && currentUserEmail) {
+      if (sale.created_by !== currentUserEmail) return false;
+    }
     const product = products.find(p => p.id === sale.product_id);
     const customer = customers.find(c => c.id === sale.customer_id);
     const q = search.toLowerCase().trim();
@@ -572,7 +579,7 @@ export default function Sales() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-1 rounded-lg text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                        {sale.is_debt ? `${t(lang,'sales_in_debt')}${customer?.name ? ` (${customer.name})` : ''}` : t(lang,'sales_cash')}
+                        {sale.is_debt ? `${t(lang,'sales_in_debt')}${can('view_sale_customer') && customer?.name ? ` (${customer.name})` : ''}` : t(lang,'sales_cash')}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -626,13 +633,13 @@ export default function Sales() {
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
                           {sale.is_debt ? t(lang,'sales_in_debt') : t(lang,'sales_cash')}
-                        </span>
-                        <span className="text-xs text-slate-500">{sale.boxes_sold} {t(lang,'sales_boxes_short')}</span>
+                          </span>
+                          <span className="text-xs text-slate-500">{sale.boxes_sold} {t(lang,'sales_boxes_short')}</span>
                         {sale.is_cancelled && <span className="text-xs text-red-500 font-medium">{t(lang,'sales_cancelled')}</span>}
                       </div>
                       <ChevronRight className="w-4 h-4 text-slate-300" />
                     </div>
-                    {(customer?.name || sale.customer_name) && sale.customer_name !== 'Неизвестный' && (
+                    {can('view_sale_customer') && (customer?.name || sale.customer_name) && sale.customer_name !== 'Неизвестный' && (
                       <p className="text-xs text-slate-500 mt-1">👤 {customer?.name || sale.customer_name}</p>
                     )}
                   </div>
@@ -729,7 +736,7 @@ export default function Sales() {
                 </div>
                 <div className="pt-2 border-t border-slate-100">
                   <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                    {sale.is_debt ? `${t(lang,'sales_in_debt')}${customer?.name ? ` (${customer.name})` : ''}` : t(lang,'sales_cash')}
+                    {sale.is_debt ? `${t(lang,'sales_in_debt')}${can('view_sale_customer') && customer?.name ? ` (${customer.name})` : ''}` : t(lang,'sales_cash')}
                   </span>
                 </div>
               </div>

@@ -131,7 +131,7 @@ function KpiCard({ icon: Icon, label, value, sub, bg, ic }) {
 
 // ─── Main Component ───────────────────────────────────────────
 export default function EmployeeAnalytics() {
-  const { isOwner, isReady } = useEmployeeAccess();
+  const { isOwner, isReady, can } = useEmployeeAccess();
   const [loading, setLoading]         = useState(true);
   const [employees, setEmployees]     = useState([]);
   const [sales, setSales]             = useState([]);
@@ -146,7 +146,8 @@ export default function EmployeeAnalytics() {
   const [showSalesList, setShowSalesList] = useState(false);
 
   useEffect(() => {
-    if (!isReady || !isOwner) return;
+    if (!isReady) return;
+    if (!isOwner && !can('view_employee_analytics')) return;
     loadData();
   }, [isReady]);
 
@@ -259,13 +260,14 @@ export default function EmployeeAnalytics() {
   const activeEmps = employeeStats.filter(e => e.count > 0);
 
   if (!isReady) return <PageLoader message="Загрузка..." />;
-  if (!isOwner) return (
+  if (!isOwner && !can('view_employee_analytics')) return (
     <div className="flex items-center justify-center min-h-[50vh]">
       <div className="text-center space-y-3">
         <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
           <Users className="w-8 h-8 text-red-500" />
         </div>
-        <p className="text-slate-600 font-medium">Доступ только для владельца бизнеса</p>
+        <p className="text-slate-600 font-medium">Нет доступа к разделу «Эффективность»</p>
+        <p className="text-slate-400 text-sm">Обратитесь к владельцу бизнеса</p>
       </div>
     </div>
   );
