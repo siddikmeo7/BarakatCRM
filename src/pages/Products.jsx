@@ -456,7 +456,7 @@ export default function Products() {
     <div className="space-y-6">
       <PageHeader 
         title={t(lang,'prod_title')}
-        subtitle={`${products.length} ${t(lang,'prod_subtitle_count')} ${can('view_stock_value') ? `${totalStockValue.toLocaleString()} ${t(lang,'dash_somoni')}` : '••••• с.'}`}
+        subtitle={`${products.length} ${t(lang,'prod_subtitle_count')} ${can('view_stock_value') ? `${totalStockValue.toLocaleString()} ${t(lang,'dash_somoni')}` : ''}`}
         actions={
           can('add_products') && (
             <div className="flex gap-2">
@@ -813,16 +813,16 @@ export default function Products() {
                           </p>
                         </div>
                         {can('view_purchase_price') && (
-                          <>
-                            <div className="bg-white rounded-xl p-2 border border-slate-100">
-                              <p className="text-slate-400">Закупка / кор.</p>
-                              <p className="font-semibold text-slate-800">{product.purchase_price?.toLocaleString()} с.</p>
-                            </div>
-                            <div className="bg-white rounded-xl p-2 border border-slate-100">
-                              <p className="text-slate-400">Стоимость склада</p>
-                              <p className="font-semibold text-emerald-600">{stockValue.toLocaleString()} с.</p>
-                            </div>
-                          </>
+                          <div className="bg-white rounded-xl p-2 border border-slate-100">
+                            <p className="text-slate-400">Закупка / кор.</p>
+                            <p className="font-semibold text-slate-800">{product.purchase_price?.toLocaleString()} с.</p>
+                          </div>
+                        )}
+                        {can('view_stock_value') && (
+                          <div className="bg-white rounded-xl p-2 border border-slate-100">
+                            <p className="text-slate-400">Стоимость склада</p>
+                            <p className="font-semibold text-emerald-600">{stockValue.toLocaleString()} с.</p>
+                          </div>
                         )}
                       </div>
                       <div className="flex gap-2">
