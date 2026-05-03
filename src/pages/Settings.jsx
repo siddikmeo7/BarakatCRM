@@ -49,11 +49,13 @@ import {
   Eye,
   Search,
   Check,
-  Copy
+  Copy,
+  ArrowLeftRight
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
 import EmployeeCard from '@/components/employees/EmployeeCard';
+import SwitchAccountDialog from '@/components/settings/SwitchAccountDialog';
 
 const LANGUAGES = [
   { value: 'ru', label: 'Русский' },
@@ -138,6 +140,7 @@ export default function Settings() {
   const [empLoginLoading, setEmpLoginLoading] = useState(false);
   const [empLoginError, setEmpLoginError] = useState('');
 
+  const [switchAccountOpen, setSwitchAccountOpen] = useState(false);
   const [deleteAccountDialog, setDeleteAccountDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [editingEmployee, setEditingEmployee] = useState(null);
@@ -632,6 +635,18 @@ export default function Settings() {
               await loadData();
             }}
           />
+        </div>
+
+        {/* Switch Account button */}
+        <div className="border-t border-slate-100 pt-3">
+          <Button
+            variant="outline"
+            className="gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 w-full"
+            onClick={() => setSwitchAccountOpen(true)}
+          >
+            <ArrowLeftRight className="w-4 h-4" />
+            Переключить аккаунт
+          </Button>
         </div>
 
         {/* Logout button */}
@@ -1860,6 +1875,14 @@ export default function Settings() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Switch Account Dialog */}
+      <SwitchAccountDialog
+        open={switchAccountOpen}
+        onClose={() => setSwitchAccountOpen(false)}
+        currentUser={user}
+        currentEmployeeId={currentEmployee?.id}
+      />
 
       {/* Delete Account Dialog */}
       <Dialog open={deleteAccountDialog} onOpenChange={setDeleteAccountDialog}>
