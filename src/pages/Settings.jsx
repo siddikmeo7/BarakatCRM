@@ -40,8 +40,8 @@ const COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Сини�
 
 export default function Settings() {
   const navigate = useNavigate();
-  // Проверяем режим сотрудника
-  const savedMode = sessionStorage.getItem('barakatcrm_mode');
+  // Проверяем режим сотрудника (сначала sessionStorage, потом localStorage)
+  const savedMode = sessionStorage.getItem('barakatcrm_mode') || localStorage.getItem('barakatcrm_mode');
   const isEmployeeMode = savedMode && savedMode.startsWith('employee_');
   // Реактивное состояние сотрудника — обновляется после loadData
   const [currentEmployee, setCurrentEmployee] = useState(() => window.__barakatEmployee || null);
@@ -537,25 +537,66 @@ export default function Settings() {
 
   // Обычный сотрудник (не admin, не owner) — упрощённая страница
   if (currentEmployee && !currentEmployee.is_admin) {
+    const empLastLogin = currentEmployee?.last_login_at ? new Date(currentEmployee.last_login_at) : null;
+    const parseDevice = (ua) => {
+      if (!ua) return '—';
+      const isMobile = /iPhone|Android.*Mobile/i.test(ua);
+      const device = isMobile ? '📱' : /iPad|Android(?!.*Mobile)/i.test(ua) ? '📱 Планшет' : '💻';
+      const os = /iOS|iPhone|iPad/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'macOS' : '';
+      const browser = /Edg/i.test(ua) ? 'Edge' : /Chrome/i.test(ua) && !/Edge/i.test(ua) ? 'Chrome' : /Firefox/i.test(ua) ? 'Firefox' : /Safari/i.test(ua) && !/Chrome/i.test(ua) ? 'Safari' : '';
+      return `${device}${os ? ' ' + os : ''}${browser ? ' · ' + browser : ''}`;
+    };
     return (
-      <div className="space-y-5">
+      <div className="space-y-4">
         <PageHeader title="Настройки" subtitle="Ваш профиль и аккаунт" />
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
+          {/* Профиль */}
           <div className="flex items-center gap-3">
             {currentEmployee?.avatar_url ? (
-              <AvatarDisplay avatarUrl={currentEmployee.avatar_url} name={user?.full_name} size="md" />
+              <AvatarDisplay avatarUrl={currentEmployee.avatar_url} name={currentEmployee.name} size="md" />
             ) : (
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md flex-shrink-0">
-                <span className="text-white font-bold text-lg">{user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}</span>
+                <span className="text-white font-bold text-lg">{currentEmployee.name?.charAt(0) || '?'}</span>
               </div>
             )}
-            <div>
-              <p className="font-semibold text-slate-900">{user?.full_name || 'Пользователь'}</p>
-              <p className="text-sm text-slate-500">{user?.email}</p>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium mt-0.5">👤 Сотрудник</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-slate-900 truncate">{currentEmployee.name}</p>
+              <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+              <div className="flex flex-wrap gap-1 mt-0.5">
+                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs">👤 Сотрудник</span>
+                {currentEmployee.is_frozen
+                  ? <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">🧊 Заморожен</span>
+                  : <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block"/>Активен</span>
+                }
+              </div>
             </div>
           </div>
+          {/* Бизнес */}
+          {business && (
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <span className="text-white font-bold text-sm">{business.name?.charAt(0)?.toUpperCase()}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-slate-900 text-sm truncate">{business.name}</p>
+                <p className="text-xs text-slate-500">Вы работаете здесь как сотрудник</p>
+              </div>
+            </div>
+          )}
+          {/* Активность */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-slate-50 rounded-xl p-3">
+              <p className="text-xs text-slate-400 mb-0.5">🕐 Последний вход</p>
+              <p className="text-xs font-semibold text-slate-800">{empLastLogin ? format(empLastLogin, 'dd.MM.yyyy HH:mm') : 'Нет данных'}</p>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3">
+              <p className="text-xs text-slate-400 mb-0.5">💻 Устройство</p>
+              <p className="text-xs font-semibold text-slate-800 truncate">{parseDevice(currentEmployee.device_info)}</p>
+            </div>
+          </div>
+          {/* Аватар */}
           <div className="border-t border-slate-100 pt-3">
+            <p className="text-xs font-medium text-slate-500 mb-2">Фото профиля</p>
             <AvatarPicker key={currentEmployee?.avatar_url || 'no-avatar'} currentAvatar={currentEmployee?.avatar_url || null}
               onSave={async (url) => {
                 await base44.entities.Employee.update(currentEmployee.id, { avatar_url: url });
@@ -563,13 +604,12 @@ export default function Settings() {
                 await loadData();
               }} />
           </div>
-          <div className="border-t border-slate-100 pt-3">
-            <Button variant="outline" className="gap-2 text-indigo-600 hover:bg-indigo-50 border-indigo-200 w-full" onClick={() => setSwitchAccountOpen(true)}>
-              <ArrowLeftRight className="w-4 h-4" /> Переключить аккаунт
+          {/* Кнопки */}
+          <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+            <Button variant="outline" className="gap-1.5 text-indigo-600 hover:bg-indigo-50 border-indigo-200 text-sm" onClick={() => setSwitchAccountOpen(true)}>
+              <ArrowLeftRight className="w-4 h-4" /> Сменить аккаунт
             </Button>
-          </div>
-          <div className="border-t border-slate-100 pt-3">
-            <Button variant="outline" className="gap-2 text-red-600 hover:bg-red-50 border-red-200 w-full"
+            <Button variant="outline" className="gap-1.5 text-red-600 hover:bg-red-50 border-red-200 text-sm"
               onClick={() => {
                 if (confirm('Выйти из аккаунта?')) {
                   const mode = localStorage.getItem('barakatcrm_mode');
