@@ -368,8 +368,8 @@ export default function Layout({ children, currentPageName }) {
     if (currentEmployee?.is_admin) return true;
     // EmployeeAnalytics — только для владельца
     if (item.ownerOnly && !isOwner) return false;
-    // Settings — только для владельца или у кого есть view_settings_language
-    if (item.name === 'Settings' && !isOwner && !employeePermissions?.view_settings_language && !employeePermissions?.view_settings_defaults && !employeePermissions?.manage_settings_defaults && !employeePermissions?.view_settings_custom && !employeePermissions?.manage_settings_custom && !employeePermissions?.view_settings_security && !employeePermissions?.view_settings_codes && !employeePermissions?.manage_settings && !employeePermissions?.manage_employees && !employeePermissions?.manage_roles && !employeePermissions?.view_activity_log) return false;
+    // Settings — всегда видна всем (сотрудники видят свой профиль, разрешения, выход)
+    if (item.name === 'Settings') return true;
     return canAccess(item.permKey);
   });
 
