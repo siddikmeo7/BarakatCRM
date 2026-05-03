@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
-import { Save, Shield, Package, ShoppingCart, Warehouse, Users, CreditCard, RotateCcw, TrendingUp, History, Settings, LayoutDashboard, FileDown, Percent, ArrowLeftRight, RotateCw, Copy, Check, Upload, Tag } from 'lucide-react';
+import { Save, Shield, Package, ShoppingCart, Warehouse, Users, CreditCard, RotateCcw, TrendingUp, History, Settings, LayoutDashboard, FileDown, Percent, ArrowLeftRight, RotateCw, Copy, Check, Upload, Tag, Bot } from 'lucide-react';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
 
 const PERMISSION_GROUPS = [
@@ -96,6 +96,15 @@ const PERMISSION_GROUPS = [
       { key: 'view_reports',      label: 'Видеть раздел «Отчёты»',  desc: 'Доступ к разделу отчётов и статистики' },
       { key: 'view_activity_log', label: 'Видеть историю действий', desc: 'Просматривать лог активности' },
       { key: 'export_reports',    label: 'Экспортировать отчёты',   desc: 'Скачивать данные в Excel/PDF' },
+    ]
+  },
+  {
+    label: 'AI Ассистент',
+    icon: Bot,
+    color: 'text-purple-600',
+    bg: 'bg-purple-50',
+    permissions: [
+      { key: 'view_ai_assistant', label: 'Использовать AI Ассистент', desc: 'Доступ к разделу AI — анализ бизнеса, вопросы и ответы' },
     ]
   },
   {
@@ -286,6 +295,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
         view_customers: true, manage_customers: false,
         view_debts: false, manage_debts: false,
         manage_returns: false, view_activity_log: false, export_reports: false,
+        view_ai_assistant: false,
         view_settings_language: true, manage_employees: false, manage_roles: false, manage_settings: false,
       });
     } else if (preset === 'manager') {
@@ -298,6 +308,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
         view_customers: true, manage_customers: true,
         view_debts: true, manage_debts: true,
         manage_returns: true, view_activity_log: false, export_reports: false,
+        view_ai_assistant: false,
         view_settings_language: true, manage_employees: false, manage_roles: false, manage_settings: false,
       });
     } else if (preset === 'all') {

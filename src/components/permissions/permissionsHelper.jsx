@@ -63,6 +63,9 @@ export const PERMISSIONS = {
   // Возвраты
   MANAGE_RETURNS: 'manage_returns',
 
+  // AI Ассистент
+  VIEW_AI_ASSISTANT: 'view_ai_assistant',
+
   // Логи и управление
   VIEW_ACTIVITY_LOG: 'view_activity_log',
   MANAGE_EMPLOYEES: 'manage_employees',

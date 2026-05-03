@@ -7,12 +7,14 @@ import { Input } from '@/components/ui/input';
 import {
   Bot, Send, Plus, MessageSquare, Trash2, Loader2, Sparkles,
   Menu, X, Package, Users, ShoppingCart, TrendingUp, History,
-  AlertTriangle, CheckCircle, Edit3, RotateCcw, ChevronDown
+  AlertTriangle, CheckCircle, Edit3, RotateCcw, ChevronDown, Lock
 } from 'lucide-react';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 
 export default function AIAssistant() {
+  const { can, isReady } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
@@ -316,10 +318,22 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
     lang === 'ru' ? 'Какие изменения были сегодня?' : lang === 'tj' ? 'Имрӯз кадом тағйиротҳо буданд?' : 'What changes happened today?',
   ];
 
-  if (loading) {
+  if (loading || !isReady) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+      </div>
+    );
+  }
+
+  if (!can('view_ai_assistant')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4 px-4">
+        <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center">
+          <Lock className="w-10 h-10 text-purple-300" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-700">Нет доступа</h2>
+        <p className="text-slate-400 max-w-sm text-sm">У вас нет разрешения на использование AI Ассистента. Обратитесь к владельцу бизнеса.</p>
       </div>
     );
   }
