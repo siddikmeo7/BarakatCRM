@@ -77,6 +77,9 @@
         "view_purchase_price": {
           "type": "boolean"
         },
+        "view_revenue": {
+          "type": "boolean"
+        },
         "view_products": {
           "type": "boolean"
         },
@@ -90,6 +93,9 @@
           "type": "boolean"
         },
         "move_products": {
+          "type": "boolean"
+        },
+        "view_products_cost": {
           "type": "boolean"
         },
         "view_sales": {
@@ -107,10 +113,19 @@
         "manage_discounts": {
           "type": "boolean"
         },
+        "view_sale_profit": {
+          "type": "boolean"
+        },
+        "view_sale_purchase_price": {
+          "type": "boolean"
+        },
         "view_warehouses": {
           "type": "boolean"
         },
         "manage_warehouses": {
+          "type": "boolean"
+        },
+        "view_warehouse_value": {
           "type": "boolean"
         },
         "view_customers": {
@@ -119,13 +134,25 @@
         "manage_customers": {
           "type": "boolean"
         },
+        "delete_customers": {
+          "type": "boolean"
+        },
+        "view_customer_debt": {
+          "type": "boolean"
+        },
         "view_debts": {
           "type": "boolean"
         },
         "manage_debts": {
           "type": "boolean"
         },
+        "add_debt_manual": {
+          "type": "boolean"
+        },
         "manage_returns": {
+          "type": "boolean"
+        },
+        "view_returns": {
           "type": "boolean"
         },
         "view_reports": {
@@ -135,6 +162,9 @@
           "type": "boolean"
         },
         "export_reports": {
+          "type": "boolean"
+        },
+        "view_ai_assistant": {
           "type": "boolean"
         },
         "manage_employees": {

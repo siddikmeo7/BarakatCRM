@@ -15,6 +15,7 @@ import {
 import { format, parseISO, isToday, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 // Проверяет, есть ли у клиента продажа с просроченным или сегодняшним сроком оплаты
 const getDueDateStatus = (salesList) => {
@@ -30,6 +31,7 @@ const getDueDateStatus = (salesList) => {
 };
 
 export default function Debts() {
+  const { can } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -437,12 +439,14 @@ export default function Debts() {
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button size="sm" variant="outline"
-              onClick={() => openAddDebtForCustomer(c.id)}
-              className="gap-1.5 text-xs border-orange-300 text-orange-700 hover:bg-orange-50 flex-1">
-              <Plus className="w-3.5 h-3.5" /> Прибавить долг
-            </Button>
-            {(customerDebtMap[c.id]?.totalAmount - customerDebtMap[c.id]?.totalPaid) > 0 && (
+            {can('add_debt_manual') && (
+              <Button size="sm" variant="outline"
+                onClick={() => openAddDebtForCustomer(c.id)}
+                className="gap-1.5 text-xs border-orange-300 text-orange-700 hover:bg-orange-50 flex-1">
+                <Plus className="w-3.5 h-3.5" /> Прибавить долг
+              </Button>
+            )}
+            {can('manage_debts') && (customerDebtMap[c.id]?.totalAmount - customerDebtMap[c.id]?.totalPaid) > 0 && (
               <Button size="sm" onClick={() => { setBulkPayOpen(true); setBulkPayAmount(''); }}
                 className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 text-xs flex-1">
                 <DollarSign className="w-3.5 h-3.5" /> Погасить долг
@@ -624,7 +628,7 @@ export default function Debts() {
                         История платежей {salePayments.length > 0 && `(${salePayments.length})`}
                         <ChevronRight className={`w-3 h-3 transition-transform ${isHistoryOpen ? 'rotate-90' : ''}`} />
                       </button>
-                      {!isPaid && (
+                      {!isPaid && can('manage_debts') && (
                         <Button size="sm" onClick={() => openPayDialog(sale)} className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs px-3">
                           <DollarSign className="w-3 h-3 mr-1" /> Оплатить
                         </Button>
@@ -799,9 +803,11 @@ export default function Debts() {
           <h1 className="text-xl font-bold text-slate-900">{t(lang,'debts_title')}</h1>
           <p className="text-xs text-slate-400">{totalDebtors} должников · {totalDebt.toLocaleString()} с.</p>
         </div>
-        <Button onClick={() => setAddDebtOpen(true)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
-          <PlusCircle className="w-3.5 h-3.5" /> Добавить
-        </Button>
+        {can('add_debt_manual') && (
+          <Button onClick={() => setAddDebtOpen(true)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
+            <PlusCircle className="w-3.5 h-3.5" /> Добавить
+          </Button>
+        )}
       </div>
 
       {/* Поиск, сортировка, фильтры */}

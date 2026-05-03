@@ -206,7 +206,7 @@ export default function Returns() {
     count: filteredReturns.filter(r => r.condition === condition).length
   }));
 
-  if (!can('manage_returns')) {
+  if (!can('view_returns') && !can('manage_returns')) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center space-y-4">

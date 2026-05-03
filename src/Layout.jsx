@@ -36,7 +36,7 @@ const ALL_MENU_ITEMS = [
   { name: 'Products',    icon: Package,          labelKey: 'nav_products',  color: 'text-blue-500',    activeBg: 'bg-blue-500',    activeText: 'text-blue-600', permKey: 'view_products' },
   { name: 'Warehouses',  icon: Warehouse,        labelKey: 'nav_warehouses',color: 'text-orange-500',  activeBg: 'bg-orange-500',  activeText: 'text-orange-600', permKey: 'view_warehouses' },
   { name: 'Sales',       icon: ShoppingCart,     labelKey: 'nav_sales',     color: 'text-green-500',   activeBg: 'bg-green-500',   activeText: 'text-green-600', permKey: 'view_sales' },
-  { name: 'Returns',     icon: RotateCcw,        labelKey: 'nav_returns',   color: 'text-yellow-500',  activeBg: 'bg-yellow-500',  activeText: 'text-yellow-600', permKey: 'manage_returns' },
+  { name: 'Returns',     icon: RotateCcw,        labelKey: 'nav_returns',   color: 'text-yellow-500',  activeBg: 'bg-yellow-500',  activeText: 'text-yellow-600', permKey: 'view_returns' },
   { name: 'Customers',   icon: Users,            labelKey: 'nav_customers', color: 'text-pink-500',    activeBg: 'bg-pink-500',    activeText: 'text-pink-600', permKey: 'view_customers' },
   { name: 'Debts',       icon: CreditCard,       labelKey: 'nav_debts',     color: 'text-red-500',     activeBg: 'bg-red-500',     activeText: 'text-red-600', permKey: 'view_debts' },
   { name: 'Reports',     icon: FileText,         labelKey: 'nav_reports',   color: 'text-violet-500',  activeBg: 'bg-violet-500',  activeText: 'text-violet-600', permKey: 'view_reports' },

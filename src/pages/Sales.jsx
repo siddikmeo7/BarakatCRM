@@ -399,7 +399,11 @@ export default function Sales() {
             <ShoppingCart className="w-4 h-4 text-blue-600" />
             <span className="text-xs text-slate-500 truncate">{t(lang,'sales_revenue')}</span>
           </div>
-          <p className="text-xl font-bold text-slate-900">{totals.revenue.toLocaleString()}</p>
+          {can('view_revenue') ? (
+            <p className="text-xl font-bold text-slate-900">{totals.revenue.toLocaleString()}</p>
+          ) : (
+            <p className="text-xl font-bold text-slate-300">•••</p>
+          )}
         </div>
         <div className="col-span-1 lg:col-span-1 bg-white rounded-xl p-3 shadow-sm border border-slate-100">
           <div className="flex items-center gap-1.5 mb-1">

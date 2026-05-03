@@ -241,22 +241,34 @@ export default function Customers() {
             <h1 className="text-lg font-bold text-slate-900 truncate">{c.name}</h1>
             <p className="text-xs text-slate-400">{c.phone}</p>
           </div>
-          {can('manage_customers') && (
-            <div className="flex gap-1">
+          <div className="flex gap-1">
+            {can('manage_customers') && (
               <button onClick={() => { handleOpenDialog(c); }} className="p-2 hover:bg-slate-100 rounded-lg"><Edit2 className="w-4 h-4 text-slate-500" /></button>
+            )}
+            {can('delete_customers') && (
               <button onClick={() => { handleDelete(c.id); setSelectedCustomer(null); }} className="p-2 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4 text-red-500" /></button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
             <p className="text-xs text-slate-400">Долг</p>
-            <p className="text-xl font-bold text-orange-600">{(c.total_debt||0).toLocaleString()} с.</p>
-            {c.debt_limit && <p className="text-xs text-slate-400">Лимит: {c.debt_limit.toLocaleString()} с.</p>}
+            {can('view_customer_debt') ? (
+              <>
+                <p className="text-xl font-bold text-orange-600">{(c.total_debt||0).toLocaleString()} с.</p>
+                {c.debt_limit && <p className="text-xs text-slate-400">Лимит: {c.debt_limit.toLocaleString()} с.</p>}
+              </>
+            ) : (
+              <p className="text-xl font-bold text-slate-300">•••</p>
+            )}
           </div>
           <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
             <p className="text-xs text-slate-400">Оплачено</p>
-            <p className="text-xl font-bold text-emerald-600">{(c.total_paid||0).toLocaleString()} с.</p>
+            {can('view_customer_debt') ? (
+              <p className="text-xl font-bold text-emerald-600">{(c.total_paid||0).toLocaleString()} с.</p>
+            ) : (
+              <p className="text-xl font-bold text-slate-300">•••</p>
+            )}
           </div>
         </div>
         <div className="bg-white rounded-xl p-3 border border-slate-100 space-y-2">
@@ -305,10 +317,12 @@ export default function Customers() {
           <h1 className="text-xl font-bold text-slate-900">Клиенты</h1>
           <p className="text-xs text-slate-400">{customers.length} · долг {totalDebt.toLocaleString()} с.</p>
         </div>
-        {can('manage_customers') && (
-          <Button onClick={() => handleOpenDialog()} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
-            <Plus className="w-3.5 h-3.5" /> Добавить
-          </Button>
+        {(can('manage_customers') || can('delete_customers')) && (
+          can('manage_customers') && (
+            <Button onClick={() => handleOpenDialog()} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
+              <Plus className="w-3.5 h-3.5" /> Добавить
+            </Button>
+          )
         )}
       </div>
 
@@ -348,12 +362,15 @@ export default function Customers() {
               <p className="text-xs text-slate-400 truncate">{customer.phone}</p>
             </div>
             <div className="text-right flex-shrink-0">
-              {(customer.total_debt||0) > 0 ? (
-                <p className="text-sm font-bold text-orange-600">{(customer.total_debt||0).toLocaleString()} с.</p>
+              {can('view_customer_debt') ? (
+                (customer.total_debt||0) > 0 ? (
+                  <p className="text-sm font-bold text-orange-600">{(customer.total_debt||0).toLocaleString()} с.</p>
+                ) : (
+                  <p className="text-xs text-emerald-500 font-medium">✓ нет долга</p>
+                )
               ) : (
-                <p className="text-xs text-emerald-500 font-medium">✓ нет долга</p>
+                <p className="text-xs text-slate-300">•••</p>
               )}
-              <p className="text-xs text-slate-300">оплач. {(customer.total_paid||0).toLocaleString()}</p>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
           </div>
