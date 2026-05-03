@@ -30,8 +30,12 @@ import {
   Tag,
   Warehouse,
   DollarSign,
-  CheckCheck
+  CheckCheck,
+  Layers,
+  AlertCircle
 } from 'lucide-react';
+import BulkAddProductsDialog from '@/components/products/BulkAddProductsDialog';
+import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
 import { format, parseISO, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
@@ -77,7 +81,9 @@ export default function Products() {
   const [bulkAction, setBulkAction] = useState(null); // 'brand'|'model'|'type'|'color'|'warehouse'|'sale_price'|'purchase_price'|'delete'
   const [bulkValue, setBulkValue] = useState('');
   const [bulkSaving, setBulkSaving] = useState(false);
-  
+  const [bulkAddOpen, setBulkAddOpen] = useState(false);
+  const [orphanedDialogOpen, setOrphanedDialogOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     brand: '',
     model: '',
@@ -423,6 +429,10 @@ export default function Products() {
     sum + ((p.boxes_in_stock || 0) * (p.sale_price || 0)), 0
   );
 
+  // Товары без склада (склад был удалён)
+  const warehouseIds = new Set(warehouses.map(w => w.id));
+  const orphanedProducts = products.filter(p => p.warehouse_id && !warehouseIds.has(p.warehouse_id));
+
   if (!isReady) return <PageLoader message="Загрузка..." />;
   if (!can('view_products')) {
     return (
@@ -449,13 +459,40 @@ export default function Products() {
         subtitle={`${products.length} ${t(lang,'prod_subtitle_count')} ${can('view_stock_value') ? `${totalStockValue.toLocaleString()} ${t(lang,'dash_somoni')}` : '••••• с.'}`}
         actions={
           can('add_products') && (
-            <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-              <Plus className="w-4 h-4" />
-              {t(lang,'prod_add')}
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setBulkAddOpen(true)} variant="outline" className="gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+                <Layers className="w-4 h-4" />
+                <span className="hidden sm:inline">Много товаров</span>
+              </Button>
+              <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+                <Plus className="w-4 h-4" />
+                {t(lang,'prod_add')}
+              </Button>
+            </div>
           )
         }
       />
+
+      {/* Orphaned products banner */}
+      {orphanedProducts.length > 0 && can('edit_products') && (
+        <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-800">
+              {orphanedProducts.length} товаров без склада
+            </p>
+            <p className="text-xs text-amber-600 mt-0.5">
+              Склад был удалён. Переместите эти товары в другой склад.
+            </p>
+          </div>
+          <Button size="sm" variant="outline"
+            className="border-amber-400 text-amber-700 hover:bg-amber-100 gap-1.5 flex-shrink-0"
+            onClick={() => setOrphanedDialogOpen(true)}>
+            <Warehouse className="w-3.5 h-3.5" />
+            Переместить
+          </Button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 space-y-2">
@@ -769,9 +806,11 @@ export default function Products() {
                           <p className="text-slate-400">Размеры</p>
                           <p className="font-semibold text-slate-800">{product.size_from}–{product.size_to}</p>
                         </div>
-                        <div className="bg-white rounded-xl p-2 border border-slate-100">
+                        <div className={`rounded-xl p-2 border ${product.warehouse_id && !warehouse ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-100'}`}>
                           <p className="text-slate-400">Склад</p>
-                          <p className="font-semibold text-slate-800 truncate">{warehouse?.name || '—'}</p>
+                          <p className={`font-semibold truncate ${product.warehouse_id && !warehouse ? 'text-amber-600' : 'text-slate-800'}`}>
+                            {warehouse?.name || (product.warehouse_id ? '⚠️ Удалён' : '—')}
+                          </p>
                         </div>
                         {can('view_purchase_price') && (
                           <>
@@ -1141,6 +1180,24 @@ export default function Products() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Add Products Dialog */}
+      <BulkAddProductsDialog
+        open={bulkAddOpen}
+        onClose={() => setBulkAddOpen(false)}
+        business={business}
+        warehouses={warehouses}
+        onSaved={loadData}
+      />
+
+      {/* Orphaned Products Dialog */}
+      <OrphanedProductsDialog
+        open={orphanedDialogOpen}
+        onClose={() => setOrphanedDialogOpen(false)}
+        orphanedProducts={orphanedProducts}
+        warehouses={warehouses}
+        onSaved={loadData}
+      />
 
       {/* Bulk Edit Dialog */}
       <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
