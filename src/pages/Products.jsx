@@ -201,7 +201,7 @@ export default function Products() {
     if (savingRef.current) return; // Жёсткая защита от двойного нажатия
     savingRef.current = true;
     setSaving(true);
-    setDialogOpen(false); // Закрываем сразу, чтобы нельзя было нажать снова
+    // НЕ закрываем диалог сразу — это вызывало белый экран у сотрудников
     
     const data = {
       ...formData,
@@ -223,6 +223,7 @@ export default function Products() {
 
     try {
       const user = await base44.auth.me().catch(() => ({ email: 'unknown' }));
+      setDialogOpen(false); // Закрываем только после успешного получения user
       if (editingProduct) {
         // Вычисляем diff — что изменилось
         const changedFields = {};
@@ -265,6 +266,7 @@ export default function Products() {
       await loadData();
     } catch (error) {
       console.error('Error saving product:', error);
+      setDialogOpen(false);
       await loadData();
     } finally {
       setSaving(false);
@@ -1106,7 +1108,7 @@ export default function Products() {
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              {can('view_purchase_price') && (
+              {(can('view_purchase_price') || can('edit_product_purchase_price')) && (
               <div>
                 <Label>{t(lang,'prod_purchase_price')} *</Label>
                 <Input 
@@ -1115,9 +1117,11 @@ export default function Products() {
                   inputMode="decimal"
                   value={formData.purchase_price}
                   onChange={(e) => {
+                    if (!can('edit_product_purchase_price') && !can('edit_products')) return;
                     const val = e.target.value.replace(/[^0-9.]/g, '');
                     setFormData({ ...formData, purchase_price: val });
                   }}
+                  readOnly={!can('edit_product_purchase_price') && !can('edit_products')}
                   placeholder="0"
                   className="mt-1.5"
                 />
@@ -1131,9 +1135,11 @@ export default function Products() {
                   inputMode="decimal"
                   value={formData.sale_price}
                   onChange={(e) => {
+                    if (!can('edit_product_sale_price') && !can('edit_products')) return;
                     const val = e.target.value.replace(/[^0-9.]/g, '');
                     setFormData({ ...formData, sale_price: val });
                   }}
+                  readOnly={!can('edit_product_sale_price') && !can('edit_products')}
                   placeholder="0"
                   className="mt-1.5"
                 />
@@ -1247,7 +1253,7 @@ export default function Products() {
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={saving || !formData.brand || !formData.model || (!!duplicateProduct && !editingProduct)}
+              disabled={savingRef.current || !formData.brand || !formData.model || (!!duplicateProduct && !editingProduct)}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingProduct ? t(lang,'prod_save') : t(lang,'prod_add')}
