@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/ui/PageHeader';
 import SearchInput from '@/components/filters/SearchInput';
@@ -32,7 +32,8 @@ import {
   DollarSign,
   CheckCheck,
   Layers,
-  AlertCircle
+  AlertCircle,
+  Info
 } from 'lucide-react';
 import BulkAddProductsDialog from '@/components/products/BulkAddProductsDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
@@ -57,6 +58,8 @@ export default function Products() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false); // защита от двойного сохранения
+  const [duplicateProduct, setDuplicateProduct] = useState(null); // найденный дубликат
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterWarehouse, setFilterWarehouse] = useState('all');
@@ -142,7 +145,22 @@ export default function Products() {
     }
   };
 
+  // Проверка дубликата по бренду+модели
+  const checkDuplicate = (brand, model) => {
+    if (!brand.trim() || !model.trim()) {
+      setDuplicateProduct(null);
+      return;
+    }
+    const found = products.find(p =>
+      p.brand?.toLowerCase().trim() === brand.toLowerCase().trim() &&
+      p.model?.toLowerCase().trim() === model.toLowerCase().trim() &&
+      (!editingProduct || p.id !== editingProduct.id)
+    );
+    setDuplicateProduct(found || null);
+  };
+
   const handleOpenDialog = (product = null) => {
+    setDuplicateProduct(null);
     if (product) {
       setEditingProduct(product);
       setFormData({
@@ -180,7 +198,8 @@ export default function Products() {
   };
 
   const handleSave = async () => {
-    if (saving) return; // Защита от двойного нажатия
+    if (savingRef.current) return; // Жёсткая защита от двойного нажатия
+    savingRef.current = true;
     setSaving(true);
     setDialogOpen(false); // Закрываем сразу, чтобы нельзя было нажать снова
     
@@ -249,6 +268,7 @@ export default function Products() {
       await loadData();
     } finally {
       setSaving(false);
+      savingRef.current = false;
     }
   };
 
@@ -944,7 +964,11 @@ export default function Products() {
                 <Label>{t(lang,'prod_brand')} *</Label>
                 <Input 
                   value={formData.brand}
-                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData({ ...formData, brand: val });
+                    checkDuplicate(val, formData.model);
+                  }}
                   placeholder="Nike, Adidas..."
                   className="mt-1.5"
                 />
@@ -953,12 +977,63 @@ export default function Products() {
                 <Label>{t(lang,'prod_model')} *</Label>
                 <Input 
                   value={formData.model}
-                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData({ ...formData, model: val });
+                    checkDuplicate(formData.brand, val);
+                  }}
                   placeholder="Air Max, Ultra Boost..."
-                  className="mt-1.5"
+                  className={`mt-1.5 ${duplicateProduct && !editingProduct ? 'border-amber-400 focus-visible:ring-amber-400' : ''}`}
                 />
               </div>
             </div>
+
+            {/* Предупреждение о дубликате */}
+            {duplicateProduct && !editingProduct && (
+              <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-300 rounded-xl animate-in fade-in duration-200">
+                <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-amber-800">
+                    Такой товар уже существует!
+                  </p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    <span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span> уже добавлен в систему
+                  </p>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                    <div className="bg-white rounded-lg p-2 border border-amber-200">
+                      <p className="text-amber-500">Добавлен</p>
+                      <p className="font-semibold text-slate-800">
+                        {duplicateProduct.created_date ? format(parseISO(duplicateProduct.created_date), 'dd.MM.yyyy HH:mm', { locale: ru }) : '—'}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 border border-amber-200">
+                      <p className="text-amber-500">Коробок</p>
+                      <p className="font-semibold text-slate-800">{duplicateProduct.boxes_in_stock || 0}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 border border-amber-200">
+                      <p className="text-amber-500">Цена</p>
+                      <p className="font-semibold text-slate-800">{duplicateProduct.sale_price?.toLocaleString()} с.</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setDialogOpen(false); setDuplicateProduct(null); setTimeout(() => handleOpenDialog(duplicateProduct), 100); }}
+                      className="text-xs px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Открыть существующий
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDuplicateProduct(null)}
+                      className="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium hover:bg-amber-50 transition-colors"
+                    >
+                      Всё равно добавить
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <SearchableSelect
@@ -1172,7 +1247,7 @@ export default function Products() {
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={saving || !formData.brand || !formData.model}
+              disabled={saving || !formData.brand || !formData.model || (!!duplicateProduct && !editingProduct)}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingProduct ? t(lang,'prod_save') : t(lang,'prod_add')}
