@@ -106,11 +106,14 @@ export default function Products() {
   useEffect(() => {
     if (window.__barakatAccessReady) {
       loadData();
-    } else {
-      const handler = () => loadData();
-      window.addEventListener('barakatAccessReady', handler);
-      return () => window.removeEventListener('barakatAccessReady', handler);
+      return;
     }
+    let called = false;
+    const handler = () => {
+      if (!called) { called = true; loadData(); }
+    };
+    window.addEventListener('barakatAccessReady', handler);
+    return () => window.removeEventListener('barakatAccessReady', handler);
   }, []);
 
   const loadData = async () => {
@@ -128,7 +131,9 @@ export default function Products() {
       const biz = bizList[0] || cachedBiz;
       setBusiness(biz);
       setLang(biz.language || 'ru');
-      setProducts(productsData);
+      // Дедупликация по id на случай двойной загрузки
+      const uniqueProducts = [...new Map(productsData.map(p => [p.id, p])).values()];
+      setProducts(uniqueProducts);
       setWarehouses(warehousesData);
 
       setFormData(prev => ({
