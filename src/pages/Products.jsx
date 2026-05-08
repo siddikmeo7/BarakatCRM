@@ -59,6 +59,7 @@ export default function Products() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false); // защита от двойного сохранения
+  const loadCalledRef = useRef(false); // защита от двойной загрузки данных
   const [duplicateProduct, setDuplicateProduct] = useState(null); // найденный дубликат
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -104,14 +105,17 @@ export default function Products() {
   });
 
   useEffect(() => {
-    if (window.__barakatAccessReady) {
+    const doLoad = () => {
+      if (loadCalledRef.current) return;
+      loadCalledRef.current = true;
       loadData();
+    };
+
+    if (window.__barakatAccessReady) {
+      doLoad();
       return;
     }
-    let called = false;
-    const handler = () => {
-      if (!called) { called = true; loadData(); }
-    };
+    const handler = () => doLoad();
     window.addEventListener('barakatAccessReady', handler);
     return () => window.removeEventListener('barakatAccessReady', handler);
   }, []);
@@ -475,7 +479,7 @@ export default function Products() {
   if (loading) return <PageLoader message="Загрузка товаров..." />;
 
   return (
-    <PullToRefresh onRefresh={loadData}>
+    <PullToRefresh onRefresh={() => { loadCalledRef.current = false; return loadData(); }}>
     <div className="space-y-6">
       <PageHeader 
         title={t(lang,'prod_title')}
