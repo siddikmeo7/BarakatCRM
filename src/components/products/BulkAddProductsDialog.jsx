@@ -1,14 +1,15 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Loader2, Package, CheckCheck, Copy, Box, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Loader2, Package, CheckCheck, Copy, Box, TrendingUp, DollarSign, AlertCircle, RotateCcw, Star } from 'lucide-react';
 
 const BASE_PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
 const BASE_COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый', 'Другой'];
+const DRAFT_KEY = 'barakat_bulk_add_draft';
 
 function emptyRow(defaults = {}) {
   return {
@@ -27,6 +28,26 @@ function emptyRow(defaults = {}) {
   };
 }
 
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  } catch (_) {}
+  return null;
+}
+
+function saveDraft(rows) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(rows));
+  } catch (_) {}
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+}
+
 export default function BulkAddProductsDialog({ open, onClose, business, warehouses, onSaved }) {
   const allProductTypes = [...BASE_PRODUCT_TYPES, ...(business?.custom_product_types || [])];
   const allColors = [...BASE_COLORS, ...(business?.custom_colors || [])];
@@ -40,32 +61,87 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
     warehouse_id: warehouses[0]?.id || '',
   };
 
-  const [rows, setRows] = useState([emptyRow(defaultsFromBiz), emptyRow(defaultsFromBiz)]);
+  const initRows = () => loadDraft() || [emptyRow(defaultsFromBiz), emptyRow(defaultsFromBiz)];
+
+  const [rows, setRows] = useState(initRows);
   const [saving, setSaving] = useState(false);
-  const [progress, setProgress] = useState(null); // { done, total, errors }
+  const [progress, setProgress] = useState(null);
+  const [hasDraft, setHasDraft] = useState(() => !!loadDraft());
+  // ID строки, цены которой применяются ко всем остальным без цен
+  const [priceSourceId, setPriceSourceId] = useState(null);
   const savingRef = useRef(false);
 
+  // При открытии — подгружаем черновик если есть
+  useEffect(() => {
+    if (open) {
+      const draft = loadDraft();
+      if (draft) {
+        setRows(draft);
+        setHasDraft(true);
+        // Автовыбор эталонной строки — первая с заполненными ценами
+        const src = draft.find(r => r.purchase_price || r.sale_price);
+        setPriceSourceId(src?._id || null);
+      } else {
+        setPriceSourceId(null);
+      }
+    }
+  }, [open]);
+
+  // Сохраняем черновик при каждом изменении rows
+  useEffect(() => {
+    if (saving) return;
+    saveDraft(rows);
+    setHasDraft(true);
+  }, [rows]);
+
+  // Когда меняем priceSourceId — применяем цены источника ко всем пустым строкам
+  const applyPriceSource = (sourceId, currentRows) => {
+    const src = currentRows.find(r => r._id === sourceId);
+    if (!src) return currentRows;
+    return currentRows.map(r => {
+      if (r._id === sourceId) return r;
+      return {
+        ...r,
+        purchase_price: r.purchase_price || src.purchase_price,
+        sale_price: r.sale_price || src.sale_price,
+      };
+    });
+  };
+
   const updateRow = (id, field, value) => {
-    setRows(prev => prev.map(r => r._id === id ? { ...r, [field]: value } : r));
+    setRows(prev => {
+      const updated = prev.map(r => r._id === id ? { ...r, [field]: value } : r);
+      // Если поменяли цену в эталонной строке — перезаписываем пустые
+      if ((field === 'purchase_price' || field === 'sale_price') && id === priceSourceId) {
+        return applyPriceSource(id, updated);
+      }
+      return updated;
+    });
   };
 
   const addRow = () => {
     const last = rows[rows.length - 1] || {};
-    setRows(prev => [...prev, emptyRow({
+    // Для новой строки берём цены из эталона если он задан
+    const src = priceSourceId ? rows.find(r => r._id === priceSourceId) : null;
+    const newRow = emptyRow({
       brand: last.brand,
       product_type: last.product_type,
       color: last.color,
       size_from: last.size_from,
       size_to: last.size_to,
       pairs_per_box: last.pairs_per_box,
-      purchase_price: last.purchase_price,
-      sale_price: last.sale_price,
-      boxes_in_stock: last.boxes_in_stock,
+      purchase_price: src?.purchase_price || last.purchase_price || '',
+      sale_price: src?.sale_price || last.sale_price || '',
+      boxes_in_stock: '',
       warehouse_id: last.warehouse_id,
-    })]);
+    });
+    setRows(prev => [...prev, newRow]);
   };
 
-  const removeRow = (id) => setRows(prev => prev.filter(r => r._id !== id));
+  const removeRow = (id) => {
+    setRows(prev => prev.filter(r => r._id !== id));
+    if (priceSourceId === id) setPriceSourceId(null);
+  };
 
   const duplicateRow = (id) => {
     const row = rows.find(r => r._id === id);
@@ -81,7 +157,24 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
 
   const applyBrandToAll = (brand) => setRows(prev => prev.map(r => ({ ...r, brand })));
 
-  // Сохраняем строго последовательно — гарантия что каждый товар добавится
+  // Установить эталонную строку и применить её цены ко всем пустым
+  const setAsSource = (id) => {
+    const newSrcId = priceSourceId === id ? null : id;
+    setPriceSourceId(newSrcId);
+    if (newSrcId) {
+      setRows(prev => applyPriceSource(newSrcId, prev));
+    }
+  };
+
+  const handleClearDraft = () => {
+    if (!confirm('Аннулировать черновик? Все введённые данные будут удалены.')) return;
+    clearDraft();
+    setRows([emptyRow(defaultsFromBiz), emptyRow(defaultsFromBiz)]);
+    setPriceSourceId(null);
+    setHasDraft(false);
+    setProgress(null);
+  };
+
   const handleSave = async () => {
     if (savingRef.current) return;
     const validRows = rows.filter(r => r.brand.trim() && r.model.trim());
@@ -97,9 +190,13 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
     try {
       const user = await base44.auth.me().catch(() => ({ email: 'unknown' }));
 
-      // Строго последовательно — один за другим, не Promise.all
       for (const row of validRows) {
         try {
+          // Подставляем цену из эталона если у строки пустые цены
+          const src = priceSourceId ? rows.find(r => r._id === priceSourceId) : null;
+          const purchasePrice = parseFloat(row.purchase_price) || (src ? parseFloat(src.purchase_price) : 0) || 0;
+          const salePrice = parseFloat(row.sale_price) || (src ? parseFloat(src.sale_price) : 0) || 0;
+
           const data = {
             business_id: business.id,
             brand: row.brand.trim(),
@@ -109,8 +206,8 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
             size_from: parseInt(row.size_from) || 39,
             size_to: parseInt(row.size_to) || 44,
             pairs_per_box: parseInt(row.pairs_per_box) || 6,
-            purchase_price: parseFloat(row.purchase_price) || 0,
-            sale_price: parseFloat(row.sale_price) || 0,
+            purchase_price: purchasePrice,
+            sale_price: salePrice,
             boxes_in_stock: parseInt(row.boxes_in_stock) || 0,
             warehouse_id: row.warehouse_id || '',
           };
@@ -132,11 +229,13 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
         setProgress({ done, total: validRows.length, errors });
       }
 
-      // После завершения — обновляем список и закрываем
+      clearDraft();
+      setHasDraft(false);
       await onSaved();
       setTimeout(() => {
         setRows([emptyRow(defaultsFromBiz), emptyRow(defaultsFromBiz)]);
         setProgress(null);
+        setPriceSourceId(null);
         onClose();
       }, 1200);
     } catch (e) {
@@ -147,29 +246,58 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
     }
   };
 
+  // Закрытие диалога — НЕ сбрасываем данные, черновик сохранён
+  const handleClose = () => {
+    if (saving) return;
+    onClose();
+  };
+
   const validRows = rows.filter(r => r.brand.trim() && r.model.trim());
   const validCount = validRows.length;
 
-  // Итоговая сводка
+  // Итоговая сводка — используем цены из эталона для строк без цен
+  const src = priceSourceId ? rows.find(r => r._id === priceSourceId) : null;
   const totalBoxes = validRows.reduce((sum, r) => sum + (parseInt(r.boxes_in_stock) || 0), 0);
-  const totalSaleValue = validRows.reduce((sum, r) => sum + ((parseInt(r.boxes_in_stock) || 0) * (parseFloat(r.sale_price) || 0)), 0);
-  const totalPurchaseValue = validRows.reduce((sum, r) => sum + ((parseInt(r.boxes_in_stock) || 0) * (parseFloat(r.purchase_price) || 0)), 0);
+  const totalSaleValue = validRows.reduce((sum, r) => {
+    const sp = parseFloat(r.sale_price) || (src ? parseFloat(src.sale_price) : 0) || 0;
+    return sum + (parseInt(r.boxes_in_stock) || 0) * sp;
+  }, 0);
+  const totalPurchaseValue = validRows.reduce((sum, r) => {
+    const pp = parseFloat(r.purchase_price) || (src ? parseFloat(src.purchase_price) : 0) || 0;
+    return sum + (parseInt(r.boxes_in_stock) || 0) * pp;
+  }, 0);
   const totalProfit = totalSaleValue - totalPurchaseValue;
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5 text-indigo-600" />
-            Добавить много товаров
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5 text-indigo-600" />
+              Добавить много товаров
+            </DialogTitle>
+            {hasDraft && (
+              <div className="flex items-center gap-2 mr-6">
+                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                  📝 Черновик сохранён
+                </span>
+                <button
+                  onClick={handleClearDraft}
+                  className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 px-2 py-0.5 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Аннулировать
+                </button>
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="space-y-3 py-2">
           {/* Info */}
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 text-sm text-indigo-700">
-            💡 Заполните модели для каждого товара. Общие поля копируются из предыдущей строки.
+            💡 Нажмите ⭐ на любой строке чтобы сделать её эталоном цен — остальные строки без цены автоматически получат те же цены.
           </div>
 
           {/* Common brand */}
@@ -190,97 +318,126 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
 
           {/* Rows */}
           <div className="space-y-2">
-            {rows.map((row, idx) => (
-              <div key={row._id} className="bg-white border border-slate-200 rounded-xl p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center flex-shrink-0">{idx + 1}</span>
-                  <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    <div className="col-span-2 sm:col-span-1">
-                      <Input
-                        value={row.model}
-                        onChange={e => updateRow(row._id, 'model', e.target.value)}
-                        placeholder="Модель *"
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        type="text" inputMode="numeric"
-                        value={row.boxes_in_stock}
-                        onChange={e => updateRow(row._id, 'boxes_in_stock', e.target.value.replace(/[^0-9]/g, ''))}
-                        placeholder="Коробок"
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        type="text" inputMode="decimal"
-                        value={row.sale_price}
-                        onChange={e => updateRow(row._id, 'sale_price', e.target.value.replace(/[^0-9.]/g, ''))}
-                        placeholder="Цена прод."
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0">
-                    <button onClick={() => duplicateRow(row._id)} title="Дублировать"
-                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-colors">
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                    {rows.length > 1 && (
-                      <button onClick={() => removeRow(row._id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
+            {rows.map((row, idx) => {
+              const isSource = row._id === priceSourceId;
+              const effectiveSalePrice = parseFloat(row.sale_price) || (src && !isSource ? parseFloat(src.sale_price) : 0) || 0;
+              const effectivePurchasePrice = parseFloat(row.purchase_price) || (src && !isSource ? parseFloat(src.purchase_price) : 0) || 0;
+              const rowTotal = (parseInt(row.boxes_in_stock) || 0) * effectiveSalePrice;
+              const rowProfit = (parseInt(row.boxes_in_stock) || 0) * (effectiveSalePrice - effectivePurchasePrice);
+
+              return (
+                <div key={row._id} className={`bg-white border rounded-xl p-3 transition-all ${isSource ? 'border-amber-400 ring-1 ring-amber-200' : 'border-slate-200'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    {/* Номер + эталон */}
+                    <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+                      <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center">{idx + 1}</span>
+                      <button
+                        onClick={() => setAsSource(row._id)}
+                        title={isSource ? 'Убрать эталон' : 'Сделать эталоном цен'}
+                        className={`p-0.5 rounded transition-colors ${isSource ? 'text-amber-500' : 'text-slate-200 hover:text-amber-400'}`}
+                      >
+                        <Star className="w-3 h-3" fill={isSource ? 'currentColor' : 'none'} />
                       </button>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <Select value={row.color} onValueChange={v => updateRow(row._id, 'color', v)}>
-                    <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {allColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <div className="flex gap-1">
-                    <Input type="text" inputMode="numeric"
-                      value={row.size_from}
-                      onChange={e => updateRow(row._id, 'size_from', e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="От" className="h-7 text-xs flex-1" />
-                    <Input type="text" inputMode="numeric"
-                      value={row.size_to}
-                      onChange={e => updateRow(row._id, 'size_to', e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="До" className="h-7 text-xs flex-1" />
-                  </div>
-                  <Select value={row.warehouse_id} onValueChange={v => updateRow(row._id, 'warehouse_id', v)}>
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue placeholder="Склад" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {warehouses.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Input type="text" inputMode="decimal"
-                    value={row.purchase_price}
-                    onChange={e => updateRow(row._id, 'purchase_price', e.target.value.replace(/[^0-9.]/g, ''))}
-                    placeholder="Цена заку." className="h-7 text-xs" />
-                </div>
+                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      <div className="col-span-2 sm:col-span-1">
+                        <Input
+                          value={row.model}
+                          onChange={e => updateRow(row._id, 'model', e.target.value)}
+                          placeholder="Модель *"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          type="text" inputMode="numeric"
+                          value={row.boxes_in_stock}
+                          onChange={e => updateRow(row._id, 'boxes_in_stock', e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="Коробок"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          type="text" inputMode="decimal"
+                          value={row.sale_price}
+                          onChange={e => updateRow(row._id, 'sale_price', e.target.value.replace(/[^0-9.]/g, ''))}
+                          placeholder={src && !isSource && src.sale_price ? `Авто: ${src.sale_price}` : 'Цена прод.'}
+                          className={`h-8 text-sm ${!row.sale_price && src && !isSource ? 'border-amber-200 bg-amber-50 placeholder:text-amber-500' : ''}`}
+                        />
+                      </div>
+                    </div>
 
-                {/* Мини-итог по строке */}
-                {row.boxes_in_stock && row.sale_price && (
-                  <div className="mt-2 flex gap-3 text-xs text-slate-500 pl-1">
-                    <span>📦 {parseInt(row.boxes_in_stock) || 0} кор.</span>
-                    <span>💰 {((parseInt(row.boxes_in_stock) || 0) * (parseFloat(row.sale_price) || 0)).toLocaleString()} с.</span>
-                    {row.purchase_price && (
-                      <span className="text-emerald-600">
-                        📈 +{((parseInt(row.boxes_in_stock) || 0) * ((parseFloat(row.sale_price) || 0) - (parseFloat(row.purchase_price) || 0))).toLocaleString()} с.
+                    <div className="flex gap-1 flex-shrink-0">
+                      <button onClick={() => duplicateRow(row._id)} title="Дублировать"
+                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-colors">
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                      {rows.length > 1 && (
+                        <button onClick={() => removeRow(row._id)}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <Select value={row.color} onValueChange={v => updateRow(row._id, 'color', v)}>
+                      <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {allColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex gap-1">
+                      <Input type="text" inputMode="numeric"
+                        value={row.size_from}
+                        onChange={e => updateRow(row._id, 'size_from', e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="От" className="h-7 text-xs flex-1" />
+                      <Input type="text" inputMode="numeric"
+                        value={row.size_to}
+                        onChange={e => updateRow(row._id, 'size_to', e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="До" className="h-7 text-xs flex-1" />
+                    </div>
+                    <Select value={row.warehouse_id} onValueChange={v => updateRow(row._id, 'warehouse_id', v)}>
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="Склад" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {warehouses.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Input type="text" inputMode="decimal"
+                      value={row.purchase_price}
+                      onChange={e => updateRow(row._id, 'purchase_price', e.target.value.replace(/[^0-9.]/g, ''))}
+                      placeholder={src && !isSource && src.purchase_price ? `Авто: ${src.purchase_price}` : 'Цена заку.'}
+                      className={`h-7 text-xs ${!row.purchase_price && src && !isSource ? 'border-amber-200 bg-amber-50 placeholder:text-amber-500' : ''}`}
+                    />
+                  </div>
+
+                  {/* Мини-итог по строке */}
+                  {row.boxes_in_stock && (effectiveSalePrice > 0) && (
+                    <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500 pl-1">
+                      <span>📦 {parseInt(row.boxes_in_stock) || 0} кор.</span>
+                      <span>💰 {rowTotal.toLocaleString()} с.
+                        {!row.sale_price && src && !isSource && <span className="ml-1 text-amber-500">(из эталона)</span>}
                       </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+                      {effectivePurchasePrice > 0 && (
+                        <span className="text-emerald-600">📈 +{rowProfit.toLocaleString()} с.</span>
+                      )}
+                    </div>
+                  )}
+
+                  {isSource && (
+                    <div className="mt-1.5 flex items-center gap-1 text-xs text-amber-600 font-medium">
+                      <Star className="w-3 h-3" fill="currentColor" />
+                      Эталон цен — остальные строки без цены используют эту
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Add row */}
@@ -343,7 +500,6 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
                     : `✅ Все ${progress.done} товаров успешно добавлены!`}
                 </span>
               </div>
-              {/* Прогресс бар */}
               <div className="w-full bg-white rounded-full h-2 border border-slate-200">
                 <div
                   className={`h-2 rounded-full transition-all duration-300 ${progress.errors > 0 ? 'bg-amber-400' : 'bg-emerald-500'}`}
@@ -359,7 +515,7 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
             Готово к сохранению: <span className="font-bold text-indigo-600">{validCount}</span> товаров
           </p>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} disabled={saving}>Отмена</Button>
+            <Button variant="outline" onClick={handleClose} disabled={saving}>Закрыть</Button>
             <Button
               onClick={handleSave}
               disabled={saving || validCount === 0}
