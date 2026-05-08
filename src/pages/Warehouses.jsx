@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MoveProductsDialog from '@/components/warehouses/MoveProductsDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
+import DuplicateProductsDialog from '@/components/products/DuplicateProductsDialog';
 import { 
   Plus, 
   Warehouse as WarehouseIcon, 
@@ -290,6 +291,18 @@ export default function Warehouses() {
   const [orphanedDialogOpen, setOrphanedDialogOpen] = useState(false);
   const [orphanedTarget, setOrphanedTarget] = useState('');
   const [orphanedSaving, setOrphanedSaving] = useState(false);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+
+  // Найти группы дубликатов (одинаковый brand+model в рамках бизнеса)
+  const duplicateGroups = (() => {
+    const map = {};
+    products.forEach(p => {
+      const key = `${p.brand?.toLowerCase().trim()}__${p.model?.toLowerCase().trim()}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(p);
+    });
+    return Object.values(map).filter(g => g.length > 1);
+  })();
 
   // Товары выбранного склада (с фильтрацией по модели)
   const warehouseProducts = selectedWarehouse 
@@ -385,6 +398,27 @@ export default function Warehouses() {
             onClick={() => setOrphanedDialogOpen(true)}>
             <ArrowRightLeft className="w-3.5 h-3.5" />
             Переместить
+          </Button>
+        </div>
+      )}
+
+      {/* Duplicate products banner */}
+      {duplicateGroups.length > 0 && (
+        <div className="bg-red-50 border border-red-300 rounded-2xl p-4 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-red-800">
+              ⚠️ Найдены дубликаты: {duplicateGroups.length} групп товаров с одинаковым брендом и моделью
+            </p>
+            <p className="text-xs text-red-600 mt-0.5">
+              В системе есть товары с одинаковым названием. Рекомендуется удалить лишние записи.
+            </p>
+          </div>
+          <Button size="sm"
+            className="bg-red-500 hover:bg-red-600 text-white gap-1.5 flex-shrink-0"
+            onClick={() => setDuplicateDialogOpen(true)}>
+            <Trash2 className="w-3.5 h-3.5" />
+            Исправить
           </Button>
         </div>
       )}
@@ -984,6 +1018,14 @@ export default function Warehouses() {
         onClose={() => setOrphanedDialogOpen(false)}
         orphanedProducts={orphanedProducts}
         warehouses={warehouses}
+        onSaved={loadData}
+      />
+
+      {/* Duplicate Products Dialog */}
+      <DuplicateProductsDialog
+        open={duplicateDialogOpen}
+        onClose={() => setDuplicateDialogOpen(false)}
+        duplicateGroups={duplicateGroups}
         onSaved={loadData}
       />
 
