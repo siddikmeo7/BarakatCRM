@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import SearchableSelect from '@/components/search/SearchableSelect';
-import { Plus, Trash2, Loader2, Package, CheckCheck, Copy } from 'lucide-react';
+import { Plus, Trash2, Loader2, Package, CheckCheck, Copy, Box, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
 
 const BASE_PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
 const BASE_COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый', 'Другой'];
@@ -23,7 +22,7 @@ function emptyRow(defaults = {}) {
     pairs_per_box: defaults.pairs_per_box || 6,
     purchase_price: defaults.purchase_price || '',
     sale_price: defaults.sale_price || '',
-    boxes_in_stock: defaults.boxes_in_stock || 0,
+    boxes_in_stock: defaults.boxes_in_stock || '',
     warehouse_id: defaults.warehouse_id || '',
   };
 }
@@ -43,14 +42,14 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
 
   const [rows, setRows] = useState([emptyRow(defaultsFromBiz), emptyRow(defaultsFromBiz)]);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [progress, setProgress] = useState(null); // { done, total, errors }
+  const savingRef = useRef(false);
 
   const updateRow = (id, field, value) => {
     setRows(prev => prev.map(r => r._id === id ? { ...r, [field]: value } : r));
   };
 
   const addRow = () => {
-    // Clone last row's shared fields for convenience
     const last = rows[rows.length - 1] || {};
     setRows(prev => [...prev, emptyRow({
       brand: last.brand,
@@ -80,56 +79,82 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
     });
   };
 
-  // Apply brand to all rows
   const applyBrandToAll = (brand) => setRows(prev => prev.map(r => ({ ...r, brand })));
 
+  // Сохраняем строго последовательно — гарантия что каждый товар добавится
   const handleSave = async () => {
+    if (savingRef.current) return;
     const validRows = rows.filter(r => r.brand.trim() && r.model.trim());
     if (validRows.length === 0) return;
+
+    savingRef.current = true;
     setSaving(true);
+    setProgress({ done: 0, total: validRows.length, errors: 0 });
+
+    let done = 0;
+    let errors = 0;
+
     try {
       const user = await base44.auth.me().catch(() => ({ email: 'unknown' }));
-      await Promise.all(validRows.map(async row => {
-        const data = {
-          business_id: business.id,
-          brand: row.brand.trim(),
-          model: row.model.trim(),
-          product_type: row.product_type,
-          color: row.color,
-          size_from: parseInt(row.size_from) || 39,
-          size_to: parseInt(row.size_to) || 44,
-          pairs_per_box: parseInt(row.pairs_per_box) || 6,
-          purchase_price: parseFloat(row.purchase_price) || 0,
-          sale_price: parseFloat(row.sale_price) || 0,
-          boxes_in_stock: parseInt(row.boxes_in_stock) || 0,
-          warehouse_id: row.warehouse_id || '',
-        };
-        const created = await base44.entities.Product.create(data);
-        await base44.entities.ActivityLog.create({
-          business_id: business.id,
-          action_type: 'create',
-          entity_type: 'Product',
-          entity_id: created.id,
-          entity_data: data,
-          user_email: user.email,
-          description: `Добавлен товар: ${data.brand} ${data.model}`,
-        });
-      }));
-      setSaved(true);
+
+      // Строго последовательно — один за другим, не Promise.all
+      for (const row of validRows) {
+        try {
+          const data = {
+            business_id: business.id,
+            brand: row.brand.trim(),
+            model: row.model.trim(),
+            product_type: row.product_type,
+            color: row.color,
+            size_from: parseInt(row.size_from) || 39,
+            size_to: parseInt(row.size_to) || 44,
+            pairs_per_box: parseInt(row.pairs_per_box) || 6,
+            purchase_price: parseFloat(row.purchase_price) || 0,
+            sale_price: parseFloat(row.sale_price) || 0,
+            boxes_in_stock: parseInt(row.boxes_in_stock) || 0,
+            warehouse_id: row.warehouse_id || '',
+          };
+          const created = await base44.entities.Product.create(data);
+          await base44.entities.ActivityLog.create({
+            business_id: business.id,
+            action_type: 'create',
+            entity_type: 'Product',
+            entity_id: created.id,
+            entity_data: data,
+            user_email: user.email,
+            description: `Добавлен товар: ${data.brand} ${data.model} (${data.boxes_in_stock} кор., ${data.sale_price?.toLocaleString()} с.)`,
+          });
+          done++;
+        } catch (err) {
+          console.error('Ошибка при добавлении строки:', err);
+          errors++;
+        }
+        setProgress({ done, total: validRows.length, errors });
+      }
+
+      // После завершения — обновляем список и закрываем
+      await onSaved();
       setTimeout(() => {
-        setSaved(false);
         setRows([emptyRow(defaultsFromBiz), emptyRow(defaultsFromBiz)]);
-        onSaved();
+        setProgress(null);
         onClose();
-      }, 900);
+      }, 1200);
     } catch (e) {
       console.error(e);
     } finally {
       setSaving(false);
+      savingRef.current = false;
     }
   };
 
-  const validCount = rows.filter(r => r.brand.trim() && r.model.trim()).length;
+  const validRows = rows.filter(r => r.brand.trim() && r.model.trim());
+  const validCount = validRows.length;
+
+  // Итоговая сводка
+  const totalBoxes = validRows.reduce((sum, r) => sum + (parseInt(r.boxes_in_stock) || 0), 0);
+  const totalSaleValue = validRows.reduce((sum, r) => sum + ((parseInt(r.boxes_in_stock) || 0) * (parseFloat(r.sale_price) || 0)), 0);
+  const totalPurchaseValue = validRows.reduce((sum, r) => sum + ((parseInt(r.boxes_in_stock) || 0) * (parseFloat(r.purchase_price) || 0)), 0);
+  const totalProfit = totalSaleValue - totalPurchaseValue;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -142,12 +167,12 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
         </DialogHeader>
 
         <div className="space-y-3 py-2">
-          {/* Info banner */}
+          {/* Info */}
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 text-sm text-indigo-700">
-            💡 Заполните модели для каждого товара. Общие поля (бренд, размер, цена) будут скопированы автоматически из предыдущей строки при добавлении.
+            💡 Заполните модели для каждого товара. Общие поля копируются из предыдущей строки.
           </div>
 
-          {/* Common brand field */}
+          {/* Common brand */}
           <div className="bg-white border border-slate-200 rounded-xl p-3">
             <div className="flex items-end gap-2">
               <div className="flex-1">
@@ -170,7 +195,6 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center flex-shrink-0">{idx + 1}</span>
                   <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {/* Model — most important */}
                     <div className="col-span-2 sm:col-span-1">
                       <Input
                         value={row.model}
@@ -199,8 +223,7 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
                     </div>
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
-                    <button onClick={() => duplicateRow(row._id)}
-                      title="Дублировать строку"
+                    <button onClick={() => duplicateRow(row._id)} title="Дублировать"
                       className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-colors">
                       <Copy className="w-3.5 h-3.5" />
                     </button>
@@ -213,7 +236,6 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
                   </div>
                 </div>
 
-                {/* Expanded options */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <Select value={row.color} onValueChange={v => updateRow(row._id, 'color', v)}>
                     <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
@@ -222,20 +244,14 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
                     </SelectContent>
                   </Select>
                   <div className="flex gap-1">
-                    <Input
-                      type="text" inputMode="numeric"
+                    <Input type="text" inputMode="numeric"
                       value={row.size_from}
                       onChange={e => updateRow(row._id, 'size_from', e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="От"
-                      className="h-7 text-xs w-14 flex-1"
-                    />
-                    <Input
-                      type="text" inputMode="numeric"
+                      placeholder="От" className="h-7 text-xs flex-1" />
+                    <Input type="text" inputMode="numeric"
                       value={row.size_to}
                       onChange={e => updateRow(row._id, 'size_to', e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="До"
-                      className="h-7 text-xs w-14 flex-1"
-                    />
+                      placeholder="До" className="h-7 text-xs flex-1" />
                   </div>
                   <Select value={row.warehouse_id} onValueChange={v => updateRow(row._id, 'warehouse_id', v)}>
                     <SelectTrigger className="h-7 text-xs">
@@ -245,23 +261,97 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
                       {warehouses.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Input
-                    type="text" inputMode="decimal"
+                  <Input type="text" inputMode="decimal"
                     value={row.purchase_price}
                     onChange={e => updateRow(row._id, 'purchase_price', e.target.value.replace(/[^0-9.]/g, ''))}
-                    placeholder="Цена заку."
-                    className="h-7 text-xs"
-                  />
+                    placeholder="Цена заку." className="h-7 text-xs" />
                 </div>
+
+                {/* Мини-итог по строке */}
+                {row.boxes_in_stock && row.sale_price && (
+                  <div className="mt-2 flex gap-3 text-xs text-slate-500 pl-1">
+                    <span>📦 {parseInt(row.boxes_in_stock) || 0} кор.</span>
+                    <span>💰 {((parseInt(row.boxes_in_stock) || 0) * (parseFloat(row.sale_price) || 0)).toLocaleString()} с.</span>
+                    {row.purchase_price && (
+                      <span className="text-emerald-600">
+                        📈 +{((parseInt(row.boxes_in_stock) || 0) * ((parseFloat(row.sale_price) || 0) - (parseFloat(row.purchase_price) || 0))).toLocaleString()} с.
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
 
-          {/* Add row button */}
+          {/* Add row */}
           <button onClick={addRow}
             className="w-full py-2.5 border-2 border-dashed border-indigo-200 rounded-xl text-indigo-500 text-sm font-medium hover:border-indigo-400 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
             <Plus className="w-4 h-4" /> Добавить строку
           </button>
+
+          {/* Итоговая сводка */}
+          {validCount > 0 && (
+            <div className="bg-gradient-to-r from-indigo-50 to-emerald-50 border border-indigo-100 rounded-xl p-4">
+              <p className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wide">📊 Итого по {validCount} товарам</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-white rounded-xl p-3 border border-indigo-100 text-center">
+                  <Box className="w-4 h-4 text-indigo-500 mx-auto mb-1" />
+                  <p className="text-xs text-slate-400">Коробок</p>
+                  <p className="text-xl font-bold text-indigo-600">{totalBoxes}</p>
+                </div>
+                <div className="bg-white rounded-xl p-3 border border-blue-100 text-center">
+                  <DollarSign className="w-4 h-4 text-blue-500 mx-auto mb-1" />
+                  <p className="text-xs text-slate-400">Сумма продаж</p>
+                  <p className="text-lg font-bold text-blue-600">{totalSaleValue.toLocaleString()} с.</p>
+                </div>
+                {totalPurchaseValue > 0 && (
+                  <div className="bg-white rounded-xl p-3 border border-slate-100 text-center">
+                    <Package className="w-4 h-4 text-slate-400 mx-auto mb-1" />
+                    <p className="text-xs text-slate-400">По закупке</p>
+                    <p className="text-lg font-bold text-slate-600">{totalPurchaseValue.toLocaleString()} с.</p>
+                  </div>
+                )}
+                {totalPurchaseValue > 0 && (
+                  <div className="bg-white rounded-xl p-3 border border-emerald-100 text-center">
+                    <TrendingUp className="w-4 h-4 text-emerald-500 mx-auto mb-1" />
+                    <p className="text-xs text-slate-400">Прибыль</p>
+                    <p className={`text-lg font-bold ${totalProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {totalProfit >= 0 ? '+' : ''}{totalProfit.toLocaleString()} с.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Прогресс сохранения */}
+          {progress && (
+            <div className={`rounded-xl p-3 border ${progress.errors > 0 ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                {progress.done < progress.total ? (
+                  <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
+                ) : progress.errors > 0 ? (
+                  <AlertCircle className="w-4 h-4 text-amber-500" />
+                ) : (
+                  <CheckCheck className="w-4 h-4 text-emerald-500" />
+                )}
+                <span className="text-sm font-semibold">
+                  {progress.done < progress.total
+                    ? `Сохранение... ${progress.done} / ${progress.total}`
+                    : progress.errors > 0
+                    ? `Сохранено ${progress.done} из ${progress.total} (${progress.errors} ошибок)`
+                    : `✅ Все ${progress.done} товаров успешно добавлены!`}
+                </span>
+              </div>
+              {/* Прогресс бар */}
+              <div className="w-full bg-white rounded-full h-2 border border-slate-200">
+                <div
+                  className={`h-2 rounded-full transition-all duration-300 ${progress.errors > 0 ? 'bg-amber-400' : 'bg-emerald-500'}`}
+                  style={{ width: `${(progress.done / progress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-slate-100">
@@ -269,16 +359,18 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
             Готово к сохранению: <span className="font-bold text-indigo-600">{validCount}</span> товаров
           </p>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>Отмена</Button>
+            <Button variant="outline" onClick={onClose} disabled={saving}>Отмена</Button>
             <Button
               onClick={handleSave}
               disabled={saving || validCount === 0}
-              className={`gap-2 ${saved ? 'bg-emerald-600 hover:bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+              className={`gap-2 ${progress?.done === progress?.total && progress?.done > 0 ? 'bg-emerald-600 hover:bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> :
-               saved ? <CheckCheck className="w-4 h-4" /> :
+               progress?.done === progress?.total && progress?.done > 0 ? <CheckCheck className="w-4 h-4" /> :
                <Plus className="w-4 h-4" />}
-              {saved ? 'Сохранено!' : `Сохранить ${validCount > 0 ? validCount : ''} товаров`}
+              {progress?.done === progress?.total && progress?.done > 0
+                ? 'Сохранено!'
+                : `Сохранить ${validCount > 0 ? validCount : ''} товаров`}
             </Button>
           </div>
         </div>
