@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MoveProductsDialog from '@/components/warehouses/MoveProductsDialog';
+import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
 import { 
   Plus, 
   Warehouse as WarehouseIcon, 
@@ -978,57 +979,13 @@ export default function Warehouses() {
       </Dialog>
 
       {/* Orphaned Products Dialog */}
-      <Dialog open={orphanedDialogOpen} onOpenChange={setOrphanedDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-amber-700">
-              <AlertCircle className="w-5 h-5" />
-              Товары без склада ({orphanedProducts.length})
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-3 space-y-4">
-            <div className="max-h-48 overflow-y-auto space-y-1.5">
-              {orphanedProducts.map(p => (
-                <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg bg-amber-50 border border-amber-100">
-                  {p.photo_url
-                    ? <img src={p.photo_url} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                    : <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0"><Package className="w-4 h-4 text-amber-400" /></div>
-                  }
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 truncate">{p.brand} {p.model}</p>
-                    <p className="text-xs text-slate-400">{p.boxes_in_stock || 0} кор. · {p.color}</p>
-                  </div>
-                  <p className="text-xs font-semibold text-slate-600 flex-shrink-0">{p.sale_price?.toLocaleString()} с.</p>
-                </div>
-              ))}
-            </div>
-            <div>
-              <Label className="mb-1.5 block">Переместить на склад</Label>
-              <Select value={orphanedTarget} onValueChange={setOrphanedTarget}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите склад..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {warehouses.map(w => (
-                    <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => setOrphanedDialogOpen(false)}>Закрыть</Button>
-            <Button
-              onClick={handleMoveOrphaned}
-              disabled={orphanedSaving || !orphanedTarget}
-              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white gap-2"
-            >
-              {orphanedSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRightLeft className="w-4 h-4" />}
-              Переместить все
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <OrphanedProductsDialog
+        open={orphanedDialogOpen}
+        onClose={() => setOrphanedDialogOpen(false)}
+        orphanedProducts={orphanedProducts}
+        warehouses={warehouses}
+        onSaved={loadData}
+      />
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

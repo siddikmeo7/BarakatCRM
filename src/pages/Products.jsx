@@ -84,6 +84,7 @@ export default function Products() {
   const [bulkAction, setBulkAction] = useState(null); // 'brand'|'model'|'type'|'color'|'warehouse'|'sale_price'|'purchase_price'|'delete'
   const [bulkValue, setBulkValue] = useState('');
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkDone, setBulkDone] = useState(false);
   const [bulkAddOpen, setBulkAddOpen] = useState(false);
   const [orphanedDialogOpen, setOrphanedDialogOpen] = useState(false);
 
@@ -326,13 +327,11 @@ export default function Products() {
   const openBulkAction = (action) => {
     setBulkAction(action);
     setBulkValue('');
+    setBulkDone(false);
     setBulkDialogOpen(true);
   };
 
   const handleBulkSave = async () => {
-    if (bulkAction === 'delete') {
-      if (!confirm(`Удалить ${selectedIds.size} товаров?`)) return;
-    }
     setBulkSaving(true);
     try {
       const user = await base44.auth.me().catch(() => ({ email: 'unknown' }));
@@ -366,9 +365,13 @@ export default function Products() {
         });
       }
       await loadData();
-      setBulkDialogOpen(false);
-      setSelectedIds(new Set());
-      setSelectMode(false);
+      setBulkDone(true);
+      setTimeout(() => {
+        setBulkDone(false);
+        setBulkDialogOpen(false);
+        setSelectedIds(new Set());
+        setSelectMode(false);
+      }, 1200);
     } catch (e) { console.error(e); }
     finally { setBulkSaving(false); }
   };
@@ -1312,13 +1315,16 @@ export default function Products() {
           )}
 
           <div className="flex gap-2 mt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setBulkDialogOpen(false)}>Отмена</Button>
+            <Button variant="outline" className="flex-1" onClick={() => setBulkDialogOpen(false)} disabled={bulkSaving || bulkDone}>Отмена</Button>
             <Button
               onClick={handleBulkSave}
-              disabled={bulkSaving || (bulkAction !== 'delete' && !bulkValue) || selectedIds.size === 0}
-              className={bulkAction === 'delete' ? 'flex-1 bg-red-600 hover:bg-red-700' : 'flex-1 bg-indigo-600 hover:bg-indigo-700'}
+              disabled={bulkSaving || bulkDone || (bulkAction !== 'delete' && !bulkValue) || selectedIds.size === 0}
+              className={`flex-1 transition-all ${bulkDone ? 'bg-emerald-600 hover:bg-emerald-600' : bulkAction === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
             >
-              {bulkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : bulkAction === 'delete' ? 'Удалить' : 'Применить'}
+              {bulkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> :
+               bulkDone ? <><CheckCheck className="w-4 h-4" /> Подтверждено!</> :
+               bulkAction === 'delete' ? <><Trash2 className="w-4 h-4" /> Удалить {selectedIds.size}</> :
+               <><CheckCheck className="w-4 h-4" /> Применить к {selectedIds.size}</>}
             </Button>
           </div>
         </DialogContent>
