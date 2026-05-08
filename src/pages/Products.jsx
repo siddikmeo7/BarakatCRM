@@ -214,16 +214,8 @@ export default function Products() {
       pairs_per_box: parseInt(formData.pairs_per_box) || 6
     };
 
-    // Optimistic UI update
-    const optimisticProduct = { ...data, id: editingProduct?.id || 'temp_' + Date.now() };
-    setProducts(prev => editingProduct 
-      ? prev.map(p => p.id === editingProduct.id ? optimisticProduct : p)
-      : [optimisticProduct, ...prev]
-    );
-
     try {
       const user = await base44.auth.me().catch(() => ({ email: 'unknown' }));
-      setDialogOpen(false); // Закрываем только после успешного получения user
       if (editingProduct) {
         // Вычисляем diff — что изменилось
         const changedFields = {};
@@ -263,6 +255,7 @@ export default function Products() {
           description: `Добавлен товар: ${data.brand} ${data.model} (${data.boxes_in_stock} кор., ${data.sale_price?.toLocaleString()} с.)`
         });
       }
+      setDialogOpen(false);
       await loadData();
     } catch (error) {
       console.error('Error saving product:', error);
@@ -495,26 +488,7 @@ export default function Products() {
         }
       />
 
-      {/* Orphaned products banner */}
-      {orphanedProducts.length > 0 && can('edit_products') && (
-        <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-amber-800">
-              {orphanedProducts.length} товаров без склада
-            </p>
-            <p className="text-xs text-amber-600 mt-0.5">
-              Склад был удалён. Переместите эти товары в другой склад.
-            </p>
-          </div>
-          <Button size="sm" variant="outline"
-            className="border-amber-400 text-amber-700 hover:bg-amber-100 gap-1.5 flex-shrink-0"
-            onClick={() => setOrphanedDialogOpen(true)}>
-            <Warehouse className="w-3.5 h-3.5" />
-            Переместить
-          </Button>
-        </div>
-      )}
+      {/* Orphaned products banner — перенесён в раздел Склады */}
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 space-y-2">
