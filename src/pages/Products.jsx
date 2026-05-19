@@ -390,8 +390,11 @@ export default function Products() {
   const allColors = [...BASE_COLORS, ...(business?.custom_colors || [])];
   const lowStockLimit = business?.low_stock_limit ?? 2;
 
-  // Фильтрация
+  // Фильтрация (скрываем товары с нулевым остатком по умолчанию, если не выбран фильтр "empty")
   let filteredProducts = products.filter(product => {
+    if (filterStock !== 'empty') {
+      if ((product.boxes_in_stock || 0) === 0) return false;
+    }
     const q = search.toLowerCase().trim();
     const fullName = `${product.brand || ''} ${product.model || ''}`.toLowerCase();
     const matchesSearch = !q ||

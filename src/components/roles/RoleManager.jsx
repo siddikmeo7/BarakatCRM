@@ -56,6 +56,15 @@ const PERMISSION_GROUPS = [
     ],
   },
   {
+    key: 'expenses',
+    label: '💸 Расходы',
+    color: 'orange',
+    perms: [
+      { key: 'view_expenses', label: 'Просмотр расходов' },
+      { key: 'manage_expenses', label: 'Управление расходами' },
+    ],
+  },
+  {
     key: 'customers',
     label: '👥 Клиенты и долги',
     color: 'pink',

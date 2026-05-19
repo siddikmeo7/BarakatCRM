@@ -145,8 +145,8 @@ export default function Expenses() {
     );
   }
 
-  // Проверка прав (только owner или manage_settings)
-  if (!isOwner && !can('manage_settings')) {
+  // Проверка прав
+  if (!isOwner && !can('view_expenses')) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
         <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
@@ -157,6 +157,8 @@ export default function Expenses() {
       </div>
     );
   }
+
+  const canManage = isOwner || can('manage_expenses');
 
   return (
     <div className="space-y-5">
@@ -169,13 +171,15 @@ export default function Expenses() {
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">Все затраты: аренда, зарплата, прочее</p>
         </div>
-        <Button
-          onClick={() => setShowForm(true)}
-          className="bg-red-500 hover:bg-red-600 text-white gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Добавить расход
-        </Button>
+        {canManage && (
+          <Button
+            onClick={() => setShowForm(true)}
+            className="bg-red-500 hover:bg-red-600 text-white gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Добавить расход
+          </Button>
+        )}
       </div>
 
       {/* Filter + total */}
@@ -213,9 +217,11 @@ export default function Expenses() {
               <Receipt className="w-8 h-8 text-red-300" />
             </div>
             <p className="text-slate-500 font-medium">Расходов нет за выбранный период</p>
-            <Button onClick={() => setShowForm(true)} variant="outline" className="gap-2">
-              <Plus className="w-4 h-4" /> Добавить первый расход
-            </Button>
+            {canManage && (
+              <Button onClick={() => setShowForm(true)} variant="outline" className="gap-2">
+                <Plus className="w-4 h-4" /> Добавить первый расход
+              </Button>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -243,7 +249,8 @@ export default function Expenses() {
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0 flex items-center gap-3">
-                    <p className="text-base font-bold text-red-600">−{expense.amount.toLocaleString()} с.</p>
+                  <p className="text-base font-bold text-red-600">−{expense.amount.toLocaleString()} с.</p>
+                  {canManage && (
                     <button
                       onClick={() => handleDelete(expense)}
                       disabled={deleting === expense.id}
@@ -253,6 +260,7 @@ export default function Expenses() {
                         ? <Loader2 className="w-4 h-4 animate-spin" />
                         : <Trash2 className="w-4 h-4" />}
                     </button>
+                  )}
                   </div>
                 </div>
               );

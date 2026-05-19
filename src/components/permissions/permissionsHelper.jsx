@@ -76,6 +76,10 @@ export const PERMISSIONS = {
   ADD_DEBT_MANUAL: 'add_debt_manual',
   SEND_DEBT_REMINDERS: 'send_debt_reminders',
 
+  // Расходы
+  VIEW_EXPENSES: 'view_expenses',
+  MANAGE_EXPENSES: 'manage_expenses',
+
   // Возвраты
   VIEW_RETURNS: 'view_returns',
   MANAGE_RETURNS: 'manage_returns',
