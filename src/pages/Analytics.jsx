@@ -7,6 +7,7 @@ import SalesChart from '@/components/charts/SalesChart';
 import SalesTypeChart from '@/components/charts/SalesTypeChart';
 import { 
   TrendingUp, 
+  TrendingDown,
   ShoppingCart, 
   Box,
   DollarSign,
@@ -17,11 +18,17 @@ import {
   Eye,
   EyeOff,
   User,
-  Users
+  Users,
+  Receipt,
+  Home,
+  Truck,
+  Zap,
+  Megaphone,
+  MoreHorizontal
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format, startOfDay, endOfDay } from 'date-fns';
 import { t } from '@/components/i18n/translations';
@@ -39,6 +46,7 @@ export default function Analytics() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
   const [currency, setCurrency] = useState('TJS');
@@ -136,15 +144,17 @@ export default function Analytics() {
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
-        const [salesData, productsData, customersData] = await Promise.all([
+        const [salesData, productsData, customersData, expensesData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
-          base44.entities.Customer.filter({ business_id: biz.id })
+          base44.entities.Customer.filter({ business_id: biz.id }),
+          base44.entities.Expense.filter({ business_id: biz.id }),
         ]);
         
         setSales(salesData);
         setProducts(productsData);
         setCustomers(customersData);
+        setExpenses(expensesData);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -195,6 +205,25 @@ export default function Analytics() {
   const debtAmount = debtSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const cashPercent = totalRevenue ? ((cashAmount / totalRevenue) * 100).toFixed(1) : 0;
   const debtPercent = totalRevenue ? ((debtAmount / totalRevenue) * 100).toFixed(1) : 0;
+
+  // Убыточные продажи (profit < 0)
+  const lossSales = filteredSales.filter(s => (s.profit || 0) < 0);
+  const totalLoss = lossSales.reduce((sum, s) => sum + (s.profit || 0), 0); // отрицательное число
+
+  // Расходы за период
+  const filteredExpenses = expenses.filter(e => {
+    if (!dateRange?.from) return true;
+    try {
+      const d = parseISO(e.expense_date);
+      const startDate = startOfDay(dateRange.from);
+      const endDate = endOfDay(dateRange.to || dateRange.from);
+      return isWithinInterval(d, { start: startDate, end: endDate });
+    } catch { return false; }
+  });
+  const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  // Чистая прибыль = прибыль от продаж − расходы
+  const netProfit = totalProfit - totalExpenses;
 
   // Маржа прибыли
   const profitMargin = totalRevenue ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0;
@@ -360,6 +389,54 @@ export default function Analytics() {
         />
       </div>
 
+      {/* Loss + Expenses + Net Profit row */}
+      {can('view_profit') && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+          {/* Убытки от продаж */}
+          <div className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 ${totalLoss < 0 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-100'}`}>
+            <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+              <TrendingDown className="w-6 h-6 text-red-500" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500 font-medium">Убыток от продаж</p>
+              <p className={`text-2xl font-bold ${totalLoss < 0 ? 'text-red-600' : 'text-slate-400'}`}>
+                {hideData ? masked : `${Math.round(totalLoss).toLocaleString()} с.`}
+              </p>
+              <p className="text-xs text-slate-400">{lossSales.length} продаж ниже себестоимости</p>
+            </div>
+          </div>
+          {/* Расходы */}
+          <div className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 ${totalExpenses > 0 ? 'bg-orange-50 border-orange-200' : 'bg-white border-slate-100'}`}>
+            <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+              <Receipt className="w-6 h-6 text-orange-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-slate-500 font-medium">Расходы за период</p>
+              <p className={`text-2xl font-bold ${totalExpenses > 0 ? 'text-orange-600' : 'text-slate-400'}`}>
+                {hideData ? masked : `−${totalExpenses.toLocaleString()} с.`}
+              </p>
+              <p className="text-xs text-slate-400">{filteredExpenses.length} транзакций</p>
+            </div>
+            <Link to={createPageUrl('Expenses')}>
+              <button className="text-xs text-orange-600 hover:underline flex-shrink-0">Управление →</button>
+            </Link>
+          </div>
+          {/* Чистая прибыль */}
+          <div className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 ${netProfit >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${netProfit >= 0 ? 'bg-emerald-100' : 'bg-red-100'}`}>
+              <DollarSign className={`w-6 h-6 ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`} />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500 font-medium">Чистая прибыль</p>
+              <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                {hideData ? masked : `${Math.round(netProfit).toLocaleString()} с.`}
+              </p>
+              <p className="text-xs text-slate-400">после расходов</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Inventory Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {can('view_stock_value') ? (
@@ -479,6 +556,56 @@ export default function Analytics() {
         <CustomerSegmentation customers={customers} sales={filteredSales} />
       </div>
 
+      {/* Expenses breakdown */}
+      {can('view_profit') && filteredExpenses.length > 0 && (
+        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-slate-900 text-sm md:text-base flex items-center gap-2">
+              <Receipt className="w-4 h-4 text-orange-500" />
+              Расходы по категориям
+            </h3>
+            <Link to={createPageUrl('Expenses')}>
+              <button className="text-xs text-orange-600 hover:underline">Все расходы →</button>
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: 'Аренда', icon: Home, color: 'bg-blue-100 text-blue-600' },
+              { label: 'Зарплата', icon: Users, color: 'bg-green-100 text-green-600' },
+              { label: 'Транспорт', icon: Truck, color: 'bg-orange-100 text-orange-600' },
+              { label: 'Коммунальные', icon: Zap, color: 'bg-yellow-100 text-yellow-600' },
+              { label: 'Реклама', icon: Megaphone, color: 'bg-purple-100 text-purple-600' },
+              { label: 'Прочее', icon: MoreHorizontal, color: 'bg-slate-100 text-slate-600' },
+            ].map(cat => {
+              const total = filteredExpenses.filter(e => e.category === cat.label).reduce((s, e) => s + (e.amount || 0), 0);
+              if (!total) return null;
+              const pct = totalExpenses ? ((total / totalExpenses) * 100).toFixed(0) : 0;
+              const Icon = cat.icon;
+              return (
+                <div key={cat.label} className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cat.color}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-medium text-slate-700">{cat.label}</span>
+                      <span className="text-slate-500">{hideData ? masked : `${total.toLocaleString()} с.`} ({pct}%)</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-400 rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            }).filter(Boolean)}
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
+            <span className="text-sm font-medium text-slate-600">Итого расходов:</span>
+            <span className="text-lg font-bold text-orange-600">{hideData ? masked : `−${totalExpenses.toLocaleString()} с.`}</span>
+          </div>
+        </div>
+      )}
+
       {/* Top Products by Revenue - Moved to End */}
       <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
@@ -541,7 +668,11 @@ export default function Analytics() {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="font-semibold text-slate-900 text-xs md:text-sm">{hideData ? masked : `${Math.round(stats.revenue)} с.`}</p>
-                    {can('view_profit') && <p className="text-xs md:text-sm text-emerald-600 font-medium">+{hideData ? masked : `${Math.round(stats.profit)} с.`}</p>}
+                    {can('view_profit') && (
+                      <p className={`text-xs md:text-sm font-medium ${stats.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {hideData ? masked : `${stats.profit >= 0 ? '+' : ''}${Math.round(stats.profit)} с.`}
+                      </p>
+                    )}
                   </div>
                 </div>
               );
