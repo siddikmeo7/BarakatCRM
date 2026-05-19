@@ -24,13 +24,17 @@ import {
   Truck,
   Zap,
   Megaphone,
-  MoreHorizontal
+  MoreHorizontal,
+  X,
+  Calendar
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format, startOfDay, endOfDay } from 'date-fns';
+import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
 import SalesForecast from '@/components/analytics/SalesForecast';
 import CustomerSegmentation from '@/components/analytics/CustomerSegmentation';
@@ -63,6 +67,7 @@ export default function Analytics() {
   const [topProductsSort, setTopProductsSort] = useState('revenue'); // revenue, profit, boxes
   const [mySalesOnly, setMySalesOnly] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
+  const [showLossModal, setShowLossModal] = useState(false);
 
 
 
@@ -392,19 +397,25 @@ export default function Analytics() {
       {/* Loss + Expenses + Net Profit row */}
       {can('view_profit') && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-          {/* Убытки от продаж */}
-          <div className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 ${totalLoss < 0 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-100'}`}>
+          {/* Убытки от продаж — кликабельная карточка */}
+          <button
+            onClick={() => lossSales.length > 0 && setShowLossModal(true)}
+            className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 text-left transition-all w-full ${totalLoss < 0 ? 'bg-red-50 border-red-200 hover:bg-red-100 cursor-pointer' : 'bg-white border-slate-100 cursor-default'}`}
+          >
             <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
               <TrendingDown className="w-6 h-6 text-red-500" />
             </div>
-            <div>
+            <div className="flex-1">
               <p className="text-sm text-slate-500 font-medium">Убыток от продаж</p>
               <p className={`text-2xl font-bold ${totalLoss < 0 ? 'text-red-600' : 'text-slate-400'}`}>
                 {hideData ? masked : `${Math.round(totalLoss).toLocaleString()} с.`}
               </p>
               <p className="text-xs text-slate-400">{lossSales.length} продаж ниже себестоимости</p>
             </div>
-          </div>
+            {lossSales.length > 0 && (
+              <span className="text-xs text-red-500 font-medium flex-shrink-0">Подробнее →</span>
+            )}
+          </button>
           {/* Расходы */}
           <div className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 ${totalExpenses > 0 ? 'bg-orange-50 border-orange-200' : 'bg-white border-slate-100'}`}>
             <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
@@ -681,6 +692,72 @@ export default function Analytics() {
           })()}
         </div>
       </div>
+      {/* Loss Sales Modal */}
+      <Dialog open={showLossModal} onOpenChange={setShowLossModal}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <TrendingDown className="w-5 h-5" />
+              Убыточные продажи — {lossSales.length} шт.
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="mt-2 space-y-2">
+            {/* Итог */}
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center justify-between">
+              <span className="text-sm font-medium text-red-700">Общий убыток:</span>
+              <span className="text-lg font-bold text-red-600">{Math.round(totalLoss).toLocaleString()} с.</span>
+            </div>
+
+            {/* Список продаж */}
+            <div className="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
+              {lossSales
+                .sort((a, b) => (a.profit || 0) - (b.profit || 0)) // самые большие убытки сверху
+                .map(sale => {
+                  const product = products.find(p => p.id === sale.product_id);
+                  const lossPerBox = sale.boxes_sold ? Math.round((sale.profit || 0) / sale.boxes_sold) : 0;
+                  return (
+                    <div key={sale.id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-red-50 transition-colors">
+                      {product?.photo_url ? (
+                        <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                          <Package className="w-5 h-5 text-slate-300" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-800 text-sm truncate">
+                          {product ? `${product.brand} ${product.model}` : 'Неизвестный товар'}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5 flex-wrap">
+                          <span>{sale.boxes_sold} кор.</span>
+                          <span>·</span>
+                          <span>Продажа: {(sale.sale_price || 0).toLocaleString()} с.</span>
+                          <span>·</span>
+                          <span>Закупка: {(sale.purchase_price || 0).toLocaleString()} с.</span>
+                          {sale.sale_date && (
+                            <>
+                              <span>·</span>
+                              <span className="flex items-center gap-0.5">
+                                <Calendar className="w-3 h-3" />
+                                {format(parseISO(sale.sale_date), 'dd.MM.yyyy', { locale: ru })}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-base font-bold text-red-600">{Math.round(sale.profit || 0).toLocaleString()} с.</p>
+                        <p className="text-xs text-red-400">{lossPerBox.toLocaleString()} с./кор.</p>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
