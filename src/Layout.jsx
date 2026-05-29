@@ -25,6 +25,8 @@ import {
   TrendingUp,
   TrendingDown,
   FileText,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -52,8 +54,20 @@ const ADMIN_MENU_ITEMS = [
   { name: 'AdminBusinesses', icon: Building2,       labelKey: 'nav_businesses', color: 'text-blue-500',   activeBg: 'bg-blue-500' },
 ];
 
+function useDarkMode() {
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
+  const toggle = () => {
+    const next = !document.documentElement.classList.contains('dark');
+    document.documentElement.classList.toggle('dark', next);
+    localStorage.setItem('barakatcrm_theme', next ? 'dark' : 'light');
+    setIsDark(next);
+  };
+  return [isDark, toggle];
+}
+
 export default function Layout({ children, currentPageName }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isDark, toggleDark] = useDarkMode();
 
   const [user, setUser] = useState(null);
   const [business, setBusiness] = useState(null);
@@ -544,7 +558,16 @@ export default function Layout({ children, currentPageName }) {
           })()}
         </div>
 
-        <div className="w-9 h-9 flex-shrink-0"></div>
+        <button
+          onClick={toggleDark}
+          className="w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          title={isDark ? 'Светлая тема' : 'Тёмная тема'}
+        >
+          {isDark
+            ? <Sun className="w-4 h-4 text-amber-400" />
+            : <Moon className="w-4 h-4 text-slate-500" />
+          }
+        </button>
       </header>
 
       {/* === PAGE CONTENT === */}

@@ -33,7 +33,7 @@ import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
-import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format, startOfDay, endOfDay } from 'date-fns';
+import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format, startOfDay, endOfDay, isSameDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
 import SalesForecast from '@/components/analytics/SalesForecast';
@@ -614,6 +614,72 @@ export default function Analytics() {
             <span className="text-sm font-medium text-slate-600">Итого расходов:</span>
             <span className="text-lg font-bold text-orange-600">{hideData ? masked : `−${totalExpenses.toLocaleString()} с.`}</span>
           </div>
+        </div>
+      )}
+
+      {/* Детализация продаж по товарам за выбранный период */}
+      {dateRange?.from && (
+        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
+          <h3 className="font-semibold text-slate-900 text-sm md:text-base mb-1 flex items-center gap-2">
+            <Package className="w-4 h-4 text-indigo-500" />
+            Продажи по товарам за период
+          </h3>
+          <p className="text-xs text-slate-400 mb-4">
+            {format(dateRange.from, 'dd MMM yyyy', { locale: ru })}
+            {dateRange.to && !isSameDay(dateRange.from, dateRange.to) ? ` — ${format(dateRange.to, 'dd MMM yyyy', { locale: ru })}` : ''}
+            {' · '}{filteredSales.length} продаж
+          </p>
+          {filteredSales.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Нет продаж за выбранный период</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[500px] overflow-y-auto">
+              {(() => {
+                const productStats = {};
+                filteredSales.forEach(sale => {
+                  const pid = sale.product_id;
+                  if (!productStats[pid]) productStats[pid] = { boxes: 0, revenue: 0, profit: 0, count: 0 };
+                  productStats[pid].boxes += sale.boxes_sold || 0;
+                  productStats[pid].revenue += sale.total_amount || 0;
+                  productStats[pid].profit += sale.profit || 0;
+                  productStats[pid].count += 1;
+                });
+                return Object.entries(productStats)
+                  .sort((a, b) => b[1].revenue - a[1].revenue)
+                  .map(([pid, stats], i) => {
+                    const product = products.find(p => p.id === pid);
+                    if (!product) return null;
+                    return (
+                      <div key={pid} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-indigo-50 transition-colors">
+                        <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
+                        {product.photo_url
+                          ? <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          : <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0"><Package className="w-5 h-5 text-slate-400" /></div>
+                        }
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-900 text-sm truncate">{product.brand} {product.model}</p>
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500 mt-0.5">
+                            <span>📦 {stats.boxes} кор.</span>
+                            <span>🛒 {stats.count} продаж</span>
+                            {product.color && <span>🎨 {product.color}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="font-bold text-slate-900 text-sm">{hideData ? masked : `${Math.round(stats.revenue).toLocaleString()} с.`}</p>
+                          {can('view_profit') && (
+                            <p className={`text-xs font-medium ${stats.profit >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                              {hideData ? masked : `${stats.profit >= 0 ? '+' : ''}${Math.round(stats.profit).toLocaleString()} с.`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }).filter(Boolean);
+              })()}
+            </div>
+          )}
         </div>
       )}
 

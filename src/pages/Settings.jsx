@@ -21,7 +21,7 @@ import {
   Settings as SettingsIcon, Building2, Palette, Users, Plus, Trash2, Loader2, Save,
   CheckCircle, MessageCircle, Mail, Bell, Edit2, LogOut, History, Download, Shield,
   RotateCcw, AlertCircle, RefreshCw, ChevronDown, Lock, Database, Zap, Package,
-  ShoppingCart, Eye, Search, Check, Copy, ArrowLeftRight
+  ShoppingCart, Eye, Search, Check, Copy, ArrowLeftRight, Moon, Sun
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
@@ -38,8 +38,20 @@ const LANGUAGES = [
 const PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
 const COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый'];
 
+function useDarkMode() {
+  const [isDark, setIsDark] = React.useState(() => document.documentElement.classList.contains('dark'));
+  const toggle = () => {
+    const next = !document.documentElement.classList.contains('dark');
+    document.documentElement.classList.toggle('dark', next);
+    localStorage.setItem('barakatcrm_theme', next ? 'dark' : 'light');
+    setIsDark(next);
+  };
+  return [isDark, toggle];
+}
+
 export default function Settings() {
   const navigate = useNavigate();
+  const [isDark, toggleDark] = useDarkMode();
   // Проверяем режим сотрудника (сначала sessionStorage, потом localStorage)
   const savedMode = sessionStorage.getItem('barakatcrm_mode') || localStorage.getItem('barakatcrm_mode');
   const isEmployeeMode = savedMode && savedMode.startsWith('employee_');
