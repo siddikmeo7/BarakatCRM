@@ -40,38 +40,38 @@
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --background: 0 0% 7%;
+    --foreground: 0 0% 97%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 97%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 97%;
+    --primary: 243 75% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 17%;
+    --secondary-foreground: 0 0% 97%;
+    --muted: 0 0% 17%;
+    --muted-foreground: 0 0% 72%;
+    --accent: 243 75% 65%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 22%;
+    --input: 0 0% 17%;
+    --ring: 243 75% 65%;
+    --chart-1: 220 70% 60%;
+    --chart-2: 160 60% 55%;
+    --chart-3: 37 91% 60%;
+    --chart-4: 280 65% 65%;
+    --chart-5: 340 75% 60%;
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 97%;
+    --sidebar-primary: 243 75% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 97%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 243 75% 65%;
   }
 }
 
@@ -85,4 +85,129 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ===== DARK MODE GLOBAL OVERRIDES ===== */
+
+/* Белые карточки → тёмный фон */
+.dark .bg-white {
+  background-color: hsl(0 0% 11%) !important;
+}
+.dark .bg-slate-50 {
+  background-color: hsl(0 0% 14%) !important;
+}
+.dark .bg-slate-100 {
+  background-color: hsl(0 0% 18%) !important;
+}
+.dark .bg-slate-200 {
+  background-color: hsl(0 0% 22%) !important;
+}
+
+/* Все тексты */
+.dark .text-slate-900 { color: hsl(0 0% 97%) !important; }
+.dark .text-slate-800 { color: hsl(0 0% 92%) !important; }
+.dark .text-slate-700 { color: hsl(0 0% 87%) !important; }
+.dark .text-slate-600 { color: hsl(0 0% 80%) !important; }
+.dark .text-slate-500 { color: hsl(0 0% 70%) !important; }
+.dark .text-slate-400 { color: hsl(0 0% 60%) !important; }
+
+/* Границы */
+.dark .border-slate-100 { border-color: hsl(0 0% 20%) !important; }
+.dark .border-slate-200 { border-color: hsl(0 0% 24%) !important; }
+.dark .border-slate-300 { border-color: hsl(0 0% 28%) !important; }
+
+/* Header */
+.dark header {
+  background-color: hsl(0 0% 9%) !important;
+  border-color: hsl(0 0% 20%) !important;
+}
+
+/* Hover states */
+.dark .hover\:bg-slate-50:hover { background-color: hsl(0 0% 16%) !important; }
+.dark .hover\:bg-slate-100:hover { background-color: hsl(0 0% 20%) !important; }
+
+/* Inputs */
+.dark input,
+.dark textarea,
+.dark [cmdk-input] {
+  background-color: hsl(0 0% 15%) !important;
+  color: hsl(0 0% 97%) !important;
+  border-color: hsl(0 0% 26%) !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: hsl(0 0% 55%) !important;
+}
+
+/* Tables */
+.dark thead { background-color: hsl(0 0% 14%) !important; }
+.dark tbody tr { border-color: hsl(0 0% 20%) !important; }
+.dark tbody tr:hover { background-color: hsl(0 0% 15%) !important; }
+.dark th { color: hsl(0 0% 75%) !important; border-color: hsl(0 0% 22%) !important; }
+.dark td { color: hsl(0 0% 90%) !important; border-color: hsl(0 0% 20%) !important; }
+
+/* Dividers */
+.dark .divide-slate-100 > * + * { border-color: hsl(0 0% 20%) !important; }
+.dark .divide-y > * + * { border-color: hsl(0 0% 20%) !important; }
+
+/* Subtle colour backgrounds */
+.dark .bg-indigo-50   { background-color: hsl(243 40% 14%) !important; }
+.dark .bg-emerald-50  { background-color: hsl(152 40% 10%) !important; }
+.dark .bg-red-50      { background-color: hsl(0 40% 12%)   !important; }
+.dark .bg-orange-50   { background-color: hsl(30 40% 12%)  !important; }
+.dark .bg-blue-50     { background-color: hsl(213 40% 12%) !important; }
+.dark .bg-yellow-50   { background-color: hsl(48 40% 12%)  !important; }
+.dark .bg-purple-50   { background-color: hsl(270 40% 12%) !important; }
+.dark .bg-pink-50     { background-color: hsl(330 40% 12%) !important; }
+.dark .bg-green-50    { background-color: hsl(142 40% 10%) !important; }
+.dark .bg-cyan-50     { background-color: hsl(195 40% 12%) !important; }
+.dark .bg-amber-50    { background-color: hsl(38 40% 12%)  !important; }
+.dark .bg-violet-50   { background-color: hsl(250 40% 12%) !important; }
+.dark .bg-rose-50     { background-color: hsl(355 40% 12%) !important; }
+
+/* Coloured icon backgrounds — keep them but slightly darker */
+.dark .bg-indigo-100  { background-color: hsl(243 45% 20%) !important; }
+.dark .bg-emerald-100 { background-color: hsl(152 45% 15%) !important; }
+.dark .bg-red-100     { background-color: hsl(0 45% 18%)   !important; }
+.dark .bg-orange-100  { background-color: hsl(30 45% 18%)  !important; }
+.dark .bg-blue-100    { background-color: hsl(213 45% 18%) !important; }
+.dark .bg-yellow-100  { background-color: hsl(48 45% 18%)  !important; }
+.dark .bg-purple-100  { background-color: hsl(270 45% 18%) !important; }
+.dark .bg-pink-100    { background-color: hsl(330 45% 18%) !important; }
+.dark .bg-green-100   { background-color: hsl(142 45% 15%) !important; }
+.dark .bg-cyan-100    { background-color: hsl(195 45% 18%) !important; }
+.dark .bg-amber-100   { background-color: hsl(38 45% 18%)  !important; }
+.dark .bg-violet-100  { background-color: hsl(250 45% 18%) !important; }
+.dark .bg-rose-100    { background-color: hsl(355 45% 18%) !important; }
+
+/* Coloured borders */
+.dark .border-red-200    { border-color: hsl(0 50% 28%)   !important; }
+.dark .border-orange-200 { border-color: hsl(30 50% 28%)  !important; }
+.dark .border-emerald-200{ border-color: hsl(152 50% 22%) !important; }
+.dark .border-indigo-200 { border-color: hsl(243 50% 28%) !important; }
+.dark .border-blue-200   { border-color: hsl(213 50% 28%) !important; }
+.dark .border-green-200  { border-color: hsl(142 50% 22%) !important; }
+.dark .border-amber-200  { border-color: hsl(38 50% 28%)  !important; }
+
+/* Main background */
+.dark main { background-color: hsl(0 0% 7%); }
+
+/* Scrollbars */
+.dark ::-webkit-scrollbar { width: 6px; height: 6px; }
+.dark ::-webkit-scrollbar-track { background: hsl(0 0% 12%); }
+.dark ::-webkit-scrollbar-thumb { background: hsl(0 0% 30%); border-radius: 3px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: hsl(0 0% 40%); }
+
+/* Low stock pulsing border */
+@keyframes pulse-border {
+  0%, 100% { border-color: #fca5a5; box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }
+  50% { border-color: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,0.12); }
+}
+.animate-pulse-border {
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+@keyframes row-pulse {
+  0%, 100% { background-color: #fff1f2; }
+  50% { background-color: #fee2e2; }
 }
