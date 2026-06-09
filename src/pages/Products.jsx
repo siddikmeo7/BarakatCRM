@@ -394,11 +394,11 @@ export default function Products() {
   const allColors = [...BASE_COLORS, ...(business?.custom_colors || [])];
   const lowStockLimit = business?.low_stock_limit ?? 2;
 
-  // Уникальные модели из всех существующих товаров
-  const existingModels = useMemo(() => {
-    const models = [...new Set(products.map(p => p.model).filter(Boolean))].sort();
-    if (!modelPickerSearch.trim()) return models;
-    return models.filter(m => m.toLowerCase().includes(modelPickerSearch.toLowerCase().trim()));
+  // Уникальные бренды из всех существующих товаров
+  const existingBrands = useMemo(() => {
+    const brands = [...new Set(products.map(p => p.brand).filter(Boolean))].sort();
+    if (!modelPickerSearch.trim()) return brands;
+    return brands.filter(b => b.toLowerCase().includes(modelPickerSearch.toLowerCase().trim()));
   }, [products, modelPickerSearch]);
 
   // Фильтрация (скрываем товары с нулевым остатком по умолчанию, если не выбран фильтр "empty")
@@ -962,37 +962,29 @@ export default function Products() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>{t(lang,'prod_brand')} *</Label>
-                <Input 
-                  value={formData.brand}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFormData({ ...formData, brand: val });
-                    checkDuplicate(val, formData.model);
-                  }}
-                  placeholder="Nike, Adidas..."
-                  className="mt-1.5"
-                />
-              </div>
               <div className="relative">
-                <Label>{t(lang,'prod_model')} *</Label>
+                <Label>{t(lang,'prod_brand')} *</Label>
                 <div className="flex gap-1.5 mt-1.5">
                   <Input 
-                    value={formData.model}
+                    value={formData.brand}
                     onChange={(e) => {
                       const val = e.target.value;
-                      setFormData({ ...formData, model: val });
-                      checkDuplicate(formData.brand, val);
+                      setFormData({ ...formData, brand: val });
+                      checkDuplicate(val, formData.model);
+                      setModelPickerOpen(true);
+                      setModelPickerSearch(val);
                     }}
-                    placeholder="Air Max, Ultra Boost..."
-                    className={`flex-1 ${duplicateProduct && !editingProduct ? 'border-amber-400 focus-visible:ring-amber-400' : ''}`}
+                    onFocus={() => { setModelPickerOpen(true); setModelPickerSearch(formData.brand); }}
+                    onBlur={() => setTimeout(() => setModelPickerOpen(false), 150)}
+                    placeholder="Nike, Adidas..."
+                    className="flex-1"
                   />
                   <button
                     type="button"
+                    onMouseDown={e => e.preventDefault()}
                     onClick={() => { setModelPickerOpen(v => !v); setModelPickerSearch(''); }}
                     className="flex items-center gap-1 px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-xs text-slate-600 hover:text-indigo-700 transition-colors flex-shrink-0"
-                    title="Выбрать из существующих моделей"
+                    title="Выбрать из существующих брендов"
                   >
                     <ChevronDown className="w-3.5 h-3.5" />
                   </button>
@@ -1003,42 +995,55 @@ export default function Products() {
                       <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 rounded-lg">
                         <Search className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                         <input
-                          autoFocus
                           value={modelPickerSearch}
                           onChange={e => setModelPickerSearch(e.target.value)}
-                          placeholder="Поиск модели..."
+                          placeholder="Поиск бренда..."
                           className="flex-1 bg-transparent text-xs outline-none text-slate-700 placeholder:text-slate-400"
                         />
                         {modelPickerSearch && (
-                          <button onClick={() => setModelPickerSearch('')} className="text-slate-400 hover:text-slate-600">
+                          <button onMouseDown={e => e.preventDefault()} onClick={() => setModelPickerSearch('')} className="text-slate-400 hover:text-slate-600">
                             <X className="w-3 h-3" />
                           </button>
                         )}
                       </div>
                     </div>
                     <div className="max-h-48 overflow-y-auto">
-                      {existingModels.length === 0 ? (
+                      {existingBrands.length === 0 ? (
                         <p className="text-xs text-slate-400 text-center py-4">Нет совпадений</p>
                       ) : (
-                        existingModels.map(model => (
+                        existingBrands.map(brand => (
                           <button
-                            key={model}
+                            key={brand}
                             type="button"
+                            onMouseDown={e => e.preventDefault()}
                             onClick={() => {
-                              setFormData(prev => ({ ...prev, model }));
-                              checkDuplicate(formData.brand, model);
+                              setFormData(prev => ({ ...prev, brand }));
+                              checkDuplicate(brand, formData.model);
                               setModelPickerOpen(false);
                               setModelPickerSearch('');
                             }}
                             className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
                           >
-                            {model}
+                            {brand}
                           </button>
                         ))
                       )}
                     </div>
                   </div>
                 )}
+              </div>
+              <div>
+                <Label>{t(lang,'prod_model')} *</Label>
+                <Input 
+                  value={formData.model}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData({ ...formData, model: val });
+                    checkDuplicate(formData.brand, val);
+                  }}
+                  placeholder="Air Max, Ultra Boost..."
+                  className={`mt-1.5 ${duplicateProduct && !editingProduct ? 'border-amber-400 focus-visible:ring-amber-400' : ''}`}
+                />
               </div>
             </div>
 
