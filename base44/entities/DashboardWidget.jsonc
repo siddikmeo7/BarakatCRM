@@ -1,0 +1,40 @@
+{
+  "name": "DashboardWidget",
+  "type": "object",
+  "properties": {
+    "business_id": {
+      "type": "string",
+      "description": "ID \u0431\u0438\u0437\u043d\u0435\u0441\u0430"
+    },
+    "widget_type": {
+      "type": "string",
+      "enum": [
+        "sales",
+        "profit",
+        "boxes",
+        "stock",
+        "debt",
+        "customers",
+        "chart_sales",
+        "chart_profit",
+        "top_products",
+        "recent_sales"
+      ],
+      "description": "\u0422\u0438\u043f \u0432\u0438\u0434\u0436\u0435\u0442\u0430"
+    },
+    "position": {
+      "type": "number",
+      "description": "\u041f\u043e\u0437\u0438\u0446\u0438\u044f \u0432\u0438\u0434\u0436\u0435\u0442\u0430"
+    },
+    "is_visible": {
+      "type": "boolean",
+      "default": true,
+      "description": "\u0412\u0438\u0434\u0435\u043d \u043b\u0438 \u0432\u0438\u0434\u0436\u0435\u0442"
+    }
+  },
+  "required": [
+    "business_id",
+    "widget_type",
+    "position"
+  ]
+}

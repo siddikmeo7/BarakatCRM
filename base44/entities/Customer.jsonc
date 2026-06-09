@@ -1,0 +1,58 @@
+{
+  "name": "Customer",
+  "type": "object",
+  "properties": {
+    "business_id": {
+      "type": "string",
+      "description": "ID \u0431\u0438\u0437\u043d\u0435\u0441\u0430"
+    },
+    "name": {
+      "type": "string",
+      "description": "\u0418\u043c\u044f \u043a\u043b\u0438\u0435\u043d\u0442\u0430"
+    },
+    "phone": {
+      "type": "string",
+      "description": "\u041e\u0441\u043d\u043e\u0432\u043d\u043e\u0439 \u043d\u043e\u043c\u0435\u0440 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430"
+    },
+    "whatsapp": {
+      "type": "string",
+      "description": "\u041d\u043e\u043c\u0435\u0440 WhatsApp"
+    },
+    "telegram": {
+      "type": "string",
+      "description": "\u041d\u043e\u043c\u0435\u0440/username Telegram"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email (\u043d\u0435\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e)"
+    },
+    "address": {
+      "type": "string",
+      "description": "\u0410\u0434\u0440\u0435\u0441 \u043a\u043b\u0438\u0435\u043d\u0442\u0430"
+    },
+    "use_phone_for_all": {
+      "type": "boolean",
+      "default": true,
+      "description": "\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u043e\u0441\u043d\u043e\u0432\u043d\u043e\u0439 \u043d\u043e\u043c\u0435\u0440 \u0434\u043b\u044f \u0432\u0441\u0435\u0445 \u043c\u0435\u0441\u0441\u0435\u043d\u0434\u0436\u0435\u0440\u043e\u0432"
+    },
+    "total_debt": {
+      "type": "number",
+      "default": 0,
+      "description": "\u041e\u0431\u0449\u0438\u0439 \u0434\u043e\u043b\u0433"
+    },
+    "total_paid": {
+      "type": "number",
+      "default": 0,
+      "description": "\u0412\u0441\u0435\u0433\u043e \u043e\u043f\u043b\u0430\u0447\u0435\u043d\u043e"
+    },
+    "debt_limit": {
+      "type": "number",
+      "description": "\u041b\u0438\u043c\u0438\u0442 \u0434\u043e\u043b\u0433\u0430 (\u043c\u0430\u043a\u0441\u0438\u043c\u0430\u043b\u044c\u043d\u0430\u044f \u0441\u0443\u043c\u043c\u0430 \u0434\u043e\u043b\u0433\u0430 \u043a\u043b\u0438\u0435\u043d\u0442\u0430)"
+    }
+  },
+  "required": [
+    "business_id",
+    "name",
+    "phone"
+  ]
+}

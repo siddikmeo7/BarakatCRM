@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/ui/PageHeader';
 import SearchInput from '@/components/filters/SearchInput';
@@ -33,7 +33,9 @@ import {
   CheckCheck,
   Layers,
   AlertCircle,
-  Info
+  Info,
+  ChevronDown,
+  Search
 } from 'lucide-react';
 import BulkAddProductsDialog from '@/components/products/BulkAddProductsDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
@@ -88,6 +90,8 @@ export default function Products() {
   const [bulkDone, setBulkDone] = useState(false);
   const [bulkAddOpen, setBulkAddOpen] = useState(false);
   const [orphanedDialogOpen, setOrphanedDialogOpen] = useState(false);
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  const [modelPickerSearch, setModelPickerSearch] = useState('');
 
   const [formData, setFormData] = useState({
     brand: '',
@@ -389,6 +393,13 @@ export default function Products() {
   const allProductTypes = [...BASE_PRODUCT_TYPES, ...(business?.custom_product_types || [])];
   const allColors = [...BASE_COLORS, ...(business?.custom_colors || [])];
   const lowStockLimit = business?.low_stock_limit ?? 2;
+
+  // Уникальные модели из всех существующих товаров
+  const existingModels = useMemo(() => {
+    const models = [...new Set(products.map(p => p.model).filter(Boolean))].sort();
+    if (!modelPickerSearch.trim()) return models;
+    return models.filter(m => m.toLowerCase().includes(modelPickerSearch.toLowerCase().trim()));
+  }, [products, modelPickerSearch]);
 
   // Фильтрация (скрываем товары с нулевым остатком по умолчанию, если не выбран фильтр "empty")
   let filteredProducts = products.filter(product => {
@@ -964,18 +975,70 @@ export default function Products() {
                   className="mt-1.5"
                 />
               </div>
-              <div>
+              <div className="relative">
                 <Label>{t(lang,'prod_model')} *</Label>
-                <Input 
-                  value={formData.model}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFormData({ ...formData, model: val });
-                    checkDuplicate(formData.brand, val);
-                  }}
-                  placeholder="Air Max, Ultra Boost..."
-                  className={`mt-1.5 ${duplicateProduct && !editingProduct ? 'border-amber-400 focus-visible:ring-amber-400' : ''}`}
-                />
+                <div className="flex gap-1.5 mt-1.5">
+                  <Input 
+                    value={formData.model}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData({ ...formData, model: val });
+                      checkDuplicate(formData.brand, val);
+                    }}
+                    placeholder="Air Max, Ultra Boost..."
+                    className={`flex-1 ${duplicateProduct && !editingProduct ? 'border-amber-400 focus-visible:ring-amber-400' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setModelPickerOpen(v => !v); setModelPickerSearch(''); }}
+                    className="flex items-center gap-1 px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-xs text-slate-600 hover:text-indigo-700 transition-colors flex-shrink-0"
+                    title="Выбрать из существующих моделей"
+                  >
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {modelPickerOpen && (
+                  <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+                    <div className="p-2 border-b border-slate-100">
+                      <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 rounded-lg">
+                        <Search className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                        <input
+                          autoFocus
+                          value={modelPickerSearch}
+                          onChange={e => setModelPickerSearch(e.target.value)}
+                          placeholder="Поиск модели..."
+                          className="flex-1 bg-transparent text-xs outline-none text-slate-700 placeholder:text-slate-400"
+                        />
+                        {modelPickerSearch && (
+                          <button onClick={() => setModelPickerSearch('')} className="text-slate-400 hover:text-slate-600">
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {existingModels.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-4">Нет совпадений</p>
+                      ) : (
+                        existingModels.map(model => (
+                          <button
+                            key={model}
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, model }));
+                              checkDuplicate(formData.brand, model);
+                              setModelPickerOpen(false);
+                              setModelPickerSearch('');
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                          >
+                            {model}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -1,0 +1,46 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user"
+    },
+    "session_token": {
+      "type": "string",
+      "description": "\u0422\u043e\u043a\u0435\u043d \u0442\u0435\u043a\u0443\u0449\u0435\u0439 \u0441\u0435\u0441\u0441\u0438\u0438"
+    },
+    "active_sessions": {
+      "type": "array",
+      "description": "\u0421\u043f\u0438\u0441\u043e\u043a \u0430\u043a\u0442\u0438\u0432\u043d\u044b\u0445 \u0441\u0435\u0441\u0441\u0438\u0439/\u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432",
+      "items": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string"
+          },
+          "device": {
+            "type": "string"
+          },
+          "browser": {
+            "type": "string"
+          },
+          "last_seen": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "session_token"
+  ]
+}
