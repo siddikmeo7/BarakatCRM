@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       });
       const tgText = `⚠️ *Мало товаров на складе — ${business.name}*\n\n${tgLines.join('\n')}\n\n_Лимит: ${limit} кор. Всего: ${sorted.length} товаров_`;
 
-      // Send to all recipients
+      // Send emails to all recipients
       for (const recipient of recipients) {
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
@@ -103,10 +103,14 @@ Deno.serve(async (req) => {
         } catch (e) {
           console.error(`Email to ${recipient.email} failed:`, e.message);
         }
+      }
 
-        if (recipient.telegram) {
-          await sendTelegram(recipient.telegram, tgText);
-        }
+      // Send Telegram to all configured telegram_recipients
+      const tgRecipients = Array.isArray(business.telegram_recipients) && business.telegram_recipients.length > 0
+        ? business.telegram_recipients
+        : (business.telegram_chat_id ? [{ name: 'Владелец', chat_id: business.telegram_chat_id }] : []);
+      for (const tgr of tgRecipients) {
+        if (tgr.chat_id) await sendTelegram(tgr.chat_id, tgText);
       }
 
       results.push({

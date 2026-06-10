@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
-import { Save, Shield, Package, ShoppingCart, Warehouse, Users, CreditCard, RotateCcw, TrendingUp, Settings, Bot, FileText, Bell, RotateCw, Copy, Check, Upload, Tag } from 'lucide-react';
+import { Save, Shield, Package, ShoppingCart, Warehouse, Users, CreditCard, RotateCcw, TrendingUp, Settings, Bot, FileText, Bell, Upload, Tag } from 'lucide-react';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
 
 const PERMISSION_GROUPS = [
@@ -157,9 +157,6 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
   const [isFrozen, setIsFrozen] = useState(employee?.is_frozen || false);
   const [isAdmin, setIsAdmin] = useState(employee?.is_admin || false);
   const [saving, setSaving] = useState(false);
-  const [loginCode, setLoginCode] = useState(employee?.login_session_token || '');
-  const [password, setPassword] = useState('');
-  const [copied, setCopied] = useState('');
   const [uploading, setUploading] = useState(false);
   const [roles, setRoles] = useState([]);
   const [selectedRoleId, setSelectedRoleId] = useState(employee?.role_id || '');
@@ -183,24 +180,6 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
 
   const toggle = (key) => setPermissions(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const generateNewCode = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
-    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
-    return code;
-  };
-
-  const generateStrongPassword = () => {
-    const all = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
-    return Array.from({ length: 12 }, () => all[Math.floor(Math.random() * all.length)]).join('');
-  };
-
-  const handleCopy = (text, type) => {
-    navigator.clipboard.writeText(text);
-    setCopied(type);
-    setTimeout(() => setCopied(''), 2000);
-  };
-
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -219,15 +198,8 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
         permissions: { ...permissions },
         is_frozen: isFrozen,
         is_admin: isAdmin,
-        login_session_token: loginCode,
         role_id: selectedRoleId || null,
       };
-      if (password.trim()) {
-        const resp = await base44.functions.invoke('hashPassword', { password: password.trim() });
-        const hash = resp?.data?.hash;
-        if (!hash) throw new Error('Ошибка хеширования пароля');
-        updateData.password = hash;
-      }
       // build change history
       const changes = [];
       if (employee.is_frozen !== isFrozen) changes.push({ field: 'is_frozen', oldValue: String(employee.is_frozen ?? false), newValue: String(isFrozen) });
@@ -487,33 +459,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
                 </div>
               )}
 
-              {/* Login code */}
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-xl p-3">
-                <p className="text-xs font-semibold text-indigo-900 dark:text-indigo-300 mb-2">🔑 Код входа</p>
-                <div className="flex items-center gap-2">
-                  <Input value={loginCode} onChange={e => setLoginCode(e.target.value)} className="font-mono font-bold tracking-widest h-8 text-sm flex-1" maxLength="8" />
-                  <button onClick={() => handleCopy(loginCode, 'code')} className="p-1.5 hover:bg-indigo-100 rounded">
-                    {copied === 'code' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-indigo-500" />}
-                  </button>
-                  <button onClick={() => setLoginCode(generateNewCode())} className="p-1.5 hover:bg-indigo-100 rounded">
-                    <RotateCw className="w-3.5 h-3.5 text-indigo-500" />
-                  </button>
-                </div>
-              </div>
 
-              {/* Password */}
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-3">
-                <p className="text-xs font-semibold text-green-900 dark:text-green-300 mb-2">🔐 Новый пароль</p>
-                <div className="flex items-center gap-2">
-                  <Input type="text" value={password} onChange={e => setPassword(e.target.value)} placeholder="Введите или сгенерируйте..." className="font-mono h-8 text-sm flex-1" />
-                  <button onClick={() => handleCopy(password, 'password')} className="p-1.5 hover:bg-green-100 rounded">
-                    {copied === 'password' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-green-600" />}
-                  </button>
-                  <button onClick={() => setPassword(generateStrongPassword())} className="p-1.5 hover:bg-green-100 rounded">
-                    <RotateCw className="w-3.5 h-3.5 text-green-600" />
-                  </button>
-                </div>
-              </div>
             </div>
           )}
         </div>

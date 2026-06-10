@@ -79,19 +79,27 @@ Deno.serve(async (req) => {
         results.push({ email: recipient.email, email_sent: false, email_error: e.message });
       }
 
-      // Send Telegram if configured
-      if (recipient.telegram && botToken) {
+    }
+
+    // Send Telegram to all configured telegram_recipients
+    const tgRecipients = Array.isArray(business.telegram_recipients) && business.telegram_recipients.length > 0
+      ? business.telegram_recipients
+      : (business.telegram_chat_id ? [{ name: 'Владелец', chat_id: business.telegram_chat_id }] : []);
+
+    if (botToken) {
+      const msg = `⚠️ *Мало товара на складе!*\n\n🏢 Бизнес: ${business.name}\n📦 Товар: ${productName}\n🔴 Остаток: *${stockCount} кор.* (лимит: ${limit})\n\nПожалуйста, пополните запас!`;
+      for (const tgr of tgRecipients) {
+        if (!tgr.chat_id) continue;
         try {
-          const msg = `⚠️ *Мало товара на складе!*\n\n🏢 Бизнес: ${business.name}\n📦 Товар: ${productName}\n🔴 Остаток: *${stockCount} кор.* (лимит: ${limit})\n\nПожалуйста, пополните запас!`;
           const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: recipient.telegram, text: msg, parse_mode: 'Markdown' })
+            body: JSON.stringify({ chat_id: tgr.chat_id, text: msg, parse_mode: 'Markdown' })
           });
           const tgData = await tgRes.json();
-          results.push({ telegram: recipient.telegram, tg_sent: tgData.ok });
+          results.push({ telegram: tgr.chat_id, name: tgr.name, tg_sent: tgData.ok });
         } catch (e) {
-          results.push({ telegram: recipient.telegram, tg_sent: false, tg_error: e.message });
+          results.push({ telegram: tgr.chat_id, tg_sent: false, tg_error: e.message });
         }
       }
     }
