@@ -11,6 +11,7 @@ import {
 import { format, parseISO, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import DateFilter from '@/components/filters/DateFilter';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import BackButton from '@/components/ui/BackButton';
 
 const CATEGORIES = [
   { value: 'Аренда', label: 'Аренда', icon: Home, color: 'bg-blue-100 text-blue-600' },
@@ -165,6 +166,7 @@ export default function Expenses() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
+          <BackButton className="mb-2" />
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <TrendingDown className="w-6 h-6 text-red-500" />
             Расходы

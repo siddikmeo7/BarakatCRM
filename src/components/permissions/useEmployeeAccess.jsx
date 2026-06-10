@@ -26,7 +26,12 @@ export function useEmployeeAccess() {
   const can = (permKey) => {
     if (!isReady) return false; // still loading
     if (!employee) return true; // owner — full access
-    if (employee.is_admin) return true; // admin employee — full access
+    if (employee.is_admin) {
+      // Admin has all permissions UNLESS explicitly set to false
+      const override = employee.permissions?.[permKey];
+      if (override === false) return false;
+      return true;
+    }
     const mergedPerms = window.__barakatMergedPermissions;
     if (mergedPerms && mergedPerms[permKey] !== undefined) return mergedPerms[permKey] === true;
     return employee?.permissions?.[permKey] === true;

@@ -532,57 +532,66 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
 
         {/* Permissions list */}
         <div className="space-y-4">
-          {isAdmin ? (
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-300 rounded-xl p-5 text-center">
-              <p className="text-lg font-bold text-indigo-700 mb-1">👑 Статус: Администратор</p>
-              <p className="text-sm text-slate-600">Этот сотрудник имеет полный доступ ко всем функциям бизнеса, как владелец</p>
-              <div className="mt-3 flex flex-wrap gap-2 justify-center text-xs">
-                {PERMISSION_GROUPS.map(g => (
-                  <span key={g.label} className={cn('px-2 py-1 rounded-full font-medium', g.bg, g.color)}>
-                    ✓ {g.label}
-                  </span>
-                ))}
-              </div>
+          {isAdmin && (
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-300 rounded-xl p-4 mb-2">
+              <p className="text-sm font-bold text-indigo-700 mb-1">👑 Администратор — по умолчанию имеет все права</p>
+              <p className="text-xs text-slate-500">Вы можете выборочно отключить определённые разрешения для этого администратора ниже.</p>
             </div>
-          ) : (
-            filteredGroups.map((group) => {
-              const Icon = group.icon;
-              const groupEnabled = group.permissions.filter(p => !!permissions[p.key]).length;
-              return (
-                <div key={group.label} className="border border-slate-200 rounded-xl overflow-hidden">
-                  <div className={`flex items-center justify-between px-4 py-2.5 ${group.bg}`}>
-                    <div className="flex items-center gap-2">
-                      <Icon className={`w-4 h-4 ${group.color}`} />
-                      <span className={`text-sm font-semibold ${group.color}`}>{group.label}</span>
-                    </div>
-                    <span className="text-xs text-slate-500">{groupEnabled}/{group.permissions.length}</span>
-                  </div>
-                  <div className="p-3 space-y-1.5">
-                    {group.permissions.map((perm) => {
-                      const enabled = !!permissions[perm.key];
-                      return (
-                        <div
-                          key={perm.key}
-                          onClick={() => toggle(perm.key)}
-                          className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all ${
-                            enabled ? 'bg-indigo-50 border border-indigo-200' : 'bg-slate-50 border border-transparent hover:bg-slate-100'
-                          }`}
-                        >
-                          <div className="flex-1 min-w-0 mr-3">
-                            <p className={`text-sm font-medium ${enabled ? 'text-indigo-800' : 'text-slate-700'}`}>{perm.label}</p>
-                            <p className="text-xs text-slate-400 truncate">{perm.desc}</p>
-                          </div>
-                          <div className={`w-10 h-6 rounded-full transition-all flex items-center px-1 flex-shrink-0 ${enabled ? 'bg-indigo-500' : 'bg-slate-300'}`}>
-                            <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-4' : 'translate-x-0'}`} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })
           )}
+          {filteredGroups.map((group) => {
+            const Icon = group.icon;
+            // For admin: permission is ON unless explicitly disabled (key === false)
+            const getEnabled = (key) => isAdmin ? (permissions[key] !== false) : !!permissions[key];
+            const groupEnabled = group.permissions.filter(p => getEnabled(p.key)).length;
+            return (
+              <div key={group.label} className="border border-slate-200 rounded-xl overflow-hidden">
+                <div className={`flex items-center justify-between px-4 py-2.5 ${group.bg}`}>
+                  <div className="flex items-center gap-2">
+                    <Icon className={`w-4 h-4 ${group.color}`} />
+                    <span className={`text-sm font-semibold ${group.color}`}>{group.label}</span>
+                  </div>
+                  <span className="text-xs text-slate-500">{groupEnabled}/{group.permissions.length}</span>
+                </div>
+                <div className="p-3 space-y-1.5">
+                  {group.permissions.map((perm) => {
+                    const enabled = getEnabled(perm.key);
+                    return (
+                      <div
+                        key={perm.key}
+                        onClick={() => {
+                          if (isAdmin) {
+                            // For admin: toggle means explicitly set false or remove restriction
+                            setPermissions(prev => ({
+                              ...prev,
+                              [perm.key]: prev[perm.key] === false ? undefined : false
+                            }));
+                          } else {
+                            toggle(perm.key);
+                          }
+                        }}
+                        className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all ${
+                          enabled
+                            ? isAdmin ? 'bg-indigo-50 border border-indigo-200' : 'bg-indigo-50 border border-indigo-200'
+                            : 'bg-red-50 border border-red-200 hover:bg-red-100'
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0 mr-3">
+                          <p className={`text-sm font-medium ${enabled ? 'text-indigo-800' : 'text-red-700'}`}>
+                            {perm.label}
+                            {isAdmin && !enabled && <span className="ml-2 text-xs font-normal text-red-500">(отключено для этого админа)</span>}
+                          </p>
+                          <p className="text-xs text-slate-400 truncate">{perm.desc}</p>
+                        </div>
+                        <div className={`w-10 h-6 rounded-full transition-all flex items-center px-1 flex-shrink-0 ${enabled ? 'bg-indigo-500' : 'bg-red-400'}`}>
+                          <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex gap-3 pt-4">

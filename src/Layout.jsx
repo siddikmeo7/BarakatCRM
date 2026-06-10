@@ -374,8 +374,12 @@ export default function Layout({ children, currentPageName }) {
   const canAccess = (permKey) => {
     if (isOwner) return true;
     if (!permKey) return true;
-    if (currentEmployee?.is_admin) return true; // admin employee — full access
-    // Если разрешение явно не задано (undefined) — считаем запрещённым для сотрудников
+    if (currentEmployee?.is_admin) {
+      // Admin has access UNLESS explicitly disabled in their personal permissions
+      const override = currentEmployee.permissions?.[permKey];
+      if (override === false) return false;
+      return true;
+    }
     return employeePermissions?.[permKey] === true;
   };
 
@@ -466,18 +470,55 @@ export default function Layout({ children, currentPageName }) {
       </nav>
 
       {/* User Info */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center flex-shrink-0">
-            <span className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-              {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
-            </span>
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+        {/* Current user status card */}
+        {currentEmployee ? (
+          <div className={`rounded-xl px-3 py-2.5 flex items-center gap-3 ${currentEmployee.is_admin ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border border-indigo-200 dark:border-indigo-700' : 'bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700'}`}>
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${currentEmployee.is_admin ? 'bg-gradient-to-br from-indigo-500 to-purple-500' : 'bg-gradient-to-br from-slate-400 to-slate-500'}`}>
+              {currentEmployee.avatar_url
+                ? <img src={currentEmployee.avatar_url} alt={currentEmployee.name} className="w-full h-full object-cover" />
+                : <span className="text-white font-bold text-sm">{currentEmployee.name?.charAt(0)?.toUpperCase()}</span>
+              }
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{currentEmployee.name}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${currentEmployee.is_admin ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
+                  {currentEmployee.is_admin ? '👑 Админ' : '🛍️ Сотрудник'}
+                </span>
+                <span className="text-[10px] text-slate-400 truncate">{business?.name}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user?.full_name || 'User'}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
+        ) : (
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center flex-shrink-0">
+              <span className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+                {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user?.full_name || 'User'}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+                  👑 Владелец
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Dark mode toggle in drawer */}
+        <button
+          onClick={toggleDark}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        >
+          {isDark
+            ? <Sun className="w-4 h-4 text-amber-400 flex-shrink-0" />
+            : <Moon className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          }
+          <span className="text-sm text-slate-700 dark:text-slate-300">{isDark ? 'Светлая тема' : 'Тёмная тема'}</span>
+        </button>
       </div>
     </div>
   );

@@ -39,6 +39,7 @@ import { t } from '@/components/i18n/translations';
 import SalesForecast from '@/components/analytics/SalesForecast';
 import CustomerSegmentation from '@/components/analytics/CustomerSegmentation';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import BackButton from '@/components/ui/BackButton';
 
 const DEFAULT_RATES = { TJS: 1, USD: 0.091, RUB: 8.5, EUR: 0.084, CNY: 0.66 };
 const RATES_CACHE_KEY = 'exchange_rates_cache';
@@ -273,6 +274,9 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <BackButton />
+      </div>
       <PageHeader 
         title={t(lang,'analytics_title')}
         subtitle={t(lang,'analytics_subtitle')}
