@@ -113,6 +113,21 @@ Deno.serve(async (req) => {
         if (tgr.chat_id) await sendTelegram(tgr.chat_id, tgText);
       }
 
+      // Send WhatsApp notifications
+      const waRecipients = Array.isArray(business.whatsapp_recipients) ? business.whatsapp_recipients.filter(r => r.phone) : [];
+      if (waRecipients.length > 0) {
+        try {
+          await base44.asServiceRole.functions.invoke('sendWhatsAppBroadcast', {
+            business_id: businessId,
+            message_type: 'low_stock',
+            business_name: business.name,
+            low_stock_items: sorted.map(p => ({ brand: p.brand || '', model: p.model || '', boxes_in_stock: p.boxes_in_stock ?? 0 })),
+          });
+        } catch (e) {
+          console.error('WhatsApp broadcast error:', e.message);
+        }
+      }
+
       results.push({
         business: business.name,
         low_stock_count: lowStockProducts.length,

@@ -14,7 +14,7 @@ import DeviceSessionsPanel from '@/components/settings/DeviceSessionsPanel';
 import AutomationPanel from '@/components/settings/AutomationPanel';
 import AvatarPicker, { AvatarDisplay } from '@/components/settings/AvatarPicker';
 import RecentBusinessesPanel, { saveBusinessToHistory } from '@/components/settings/RecentBusinessesPanel';
-import TelegramNotificationsPanel from '@/components/settings/TelegramNotificationsPanel';
+import NotificationsSettingsPanel from '@/components/settings/NotificationsSettingsPanel';
 import CustomFieldsPanel from '@/components/settings/CustomFieldsPanel';
 import { format } from 'date-fns';
 import { 
@@ -52,12 +52,9 @@ function useDarkMode() {
 export default function Settings() {
   const navigate = useNavigate();
   const [isDark, toggleDark] = useDarkMode();
-  // Проверяем режим сотрудника (сначала sessionStorage, потом localStorage)
   const savedMode = sessionStorage.getItem('barakatcrm_mode') || localStorage.getItem('barakatcrm_mode');
   const isEmployeeMode = savedMode && savedMode.startsWith('employee_');
-  // Реактивное состояние сотрудника — обновляется после loadData
   const [currentEmployee, setCurrentEmployee] = useState(() => window.__barakatEmployee || null);
-  const isEmployeeAdmin = currentEmployee?.is_admin === true;
   const [business, setBusiness] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [user, setUser] = useState(null);
@@ -66,29 +63,17 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
-  const [driveBackupLoading, setDriveBackupLoading] = useState(false);
-  const [driveBackupMsg, setDriveBackupMsg] = useState('');
   const [clearingCache, setClearingCache] = useState(false);
   
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    address: '',
-    language: 'ru',
-    default_color: 'Чёрный',
-    default_size_from: 39,
-    default_size_to: 44,
-    default_pairs_per_box: 6,
-    default_product_type: 'Туфли',
-    low_stock_limit: 2
+    name: '', phone: '', address: '', language: 'ru',
+    default_color: 'Чёрный', default_size_from: 39, default_size_to: 44,
+    default_pairs_per_box: 6, default_product_type: 'Туфли', low_stock_limit: 2
   });
 
   const [roles, setRoles] = useState([]);
   const [newEmployee, setNewEmployee] = useState({
-    name: '',
-    user_email: '',
-    phone: '',
-    role: 'Продавец',
+    name: '', user_email: '', phone: '', role: 'Продавец',
     permissions: {
       view_analytics: false, view_profit: false,
       view_products: true, add_products: true, edit_products: false, delete_products: false,
@@ -104,39 +89,28 @@ export default function Settings() {
   const [editingType, setEditingType] = useState(null);
   const [editColorDialog, setEditColorDialog] = useState(false);
   const [editTypeDialog, setEditTypeDialog] = useState(false);
-  const [newCustomPermission, setNewCustomPermission] = useState('');
   const [expandedSections, setExpandedSections] = useState({
-    business: false,
-    access: false,
-    defaults: false,
-    employees: false,
-    notifications: false,
-    custom: false,
-    history: false,
-    security: false,
-    employee_login: false,
-    recent_businesses: false
+    business: false, access: false, defaults: false, employees: false,
+    notifications: false, custom: false, history: false, security: false,
+    employee_login: false, recent_businesses: false
   });
 
-  // Employee login state
   const [empLoginCode, setEmpLoginCode] = useState('');
   const [empAccessCode, setEmpAccessCode] = useState('');
   const [empLoginLoading, setEmpLoginLoading] = useState(false);
   const [empLoginError, setEmpLoginError] = useState('');
-
   const [switchAccountOpen, setSwitchAccountOpen] = useState(false);
   const [deleteAccountDialog, setDeleteAccountDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [showAddEmployeeForm, setShowAddEmployeeForm] = useState(false);
+  const [empRefreshing, setEmpRefreshing] = useState(false);
+  const [selectedEmp, setSelectedEmp] = useState(null);
 
   useEffect(() => {
     loadData();
-    // Автообновление каждые 15 минут для актуальных статусов сотрудников
     const interval = setInterval(() => {
-      if (business?.id) {
-        base44.entities.Employee.filter({ business_id: business?.id }).then(setEmployees);
-      }
+      if (business?.id) base44.entities.Employee.filter({ business_id: business?.id }).then(setEmployees);
     }, 15 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
@@ -145,17 +119,13 @@ export default function Settings() {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
-      
-      // Обновляем currentEmployee из свежих данных
       const freshEmployee = window.__barakatEmployee || null;
       
-      // Если режим сотрудника — загружаем бизнес через employee
       if (isEmployeeMode) {
         const empId = savedMode.replace('employee_', '');
         const empList = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
         const emp = empList.find(e => e.id === empId) || empList[0];
         if (emp) {
-          // Обновляем глобальный объект и локальный state свежими данными из БД
           window.__barakatEmployee = emp;
           setCurrentEmployee(emp);
           const bizList = await base44.entities.Business.filter({ id: emp.business_id });
@@ -163,18 +133,7 @@ export default function Settings() {
             const biz = bizList[0];
             setBusiness(biz);
             setLang(biz.language || 'ru');
-            setFormData({
-              name: biz.name || '',
-              phone: biz.phone || '',
-              address: biz.address || '',
-              language: biz.language || 'ru',
-              default_color: biz.default_color || 'Чёрный',
-              default_size_from: biz.default_size_from || 39,
-              default_size_to: biz.default_size_to || 44,
-              default_pairs_per_box: biz.default_pairs_per_box || 6,
-              default_product_type: biz.default_product_type || 'Туфли',
-              low_stock_limit: biz.low_stock_limit ?? 2
-            });
+            setFormData({ name: biz.name || '', phone: biz.phone || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2 });
           }
         }
         setLoading(false);
@@ -183,48 +142,19 @@ export default function Settings() {
       setCurrentEmployee(freshEmployee);
       
       const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
-      
       if (businesses.length > 0) {
         const biz = businesses[0];
         setBusiness(biz);
         setLang(biz.language || 'ru');
-        setFormData({
-          name: biz.name || '',
-          phone: biz.phone || '',
-          address: biz.address || '',
-          language: biz.language || 'ru',
-          default_color: biz.default_color || 'Чёрный',
-          default_size_from: biz.default_size_from || 39,
-          default_size_to: biz.default_size_to || 44,
-          default_pairs_per_box: biz.default_pairs_per_box || 6,
-          default_product_type: biz.default_product_type || 'Туфли',
-          low_stock_limit: biz.low_stock_limit ?? 2
-        });
+        setFormData({ name: biz.name || '', phone: biz.phone || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2 });
 
-        // Загружаем роли
         let rolesData = await base44.entities.Role.filter({ business_id: biz.id });
-        
-        // Если роли "Продавец" нет - создаём
         const hasSeller = rolesData.some(r => r.name === 'Продавец');
         if (!hasSeller) {
-          await base44.entities.Role.create({
-            business_id: biz.id,
-            name: 'Продавец',
-            description: 'Продавец товаров',
-            permissions: {
-              view_analytics: false, view_profit: false,
-              view_products: true, add_products: true, edit_products: false, delete_products: false,
-              view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false,
-              view_warehouses: true, manage_warehouses: false,
-              view_customers: true, manage_customers: false,
-              view_debts: false, manage_debts: false,
-              manage_returns: false, view_activity_log: false, manage_employees: false, manage_roles: false,
-            }
-          });
+          await base44.entities.Role.create({ business_id: biz.id, name: 'Продавец', description: 'Продавец товаров', permissions: { view_analytics: false, view_profit: false, view_products: true, add_products: true, edit_products: false, delete_products: false, view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false, view_warehouses: true, manage_warehouses: false, view_customers: true, manage_customers: false, view_debts: false, manage_debts: false, manage_returns: false, view_activity_log: false, manage_employees: false, manage_roles: false } });
           rolesData = await base44.entities.Role.filter({ business_id: biz.id });
         }
         setRoles(rolesData);
-
         const employeesData = await base44.entities.Employee.filter({ business_id: biz.id });
         setEmployees(employeesData);
       }
@@ -249,78 +179,16 @@ export default function Settings() {
   };
 
   const handleAddEmployee = async () => {
-    if (!newEmployee.name.trim() || !newEmployee.user_email.trim()) {
-      alert('Заполните имя и email');
-      return;
-    }
-    
+    if (!newEmployee.name.trim() || !newEmployee.user_email.trim()) { alert('Заполните имя и email'); return; }
     try {
-      // Находим роль по названию из загруженных ролей
       const foundRole = roles.find(r => r.name === newEmployee.role);
-      
-      if (!foundRole) {
-        alert(`Роль "${newEmployee.role}" не найдена`);
-        return;
-      }
-      
-      const roleId = foundRole.id;
-
-      // Создаём запись сотрудника
-      const createdEmp = await base44.entities.Employee.create({
-        name: newEmployee.name,
-        user_email: newEmployee.user_email,
-        phone: newEmployee.phone,
-        role_id: roleId,
-        permissions: newEmployee.permissions,
-        business_id: business.id,
-        is_active: true
-      });
-
-      // Приглашаем пользователя в систему
-      let inviteSuccess = false;
-      try {
-        await base44.users.inviteUser(newEmployee.user_email, 'user');
-        inviteSuccess = true;
-      } catch (inviteErr) {
-        console.error('Invite error:', inviteErr);
-      }
-      
-      // Отправляем письмо сотруднику с информацией
-      try {
-        await base44.functions.invoke('sendEmployeeInviteEmail', {
-          email: newEmployee.user_email,
-          employeeName: newEmployee.name,
-          businessName: business.name,
-          loginCode: createdEmp.login_session_token || 'XXXXXXXX',
-          accessCode: business.access_code,
-          permissions: newEmployee.permissions,
-          roleId: roleId
-        });
-      } catch (emailErr) {
-        console.error('Email error:', emailErr);
-      }
-      
+      if (!foundRole) { alert(`Роль "${newEmployee.role}" не найдена`); return; }
+      const createdEmp = await base44.entities.Employee.create({ name: newEmployee.name, user_email: newEmployee.user_email, phone: newEmployee.phone, role_id: foundRole.id, permissions: newEmployee.permissions, business_id: business.id, is_active: true });
+      try { await base44.users.inviteUser(newEmployee.user_email, 'user'); } catch (_) {}
+      try { await base44.functions.invoke('sendEmployeeInviteEmail', { email: newEmployee.user_email, employeeName: newEmployee.name, businessName: business.name, loginCode: createdEmp.login_session_token || 'XXXXXXXX', accessCode: business.access_code, permissions: newEmployee.permissions, roleId: foundRole.id }); } catch (_) {}
       await loadData();
-      
-      alert(`✅ Сотрудник ${newEmployee.name} добавлен и приглашение отправлено на ${newEmployee.user_email}`);
-      
-      setNewEmployee({ 
-        name: '', 
-        user_email: '', 
-        phone: '', 
-        role: 'Продавец',
-        permissions: {
-          view_analytics: false, view_profit: false,
-          view_products: true, add_products: true, edit_products: false, delete_products: false,
-          view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false,
-          view_warehouses: true, manage_warehouses: false,
-          view_customers: true, manage_customers: false,
-          view_debts: false, manage_debts: false,
-          manage_returns: false, view_activity_log: false,
-        },
-        custom_permissions: []
-      });
-      setNewCustomPermission('');
+      alert(`✅ Сотрудник ${newEmployee.name} добавлен`);
+      setNewEmployee({ name: '', user_email: '', phone: '', role: 'Продавец', permissions: { view_analytics: false, view_profit: false, view_products: true, add_products: true, edit_products: false, delete_products: false, view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false, view_warehouses: true, manage_warehouses: false, view_customers: true, manage_customers: false, view_debts: false, manage_debts: false, manage_returns: false, view_activity_log: false }, custom_permissions: [] });
     } catch (error) {
       console.error('Error adding employee:', error);
       alert('Ошибка при добавлении сотрудника');
@@ -328,10 +196,7 @@ export default function Settings() {
   };
 
   const handleDeleteEmployee = async (employeeId) => {
-    if (confirm(t(lang, 'confirm_delete'))) {
-      await base44.entities.Employee.delete(employeeId);
-      await loadData();
-    }
+    if (confirm(t(lang, 'confirm_delete'))) { await base44.entities.Employee.delete(employeeId); await loadData(); }
   };
 
   const handleBackup = async () => {
@@ -345,16 +210,7 @@ export default function Settings() {
         base44.entities.Return.filter({ business_id: business.id }),
         base44.entities.Employee.filter({ business_id: business.id }),
       ]);
-      const backup = {
-        exported_at: new Date().toISOString(),
-        business,
-        sales: salesData,
-        products: productsData,
-        customers: customersData,
-        warehouses: warehousesData,
-        returns: returnsData,
-        employees: employeesData,
-      };
+      const backup = { exported_at: new Date().toISOString(), business, sales: salesData, products: productsData, customers: customersData, warehouses: warehousesData, returns: returnsData, employees: employeesData };
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -364,11 +220,7 @@ export default function Settings() {
       a.click();
       URL.revokeObjectURL(url);
       a.remove();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setBackupLoading(false);
-    }
+    } catch (e) { console.error(e); } finally { setBackupLoading(false); }
   };
 
   const handleClearCache = () => {
@@ -377,23 +229,6 @@ export default function Settings() {
       localStorage.clear();
       sessionStorage.clear();
       setTimeout(() => window.location.reload(), 500);
-    }
-  };
-
-  const handleDriveBackup = async () => {
-    setDriveBackupLoading(true);
-    setDriveBackupMsg('');
-    try {
-      const res = await base44.functions.invoke('backupToGoogleDrive');
-      if (res.data?.success) {
-        setDriveBackupMsg(`✅ Сохранено: ${res.data.file_name}`);
-      } else {
-        setDriveBackupMsg(`❌ Ошибка: ${res.data?.error || 'Неизвестная ошибка'}`);
-      }
-    } catch (e) {
-      setDriveBackupMsg(`❌ Ошибка: ${e.message}`);
-    } finally {
-      setDriveBackupLoading(false);
     }
   };
 
@@ -409,145 +244,49 @@ export default function Settings() {
         base44.entities.Return.filter({ business_id: business.id }),
         base44.entities.Employee.filter({ business_id: business.id }),
       ]);
-      await Promise.all([
-        ...salesData.map(r => base44.entities.Sale.delete(r.id)),
-        ...productsData.map(r => base44.entities.Product.delete(r.id)),
-        ...customersData.map(r => base44.entities.Customer.delete(r.id)),
-        ...warehousesData.map(r => base44.entities.Warehouse.delete(r.id)),
-        ...returnsData.map(r => base44.entities.Return.delete(r.id)),
-        ...employeesData.map(r => base44.entities.Employee.delete(r.id)),
-      ]);
+      await Promise.all([...salesData.map(r => base44.entities.Sale.delete(r.id)), ...productsData.map(r => base44.entities.Product.delete(r.id)), ...customersData.map(r => base44.entities.Customer.delete(r.id)), ...warehousesData.map(r => base44.entities.Warehouse.delete(r.id)), ...returnsData.map(r => base44.entities.Return.delete(r.id)), ...employeesData.map(r => base44.entities.Employee.delete(r.id))]);
       alert('Все данные удалены.');
       window.location.reload();
-    } catch (e) {
-      console.error(e);
-      alert('Ошибка при удалении данных.');
-    }
-  };
-
-  const [activeSessions, setActiveSessions] = useState([]);
-  const [sessionsLoading, setSessionsLoading] = useState(false);
-  const currentSessionId = sessionStorage.getItem('barakat_session_id');
-  const [empRefreshing, setEmpRefreshing] = useState(false);
-  const [selectedEmp, setSelectedEmp] = useState(null);
-
-  const loadActiveSessions = async () => {
-    setSessionsLoading(true);
-    try {
-      const res = await base44.functions.invoke('revokeAllSessions', { action: 'list' });
-      setActiveSessions(res.data?.sessions || []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSessionsLoading(false);
-    }
-  };
-
-  const handleRevokeAllSessions = async () => {
-    if (!confirm('Выйти со всех других устройств? Текущая сессия останется активной.')) return;
-    try {
-      const res = await base44.functions.invoke('revokeAllSessions', { action: 'revoke_all', current_session_id: currentSessionId });
-      if (res.data?.success) {
-        sessionStorage.setItem('my_session_token', res.data.session_token);
-        await loadActiveSessions();
-        alert('✅ Все другие устройства были отключены.');
-      }
-    } catch (e) {
-      alert('Ошибка: ' + e.message);
-    }
-  };
-
-  const handleRevokeOneSession = async (targetSessionId) => {
-    if (!confirm('Завершить эту сессию?')) return;
-    try {
-      const res = await base44.functions.invoke('revokeAllSessions', { action: 'revoke_one', target_session_id: targetSessionId, current_session_id: currentSessionId });
-      if (res.data?.success) {
-        if (targetSessionId === currentSessionId) {
-          sessionStorage.clear();
-          base44.auth.logout();
-        } else {
-          await loadActiveSessions();
-        }
-      }
-    } catch (e) {
-      alert('Ошибка: ' + e.message);
-    }
+    } catch (e) { console.error(e); alert('Ошибка при удалении данных.'); }
   };
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmation !== user?.email) {
-      alert('Подтверждение не совпадает. Пожалуйста, введите правильный email.');
-      return;
-    }
-    try {
-      // Delete all business data first
-      await handleDeleteAllData();
-      // Then delete the user account
-      await base44.auth.logout();
-    } catch (e) {
-      console.error(e);
-      alert('Ошибка при удалении аккаунта.');
-    }
+    if (deleteConfirmation !== user?.email) { alert('Подтверждение не совпадает.'); return; }
+    try { await handleDeleteAllData(); await base44.auth.logout(); } catch (e) { console.error(e); }
   };
 
   const generateCodeLocal = (length) => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
-    for (let i = 0; i < length; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    for (let i = 0; i < length; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
     return code;
   };
 
   const handleRegenerateCode = async (type) => {
-    if (!confirm(`Изменить ${type === 'business' ? 'код бизнеса' : 'код доступа'}? Все сотрудники, которые вошли по старому коду, будут автоматически выброшены из системы и должны будут войти заново.`)) return;
+    if (!confirm(`Изменить ${type === 'business' ? 'код бизнеса' : 'код доступа'}?`)) return;
     setSaving(true);
     try {
       const newCode = type === 'business' ? generateCodeLocal(12) : generateCodeLocal(8);
-      
-      const updateData = type === 'business' 
-        ? { business_code: newCode }
-        : { access_code: newCode };
-
-      await base44.entities.Business.update(business.id, updateData);
-      
-      // Сбрасываем токены сессий всех сотрудников (они должны войти заново)
+      await base44.entities.Business.update(business.id, type === 'business' ? { business_code: newCode } : { access_code: newCode });
       const allEmps = await base44.entities.Employee.filter({ business_id: business.id });
-      await Promise.all(allEmps.map(emp =>
-        base44.entities.Employee.update(emp.id, { login_session_token: newCode + '_' + Date.now() })
-      ));
-      
+      await Promise.all(allEmps.map(emp => base44.entities.Employee.update(emp.id, { login_session_token: newCode + '_' + Date.now() })));
       const updated = await base44.entities.Business.filter({ id: business.id });
       if (updated.length > 0) setBusiness(updated[0]);
-      alert(`✅ ${type === 'business' ? 'Код бизнеса' : 'Код доступа'} успешно изменён: ${newCode}\n\nВсе сотрудники (${allEmps.length}) будут перенаправлены на страницу входа при следующем обновлении.`);
-    } catch (err) {
-      alert('Ошибка: ' + err.message);
-    } finally {
-      setSaving(false);
-    }
+      alert(`✅ Код успешно изменён: ${newCode}`);
+    } catch (err) { alert('Ошибка: ' + err.message); } finally { setSaving(false); }
   };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    alert('Скопировано в буфер обмена');
-  };
+  const copyToClipboard = (text) => { navigator.clipboard.writeText(text); alert('Скопировано'); };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
 
-  // Хелпер проверки разрешений
   const canPerm = (key) => {
     if (!currentEmployee) return true;
     if (currentEmployee.is_admin) return true;
     return !!(currentEmployee.permissions?.[key]);
   };
 
-  // Обычный сотрудник (не admin, не owner) — упрощённая страница
+  // Обычный сотрудник (не admin) — упрощённая страница
   if (currentEmployee && !currentEmployee.is_admin) {
     const empLastLogin = currentEmployee?.last_login_at ? new Date(currentEmployee.last_login_at) : null;
     const parseDevice = (ua) => {
@@ -562,15 +301,11 @@ export default function Settings() {
       <div className="space-y-4">
         <PageHeader title="Настройки" subtitle="Ваш профиль и аккаунт" />
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
-          {/* Профиль */}
           <div className="flex items-center gap-3">
-            {currentEmployee?.avatar_url ? (
-              <AvatarDisplay avatarUrl={currentEmployee.avatar_url} name={currentEmployee.name} size="md" />
-            ) : (
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md flex-shrink-0">
-                <span className="text-white font-bold text-lg">{currentEmployee.name?.charAt(0) || '?'}</span>
-              </div>
-            )}
+            {currentEmployee?.avatar_url
+              ? <AvatarDisplay avatarUrl={currentEmployee.avatar_url} name={currentEmployee.name} size="md" />
+              : <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md flex-shrink-0"><span className="text-white font-bold text-lg">{currentEmployee.name?.charAt(0) || '?'}</span></div>
+            }
             <div className="flex-1 min-w-0">
               <p className="font-bold text-slate-900 truncate">{currentEmployee.name}</p>
               <p className="text-xs text-slate-500 truncate">{user?.email}</p>
@@ -583,7 +318,6 @@ export default function Settings() {
               </div>
             </div>
           </div>
-          {/* Бизнес */}
           {business && (
             <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-3 flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm">
@@ -595,46 +329,17 @@ export default function Settings() {
               </div>
             </div>
           )}
-          {/* Активность */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-xs text-slate-400 mb-0.5">🕐 Последний вход</p>
-              <p className="text-xs font-semibold text-slate-800">{empLastLogin ? format(empLastLogin, 'dd.MM.yyyy HH:mm') : 'Нет данных'}</p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-xs text-slate-400 mb-0.5">💻 Устройство</p>
-              <p className="text-xs font-semibold text-slate-800 truncate">{parseDevice(currentEmployee.device_info)}</p>
-            </div>
+            <div className="bg-slate-50 rounded-xl p-3"><p className="text-xs text-slate-400 mb-0.5">🕐 Последний вход</p><p className="text-xs font-semibold text-slate-800">{empLastLogin ? format(empLastLogin, 'dd.MM.yyyy HH:mm') : 'Нет данных'}</p></div>
+            <div className="bg-slate-50 rounded-xl p-3"><p className="text-xs text-slate-400 mb-0.5">💻 Устройство</p><p className="text-xs font-semibold text-slate-800 truncate">{parseDevice(currentEmployee.device_info)}</p></div>
           </div>
-          {/* Аватар */}
           <div className="border-t border-slate-100 pt-3">
             <p className="text-xs font-medium text-slate-500 mb-2">Фото профиля</p>
-            <AvatarPicker key={currentEmployee?.avatar_url || 'no-avatar'} currentAvatar={currentEmployee?.avatar_url || null}
-              onSave={async (url) => {
-                await base44.entities.Employee.update(currentEmployee.id, { avatar_url: url });
-                window.__barakatEmployee = { ...currentEmployee, avatar_url: url };
-                await loadData();
-              }} />
+            <AvatarPicker key={currentEmployee?.avatar_url || 'no-avatar'} currentAvatar={currentEmployee?.avatar_url || null} onSave={async (url) => { await base44.entities.Employee.update(currentEmployee.id, { avatar_url: url }); window.__barakatEmployee = { ...currentEmployee, avatar_url: url }; await loadData(); }} />
           </div>
-          {/* Кнопки */}
           <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
-            <Button variant="outline" className="gap-1.5 text-indigo-600 hover:bg-indigo-50 border-indigo-200 text-sm" onClick={() => setSwitchAccountOpen(true)}>
-              <ArrowLeftRight className="w-4 h-4" /> Сменить аккаунт
-            </Button>
-            <Button variant="outline" className="gap-1.5 text-red-600 hover:bg-red-50 border-red-200 text-sm"
-              onClick={() => {
-                if (confirm('Выйти из аккаунта?')) {
-                  const mode = localStorage.getItem('barakatcrm_mode');
-                  if (mode?.startsWith('employee_')) {
-                    const empId = mode.replace('employee_', '');
-                    localStorage.removeItem(`barakat_emp_token_${empId}`);
-                    localStorage.removeItem('barakatcrm_mode');
-                  }
-                  base44.auth.logout();
-                }
-              }}>
-              <LogOut className="w-4 h-4" /> Выйти
-            </Button>
+            <Button variant="outline" className="gap-1.5 text-indigo-600 hover:bg-indigo-50 border-indigo-200 text-sm" onClick={() => setSwitchAccountOpen(true)}><ArrowLeftRight className="w-4 h-4" /> Сменить аккаунт</Button>
+            <Button variant="outline" className="gap-1.5 text-red-600 hover:bg-red-50 border-red-200 text-sm" onClick={() => { if (confirm('Выйти из аккаунта?')) { const mode = localStorage.getItem('barakatcrm_mode'); if (mode?.startsWith('employee_')) { const empId = mode.replace('employee_', ''); localStorage.removeItem(`barakat_emp_token_${empId}`); localStorage.removeItem('barakatcrm_mode'); } base44.auth.logout(); } }}><LogOut className="w-4 h-4" /> Выйти</Button>
           </div>
         </div>
         <EmployeeProfilePanel employee={currentEmployee} business={business} user={user} mergedPermissions={window.__barakatMergedPermissions} />
@@ -650,20 +355,13 @@ export default function Settings() {
             <CollapsibleTrigger asChild>
               <div className={`p-4 cursor-pointer flex items-center justify-between ${expandedSections.recent_businesses ? 'bg-teal-50' : 'hover:bg-slate-50'}`}>
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${expandedSections.recent_businesses ? 'bg-teal-600' : 'bg-teal-100'}`}>
-                    <History className={`w-5 h-5 ${expandedSections.recent_businesses ? 'text-white' : 'text-teal-600'}`} />
-                  </div>
-                  <div>
-                    <h3 className={`font-semibold ${expandedSections.recent_businesses ? 'text-teal-700' : 'text-slate-900'}`}>Недавние бизнесы</h3>
-                    <p className="text-xs text-slate-500">Быстрый вход в бизнесы</p>
-                  </div>
+                  <div className={`p-2 rounded-lg ${expandedSections.recent_businesses ? 'bg-teal-600' : 'bg-teal-100'}`}><History className={`w-5 h-5 ${expandedSections.recent_businesses ? 'text-white' : 'text-teal-600'}`} /></div>
+                  <div><h3 className={`font-semibold ${expandedSections.recent_businesses ? 'text-teal-700' : 'text-slate-900'}`}>Недавние бизнесы</h3><p className="text-xs text-slate-500">Быстрый вход в бизнесы</p></div>
                 </div>
                 <ChevronDown className={`w-5 h-5 transition ${expandedSections.recent_businesses ? 'rotate-180 text-teal-600' : 'text-slate-500'}`} />
               </div>
             </CollapsibleTrigger>
-            <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4">
-              <RecentBusinessesPanel currentUser={user} />
-            </CollapsibleContent>
+            <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4"><RecentBusinessesPanel currentUser={user} /></CollapsibleContent>
           </Collapsible>
         </div>
         <SwitchAccountDialog open={switchAccountOpen} onClose={() => setSwitchAccountOpen(false)} currentUser={user} currentEmployeeId={currentEmployee?.id} />
@@ -673,999 +371,309 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title={t(lang, 'settings_title')}
-        subtitle={t(lang, 'settings_subtitle')}
-      />
+      <PageHeader title={t(lang, 'settings_title')} subtitle={t(lang, 'settings_subtitle')} />
 
       {/* Аккаунт карточка */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
-        {/* Top row: avatar + name */}
         <div className="flex items-center gap-3">
           {(() => {
             const avatarUrl = currentEmployee?.avatar_url || user?.avatar_url;
-            if (avatarUrl) {
-              return <AvatarDisplay avatarUrl={avatarUrl} name={user?.full_name} size="md" />;
-            }
-            return (
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md flex-shrink-0">
-                <span className="text-white font-bold text-lg">{user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}</span>
-              </div>
-            );
+            if (avatarUrl) return <AvatarDisplay avatarUrl={avatarUrl} name={user?.full_name} size="md" />;
+            return <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md flex-shrink-0"><span className="text-white font-bold text-lg">{user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}</span></div>;
           })()}
           <div>
             <p className="font-semibold text-slate-900">{user?.full_name || t(lang,'settings_user')}</p>
             <p className="text-sm text-slate-500">{user?.email}</p>
-            {!currentEmployee ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium mt-0.5">👑 Владелец</span>
-            ) : currentEmployee.is_admin ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium mt-0.5">🛡️ Администратор</span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium mt-0.5">👤 Сотрудник</span>
-            )}
+            {!currentEmployee ? <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium mt-0.5">👑 Владелец</span>
+              : currentEmployee.is_admin ? <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium mt-0.5">🛡️ Администратор</span>
+              : <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium mt-0.5">👤 Сотрудник</span>}
           </div>
         </div>
 
-        {/* Текущий бизнес (для сотрудников) */}
         {currentEmployee && business && (
           <div className="border-t border-slate-100 pt-3">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">🏢 Текущий бизнес</p>
             <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <span className="text-white font-bold text-base">{business.name?.charAt(0)?.toUpperCase()}</span>
-              </div>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm"><span className="text-white font-bold text-base">{business.name?.charAt(0)?.toUpperCase()}</span></div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-slate-900 truncate">{business.name}</p>
-                {currentEmployee.name && (
-                  <p className="text-xs text-slate-500 truncate">Вы вошли как: <span className="font-medium text-indigo-600">{currentEmployee.name}</span></p>
-                )}
+                {currentEmployee.name && <p className="text-xs text-slate-500 truncate">Вы вошли как: <span className="font-medium text-indigo-600">{currentEmployee.name}</span></p>}
               </div>
-              <span className="flex items-center gap-1 text-xs text-green-600 font-medium flex-shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse" />
-                Активен
-              </span>
+              <span className="flex items-center gap-1 text-xs text-green-600 font-medium flex-shrink-0"><span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse" />Активен</span>
             </div>
           </div>
         )}
 
-        {/* Avatar Picker */}
         <div className="border-t border-slate-100 pt-3">
-          <AvatarPicker
-            key={currentEmployee?.avatar_url || user?.avatar_url || 'no-avatar'}
-            currentAvatar={currentEmployee?.avatar_url || user?.avatar_url || null}
+          <AvatarPicker key={currentEmployee?.avatar_url || user?.avatar_url || 'no-avatar'} currentAvatar={currentEmployee?.avatar_url || user?.avatar_url || null}
             onSave={async (newAvatarUrl) => {
-              if (currentEmployee) {
-                await base44.entities.Employee.update(currentEmployee.id, { avatar_url: newAvatarUrl });
-                window.__barakatEmployee = { ...currentEmployee, avatar_url: newAvatarUrl };
-              } else {
-                await base44.auth.updateMe({ avatar_url: newAvatarUrl });
-              }
+              if (currentEmployee) { await base44.entities.Employee.update(currentEmployee.id, { avatar_url: newAvatarUrl }); window.__barakatEmployee = { ...currentEmployee, avatar_url: newAvatarUrl }; }
+              else { await base44.auth.updateMe({ avatar_url: newAvatarUrl }); }
               await loadData();
-            }}
-          />
+            }} />
         </div>
 
-        {/* Switch Account button */}
         <div className="border-t border-slate-100 pt-3">
-          <Button
-            variant="outline"
-            className="gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 w-full"
-            onClick={() => setSwitchAccountOpen(true)}
-          >
-            <ArrowLeftRight className="w-4 h-4" />
-            Переключить аккаунт
+          <Button variant="outline" className="gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 w-full" onClick={() => setSwitchAccountOpen(true)}>
+            <ArrowLeftRight className="w-4 h-4" />Переключить аккаунт
           </Button>
         </div>
 
-        {/* Logout button */}
         <div className="border-t border-slate-100 pt-3">
-          <Button 
-            variant="outline" 
-            className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 w-full"
+          <Button variant="outline" className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 w-full"
             onClick={() => {
               if (confirm(t(lang, 'settings_logout_confirm'))) {
-                // Очищаем токен персистентной сессии сотрудника перед выходом
                 const mode = localStorage.getItem('barakatcrm_mode');
-                if (mode && mode.startsWith('employee_')) {
-                  const empId = mode.replace('employee_', '');
-                  localStorage.removeItem(`barakat_emp_token_${empId}`);
-                  localStorage.removeItem('barakatcrm_mode');
-                }
+                if (mode && mode.startsWith('employee_')) { const empId = mode.replace('employee_', ''); localStorage.removeItem(`barakat_emp_token_${empId}`); localStorage.removeItem('barakatcrm_mode'); }
                 base44.auth.logout();
               }
-            }}
-          >
-            <LogOut className="w-4 h-4" />
-            {t(lang, 'settings_logout')}
+            }}>
+            <LogOut className="w-4 h-4" />{t(lang, 'settings_logout')}
           </Button>
         </div>
 
-        {/* Информация об аккаунте — видна всем */}
         <div className="border-t border-slate-100 pt-3">
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-xs text-slate-400 mb-0.5">В системе с</p>
-              <p className="text-sm font-semibold text-slate-800">
-                {user?.created_date ? format(new Date(user.created_date), 'dd.MM.yyyy') : '—'}
-              </p>
-            </div>
-            <div className="bg-indigo-50 rounded-xl p-3">
-              <p className="text-xs text-slate-400 mb-0.5">Дней активности</p>
-              <p className="text-sm font-bold text-indigo-600">
-                {user?.created_date ? Math.floor((Date.now() - new Date(user.created_date).getTime()) / (1000 * 60 * 60 * 24)) + ' дн.' : '—'}
-              </p>
-            </div>
-            {(() => {
-              const emp = window.__barakatEmployee;
-              const lastLogin = emp?.last_login_at;
-              if (!lastLogin) return null;
-              const diff = Date.now() - new Date(lastLogin).getTime();
-              const mins = Math.floor(diff / 60000);
-              const hours = Math.floor(diff / 3600000);
-              const days = Math.floor(diff / 86400000);
-              const ago = days > 0 ? `${days} дн. назад` : hours > 0 ? `${hours} ч. назад` : `${mins} мин. назад`;
-              return (
-                <div className="col-span-2 bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs text-slate-400 mb-0.5">Последний вход</p>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {format(new Date(lastLogin), 'dd.MM.yyyy HH:mm')} <span className="text-xs font-normal text-slate-400">({ago})</span>
-                  </p>
-                </div>
-              );
-            })()}
-            <div className="col-span-2 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs text-green-600 font-medium">Активен сейчас</span>
-            </div>
+            <div className="bg-slate-50 rounded-xl p-3"><p className="text-xs text-slate-400 mb-0.5">В системе с</p><p className="text-sm font-semibold text-slate-800">{user?.created_date ? format(new Date(user.created_date), 'dd.MM.yyyy') : '—'}</p></div>
+            <div className="bg-indigo-50 rounded-xl p-3"><p className="text-xs text-slate-400 mb-0.5">Дней активности</p><p className="text-sm font-bold text-indigo-600">{user?.created_date ? Math.floor((Date.now() - new Date(user.created_date).getTime()) / (1000 * 60 * 60 * 24)) + ' дн.' : '—'}</p></div>
+            <div className="col-span-2 flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /><span className="text-xs text-green-600 font-medium">Активен сейчас</span></div>
           </div>
         </div>
 
-        {/* Разрешения — только для admin-сотрудника */}
         {currentEmployee?.is_admin && (
           <div className="border-t border-slate-100 pt-3">
-            <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-              <p className="text-xs text-emerald-700 font-medium">✅ Полный доступ — все разрешения как у владельца</p>
-            </div>
+            <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg"><p className="text-xs text-emerald-700 font-medium">✅ Полный доступ — все разрешения как у владельца</p></div>
           </div>
         )}
       </div>
 
       <div className="space-y-3">
-        {/* Business Settings — только владелец/manage_settings */}
+        {/* Business Settings */}
         {canPerm('manage_settings') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.business} onOpenChange={(open) => setExpandedSections({...expandedSections, business: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all rounded-t-2xl ${expandedSections.business ? 'bg-blue-50' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.business ? 'bg-blue-600' : 'bg-blue-100'}`}>
-                  <Building2 className={`w-5 h-5 ${expandedSections.business ? 'text-white' : 'text-blue-600'}`} />
-                </div>
-                <div>
-                  <h3 className={`font-semibold ${expandedSections.business ? 'text-blue-700' : 'text-slate-900'}`}>{t(lang,'settings_biz_info')}</h3>
-                  <p className="text-xs text-slate-500">Основные параметры бизнеса</p>
-                </div>
-              </div>
+              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.business ? 'bg-blue-600' : 'bg-blue-100'}`}><Building2 className={`w-5 h-5 ${expandedSections.business ? 'text-white' : 'text-blue-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.business ? 'text-blue-700' : 'text-slate-900'}`}>{t(lang,'settings_biz_info')}</h3><p className="text-xs text-slate-500">Основные параметры бизнеса</p></div></div>
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.business ? 'rotate-180 text-blue-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6 space-y-4">
             <div className="grid gap-4 max-w-2xl">
-              <div>
-                <Label>{t(lang,'settings_biz_name')}</Label>
-                <Input 
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label>{t(lang,'settings_phone')}</Label>
-                <Input 
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+992 XXX XX XX XX"
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label>{t(lang,'settings_address')}</Label>
-                <Input 
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder={t(lang,'settings_address')}
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label>{t(lang, 'settings_language')}</Label>
-                <Select value={formData.language} onValueChange={async (v) => {
-                  setFormData({ ...formData, language: v });
-                  setLang(v);
-                  if (business) {
-                    await base44.entities.Business.update(business.id, { language: v });
-                  }
-                }}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LANGUAGES.map(l => (
-                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <div><Label>{t(lang,'settings_biz_name')}</Label><Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="mt-1.5" /></div>
+              <div><Label>{t(lang,'settings_phone')}</Label><Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+992 XXX XX XX XX" className="mt-1.5" /></div>
+              <div><Label>{t(lang,'settings_address')}</Label><Input value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder={t(lang,'settings_address')} className="mt-1.5" /></div>
+              <div><Label>{t(lang, 'settings_language')}</Label><Select value={formData.language} onValueChange={async (v) => { setFormData({ ...formData, language: v }); setLang(v); if (business) await base44.entities.Business.update(business.id, { language: v }); }}><SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger><SelectContent>{LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent></Select></div>
             </div>
           </CollapsibleContent>
         </Collapsible></div> : null}
 
-        {/* Access Codes — только владелец/view_settings_codes */}
+        {/* Access Codes */}
         {canPerm('view_settings_codes') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.access} onOpenChange={(open) => setExpandedSections({...expandedSections, access: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.access ? 'bg-emerald-50' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.access ? 'bg-emerald-600' : 'bg-emerald-100'}`}>
-                  <Lock className={`w-5 h-5 ${expandedSections.access ? 'text-white' : 'text-emerald-600'}`} />
-                </div>
-                <div>
-                  <h3 className={`font-semibold ${expandedSections.access ? 'text-emerald-700' : 'text-slate-900'}`}>Коды доступа</h3>
-                  <p className="text-xs text-slate-500">Управление кодами входа в бизнес</p>
-                </div>
-              </div>
+              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.access ? 'bg-emerald-600' : 'bg-emerald-100'}`}><Lock className={`w-5 h-5 ${expandedSections.access ? 'text-white' : 'text-emerald-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.access ? 'text-emerald-700' : 'text-slate-900'}`}>Коды доступа</h3><p className="text-xs text-slate-500">Управление кодами входа в бизнес</p></div></div>
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.access ? 'rotate-180 text-emerald-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6 space-y-6">
             <div className="bg-white p-4 rounded-lg border border-slate-200">
-              <p className="text-sm font-medium text-slate-700 mb-2">КОД БИЗНЕСА (для входа сотрудников)</p>
-              <div className="flex items-center gap-2 mb-3">
-                <code className="flex-1 bg-slate-50 border border-slate-200 p-3 rounded font-mono font-bold text-lg text-slate-900 break-all select-all">
-                  {business?.business_code || '—'}
-                </code>
-                <button
-                  onClick={() => copyToClipboard(business?.business_code)}
-                  className="p-2 hover:bg-slate-200 rounded transition"
-                  title="Скопировать"
-                >
-                  <Copy className="w-4 h-4 text-slate-600" />
-                </button>
-              </div>
-              <Button
-                onClick={() => handleRegenerateCode('business')}
-                disabled={saving}
-                variant="outline"
-                size="sm"
-                className="w-full gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Изменить код бизнеса
-              </Button>
+              <p className="text-sm font-medium text-slate-700 mb-2">КОД БИЗНЕСА</p>
+              <div className="flex items-center gap-2 mb-3"><code className="flex-1 bg-slate-50 border border-slate-200 p-3 rounded font-mono font-bold text-lg text-slate-900 break-all select-all">{business?.business_code || '—'}</code><button onClick={() => copyToClipboard(business?.business_code)} className="p-2 hover:bg-slate-200 rounded transition"><Copy className="w-4 h-4 text-slate-600" /></button></div>
+              <Button onClick={() => handleRegenerateCode('business')} disabled={saving} variant="outline" size="sm" className="w-full gap-2"><RefreshCw className="w-4 h-4" />Изменить код бизнеса</Button>
             </div>
-
             <div className="bg-white p-4 rounded-lg border border-slate-200">
-              <p className="text-sm font-medium text-slate-700 mb-2">КОД ДОСТУПА (для входа сотрудников)</p>
-              <div className="flex items-center gap-2 mb-3">
-                <code className="flex-1 bg-slate-50 border border-slate-200 p-3 rounded font-mono font-bold text-lg text-slate-900 break-all select-all">
-                  {business?.access_code || '—'}
-                </code>
-                <button
-                  onClick={() => copyToClipboard(business?.access_code)}
-                  className="p-2 hover:bg-slate-200 rounded transition"
-                  title="Скопировать"
-                >
-                  <Copy className="w-4 h-4 text-slate-600" />
-                </button>
-              </div>
-              <Button
-                onClick={() => handleRegenerateCode('access')}
-                disabled={saving}
-                variant="outline"
-                size="sm"
-                className="w-full gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Изменить код доступа
-              </Button>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-              <p className="text-sm font-medium text-blue-900 mb-2">📝 Как сотруднику войти в бизнес:</p>
-              <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
-                <li>Перейти на страницу входа</li>
-                <li>Нажать "Войти в бизнес как сотрудник"</li>
-                <li>Ввести свой email</li>
-                <li>Ввести код бизнеса и код доступа</li>
-              </ol>
+              <p className="text-sm font-medium text-slate-700 mb-2">КОД ДОСТУПА</p>
+              <div className="flex items-center gap-2 mb-3"><code className="flex-1 bg-slate-50 border border-slate-200 p-3 rounded font-mono font-bold text-lg text-slate-900 break-all select-all">{business?.access_code || '—'}</code><button onClick={() => copyToClipboard(business?.access_code)} className="p-2 hover:bg-slate-200 rounded transition"><Copy className="w-4 h-4 text-slate-600" /></button></div>
+              <Button onClick={() => handleRegenerateCode('access')} disabled={saving} variant="outline" size="sm" className="w-full gap-2"><RefreshCw className="w-4 h-4" />Изменить код доступа</Button>
             </div>
           </CollapsibleContent>
         </Collapsible></div> : null}
 
-        {/* Default Settings — view_settings_defaults */}
+        {/* Default Settings */}
         {canPerm('view_settings_defaults') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.defaults} onOpenChange={(open) => setExpandedSections({...expandedSections, defaults: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.defaults ? 'bg-purple-50' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.defaults ? 'bg-purple-600' : 'bg-purple-100'}`}>
-                  <Palette className={`w-5 h-5 ${expandedSections.defaults ? 'text-white' : 'text-purple-600'}`} />
-                </div>
-                <div>
-                  <h3 className={`font-semibold ${expandedSections.defaults ? 'text-purple-700' : 'text-slate-900'}`}>{t(lang,'settings_defaults_title')}</h3>
-                  <p className="text-xs text-slate-500">Размеры, цвета и типы товаров по умолчанию</p>
-                </div>
-              </div>
+              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.defaults ? 'bg-purple-600' : 'bg-purple-100'}`}><Palette className={`w-5 h-5 ${expandedSections.defaults ? 'text-white' : 'text-purple-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.defaults ? 'text-purple-700' : 'text-slate-900'}`}>{t(lang,'settings_defaults_title')}</h3><p className="text-xs text-slate-500">Размеры, цвета и типы товаров по умолчанию</p></div></div>
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.defaults ? 'rotate-180 text-purple-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6">
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <Label>{t(lang,'settings_product_type')}</Label>
-                <Select value={formData.default_product_type} onValueChange={(v) => setFormData({ ...formData, default_product_type: v })}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRODUCT_TYPES.map(type => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>{t(lang,'settings_color')}</Label>
-                <Select value={formData.default_color} onValueChange={(v) => setFormData({ ...formData, default_color: v })}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COLORS.map(color => (
-                      <SelectItem key={color} value={color}>{color}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>{t(lang,'settings_size_from')}</Label>
-                <Input 
-                  type="text"
-                  pattern="[0-9]*"
-                  inputMode="numeric"
-                  value={formData.default_size_from}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/[^0-9]/g, '');
-                    setFormData({ ...formData, default_size_from: val ? parseInt(val) : '' });
-                  }}
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label>{t(lang,'settings_size_to')}</Label>
-                <Input 
-                  type="text"
-                  pattern="[0-9]*"
-                  inputMode="numeric"
-                  value={formData.default_size_to}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/[^0-9]/g, '');
-                    setFormData({ ...formData, default_size_to: val ? parseInt(val) : '' });
-                  }}
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label>{t(lang,'settings_pairs_per_box')}</Label>
-                <Select value={String(formData.default_pairs_per_box)} onValueChange={(v) => setFormData({ ...formData, default_pairs_per_box: parseInt(v) })}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[4, 6, 8, ...(business?.custom_pairs_per_box || [])].sort((a, b) => a - b).map(v => (
-                      <SelectItem key={v} value={String(v)}>{v} пар в коробке</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="flex items-center gap-2">
-                  🔴 Лимит «Мало на складе» (коробок)
-                </Label>
-                <div className="flex items-center gap-3 mt-1.5">
-                  <Input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={formData.low_stock_limit}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, '');
-                      setFormData({ ...formData, low_stock_limit: val ? parseInt(val) : 0 });
-                    }}
-                    className="w-24"
-                  />
-                  <p className="text-xs text-slate-500">
-                    Товары с ≤ <strong>{formData.low_stock_limit}</strong> коробок будут подсвечены красным
-                  </p>
-                </div>
-              </div>
+              <div><Label>{t(lang,'settings_product_type')}</Label><Select value={formData.default_product_type} onValueChange={(v) => setFormData({ ...formData, default_product_type: v })}><SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger><SelectContent>{PRODUCT_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent></Select></div>
+              <div><Label>{t(lang,'settings_color')}</Label><Select value={formData.default_color} onValueChange={(v) => setFormData({ ...formData, default_color: v })}><SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger><SelectContent>{COLORS.map(color => <SelectItem key={color} value={color}>{color}</SelectItem>)}</SelectContent></Select></div>
+              <div><Label>{t(lang,'settings_size_from')}</Label><Input type="text" pattern="[0-9]*" inputMode="numeric" value={formData.default_size_from} onChange={(e) => { const val = e.target.value.replace(/[^0-9]/g, ''); setFormData({ ...formData, default_size_from: val ? parseInt(val) : '' }); }} className="mt-1.5" /></div>
+              <div><Label>{t(lang,'settings_size_to')}</Label><Input type="text" pattern="[0-9]*" inputMode="numeric" value={formData.default_size_to} onChange={(e) => { const val = e.target.value.replace(/[^0-9]/g, ''); setFormData({ ...formData, default_size_to: val ? parseInt(val) : '' }); }} className="mt-1.5" /></div>
+              <div><Label>{t(lang,'settings_pairs_per_box')}</Label><Select value={String(formData.default_pairs_per_box)} onValueChange={(v) => setFormData({ ...formData, default_pairs_per_box: parseInt(v) })}><SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger><SelectContent>{[4, 6, 8, ...(business?.custom_pairs_per_box || [])].sort((a, b) => a - b).map(v => <SelectItem key={v} value={String(v)}>{v} пар в коробке</SelectItem>)}</SelectContent></Select></div>
+              <div><Label className="flex items-center gap-2">🔴 Лимит «Мало на складе» (коробок)</Label><div className="flex items-center gap-3 mt-1.5"><Input type="text" inputMode="numeric" pattern="[0-9]*" value={formData.low_stock_limit} onChange={(e) => { const val = e.target.value.replace(/[^0-9]/g, ''); setFormData({ ...formData, low_stock_limit: val ? parseInt(val) : 0 }); }} className="w-24" /><p className="text-xs text-slate-500">Товары с ≤ <strong>{formData.low_stock_limit}</strong> коробок будут подсвечены красным</p></div></div>
             </div>
           </CollapsibleContent>
         </Collapsible></div> : null}
 
-        {/* Employees — manage_employees */}
+        {/* Employees */}
         {canPerm('manage_employees') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.employees} onOpenChange={(open) => setExpandedSections({...expandedSections, employees: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.employees ? 'bg-green-50' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.employees ? 'bg-green-600' : 'bg-green-100'}`}>
-                  <Users className={`w-5 h-5 ${expandedSections.employees ? 'text-white' : 'text-green-600'}`} />
-                </div>
-                <div>
-                   <h3 className={`font-semibold ${expandedSections.employees ? 'text-green-700' : 'text-slate-900'}`}>{t(lang,'settings_employees')}</h3>
-                   <p className="text-xs text-slate-500">
-                     {employees.length} сотрудник(ов) · <span className="text-emerald-600 font-medium">{employees.filter(e => e.last_login_at).length} входили</span>
-                   </p>
-                </div>
-              </div>
+              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.employees ? 'bg-green-600' : 'bg-green-100'}`}><Users className={`w-5 h-5 ${expandedSections.employees ? 'text-white' : 'text-green-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.employees ? 'text-green-700' : 'text-slate-900'}`}>{t(lang,'settings_employees')}</h3><p className="text-xs text-slate-500">{employees.length} сотрудник(ов) · <span className="text-emerald-600 font-medium">{employees.filter(e => e.last_login_at).length} входили</span></p></div></div>
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.employees ? 'rotate-180 text-green-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4">
-            {/* Add Employee Button */}
-            <button
-              onClick={() => setShowAddEmployeeForm(true)}
-              className="w-full mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-400 transition-all text-indigo-600 font-semibold text-sm"
-            >
-              <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
-                <Plus className="w-4 h-4 text-white" />
-              </div>
-              Добавить сотрудника
+            <button onClick={() => setShowAddEmployeeForm(true)} className="w-full mb-4 flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-400 transition-all text-indigo-600 font-semibold text-sm">
+              <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center"><Plus className="w-4 h-4 text-white" /></div>Добавить сотрудника
             </button>
-
-            {/* Employees List */}
             <div className="space-y-3">
-              {/* Stats bar */}
               {employees.length > 0 && (
                 <div className="grid grid-cols-3 gap-2 mb-2">
-                  <div className="bg-white rounded-xl border border-slate-100 p-3 text-center">
-                    <p className="text-2xl font-bold text-slate-800">{employees.length}</p>
-                    <p className="text-xs text-slate-500">Всего</p>
-                  </div>
-                  <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-3 text-center">
-                    <p className="text-2xl font-bold text-emerald-700">{employees.filter(e => e.last_login_at && (Date.now() - new Date(e.last_login_at).getTime()) < 10 * 60 * 1000).length}</p>
-                    <p className="text-xs text-emerald-600">Онлайн</p>
-                  </div>
-                  <div className="bg-slate-50 rounded-xl border border-slate-100 p-3 text-center">
-                    <p className="text-2xl font-bold text-slate-600">{employees.filter(e => e.is_frozen).length}</p>
-                    <p className="text-xs text-slate-500">Заморожено</p>
-                  </div>
+                  <div className="bg-white rounded-xl border border-slate-100 p-3 text-center"><p className="text-2xl font-bold text-slate-800">{employees.length}</p><p className="text-xs text-slate-500">Всего</p></div>
+                  <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-3 text-center"><p className="text-2xl font-bold text-emerald-700">{employees.filter(e => e.last_login_at && (Date.now() - new Date(e.last_login_at).getTime()) < 10 * 60 * 1000).length}</p><p className="text-xs text-emerald-600">Онлайн</p></div>
+                  <div className="bg-slate-50 rounded-xl border border-slate-100 p-3 text-center"><p className="text-2xl font-bold text-slate-600">{employees.filter(e => e.is_frozen).length}</p><p className="text-xs text-slate-500">Заморожено</p></div>
                 </div>
               )}
-
-              {employees.map(employee => (
-                <EmployeeCard
-                  key={employee.id}
-                  employee={employee}
-                  business={business}
-                  onEdit={setEditingEmployee}
-                  onDelete={handleDeleteEmployee}
-                />
-              ))}
-              {employees.length === 0 && (
-                <p className="text-center text-slate-500 py-8">
-                  {t(lang,'settings_emp_empty')}
-                </p>
-              )}
+              {employees.map(employee => <EmployeeCard key={employee.id} employee={employee} business={business} onEdit={setEditingEmployee} onDelete={handleDeleteEmployee} />)}
+              {employees.length === 0 && <p className="text-center text-slate-500 py-8">{t(lang,'settings_emp_empty')}</p>}
             </div>
-
-            {editingEmployee && (
-              <EmployeePermissionsDialog
-                employee={editingEmployee}
-                onClose={() => setEditingEmployee(null)}
-                onSaved={loadData}
-              />
-            )}
+            {editingEmployee && <EmployeePermissionsDialog employee={editingEmployee} onClose={() => setEditingEmployee(null)} onSaved={loadData} />}
           </CollapsibleContent>
         </Collapsible></div> : null}
 
-        {/* Notifications Settings — всем */}
+        {/* Notifications Settings */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.notifications} onOpenChange={(open) => setExpandedSections({...expandedSections, notifications: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.notifications ? 'bg-yellow-50' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.notifications ? 'bg-yellow-500' : 'bg-yellow-100'}`}>
-                  <Bell className={`w-5 h-5 ${expandedSections.notifications ? 'text-white' : 'text-yellow-600'}`} />
-                </div>
-                <div>
-                  <h3 className={`font-semibold ${expandedSections.notifications ? 'text-yellow-700' : 'text-slate-900'}`}>{t(lang,'settings_notif_title')}</h3>
-                  <p className="text-xs text-slate-500">Уведомления и язык</p>
-                </div>
-              </div>
+              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.notifications ? 'bg-yellow-500' : 'bg-yellow-100'}`}><Bell className={`w-5 h-5 ${expandedSections.notifications ? 'text-white' : 'text-yellow-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.notifications ? 'text-yellow-700' : 'text-slate-900'}`}>{t(lang,'settings_notif_title')}</h3><p className="text-xs text-slate-500">Telegram, WhatsApp и Email уведомления</p></div></div>
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.notifications ? 'rotate-180 text-yellow-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6">
-            <div className="space-y-4">
-              <div className="flex items-start gap-4 p-4 border border-slate-200 rounded-xl">
-                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                  <MessageCircle className="w-5 h-5 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-slate-900 mb-1">{t(lang,'settings_notif_wa')}</h4>
-                  <p className="text-sm text-slate-500 mb-3">
-                    {t(lang,'settings_notif_wa_desc')}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="checkbox"
-                      id="whatsapp"
-                      checked={user?.whatsapp_notifications !== false}
-                      onChange={async (e) => {
-                        await base44.auth.updateMe({ whatsapp_notifications: e.target.checked });
-                        await loadData();
-                      }}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="whatsapp" className="text-sm text-slate-700">
-                      {t(lang,'settings_notif_wa_enable')}
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 p-4 border border-slate-200 rounded-xl">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-slate-900 mb-1">{t(lang,'settings_notif_email')}</h4>
-                  <p className="text-sm text-slate-500 mb-3">
-                    {t(lang,'settings_notif_email_desc')}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="checkbox"
-                      id="email"
-                      checked={user?.email_notifications !== false}
-                      onChange={async (e) => {
-                        await base44.auth.updateMe({ email_notifications: e.target.checked });
-                        await loadData();
-                      }}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="email" className="text-sm text-slate-700">
-                      {t(lang,'settings_notif_email_enable')}
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Telegram уведомления — для владельца или при наличии разрешения */}
-              {(!currentEmployee || canPerm('manage_telegram')) && business && (
-                <TelegramNotificationsPanel business={business} onUpdate={setBusiness} />
-              )}
-
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-                <div className="flex items-start gap-3">
-                  <Bell className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-amber-900 mb-1">{t(lang,'settings_notif_when')}</h4>
-                    <ul className="text-sm text-amber-700 space-y-1">
-                      <li>• При продаже товара в долг клиенту</li>
-                      <li>• При частичной оплате долга</li>
-                      <li>• При полном погашении долга</li>
-                      <li>• При малом остатке товаров (Telegram)</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-3 bg-white border border-slate-200 rounded-lg">
-               <h4 className="font-medium text-slate-900 mb-2">{t(lang,'settings_notif_lang')}</h4>
-                <Select 
-                  value={user?.language || formData.language} 
-                  onValueChange={async (v) => {
-                    await base44.auth.updateMe({ language: v });
-                    setFormData({ ...formData, language: v });
-                    await loadData();
-                  }}
-                >
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LANGUAGES.map(lang => (
-                      <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4">
+            <NotificationsSettingsPanel
+              business={business}
+              onUpdate={setBusiness}
+              lang={lang}
+              user={user}
+              currentEmployee={currentEmployee}
+              canPerm={canPerm}
+              loadData={loadData}
+              formData={formData}
+              setFormData={setFormData}
+            />
           </CollapsibleContent>
         </Collapsible></div>
 
-        {/* Custom Fields — view_settings_custom */}
+        {/* Custom Fields */}
         {canPerm('view_settings_custom') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.custom} onOpenChange={(open) => setExpandedSections({...expandedSections, custom: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.custom ? 'bg-pink-50' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.custom ? 'bg-pink-600' : 'bg-pink-100'}`}>
-                  <Palette className={`w-5 h-5 ${expandedSections.custom ? 'text-white' : 'text-pink-600'}`} />
-                </div>
-                <div>
-                  <h3 className={`font-semibold ${expandedSections.custom ? 'text-pink-700' : 'text-slate-900'}`}>{t(lang,'settings_custom_title')}</h3>
-                  <p className="text-xs text-slate-500">Пользовательские цвета и типы товаров</p>
-                </div>
-              </div>
+              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.custom ? 'bg-pink-600' : 'bg-pink-100'}`}><Palette className={`w-5 h-5 ${expandedSections.custom ? 'text-white' : 'text-pink-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.custom ? 'text-pink-700' : 'text-slate-900'}`}>{t(lang,'settings_custom_title')}</h3><p className="text-xs text-slate-500">Пользовательские цвета и типы товаров</p></div></div>
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.custom ? 'rotate-180 text-pink-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6">
-            {business && (
-              <CustomFieldsPanel
-                business={business}
-                onUpdate={setBusiness}
-                lang={lang}
-              />
-            )}
+            {business && <CustomFieldsPanel business={business} onUpdate={setBusiness} lang={lang} />}
           </CollapsibleContent>
         </Collapsible></div> : null}
 
-        {/* History Section — view_activity_log */}
-        {canPerm('view_activity_log') ? <div
-          onClick={() => navigate(createPageUrl('ActivityLog'))}
-          className="bg-white hover:bg-indigo-50 rounded-2xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition-all shadow-sm"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <History className="w-5 h-5 text-indigo-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900">История действий</h3>
-              <p className="text-xs text-slate-500">Все изменения, удаления и создания. Просмотр деталей и восстановление.</p>
-            </div>
-          </div>
+        {/* History */}
+        {canPerm('view_activity_log') ? <div onClick={() => navigate(createPageUrl('ActivityLog'))} className="bg-white hover:bg-indigo-50 rounded-2xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition-all shadow-sm">
+          <div className="flex items-center gap-3"><div className="p-2 bg-indigo-100 rounded-lg"><History className="w-5 h-5 text-indigo-600" /></div><div><h3 className="font-semibold text-slate-900">История действий</h3><p className="text-xs text-slate-500">Все изменения, удаления и создания.</p></div></div>
           <ChevronDown className="w-5 h-5 text-slate-400 -rotate-90" />
         </div> : null}
 
-        {/* Employee Login Section */}
+        {/* Employee Login */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.employee_login} onOpenChange={(open) => setExpandedSections({...expandedSections, employee_login: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.employee_login ? 'bg-purple-50' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.employee_login ? 'bg-purple-600' : 'bg-purple-100'}`}>
-                  <Users className={`w-5 h-5 ${expandedSections.employee_login ? 'text-white' : 'text-purple-600'}`} />
-                </div>
-                <div>
-                  <h3 className={`font-semibold ${expandedSections.employee_login ? 'text-purple-700' : 'text-slate-900'}`}>Войти как сотрудник</h3>
-                  <p className="text-xs text-slate-500">Подключиться к другому бизнесу по кодам</p>
-                </div>
-              </div>
+              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.employee_login ? 'bg-purple-600' : 'bg-purple-100'}`}><Users className={`w-5 h-5 ${expandedSections.employee_login ? 'text-white' : 'text-purple-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.employee_login ? 'text-purple-700' : 'text-slate-900'}`}>Войти как сотрудник</h3><p className="text-xs text-slate-500">Подключиться к другому бизнесу по кодам</p></div></div>
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.employee_login ? 'rotate-180 text-purple-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6">
             <div className="space-y-4">
-              <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                <p className="text-sm text-yellow-800">🔒 Введите коды, полученные от владельца бизнеса. Информация о бизнесах конфиденциальна.</p>
-              </div>
-              <div>
-                <Label>Код бизнеса</Label>
-                <Input
-                  value={empLoginCode}
-                  onChange={(e) => setEmpLoginCode(e.target.value.toUpperCase())}
-                  placeholder="XXXXXXXXXXXX"
-                  className="mt-1.5 font-mono"
-                />
-              </div>
-              <div>
-                <Label>Код доступа</Label>
-                <Input
-                  value={empAccessCode}
-                  onChange={(e) => setEmpAccessCode(e.target.value.toUpperCase())}
-                  placeholder="XXXXXXXX"
-                  className="mt-1.5 font-mono"
-                />
-              </div>
-              {empLoginError && (
-                <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{empLoginError}</div>
-              )}
-              <Button
-                onClick={async () => {
-                  setEmpLoginLoading(true);
-                  setEmpLoginError('');
-                  try {
-                    const businesses = await base44.entities.Business.filter({ business_code: empLoginCode.trim(), access_code: empAccessCode.trim() });
-                    if (businesses.length === 0) {
-                      setEmpLoginError('Неверные коды доступа');
-                      return;
-                    }
-                    const biz = businesses[0];
-                    const currentUser = await base44.auth.me();
-                    const emp = await base44.entities.Employee.filter({ business_id: biz.id, user_email: currentUser.email });
-                    if (emp.length === 0) {
-                      setEmpLoginError('Вы не добавлены как сотрудник этого бизнеса. Попросите владельца добавить вас.');
-                      return;
-                    }
-                    const empRecord = emp[0];
-                    localStorage.setItem('barakatcrm_mode', `employee_${empRecord.id}`);
-                    sessionStorage.setItem('barakatcrm_mode', `employee_${empRecord.id}`);
-                    // Сохраняем токен для персистентной сессии
-                    if (empRecord.login_session_token) {
-                      localStorage.setItem(`barakat_emp_token_${empRecord.id}`, empRecord.login_session_token);
-                    }
-                    // Сохраняем в историю
-                    saveBusinessToHistory(biz.id, biz.name, empRecord.id, empRecord.name || '', 'employee');
-                    navigate(createPageUrl('Dashboard'));
-                  } catch (e) {
-                    setEmpLoginError('Ошибка: ' + e.message);
-                  } finally {
-                    setEmpLoginLoading(false);
-                  }
-                }}
-                disabled={empLoginLoading || !empLoginCode || !empAccessCode}
-                className="w-full bg-purple-600 hover:bg-purple-700 gap-2"
-              >
-                {empLoginLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-                Войти как сотрудник
+              <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg"><p className="text-sm text-yellow-800">🔒 Введите коды, полученные от владельца бизнеса.</p></div>
+              <div><Label>Код бизнеса</Label><Input value={empLoginCode} onChange={(e) => setEmpLoginCode(e.target.value.toUpperCase())} placeholder="XXXXXXXXXXXX" className="mt-1.5 font-mono" /></div>
+              <div><Label>Код доступа</Label><Input value={empAccessCode} onChange={(e) => setEmpAccessCode(e.target.value.toUpperCase())} placeholder="XXXXXXXX" className="mt-1.5 font-mono" /></div>
+              {empLoginError && <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{empLoginError}</div>}
+              <Button onClick={async () => {
+                setEmpLoginLoading(true); setEmpLoginError('');
+                try {
+                  const bizes = await base44.entities.Business.filter({ business_code: empLoginCode.trim(), access_code: empAccessCode.trim() });
+                  if (!bizes.length) { setEmpLoginError('Неверные коды доступа'); return; }
+                  const biz = bizes[0];
+                  const cu = await base44.auth.me();
+                  const emp = await base44.entities.Employee.filter({ business_id: biz.id, user_email: cu.email });
+                  if (!emp.length) { setEmpLoginError('Вы не добавлены как сотрудник этого бизнеса.'); return; }
+                  const empRecord = emp[0];
+                  localStorage.setItem('barakatcrm_mode', `employee_${empRecord.id}`);
+                  sessionStorage.setItem('barakatcrm_mode', `employee_${empRecord.id}`);
+                  if (empRecord.login_session_token) localStorage.setItem(`barakat_emp_token_${empRecord.id}`, empRecord.login_session_token);
+                  saveBusinessToHistory(biz.id, biz.name, empRecord.id, empRecord.name || '', 'employee');
+                  navigate(createPageUrl('Dashboard'));
+                } catch (e) { setEmpLoginError('Ошибка: ' + e.message); } finally { setEmpLoginLoading(false); }
+              }} disabled={empLoginLoading || !empLoginCode || !empAccessCode} className="w-full bg-purple-600 hover:bg-purple-700 gap-2">
+                {empLoginLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}Войти как сотрудник
               </Button>
             </div>
           </CollapsibleContent>
         </Collapsible></div>
 
-        {/* Recent Businesses — для всех */}
+        {/* Recent Businesses */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.recent_businesses} onOpenChange={(open) => setExpandedSections({...expandedSections, recent_businesses: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.recent_businesses ? 'bg-teal-50' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.recent_businesses ? 'bg-teal-600' : 'bg-teal-100'}`}>
-                  <History className={`w-5 h-5 ${expandedSections.recent_businesses ? 'text-white' : 'text-teal-600'}`} />
-                </div>
-                <div>
-                  <h3 className={`font-semibold ${expandedSections.recent_businesses ? 'text-teal-700' : 'text-slate-900'}`}>Недавние бизнесы</h3>
-                  <p className="text-xs text-slate-500">Быстрый вход в бизнесы, в которых вы работали</p>
-                </div>
-              </div>
+              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.recent_businesses ? 'bg-teal-600' : 'bg-teal-100'}`}><History className={`w-5 h-5 ${expandedSections.recent_businesses ? 'text-white' : 'text-teal-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.recent_businesses ? 'text-teal-700' : 'text-slate-900'}`}>Недавние бизнесы</h3><p className="text-xs text-slate-500">Быстрый вход в бизнесы, в которых вы работали</p></div></div>
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.recent_businesses ? 'rotate-180 text-teal-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4">
-            <RecentBusinessesPanel currentUser={user} />
-          </CollapsibleContent>
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4"><RecentBusinessesPanel currentUser={user} /></CollapsibleContent>
         </Collapsible></div>
 
-        {/* Security Section — view_settings_security */}
+        {/* Security */}
         {canPerm('view_settings_security') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.security} onOpenChange={(open) => setExpandedSections({...expandedSections, security: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.security ? 'bg-red-50' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${expandedSections.security ? 'bg-red-600' : 'bg-red-100'}`}>
-                  <Shield className={`w-5 h-5 ${expandedSections.security ? 'text-white' : 'text-red-600'}`} />
-                </div>
-                <div>
-                  <h3 className={`font-semibold ${expandedSections.security ? 'text-red-700' : 'text-slate-900'}`}>{t(lang,'settings_security')}</h3>
-                  <p className="text-xs text-slate-500">Аккаунт, устройства и резервные копии</p>
-                </div>
-              </div>
+              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.security ? 'bg-red-600' : 'bg-red-100'}`}><Shield className={`w-5 h-5 ${expandedSections.security ? 'text-white' : 'text-red-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.security ? 'text-red-700' : 'text-slate-900'}`}>{t(lang,'settings_security')}</h3><p className="text-xs text-slate-500">Аккаунт, устройства и резервные копии</p></div></div>
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.security ? 'rotate-180 text-red-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4 space-y-3">
-
-            {/* Все устройства в системе */}
             <DeviceSessionsPanel business={business} currentUserEmail={user?.email} />
 
-            {/* Активные сотрудники */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
               <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm font-semibold text-slate-700">Сотрудники в системе</span>
-                </div>
-                <button
-                  onClick={async () => {
-                    setEmpRefreshing(true);
-                    await loadData();
-                    setEmpRefreshing(false);
-                  }}
-                  disabled={empRefreshing}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-medium text-slate-600 transition-colors disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-3 h-3 ${empRefreshing ? 'animate-spin' : ''}`} />
-                  Обновить
+                <div className="flex items-center gap-2"><Users className="w-4 h-4 text-slate-500" /><span className="text-sm font-semibold text-slate-700">Сотрудники в системе</span></div>
+                <button onClick={async () => { setEmpRefreshing(true); await loadData(); setEmpRefreshing(false); }} disabled={empRefreshing} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-medium text-slate-600 transition-colors disabled:opacity-50">
+                  <RefreshCw className={`w-3 h-3 ${empRefreshing ? 'animate-spin' : ''}`} />Обновить
                 </button>
               </div>
               <div className="p-3 space-y-2">
-                {employees.length === 0 && (
-                  <div className="text-center py-5">
-                    <Users className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-                    <p className="text-sm text-slate-400">Нет сотрудников</p>
-                  </div>
-                )}
+                {employees.length === 0 && <div className="text-center py-5"><Users className="w-8 h-8 text-slate-200 mx-auto mb-2" /><p className="text-sm text-slate-400">Нет сотрудников</p></div>}
                 {employees.map(emp => {
-                const lastLogin = emp.last_login_at ? new Date(emp.last_login_at) : null;
-                const diffMs = lastLogin ? Date.now() - lastLogin.getTime() : null;
-                const isOnline = diffMs !== null && diffMs < 10 * 60 * 1000;
-                const lastSeenText = !lastLogin ? 'Не входил' :
-                  diffMs < 60000 ? 'только что' :
-                  diffMs < 3600000 ? `${Math.floor(diffMs / 60000)} мин. назад` :
-                  diffMs < 86400000 ? `${Math.floor(diffMs / 3600000)} ч. назад` :
-                  `${Math.floor(diffMs / 86400000)} дн. назад`;
-
-                // Parse device info
-                const getDeviceLabel = (ua) => {
-                  if (!ua) return '—';
-                  const isMobile = /iPhone|Android.*Mobile|Mobile.*Android/i.test(ua);
-                  const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
-                  const isWindows = /Windows/i.test(ua);
-                  const isMac = /Mac OS X/i.test(ua) && !/iPhone|iPad/i.test(ua);
-                  const isLinux = /Linux/i.test(ua) && !/Android/i.test(ua);
-                  const isAndroid = /Android/i.test(ua);
-                  const isIOS = /iPhone|iPad/i.test(ua);
-                  const isChrome = /Chrome/i.test(ua) && !/Edge|OPR/i.test(ua);
-                  const isFirefox = /Firefox/i.test(ua);
-                  const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
-                  const isEdge = /Edg/i.test(ua);
-                  let device = isMobile ? '📱 Телефон' : isTablet ? '📱 Планшет' : '💻 Компьютер';
-                  let os = isIOS ? 'iOS' : isAndroid ? 'Android' : isWindows ? 'Windows' : isMac ? 'macOS' : isLinux ? 'Linux' : '';
-                  let browser = isEdge ? 'Edge' : isChrome ? 'Chrome' : isFirefox ? 'Firefox' : isSafari ? 'Safari' : '';
-                  return `${device}${os ? ' · ' + os : ''}${browser ? ' · ' + browser : ''}`;
-                };
-
-                 return (
-                  <div key={emp.id}>
-                    <div
-                      onClick={() => setSelectedEmp(selectedEmp?.id === emp.id ? null : emp)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${emp.is_frozen ? 'bg-blue-50 border-blue-200 opacity-70' : isOnline ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-100'} ${selectedEmp?.id === emp.id ? 'ring-2 ring-indigo-300' : ''}`}
-                    >
-                      <div className="relative flex-shrink-0">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
-                          {emp.name?.charAt(0)?.toUpperCase() || '?'}
-                        </div>
-                        <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300'}`} />
+                  const lastLogin = emp.last_login_at ? new Date(emp.last_login_at) : null;
+                  const diffMs = lastLogin ? Date.now() - lastLogin.getTime() : null;
+                  const isOnline = diffMs !== null && diffMs < 10 * 60 * 1000;
+                  const lastSeenText = !lastLogin ? 'Не входил' : diffMs < 60000 ? 'только что' : diffMs < 3600000 ? `${Math.floor(diffMs / 60000)} мин. назад` : diffMs < 86400000 ? `${Math.floor(diffMs / 3600000)} ч. назад` : `${Math.floor(diffMs / 86400000)} дн. назад`;
+                  const getDeviceLabel = (ua) => { if (!ua) return '—'; const isMobile = /iPhone|Android.*Mobile/i.test(ua); const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua); const isIOS = /iPhone|iPad/i.test(ua); const isAndroid = /Android/i.test(ua); const isWindows = /Windows/i.test(ua); const isMac = /Mac OS X/i.test(ua) && !/iPhone|iPad/i.test(ua); const isChrome = /Chrome/i.test(ua) && !/Edge|OPR/i.test(ua); const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua); const isEdge = /Edg/i.test(ua); let device = isMobile ? '📱 Телефон' : isTablet ? '📱 Планшет' : '💻 Компьютер'; let os = isIOS ? 'iOS' : isAndroid ? 'Android' : isWindows ? 'Windows' : isMac ? 'macOS' : ''; let browser = isEdge ? 'Edge' : isChrome ? 'Chrome' : isSafari ? 'Safari' : ''; return `${device}${os ? ' · ' + os : ''}${browser ? ' · ' + browser : ''}`; };
+                  return (
+                    <div key={emp.id}>
+                      <div onClick={() => setSelectedEmp(selectedEmp?.id === emp.id ? null : emp)} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${emp.is_frozen ? 'bg-blue-50 border-blue-200 opacity-70' : isOnline ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-100'} ${selectedEmp?.id === emp.id ? 'ring-2 ring-indigo-300' : ''}`}>
+                        <div className="relative flex-shrink-0"><div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">{emp.name?.charAt(0)?.toUpperCase() || '?'}</div><span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300'}`} /></div>
+                        <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-slate-900 truncate">{emp.name}</p><p className="text-xs text-slate-400 truncate">{isOnline ? <span className="text-emerald-600 font-medium">● В сети сейчас</span> : lastSeenText}</p>{emp.device_info && <p className="text-xs text-slate-400 truncate">{getDeviceLabel(emp.device_info)}</p>}</div>
+                        {emp.is_frozen && <span className="text-xs text-blue-600 font-medium flex-shrink-0">🧊 Заморожен</span>}
+                        <ChevronDown className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${selectedEmp?.id === emp.id ? 'rotate-180' : ''}`} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 truncate">{emp.name}</p>
-                        <p className="text-xs text-slate-400 truncate">
-                          {isOnline ? <span className="text-emerald-600 font-medium">● В сети сейчас</span> : lastSeenText}
-                        </p>
-                        {emp.device_info && (
-                          <p className="text-xs text-slate-400 truncate">{getDeviceLabel(emp.device_info)}</p>
-                        )}
-                      </div>
-                      {emp.is_frozen && <span className="text-xs text-blue-600 font-medium flex-shrink-0">🧊 Заморожен</span>}
-                      <ChevronDown className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${selectedEmp?.id === emp.id ? 'rotate-180' : ''}`} />
-                    </div>
-
-                    {selectedEmp?.id === emp.id && (
-                      <div className="mt-2 mb-1 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50 border border-indigo-100 p-4 space-y-3 shadow-sm" onClick={e => e.stopPropagation()}>
-                        {/* Info rows */}
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">✉️</span>
-                            <span className="text-slate-400 w-20 flex-shrink-0">Email</span>
-                            <span className="font-medium text-slate-700 truncate">{emp.user_email}</span>
+                      {selectedEmp?.id === emp.id && (
+                        <div className="mt-2 mb-1 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50 border border-indigo-100 p-4 space-y-3 shadow-sm" onClick={e => e.stopPropagation()}>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-xs"><span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">✉️</span><span className="text-slate-400 w-20 flex-shrink-0">Email</span><span className="font-medium text-slate-700 truncate">{emp.user_email}</span></div>
+                            <div className="flex items-center gap-2 text-xs"><span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">📞</span><span className="text-slate-400 w-20 flex-shrink-0">Телефон</span><span className="font-medium text-slate-700">{emp.phone || '—'}</span></div>
+                            <div className="flex items-center gap-2 text-xs"><span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">🕐</span><span className="text-slate-400 w-20 flex-shrink-0">Вход</span><span className="font-medium text-slate-700">{lastLogin ? lastLogin.toLocaleString('ru') : 'Не входил'}</span></div>
+                            <div className="flex items-center gap-2 text-xs"><span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">💻</span><span className="text-slate-400 w-20 flex-shrink-0">Устройство</span><span className="font-medium text-slate-700 truncate">{getDeviceLabel(emp.device_info)}</span></div>
                           </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">📞</span>
-                            <span className="text-slate-400 w-20 flex-shrink-0">Телефон</span>
-                            <span className="font-medium text-slate-700">{emp.phone || '—'}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">🕐</span>
-                            <span className="text-slate-400 w-20 flex-shrink-0">Вход</span>
-                            <span className="font-medium text-slate-700">{lastLogin ? lastLogin.toLocaleString('ru') : 'Не входил'}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">💻</span>
-                            <span className="text-slate-400 w-20 flex-shrink-0">Устройство</span>
-                            <span className="font-medium text-slate-700 truncate">{getDeviceLabel(emp.device_info)}</span>
-                          </div>
-                          {emp.device_info && (
-                            <div className="flex items-start gap-2 text-xs">
-                              <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">🔍</span>
-                              <span className="text-slate-400 w-20 flex-shrink-0">UA</span>
-                              <span className="text-slate-400 break-all leading-relaxed" style={{fontSize:'10px'}}>{emp.device_info.substring(0,120)}{emp.device_info.length > 120 ? '...' : ''}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">{emp.is_frozen ? '🧊' : isOnline ? '🟢' : '⚫'}</span>
-                            <span className="text-slate-400 w-20 flex-shrink-0">Статус</span>
-                            <span className={`font-semibold ${emp.is_frozen ? 'text-blue-600' : isOnline ? 'text-emerald-600' : 'text-slate-500'}`}>
-                              {emp.is_frozen ? 'Заморожен' : isOnline ? 'В сети сейчас' : 'Офлайн'}
-                            </span>
-                          </div>
-                        </div>
-
-                          {/* Action buttons */}
                           <div className="flex gap-2">
-                            {/* Завершить сеанс — только сбрасывает токен, не замораживает */}
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                if (!confirm(`Сбросить сеанс ${emp.name}? Он будет выброшен с сайта и должен войти заново.`)) return;
-                                const history = emp.change_history || [];
-                                const newToken = crypto.randomUUID();
-                                await base44.entities.Employee.update(emp.id, {
-                                  login_session_token: newToken,
-                                  change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'session', newValue: 'reset', oldValue: null }] }]
-                                });
-                                // Удаляем токен из localStorage (на этом же устройстве, если он вошёл тут)
-                                localStorage.removeItem(`barakat_emp_token_${emp.id}`);
-                                setSelectedEmp(null);
-                                await loadData();
-                              }}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-sm"
-                            >
-                              <LogOut className="w-3.5 h-3.5" />
-                              Сбросить сеанс
-                            </button>
-
-                            {/* Заморозить / Разморозить */}
-                            {!emp.is_frozen ? (
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  if (!confirm(`Заморозить ${emp.name}? Он не сможет войти в систему.`)) return;
-                                  const history = emp.change_history || [];
-                                  const frozenToken = crypto.randomUUID();
-                                  await base44.entities.Employee.update(emp.id, {
-                                   is_frozen: true,
-                                   login_session_token: frozenToken,
-                                   change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: 'false', newValue: 'true' }] }]
-                                  });
-                                  localStorage.removeItem(`barakat_emp_token_${emp.id}`);
-                                  setSelectedEmp(null);
-                                  await loadData();
-                                }}
-                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all shadow-sm"
-                              >
-                                🧊 Заморозить
-                              </button>
-                            ) : (
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  const history = emp.change_history || [];
-                                  await base44.entities.Employee.update(emp.id, {
-                                   is_frozen: false,
-                                   change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: 'true', newValue: 'false' }] }]
-                                  });
-                                  setSelectedEmp(null);
-                                  await loadData();
-                                }}
-                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-semibold hover:from-emerald-600 hover:to-teal-600 transition-all shadow-sm"
-                              >
-                                <RefreshCw className="w-3.5 h-3.5" />
-                                Разморозить
-                              </button>
-                            )}
+                            <button onClick={async (e) => { e.stopPropagation(); if (!confirm(`Сбросить сеанс ${emp.name}?`)) return; const history = emp.change_history || []; const newToken = crypto.randomUUID(); await base44.entities.Employee.update(emp.id, { login_session_token: newToken, change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'session', newValue: 'reset', oldValue: null }] }] }); localStorage.removeItem(`barakat_emp_token_${emp.id}`); setSelectedEmp(null); await loadData(); }} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-sm"><LogOut className="w-3.5 h-3.5" />Сбросить сеанс</button>
+                            {!emp.is_frozen
+                              ? <button onClick={async (e) => { e.stopPropagation(); if (!confirm(`Заморозить ${emp.name}?`)) return; const history = emp.change_history || []; await base44.entities.Employee.update(emp.id, { is_frozen: true, login_session_token: crypto.randomUUID(), change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: 'false', newValue: 'true' }] }] }); localStorage.removeItem(`barakat_emp_token_${emp.id}`); setSelectedEmp(null); await loadData(); }} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all shadow-sm">🧊 Заморозить</button>
+                              : <button onClick={async (e) => { e.stopPropagation(); const history = emp.change_history || []; await base44.entities.Employee.update(emp.id, { is_frozen: false, change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: 'true', newValue: 'false' }] }] }); setSelectedEmp(null); await loadData(); }} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-semibold transition-all shadow-sm"><RefreshCw className="w-3.5 h-3.5" />Разморозить</button>
+                            }
                           </div>
-
-                          {/* История заморозок */}
-                          {(() => {
-                            const freezeHistory = (emp.change_history || []).filter(h =>
-                              h.changes?.some(c => c.field === 'is_frozen' || c.field === 'session')
-                            ).slice(-5).reverse();
-                            if (freezeHistory.length === 0) return null;
-                            return (
-                              <div className="border-t border-indigo-100 pt-3">
-                                <p className="text-xs font-semibold text-slate-500 mb-2">📋 История действий</p>
-                                <div className="space-y-1.5">
-                                  {freezeHistory.map((h, i) => {
-                                    const change = h.changes?.[0];
-                                    const label = change?.field === 'is_frozen'
-                                      ? (change.newValue ? '🧊 Заморожен' : '✅ Разморожен')
-                                      : '🔄 Сеанс сброшен';
-                                    const date = h.timestamp ? new Date(h.timestamp).toLocaleString('ru') : '—';
-                                    return (
-                                      <div key={i} className="flex items-center justify-between text-xs bg-white rounded-lg px-2.5 py-1.5 border border-slate-100">
-                                        <span className="font-medium text-slate-700">{label}</span>
-                                        <span className="text-slate-400">{date}</span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            );
-                          })()}
                         </div>
                       )}
                     </div>
@@ -1673,325 +681,72 @@ export default function Settings() {
                 })}
                 {employees.filter(e => !e.is_frozen).length > 0 && (
                   <div className="mt-2 pt-2 border-t border-slate-100">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-orange-600 border-orange-200 hover:bg-orange-50 gap-2"
-                      onClick={async () => {
-                        if (!confirm('Завершить сеансы ВСЕХ сотрудников? Они будут выброшены из системы.')) return;
-                        await Promise.all(employees.filter(e => !e.is_frozen).map(e => {
-                          localStorage.removeItem(`barakat_emp_token_${e.id}`);
-                          return base44.entities.Employee.update(e.id, { is_frozen: true, login_session_token: crypto.randomUUID() });
-                        }));
-                        await loadData();
-                      }}
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Завершить все сеансы
-                    </Button>
+                    <Button variant="outline" size="sm" className="w-full text-orange-600 border-orange-200 hover:bg-orange-50 gap-2" onClick={async () => { if (!confirm('Завершить сеансы ВСЕХ сотрудников?')) return; await Promise.all(employees.filter(e => !e.is_frozen).map(e => { localStorage.removeItem(`barakat_emp_token_${e.id}`); return base44.entities.Employee.update(e.id, { is_frozen: true, login_session_token: crypto.randomUUID() }); })); await loadData(); }}><LogOut className="w-4 h-4" />Завершить все сеансы</Button>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Автоматизация */}
             {business && <AutomationPanel business={business} />}
-
-            {/* Резервное копирование и Экспорт — только с разрешением */}
             {canPerm('backup_data') && <BackupExportPanel business={business} onBackupJSON={handleBackup} />}
 
-            {/* Очистить кэш */}
             <div className="bg-white rounded-xl border border-blue-100 overflow-hidden">
-              <div className="px-4 py-3 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
-                <RefreshCw className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-semibold text-blue-700">{t(lang,'settings_sec_cache')}</span>
-              </div>
-              <div className="p-4">
-                <p className="text-sm text-slate-500 mb-3">{t(lang,'settings_sec_cache_desc')}</p>
-                <Button onClick={handleClearCache} disabled={clearingCache} variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50 gap-2">
-                  {clearingCache ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                  {t(lang,'settings_sec_cache')}
-                </Button>
-              </div>
+              <div className="px-4 py-3 bg-blue-50 border-b border-blue-100 flex items-center gap-2"><RefreshCw className="w-4 h-4 text-blue-500" /><span className="text-sm font-semibold text-blue-700">{t(lang,'settings_sec_cache')}</span></div>
+              <div className="p-4"><p className="text-sm text-slate-500 mb-3">{t(lang,'settings_sec_cache_desc')}</p><Button onClick={handleClearCache} disabled={clearingCache} variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50 gap-2">{clearingCache ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}{t(lang,'settings_sec_cache')}</Button></div>
             </div>
 
-            {/* Опасная зона — только с разрешением delete_all_data */}
             {canPerm('delete_all_data') && <div className="bg-white rounded-xl border border-red-100 overflow-hidden">
-              <div className="px-4 py-3 bg-red-50 border-b border-red-100 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-500" />
-                <span className="text-sm font-semibold text-red-700">Опасная зона</span>
-              </div>
+              <div className="px-4 py-3 bg-red-50 border-b border-red-100 flex items-center gap-2"><AlertCircle className="w-4 h-4 text-red-500" /><span className="text-sm font-semibold text-red-700">Опасная зона</span></div>
               <div className="p-4 space-y-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">{t(lang,'settings_sec_delete')}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{t(lang,'settings_sec_delete_desc')}</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="flex-shrink-0 text-red-600 border-red-200 hover:bg-red-50 gap-1.5" onClick={handleDeleteAllData}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Удалить данные
-                  </Button>
-                </div>
-                <div className="flex items-start justify-between gap-4 pt-3 border-t border-red-50">
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">Удалить аккаунт</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Необратимое удаление аккаунта и всех данных</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="flex-shrink-0 text-red-700 border-red-300 hover:bg-red-100 gap-1.5" onClick={() => setDeleteAccountDialog(true)}>
-                    <Zap className="w-3.5 h-3.5" />
-                    Удалить аккаунт
-                  </Button>
-                </div>
+                <div className="flex items-start justify-between gap-4"><div><p className="text-sm font-medium text-slate-800">{t(lang,'settings_sec_delete')}</p><p className="text-xs text-slate-400 mt-0.5">{t(lang,'settings_sec_delete_desc')}</p></div><Button variant="outline" size="sm" className="flex-shrink-0 text-red-600 border-red-200 hover:bg-red-50 gap-1.5" onClick={handleDeleteAllData}><Trash2 className="w-3.5 h-3.5" />Удалить данные</Button></div>
+                <div className="flex items-start justify-between gap-4 pt-3 border-t border-red-50"><div><p className="text-sm font-medium text-slate-800">Удалить аккаунт</p><p className="text-xs text-slate-400 mt-0.5">Необратимое удаление аккаунта</p></div><Button variant="outline" size="sm" className="flex-shrink-0 text-red-700 border-red-300 hover:bg-red-100 gap-1.5" onClick={() => setDeleteAccountDialog(true)}><Zap className="w-3.5 h-3.5" />Удалить аккаунт</Button></div>
               </div>
-              </div>}
-
-              </CollapsibleContent>
-              </Collapsible></div> : null}
-              </div>
+            </div>}
+          </CollapsibleContent>
+        </Collapsible></div> : null}
+      </div>
 
       {/* Save Button */}
       <div className="sticky bottom-0 bg-white border-t border-slate-200 p-4 flex justify-end gap-3 -mx-8 px-8">
-        <Button 
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-indigo-600 hover:bg-indigo-700 gap-2"
-        >
-          {saving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : saved ? (
-            <>
-              <CheckCircle className="w-4 h-4" />
-              {t(lang, 'settings_saved')}
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              {t(lang, 'settings_save')}
-            </>
-          )}
+        <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <><CheckCircle className="w-4 h-4" />{t(lang, 'settings_saved')}</> : <><Save className="w-4 h-4" />{t(lang, 'settings_save')}</>}
         </Button>
       </div>
 
       {/* Add Employee Dialog */}
-      <Dialog open={showAddEmployeeForm} onOpenChange={(open) => {
-        setShowAddEmployeeForm(open);
-        if (!open) setNewEmployee({ name: '', user_email: '', phone: '', role: 'Продавец', permissions: { view_analytics: false, view_profit: false, view_products: true, add_products: true, edit_products: false, delete_products: false, view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false, view_warehouses: true, manage_warehouses: false, view_customers: true, manage_customers: false, view_debts: false, manage_debts: false, manage_returns: false, view_activity_log: false }, custom_permissions: [] });
-      }}>
+      <Dialog open={showAddEmployeeForm} onOpenChange={(open) => { setShowAddEmployeeForm(open); if (!open) setNewEmployee({ name: '', user_email: '', phone: '', role: 'Продавец', permissions: { view_analytics: false, view_profit: false, view_products: true, add_products: true, edit_products: false, delete_products: false, view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false, view_warehouses: true, manage_warehouses: false, view_customers: true, manage_customers: false, view_debts: false, manage_debts: false, manage_returns: false, view_activity_log: false }, custom_permissions: [] }); }}>
         <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl">
-          {/* Header */}
           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-              <Plus className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <DialogTitle className="text-white font-bold text-lg leading-tight">{t(lang,'settings_emp_add')}</DialogTitle>
-              <p className="text-indigo-100 text-xs mt-0.5">Заполните данные нового сотрудника</p>
-            </div>
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0"><Plus className="w-5 h-5 text-white" /></div>
+            <div><DialogTitle className="text-white font-bold text-lg leading-tight">{t(lang,'settings_emp_add')}</DialogTitle><p className="text-indigo-100 text-xs mt-0.5">Заполните данные нового сотрудника</p></div>
           </div>
-
           <div className="p-6 space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t(lang,'settings_emp_name')}</Label>
-                <Input
-                  value={newEmployee.name}
-                  onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
-                  placeholder="Иван Иванов"
-                  className="mt-1.5 rounded-xl"
-                />
-              </div>
-              <div className="col-span-2">
-                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Email</Label>
-                <Input
-                  type="email"
-                  value={newEmployee.user_email}
-                  onChange={(e) => setNewEmployee({ ...newEmployee, user_email: e.target.value })}
-                  placeholder="email@example.com"
-                  className="mt-1.5 rounded-xl"
-                />
-              </div>
-              <div>
-                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t(lang,'settings_phone')}</Label>
-                <Input
-                  value={newEmployee.phone}
-                  onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
-                  placeholder="+992 XX XXX XX XX"
-                  className="mt-1.5 rounded-xl"
-                />
-              </div>
-              <div>
-                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Роль</Label>
-                <Select value={newEmployee.role} onValueChange={(v) => {
-                  let permissions = { ...newEmployee.permissions };
-                  if (v === 'Продавец') {
-                    permissions = { view_analytics: false, view_profit: false, view_products: true, add_products: true, edit_products: false, delete_products: false, view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false, view_warehouses: true, manage_warehouses: false, view_customers: true, manage_customers: false, view_debts: false, manage_debts: false, manage_returns: false, view_activity_log: false };
-                  } else if (v === 'Менеджер') {
-                    permissions = { view_analytics: true, view_profit: false, view_products: true, add_products: true, edit_products: true, delete_products: false, view_sales: true, add_sales: true, edit_sales: true, cancel_sales: false, view_warehouses: true, manage_warehouses: false, view_customers: true, manage_customers: true, view_debts: true, manage_debts: true, manage_returns: true, view_activity_log: false };
-                  }
-                  setNewEmployee({ ...newEmployee, role: v, permissions });
-                }}>
-                  <SelectTrigger className="mt-1.5 rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Продавец">🛍️ Продавец</SelectItem>
-                    <SelectItem value="Менеджер">👔 Менеджер</SelectItem>
-                    <SelectItem value="Кладовщик">📦 Кладовщик</SelectItem>
-                    <SelectItem value="Доставщик">🚚 Доставщик</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="col-span-2"><Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t(lang,'settings_emp_name')}</Label><Input value={newEmployee.name} onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })} placeholder="Иван Иванов" className="mt-1.5 rounded-xl" /></div>
+              <div className="col-span-2"><Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Email</Label><Input type="email" value={newEmployee.user_email} onChange={(e) => setNewEmployee({ ...newEmployee, user_email: e.target.value })} placeholder="email@example.com" className="mt-1.5 rounded-xl" /></div>
+              <div><Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t(lang,'settings_phone')}</Label><Input value={newEmployee.phone} onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })} placeholder="+992 XX XXX XX XX" className="mt-1.5 rounded-xl" /></div>
+              <div><Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Роль</Label><Select value={newEmployee.role} onValueChange={(v) => { let permissions = { ...newEmployee.permissions }; if (v === 'Продавец') permissions = { view_analytics: false, view_profit: false, view_products: true, add_products: true, edit_products: false, delete_products: false, view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false, view_warehouses: true, manage_warehouses: false, view_customers: true, manage_customers: false, view_debts: false, manage_debts: false, manage_returns: false, view_activity_log: false }; else if (v === 'Менеджер') permissions = { view_analytics: true, view_profit: false, view_products: true, add_products: true, edit_products: true, delete_products: false, view_sales: true, add_sales: true, edit_sales: true, cancel_sales: false, view_warehouses: true, manage_warehouses: false, view_customers: true, manage_customers: true, view_debts: true, manage_debts: true, manage_returns: true, view_activity_log: false }; setNewEmployee({ ...newEmployee, role: v, permissions }); }}><SelectTrigger className="mt-1.5 rounded-xl"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Продавец">🛍️ Продавец</SelectItem><SelectItem value="Менеджер">👔 Менеджер</SelectItem><SelectItem value="Кладовщик">📦 Кладовщик</SelectItem><SelectItem value="Доставщик">🚚 Доставщик</SelectItem></SelectContent></Select></div>
             </div>
-
-            {/* Permissions preview */}
-            {Object.entries(newEmployee.permissions).filter(([,v]) => v).length > 0 && (
-              <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-                <p className="text-xs font-semibold text-indigo-700 mb-2">📋 Права для роли «{newEmployee.role}»:</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {Object.entries(newEmployee.permissions).filter(([,v]) => v).map(([k]) => {
-                    const labels = { view_analytics:'Аналитика', view_products:'Товары', add_products:'+ Товары', edit_products:'Ред. товары', view_sales:'Продажи', add_sales:'+ Продажи', edit_sales:'Ред. продажи', view_warehouses:'Склады', view_customers:'Клиенты', manage_customers:'Упр. клиенты', view_debts:'Долги', manage_debts:'Упр. долги', manage_returns:'Возвраты' };
-                    return <span key={k} className="px-2 py-0.5 bg-white border border-indigo-200 text-indigo-700 rounded-lg text-xs font-medium">{labels[k] || k}</span>;
-                  })}
-                </div>
-              </div>
-            )}
-
             <div className="flex gap-2 pt-1">
-              <Button
-                variant="outline"
-                className="flex-1 rounded-xl"
-                onClick={() => setShowAddEmployeeForm(false)}
-              >
-                Отмена
-              </Button>
-              <Button
-                onClick={async () => { await handleAddEmployee(); setShowAddEmployeeForm(false); }}
-                disabled={!newEmployee.name || !newEmployee.user_email}
-                className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl font-semibold gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Добавить
-              </Button>
+              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setShowAddEmployeeForm(false)}>Отмена</Button>
+              <Button onClick={async () => { await handleAddEmployee(); setShowAddEmployeeForm(false); }} disabled={!newEmployee.name || !newEmployee.user_email} className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl font-semibold gap-2"><Plus className="w-4 h-4" />Добавить</Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Color Dialog */}
-      <Dialog open={editColorDialog} onOpenChange={setEditColorDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t(lang,'settings_edit_color')}</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Label>{t(lang,'settings_color_name')}</Label>
-            <Input
-              value={editingColor?.value || ''}
-              onChange={(e) => setEditingColor({ ...editingColor, value: e.target.value })}
-              className="mt-1.5"
-            />
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setEditColorDialog(false)}>
-              {t(lang,'cancel')}
-            </Button>
-            <Button
-              onClick={async () => {
-                if (editingColor?.value.trim()) {
-                  const updatedColors = [...business.custom_colors];
-                  updatedColors[editingColor.index] = editingColor.value.trim();
-                  await base44.entities.Business.update(business.id, { custom_colors: updatedColors });
-                  await loadData();
-                  setEditColorDialog(false);
-                }
-              }}
-            >
-              {t(lang,'save')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <SwitchAccountDialog open={switchAccountOpen} onClose={() => setSwitchAccountOpen(false)} currentUser={user} currentEmployeeId={currentEmployee?.id} />
 
-      {/* Edit Type Dialog */}
-      <Dialog open={editTypeDialog} onOpenChange={setEditTypeDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t(lang,'settings_edit_type')}</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Label>{t(lang,'settings_type_name')}</Label>
-            <Input
-              value={editingType?.value || ''}
-              onChange={(e) => setEditingType({ ...editingType, value: e.target.value })}
-              className="mt-1.5"
-            />
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setEditTypeDialog(false)}>
-              {t(lang,'cancel')}
-            </Button>
-            <Button
-              onClick={async () => {
-                if (editingType?.value.trim()) {
-                  const updatedTypes = [...business.custom_product_types];
-                  updatedTypes[editingType.index] = editingType.value.trim();
-                  await base44.entities.Business.update(business.id, { custom_product_types: updatedTypes });
-                  await loadData();
-                  setEditTypeDialog(false);
-                }
-              }}
-            >
-              {t(lang,'save')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Switch Account Dialog */}
-      <SwitchAccountDialog
-        open={switchAccountOpen}
-        onClose={() => setSwitchAccountOpen(false)}
-        currentUser={user}
-        currentEmployeeId={currentEmployee?.id}
-      />
-
-      {/* Delete Account Dialog */}
       <Dialog open={deleteAccountDialog} onOpenChange={setDeleteAccountDialog}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Подтвердить удаление аккаунта</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Подтвердить удаление аккаунта</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">
-                ⚠️ Это действие необратимо. Все ваши данные будут удалены безвозвратно.
-              </p>
-            </div>
-            <div>
-              <Label className="text-red-700">Введите ваш email для подтверждения</Label>
-              <Input
-                type="email"
-                placeholder={user?.email}
-                value={deleteConfirmation}
-                onChange={(e) => setDeleteConfirmation(e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg"><p className="text-sm text-red-700">⚠️ Это действие необратимо. Все ваши данные будут удалены безвозвратно.</p></div>
+            <div><Label className="text-red-700">Введите ваш email для подтверждения</Label><Input type="email" placeholder={user?.email} value={deleteConfirmation} onChange={(e) => setDeleteConfirmation(e.target.value)} className="mt-1.5" /></div>
           </div>
           <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => {
-              setDeleteAccountDialog(false);
-              setDeleteConfirmation('');
-            }}>
-              Отмена
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteAccount}
-              disabled={deleteConfirmation !== user?.email}
-            >
-              Удалить аккаунт
-            </Button>
+            <Button variant="outline" onClick={() => { setDeleteAccountDialog(false); setDeleteConfirmation(''); }}>Отмена</Button>
+            <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleteConfirmation !== user?.email}>Удалить аккаунт</Button>
           </div>
         </DialogContent>
       </Dialog>

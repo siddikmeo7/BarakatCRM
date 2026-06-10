@@ -104,6 +104,21 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Send WhatsApp notifications via broadcast function
+    const waRecipients = Array.isArray(business.whatsapp_recipients) ? business.whatsapp_recipients.filter(r => r.phone) : [];
+    if (waRecipients.length > 0) {
+      try {
+        await base44.asServiceRole.functions.invoke('sendWhatsAppBroadcast', {
+          business_id: businessId,
+          message_type: 'low_stock',
+          business_name: business.name,
+          low_stock_items: [{ brand: product.brand || '', model: product.model || '', boxes_in_stock: stockCount }],
+        });
+      } catch (e) {
+        console.error('WhatsApp broadcast error:', e.message);
+      }
+    }
+
     return Response.json({ success: true, product: productName, stock: stockCount, limit, notified: recipients.length, results });
   } catch (error) {
     console.error('checkLowStockAlert error:', error);
