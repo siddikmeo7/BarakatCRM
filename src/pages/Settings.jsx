@@ -707,8 +707,8 @@ export default function Settings() {
       </div>
 
       {/* Save Button */}
-      <div className="sticky bottom-0 bg-white border-t border-slate-200 p-4 flex justify-end gap-3 -mx-8 px-8">
-        <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+      <div className="flex justify-center pb-4">
+        <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 gap-2 px-8">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <><CheckCircle className="w-4 h-4" />{t(lang, 'settings_saved')}</> : <><Save className="w-4 h-4" />{t(lang, 'settings_save')}</>}
         </Button>
       </div>
