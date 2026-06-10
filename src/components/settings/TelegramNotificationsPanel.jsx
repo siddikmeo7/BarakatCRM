@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,12 @@ export default function TelegramNotificationsPanel({ business, onUpdate }) {
   };
 
   const [recipients, setRecipients] = useState(initRecipients);
+
+  // Sync when business data loads/updates
+  useEffect(() => {
+    setRecipients(initRecipients());
+  }, [business?.id, JSON.stringify(business?.telegram_recipients), business?.telegram_chat_id]);
+
   const [newName, setNewName] = useState('');
   const [newChatId, setNewChatId] = useState('');
   const [saving, setSaving] = useState(false);
