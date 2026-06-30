@@ -12,6 +12,8 @@ export const translations = {
     nav_debts: 'Долги',
     nav_ai: 'AI Ассистент',
     nav_expenses: 'Расходы',
+    nav_consignment: 'Чужие товары',
+    nav_owner_payments: 'Деньги владельцам',
     nav_emp_analytics: 'Эффективность',
     nav_reports: 'Отчёты',
     nav_settings: 'Настройки',

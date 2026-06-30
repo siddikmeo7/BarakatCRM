@@ -1,0 +1,36 @@
+{
+  "name": "ConsignmentPayout",
+  "type": "object",
+  "properties": {
+    "business_id": {
+      "type": "string",
+      "description": "ID \u0431\u0438\u0437\u043d\u0435\u0441\u0430"
+    },
+    "owner_name": {
+      "type": "string",
+      "description": "\u0418\u043c\u044f \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430"
+    },
+    "amount": {
+      "type": "number",
+      "description": "\u0412\u044b\u043f\u043b\u0430\u0447\u0435\u043d\u043d\u0430\u044f \u0441\u0443\u043c\u043c\u0430"
+    },
+    "payout_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u0414\u0430\u0442\u0430 \u0432\u044b\u043f\u043b\u0430\u0442\u044b"
+    },
+    "note": {
+      "type": "string",
+      "description": "\u041f\u0440\u0438\u043c\u0435\u0447\u0430\u043d\u0438\u0435"
+    }
+  },
+  "required": [
+    "business_id",
+    "owner_name",
+    "amount"
+  ]
+}

@@ -70,6 +70,8 @@ import UserProfile from './pages/UserProfile';
 import WarehouseSalesHistory from './pages/WarehouseSalesHistory';
 import Warehouses from './pages/Warehouses';
 import Expenses from './pages/Expenses';
+import ConsignmentProducts from './pages/ConsignmentProducts';
+import OwnerPayments from './pages/OwnerPayments';
 import __Layout from './Layout.jsx';
 
 
@@ -97,6 +99,8 @@ export const PAGES = {
     "WarehouseSalesHistory": WarehouseSalesHistory,
     "Warehouses": Warehouses,
     "Expenses": Expenses,
+    "ConsignmentProducts": ConsignmentProducts,
+    "OwnerPayments": OwnerPayments,
 }
 
 export const pagesConfig = {
