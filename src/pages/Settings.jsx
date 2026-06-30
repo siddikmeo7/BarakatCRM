@@ -62,6 +62,7 @@ export default function Settings() {
   const [lang, setLang] = useState('ru');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [backupLoading, setBackupLoading] = useState(false);
   const [clearingCache, setClearingCache] = useState(false);
   
@@ -167,13 +168,35 @@ export default function Settings() {
   };
 
   const handleSave = async () => {
+    if (!business?.id) { setSaveError('Бизнес не загружен. Обновите страницу.'); return; }
     setSaving(true);
+    setSaveError('');
+    setSaved(false);
     try {
-      await base44.entities.Business.update(business.id, formData);
+      await base44.entities.Business.update(business.id, {
+        name: formData.name,
+        phone: formData.phone,
+        address: formData.address,
+        language: formData.language,
+        default_color: formData.default_color,
+        default_size_from: formData.default_size_from,
+        default_size_to: formData.default_size_to,
+        default_pairs_per_box: formData.default_pairs_per_box,
+        default_product_type: formData.default_product_type,
+        low_stock_limit: formData.low_stock_limit,
+        default_consignment_owner: formData.default_consignment_owner || '',
+        default_consignment_owner_email: formData.default_consignment_owner_email || ''
+      });
+      const updated = await base44.entities.Business.filter({ id: business.id });
+      if (updated.length > 0) {
+        setBusiness(updated[0]);
+        window.__barakatBusiness = updated[0];
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
       console.error('Error saving settings:', error);
+      setSaveError('Ошибка сохранения: ' + (error?.message || 'неизвестная'));
     } finally {
       setSaving(false);
     }
@@ -719,11 +742,19 @@ export default function Settings() {
         </Collapsible></div> : null}
       </div>
 
-      {/* Save Button */}
-      <div className="flex justify-center pb-4">
-        <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 gap-2 px-8">
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <><CheckCircle className="w-4 h-4" />{t(lang, 'settings_saved')}</> : <><Save className="w-4 h-4" />{t(lang, 'settings_save')}</>}
-        </Button>
+      {/* Save Button — sticky bottom bar */}
+      <div className="sticky bottom-0 z-30 mt-6 -mx-4 lg:-mx-8 px-4 lg:px-8 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+        {saveError && (
+          <div className="mb-2 p-2.5 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-300 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">{saveError}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-center gap-3">
+          <Button onClick={handleSave} disabled={saving} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 gap-2 px-10 py-2.5 h-11 rounded-xl font-semibold shadow-lg shadow-indigo-500/30 transition-all">
+            {saving ? <><Loader2 className="w-5 h-5 animate-spin" />Сохранение...</> : saved ? <><CheckCircle className="w-5 h-5" />Сохранено!</> : <><Save className="w-5 h-5" />{t(lang, 'settings_save')}</>}
+          </Button>
+        </div>
       </div>
 
       {/* Add Employee Dialog */}
