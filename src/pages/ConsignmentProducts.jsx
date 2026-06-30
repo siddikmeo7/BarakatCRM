@@ -81,13 +81,18 @@ export default function ConsignmentProducts() {
   const sellItems = sellPairs * 2;
 
   const handleAddSave = async () => {
-    if (!addForm.owner_name || !addForm.brand || !addForm.model || !addForm.owner_price || !addForm.sale_price) return;
+    // Если имя владельца не введено — берём из настроек по умолчанию
+    const finalOwnerName = addForm.owner_name.trim() || business?.default_consignment_owner || '';
+    const finalOwnerEmail = addForm.owner_email.trim() || business?.default_consignment_owner_email || '';
+    if (!finalOwnerName || !addForm.brand || !addForm.model || !addForm.owner_price || !addForm.sale_price) return;
     setSaving(true);
     try {
       const user = await base44.auth.me();
       const emp = window.__barakatEmployee;
       await base44.entities.ConsignmentProduct.create({
         ...addForm,
+        owner_name: finalOwnerName,
+        owner_email: finalOwnerEmail,
         owner_price: parseFloat(addForm.owner_price),
         sale_price: parseFloat(addForm.sale_price),
         size_from: parseInt(addForm.size_from) || 39,
@@ -331,12 +336,15 @@ export default function ConsignmentProducts() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Владелец товара *</Label>
-                <Input value={addForm.owner_name} onChange={e => setAddForm({ ...addForm, owner_name: e.target.value })} placeholder="Имя владельца" className="mt-1" />
+                <Label>Владелец товара {business?.default_consignment_owner ? '(необяз.)' : '*'}</Label>
+                <Input value={addForm.owner_name} onChange={e => setAddForm({ ...addForm, owner_name: e.target.value })} placeholder={business?.default_consignment_owner || 'Имя владельца'} className="mt-1" />
+                {business?.default_consignment_owner && (
+                  <p className="text-xs text-teal-600 mt-1">💡 По умолчанию: <strong>{business.default_consignment_owner}</strong></p>
+                )}
               </div>
               <div>
                 <Label>Email владельца</Label>
-                <Input value={addForm.owner_email} onChange={e => setAddForm({ ...addForm, owner_email: e.target.value })} placeholder="email (необяз.)" className="mt-1" />
+                <Input value={addForm.owner_email} onChange={e => setAddForm({ ...addForm, owner_email: e.target.value })} placeholder={business?.default_consignment_owner_email || 'email (необяз.)'} className="mt-1" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -388,7 +396,7 @@ export default function ConsignmentProducts() {
           </div>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setAddOpen(false)}>Отмена</Button>
-            <Button onClick={handleAddSave} disabled={saving || !addForm.owner_name || !addForm.brand || !addForm.owner_price || !addForm.sale_price} className="bg-teal-600 hover:bg-teal-700">
+            <Button onClick={handleAddSave} disabled={saving || (!addForm.owner_name && !business?.default_consignment_owner) || !addForm.brand || !addForm.owner_price || !addForm.sale_price} className="bg-teal-600 hover:bg-teal-700">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Добавить'}
             </Button>
           </div>

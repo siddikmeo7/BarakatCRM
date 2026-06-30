@@ -21,7 +21,7 @@ import {
   Settings as SettingsIcon, Building2, Palette, Users, Plus, Trash2, Loader2, Save,
   CheckCircle, MessageCircle, Mail, Bell, Edit2, LogOut, History, Download, Shield,
   RotateCcw, AlertCircle, RefreshCw, ChevronDown, Lock, Database, Zap, Package,
-  ShoppingCart, Eye, Search, Check, Copy, ArrowLeftRight, Moon, Sun
+  ShoppingCart, Eye, Search, Check, Copy, ArrowLeftRight, Moon, Sun, PackageOpen
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
@@ -68,7 +68,8 @@ export default function Settings() {
   const [formData, setFormData] = useState({
     name: '', phone: '', address: '', language: 'ru',
     default_color: 'Чёрный', default_size_from: 39, default_size_to: 44,
-    default_pairs_per_box: 6, default_product_type: 'Туфли', low_stock_limit: 2
+    default_pairs_per_box: 6, default_product_type: 'Туфли', low_stock_limit: 2,
+    default_consignment_owner: '', default_consignment_owner_email: ''
   });
 
   const [roles, setRoles] = useState([]);
@@ -133,7 +134,7 @@ export default function Settings() {
             const biz = bizList[0];
             setBusiness(biz);
             setLang(biz.language || 'ru');
-            setFormData({ name: biz.name || '', phone: biz.phone || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2 });
+            setFormData({ name: biz.name || '', phone: biz.phone || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
           }
         }
         setLoading(false);
@@ -146,7 +147,7 @@ export default function Settings() {
         const biz = businesses[0];
         setBusiness(biz);
         setLang(biz.language || 'ru');
-        setFormData({ name: biz.name || '', phone: biz.phone || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2 });
+        setFormData({ name: biz.name || '', phone: biz.phone || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
 
         let rolesData = await base44.entities.Role.filter({ business_id: biz.id });
         const hasSeller = rolesData.some(r => r.name === 'Продавец');
@@ -504,6 +505,18 @@ export default function Settings() {
               <div><Label>{t(lang,'settings_size_to')}</Label><Input type="text" pattern="[0-9]*" inputMode="numeric" value={formData.default_size_to} onChange={(e) => { const val = e.target.value.replace(/[^0-9]/g, ''); setFormData({ ...formData, default_size_to: val ? parseInt(val) : '' }); }} className="mt-1.5" /></div>
               <div><Label>{t(lang,'settings_pairs_per_box')}</Label><Select value={String(formData.default_pairs_per_box)} onValueChange={(v) => setFormData({ ...formData, default_pairs_per_box: parseInt(v) })}><SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger><SelectContent>{[4, 6, 8, ...(business?.custom_pairs_per_box || [])].sort((a, b) => a - b).map(v => <SelectItem key={v} value={String(v)}>{v} пар в коробке</SelectItem>)}</SelectContent></Select></div>
               <div><Label className="flex items-center gap-2">🔴 Лимит «Мало на складе» (коробок)</Label><div className="flex items-center gap-3 mt-1.5"><Input type="text" inputMode="numeric" pattern="[0-9]*" value={formData.low_stock_limit} onChange={(e) => { const val = e.target.value.replace(/[^0-9]/g, ''); setFormData({ ...formData, low_stock_limit: val ? parseInt(val) : 0 }); }} className="w-24" /><p className="text-xs text-slate-500">Товары с ≤ <strong>{formData.low_stock_limit}</strong> коробок будут подсвечены красным</p></div></div>
+            </div>
+
+            <div className="mt-4 p-4 bg-teal-50 dark:bg-teal-900/20 rounded-xl border border-teal-200 dark:border-teal-800">
+              <div className="flex items-center gap-2 mb-3">
+                <PackageOpen className="w-4 h-4 text-teal-600" />
+                <h4 className="text-sm font-semibold text-teal-700 dark:text-teal-300">Владелец по умолчанию для реализации</h4>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">При добавлении чужого товара имя этого владельца подставится автоматически. Можно не вводить имя каждый раз — система возьмёт его отсюда.</p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div><Label>Имя владельца</Label><Input value={formData.default_consignment_owner} onChange={(e) => setFormData({ ...formData, default_consignment_owner: e.target.value })} placeholder="Напр. Ахмад" className="mt-1.5" /></div>
+                <div><Label>Email владельца (необяз.)</Label><Input value={formData.default_consignment_owner_email} onChange={(e) => setFormData({ ...formData, default_consignment_owner_email: e.target.value })} placeholder="email (необяз.)" className="mt-1.5" /></div>
+              </div>
             </div>
           </CollapsibleContent>
         </Collapsible></div> : null}
