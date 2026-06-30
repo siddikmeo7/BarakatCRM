@@ -17,6 +17,7 @@ import {
   Plus, 
   ShoppingCart, 
   Package,
+  PackageOpen,
   Box,
   Layers,
   Hash,
@@ -43,6 +44,8 @@ export default function Sales() {
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
+  const [consignmentProducts, setConsignmentProducts] = useState([]);
+  const [consignmentSales, setConsignmentSales] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +71,7 @@ export default function Sales() {
   
   const [formData, setFormData] = useState({
     product_id: '',
+    is_consignment: false,
     boxes_sold: 1,
     custom_sale_price: '',
     is_debt: false,
@@ -114,15 +118,19 @@ export default function Sales() {
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
-        const [salesData, productsData, warehousesData, customersData] = await Promise.all([
+        const [salesData, productsData, warehousesData, customersData, consignmentProdData, consignmentSaleData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
           base44.entities.Warehouse.filter({ business_id: biz.id }),
-          base44.entities.Customer.filter({ business_id: biz.id })
+          base44.entities.Customer.filter({ business_id: biz.id }),
+          base44.entities.ConsignmentProduct.filter({ business_id: biz.id }),
+          base44.entities.ConsignmentSale.filter({ business_id: biz.id })
         ]);
         
         setSales(salesData.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
         setProducts(productsData);
+        setConsignmentProducts(consignmentProdData);
+        setConsignmentSales(consignmentSaleData);
         setWarehouses(warehousesData);
         setCustomers(customersData);
       }
@@ -133,18 +141,74 @@ export default function Sales() {
     }
   };
 
-  const selectedProduct = products.find(p => p.id === formData.product_id);
+  const selectedProduct = formData.is_consignment 
+    ? consignmentProducts.find(p => p.id === formData.product_id)
+    : products.find(p => p.id === formData.product_id);
   
   // Расчёты для выбранного товара
   const pairsSold = formData.boxes_sold * (selectedProduct?.pairs_per_box || 6);
   const itemsSold = pairsSold * 2;
   const actualSalePrice = formData.custom_sale_price ? parseFloat(formData.custom_sale_price) : (selectedProduct?.sale_price || 0);
   const totalAmount = formData.boxes_sold * actualSalePrice;
-  const profit = formData.boxes_sold * (actualSalePrice - (selectedProduct?.purchase_price || 0));
+  const ownerPrice = formData.is_consignment ? (selectedProduct?.owner_price || 0) : (selectedProduct?.purchase_price || 0);
+  const profit = formData.boxes_sold * (actualSalePrice - ownerPrice);
+  const ownerAmount = formData.is_consignment ? formData.boxes_sold * ownerPrice : 0;
 
   const handleSave = async () => {
     if (!formData.product_id || formData.boxes_sold < 1) return;
     
+    // === Продажа товара на реализации (чужого товара) ===
+    if (formData.is_consignment) {
+      setSaving(true);
+      try {
+        const user = await base44.auth.me();
+        const emp = window.__barakatEmployee;
+        const consignmentSaleData = {
+          business_id: business.id,
+          product_id: formData.product_id,
+          seller_email: user.email,
+          seller_name: emp?.name || user.full_name || user.email,
+          owner_name: selectedProduct?.owner_name || '',
+          owner_email: selectedProduct?.owner_email || '',
+          brand: selectedProduct?.brand || '',
+          model: selectedProduct?.model || '',
+          boxes_sold: parseInt(formData.boxes_sold),
+          pairs_sold: pairsSold,
+          items_sold: itemsSold,
+          owner_price: selectedProduct?.owner_price || 0,
+          sale_price: actualSalePrice,
+          total_amount: totalAmount,
+          seller_profit: profit,
+          owner_amount: ownerAmount,
+          sale_date: new Date().toISOString(),
+          customer_name: formData.customer_name || '',
+          is_cancelled: false
+        };
+        const created = await base44.entities.ConsignmentSale.create(consignmentSaleData);
+        const newStock = Math.max(0, (selectedProduct.boxes_in_stock || 0) - parseInt(formData.boxes_sold));
+        await base44.entities.ConsignmentProduct.update(formData.product_id, { boxes_in_stock: newStock });
+        await base44.entities.ActivityLog.create({
+          business_id: business.id,
+          action_type: 'create',
+          entity_type: 'ConsignmentSale',
+          entity_id: created.id,
+          entity_data: consignmentSaleData,
+          user_email: user.email,
+          description: `Реализация: ${selectedProduct?.brand} ${selectedProduct?.model}, ${formData.boxes_sold} кор. × ${actualSalePrice.toLocaleString()} с. = ${totalAmount.toLocaleString()} с. (прибыль: ${profit.toLocaleString()} с., владельцу: ${ownerAmount.toLocaleString()} с.)`
+        });
+        await loadData();
+        setDialogOpen(false);
+        setFormData({ product_id: '', is_consignment: false, boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_address: '', partial_payment: 0 });
+        setProductSearch('');
+      } catch (e) {
+        console.error('Error saving consignment sale:', e);
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+    
+    // === Обычная продажа (свой товар) ===
     setSaving(true);
     const partialPay = formData.is_debt ? parseFloat(formData.partial_payment) || 0 : 0;
     const remainingDebt = totalAmount - partialPay;
@@ -238,7 +302,7 @@ export default function Sales() {
       
       await loadData();
       setDialogOpen(false);
-      setFormData({ product_id: '', boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_address: '', partial_payment: 0 });
+      setFormData({ product_id: '', is_consignment: false, boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_address: '', partial_payment: 0 });
       setProductSearch('');
     } catch (error) {
       console.error('Error saving sale:', error);
@@ -261,13 +325,20 @@ export default function Sales() {
   // Если у сотрудника view_own_sales_only — показываем только его продажи
   const currentUserEmail = window.__barakatEmployee?.user_email || null;
 
+  // Объединяем обычные продажи и продажи на реализации
+  const unifiedSales = [
+    ...sales.map(s => ({ ...s, _isConsignment: false })),
+    ...consignmentSales.map(s => ({ ...s, _isConsignment: true, profit: s.seller_profit || 0, is_debt: false }))
+  ];
   // Фильтрация продаж для отображения в списке (все, включая отменённые)
-  let filteredSales = sales.filter(sale => {
+  let filteredSales = unifiedSales.filter(sale => {
     // Если включен режим "только свои продажи"
     if (can('view_own_sales_only') && !can('view_sales') && currentUserEmail) {
       if (sale.created_by !== currentUserEmail) return false;
     }
-    const product = products.find(p => p.id === sale.product_id);
+    const product = sale._isConsignment 
+      ? consignmentProducts.find(p => p.id === sale.product_id)
+      : products.find(p => p.id === sale.product_id);
     const customer = customers.find(c => c.id === sale.customer_id);
     const q = search.toLowerCase().trim();
     const fullProductName = `${product?.brand || ''} ${product?.model || ''}`.toLowerCase();
@@ -324,10 +395,18 @@ export default function Sales() {
     revenue: acc.revenue + (sale.total_amount || 0),
     profit: acc.profit + (sale.profit || 0)
   }), { boxes: 0, pairs: 0, items: 0, revenue: 0, profit: 0 });
+  const consignmentStats = activeSales.filter(s => s._isConsignment).reduce((acc, s) => ({
+    profit: acc.profit + (s.seller_profit || 0),
+    ownerAmount: acc.ownerAmount + (s.owner_amount || 0),
+    count: acc.count + 1
+  }), { profit: 0, ownerAmount: 0, count: 0 });
 
   // Поиск товаров для выбора (поиск по бренду+модели вместе или по отдельности)
-  const filteredProducts = products.filter(p => {
-    if ((p.boxes_in_stock || 0) === 0) return false;
+  const allAvailableProducts = [
+    ...products.filter(p => (p.boxes_in_stock || 0) > 0).map(p => ({ ...p, _isConsignment: false })),
+    ...consignmentProducts.filter(p => (p.boxes_in_stock || 0) > 0).map(p => ({ ...p, _isConsignment: true }))
+  ];
+  const filteredProducts = allAvailableProducts.filter(p => {
     const q = productSearch.toLowerCase().trim();
     if (!q) return true;
     const fullName = `${p.brand || ''} ${p.model || ''}`.toLowerCase();
@@ -424,6 +503,24 @@ export default function Sales() {
           )}
         </div>
       </div>
+
+      {/* Consignment stats */}
+      {consignmentStats.count > 0 && can('view_profit') && (
+        <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3 border border-teal-200 dark:border-teal-800 flex flex-wrap items-center gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <PackageOpen className="w-4 h-4 text-teal-600" />
+            <span className="font-medium text-teal-700 dark:text-teal-300">Реализация: {consignmentStats.count} продаж</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-500">Ваша прибыль:</span>
+            <span className="font-bold text-emerald-600">+{consignmentStats.profit.toLocaleString()} с.</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-500">Владельцам товаров:</span>
+            <span className="font-bold text-amber-600">{consignmentStats.ownerAmount.toLocaleString()} с.</span>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 space-y-2">
@@ -536,7 +633,7 @@ export default function Sales() {
             <tbody className="divide-y divide-slate-100">
               {paginatedSales.map((sale, idx) => {
                 const globalIdx = (salesPage - 1) * SALES_PAGE_SIZE + idx;
-                const product = products.find(p => p.id === sale.product_id);
+                const product = sale._isConsignment ? consignmentProducts.find(p => p.id === sale.product_id) : products.find(p => p.id === sale.product_id);
                 const customer = customers.find(c => c.id === sale.customer_id);
                 const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
                                   displayUnit === 'pairs' ? sale.pairs_sold : sale.items_sold;
@@ -578,9 +675,12 @@ export default function Sales() {
                       {can('view_profit') ? `+${sale.profit?.toLocaleString()} с.` : '••• с.'}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-1 rounded-lg text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                        {sale.is_debt ? `${t(lang,'sales_in_debt')}${can('view_sale_customer') && customer?.name ? ` (${customer.name})` : ''}` : t(lang,'sales_cash')}
-                      </span>
+                      <div className="flex flex-col items-center gap-1">
+                        <span className={`px-2 py-1 rounded-lg text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                          {sale.is_debt ? `${t(lang,'sales_in_debt')}${can('view_sale_customer') && customer?.name ? ` (${customer.name})` : ''}` : t(lang,'sales_cash')}
+                        </span>
+                        {sale._isConsignment && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-700">РЕАЛИЗ.</span>}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -595,7 +695,7 @@ export default function Sales() {
         {/* Mobile Cards */}
         <div className="md:hidden divide-y divide-slate-100">
           {paginatedSales.map(sale => {
-            const product = products.find(p => p.id === sale.product_id);
+            const product = sale._isConsignment ? consignmentProducts.find(p => p.id === sale.product_id) : products.find(p => p.id === sale.product_id);
             const customer = customers.find(c => c.id === sale.customer_id);
             return (
               <div
@@ -689,7 +789,7 @@ export default function Sales() {
         ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {paginatedSales.map(sale => {
-          const product = products.find(p => p.id === sale.product_id);
+          const product = sale._isConsignment ? consignmentProducts.find(p => p.id === sale.product_id) : products.find(p => p.id === sale.product_id);
           const customer = customers.find(c => c.id === sale.customer_id);
           const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
                             displayUnit === 'pairs' ? sale.pairs_sold : sale.items_sold;
@@ -785,7 +885,7 @@ export default function Sales() {
       {selectedSale && (
         <SaleDetailDialog
           sale={selectedSale}
-          product={products.find(p => p.id === selectedSale.product_id)}
+          product={selectedSale._isConsignment ? (consignmentProducts.find(p => p.id === selectedSale.product_id) || products.find(p => p.id === selectedSale.product_id)) : products.find(p => p.id === selectedSale.product_id)}
           customer={customers.find(c => c.id === selectedSale.customer_id)}
           onClose={() => setSelectedSale(null)}
           onUpdated={() => { loadData(); setSelectedSale(null); }}
@@ -830,10 +930,10 @@ export default function Sales() {
                     <div 
                       key={product.id}
                       onClick={() => {
-                        setFormData({ ...formData, product_id: product.id });
+                        setFormData({ ...formData, product_id: product.id, is_consignment: product._isConsignment, custom_sale_price: '' });
                         setProductSearch(`${product.brand} ${product.model}`);
                       }}
-                      className={`p-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 ${formData.product_id === product.id ? 'bg-indigo-50' : ''}`}
+                      className={`p-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 ${formData.product_id === product.id ? (product._isConsignment ? 'bg-teal-50' : 'bg-indigo-50') : ''}`}
                     >
                       {product.photo_url ? (
                         <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
@@ -843,13 +943,22 @@ export default function Sales() {
                         </div>
                       )}
                       <div className="flex-1">
-                        <p className="font-medium text-slate-900">{product.brand} {product.model}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-slate-900">{product.brand} {product.model}</p>
+                          {product._isConsignment && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-700">РЕАЛИЗАЦИЯ</span>}
+                        </div>
                         <p className="text-xs text-slate-400">
                           {[product.color, product.size_from && product.size_to ? `${product.size_from}–${product.size_to}` : null].filter(Boolean).join(' · ')}
                         </p>
-                        <p className="text-sm text-slate-500">
-                          {product.boxes_in_stock} {t(lang,'sales_boxes_label').toLowerCase()} • {product.sale_price?.toLocaleString()} с.
-                        </p>
+                        {product._isConsignment ? (
+                          <p className="text-sm text-slate-500">
+                            {product.boxes_in_stock} кор. • 👤 {product.owner_name} • +{((product.sale_price || 0) - (product.owner_price || 0)).toLocaleString()} с./кор
+                          </p>
+                        ) : (
+                          <p className="text-sm text-slate-500">
+                            {product.boxes_in_stock} {t(lang,'sales_boxes_label').toLowerCase()} • {product.sale_price?.toLocaleString()} с.
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -862,7 +971,7 @@ export default function Sales() {
 
             {/* Selected Product Info */}
             {selectedProduct && (
-              <div className="p-4 bg-indigo-50 rounded-xl">
+              <div className={`p-4 rounded-xl ${formData.is_consignment ? 'bg-teal-50' : 'bg-indigo-50'}`}>
                 <div className="flex items-center gap-3 mb-3">
                   {selectedProduct.photo_url ? (
                     <img src={selectedProduct.photo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
@@ -872,15 +981,32 @@ export default function Sales() {
                     </div>
                   )}
                   <div>
-                    <p className="font-semibold text-slate-900">{selectedProduct.brand} {selectedProduct.model}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-slate-900">{selectedProduct.brand} {selectedProduct.model}</p>
+                      {formData.is_consignment && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-200 text-teal-800">РЕАЛИЗАЦИЯ</span>}
+                    </div>
                     <p className="text-xs text-slate-500">
                       {[selectedProduct.color, selectedProduct.size_from && selectedProduct.size_to ? `${selectedProduct.size_from}–${selectedProduct.size_to}` : null].filter(Boolean).join(' · ')}
                     </p>
-                    <p className="text-sm text-slate-600">
-                      {t(lang,'sales_on_stock')}: {selectedProduct.boxes_in_stock} {t(lang,'sales_boxes_label').toLowerCase()}
-                    </p>
+                    {formData.is_consignment ? (
+                      <>
+                        <p className="text-sm text-slate-600">👤 Владелец: {selectedProduct.owner_name}</p>
+                        <p className="text-sm text-slate-600">На складе: {selectedProduct.boxes_in_stock} кор.</p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-slate-600">
+                        {t(lang,'sales_on_stock')}: {selectedProduct.boxes_in_stock} {t(lang,'sales_boxes_label').toLowerCase()}
+                      </p>
+                    )}
                   </div>
                 </div>
+                {formData.is_consignment && (
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-teal-200">
+                    <div className="text-center"><p className="text-xs text-slate-500">Цена владельца</p><p className="font-semibold text-amber-600">{selectedProduct.owner_price?.toLocaleString()} с.</p></div>
+                    <div className="text-center"><p className="text-xs text-slate-500">Цена продажи</p><p className="font-semibold text-slate-900">{actualSalePrice.toLocaleString()} с.</p></div>
+                    <div className="text-center"><p className="text-xs text-slate-500">Прибыль/кор</p><p className="font-semibold text-emerald-600">+{(actualSalePrice - (selectedProduct.owner_price || 0)).toLocaleString()} с.</p></div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -943,18 +1069,26 @@ export default function Sales() {
                   <p className="text-lg font-semibold text-emerald-600">+{profit.toLocaleString()} с.</p>
                 </div>
                 )}
+                {formData.is_consignment && can('view_profit') && (
+                <div>
+                  <p className="text-sm text-slate-500">Владельцу</p>
+                  <p className="text-lg font-semibold text-amber-600">{ownerAmount.toLocaleString()} с.</p>
+                </div>
+                )}
               </div>
             )}
 
             {/* Debt Sale */}
-            <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-xl">
+            <div className={`flex items-center gap-3 p-4 rounded-xl ${formData.is_consignment ? 'bg-slate-100 opacity-60' : 'bg-orange-50'}`}>
               <Checkbox 
                 id="is_debt"
                 checked={formData.is_debt}
+                disabled={formData.is_consignment}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_debt: checked })}
               />
               <label htmlFor="is_debt" className="font-medium text-slate-900 cursor-pointer">
                 {t(lang,'sales_debt_sale')}
+                {formData.is_consignment && <span className="text-xs text-slate-400 ml-1">(недоступно для реализации)</span>}
               </label>
             </div>
 
