@@ -12,6 +12,7 @@ import {
   Box,
   DollarSign,
   Package,
+  PackageOpen,
   Percent,
   Settings2,
   RefreshCw,
@@ -52,6 +53,7 @@ export default function Analytics() {
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [consignmentSales, setConsignmentSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
   const [currency, setCurrency] = useState('TJS');
@@ -150,17 +152,19 @@ export default function Analytics() {
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
-        const [salesData, productsData, customersData, expensesData] = await Promise.all([
+        const [salesData, productsData, customersData, expensesData, consignmentData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
           base44.entities.Customer.filter({ business_id: biz.id }),
           base44.entities.Expense.filter({ business_id: biz.id }),
+          base44.entities.ConsignmentSale.filter({ business_id: biz.id }),
         ]);
         
         setSales(salesData);
         setProducts(productsData);
         setCustomers(customersData);
         setExpenses(expensesData);
+        setConsignmentSales(consignmentData);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -216,6 +220,23 @@ export default function Analytics() {
   const lossSales = filteredSales.filter(s => (s.profit || 0) < 0);
   const totalLoss = lossSales.reduce((sum, s) => sum + (s.profit || 0), 0); // отрицательное число
 
+  // Продажи на реализации за период
+  const filteredConsignmentSales = consignmentSales.filter(s => {
+    if (s.is_cancelled) return false;
+    if (!dateRange?.from) return true;
+    try {
+      const saleDate = parseISO(s.sale_date || s.created_date);
+      const startDate = startOfDay(dateRange.from);
+      const endDate = endOfDay(dateRange.to || dateRange.from);
+      return isWithinInterval(saleDate, { start: startDate, end: endDate });
+    } catch (e) {
+      return false;
+    }
+  });
+  const consignmentProfit = filteredConsignmentSales.reduce((sum, s) => sum + (s.seller_profit || 0), 0);
+  const consignmentBoxes = filteredConsignmentSales.reduce((sum, s) => sum + (s.boxes_sold || 0), 0);
+  const consignmentOwnerAmount = filteredConsignmentSales.reduce((sum, s) => sum + (s.owner_amount || 0), 0);
+
   // Расходы за период
   const filteredExpenses = expenses.filter(e => {
     if (!dateRange?.from) return true;
@@ -228,8 +249,8 @@ export default function Analytics() {
   });
   const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
 
-  // Чистая прибыль = прибыль от продаж − расходы
-  const netProfit = totalProfit - totalExpenses;
+  // Чистая прибыль = прибыль от продаж + прибыль с реализации − расходы
+  const netProfit = totalProfit + consignmentProfit - totalExpenses;
 
   // Маржа прибыли
   const profitMargin = totalRevenue ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0;
@@ -400,7 +421,7 @@ export default function Analytics() {
 
       {/* Loss + Expenses + Net Profit row */}
       {can('view_profit') && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {/* Убытки от продаж — кликабельная карточка */}
           <button
             onClick={() => lossSales.length > 0 && setShowLossModal(true)}
@@ -447,6 +468,19 @@ export default function Analytics() {
                 {hideData ? masked : `${Math.round(netProfit).toLocaleString()} с.`}
               </p>
               <p className="text-xs text-slate-400">после расходов</p>
+            </div>
+          </div>
+          {/* Прибыль с реализации чужих товаров */}
+          <div className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 ${consignmentProfit > 0 ? 'bg-teal-50 border-teal-200' : 'bg-white border-slate-100'}`}>
+            <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center flex-shrink-0">
+              <PackageOpen className="w-6 h-6 text-teal-600" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500 font-medium">Прибыль с реализации</p>
+              <p className={`text-2xl font-bold ${consignmentProfit > 0 ? 'text-teal-600' : 'text-slate-400'}`}>
+                {hideData ? masked : `${Math.round(consignmentProfit).toLocaleString()} с.`}
+              </p>
+              <p className="text-xs text-slate-400">{consignmentBoxes} кор. · владельцам: {hideData ? masked : `${Math.round(consignmentOwnerAmount).toLocaleString()} с.`}</p>
             </div>
           </div>
         </div>

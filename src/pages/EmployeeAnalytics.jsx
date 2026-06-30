@@ -11,7 +11,7 @@ import {
 import {
   Users, TrendingUp, ShoppingCart, DollarSign, Eye, EyeOff,
   BarChart2, GitCompare, User, Target, Zap, CheckCircle,
-  CreditCard, ChevronDown, Package, RefreshCw, Trophy,
+  CreditCard, ChevronDown, Package, PackageOpen, RefreshCw, Trophy,
   Medal, Star, Clock, Calendar, ArrowUpRight, ArrowDownRight,
   List, Filter
 } from 'lucide-react';
@@ -80,13 +80,14 @@ function filterSales(sales, from, to) {
   });
 }
 
-function buildStats(employees, salesList, allTimeSalesMap) {
+function buildStats(employees, salesList, allTimeSalesMap, consignmentList = []) {
   const map = {};
   employees.forEach(emp => {
     map[emp.user_email] = {
       id: emp.id, name: emp.name || emp.user_email.split('@')[0],
       email: emp.user_email, avatar: (emp.name || emp.user_email).charAt(0).toUpperCase(),
       count: 0, revenue: 0, profit: 0, boxes: 0, debtCount: 0, debtAmount: 0, cancelCount: 0,
+      consignmentCount: 0, consignmentProfit: 0, consignmentBoxes: 0, consignmentOwnerAmount: 0,
       allTime: allTimeSalesMap[emp.user_email] || { count: 0, revenue: 0, profit: 0, debtCount: 0 }
     };
   });
@@ -96,6 +97,7 @@ function buildStats(employees, salesList, allTimeSalesMap) {
       id: null, name: email.split('@')[0], email,
       avatar: email.charAt(0).toUpperCase(),
       count: 0, revenue: 0, profit: 0, boxes: 0, debtCount: 0, debtAmount: 0, cancelCount: 0,
+      consignmentCount: 0, consignmentProfit: 0, consignmentBoxes: 0, consignmentOwnerAmount: 0,
       allTime: allTimeSalesMap[email] || { count: 0, revenue: 0, profit: 0, debtCount: 0 }
     };
     map[email].count++;
@@ -103,6 +105,26 @@ function buildStats(employees, salesList, allTimeSalesMap) {
     map[email].profit += s.profit || 0;
     map[email].boxes += s.boxes_sold || 0;
     if (s.is_debt) { map[email].debtCount++; map[email].debtAmount += s.total_amount || 0; }
+  });
+  // Добавляем прибыль с реализации чужих товаров (только seller_profit, не owner_amount)
+  consignmentList.forEach(s => {
+    if (s.is_cancelled) return;
+    const email = s.seller_email || s.created_by; if (!email) return;
+    if (!map[email]) map[email] = {
+      id: null, name: email.split('@')[0], email,
+      avatar: email.charAt(0).toUpperCase(),
+      count: 0, revenue: 0, profit: 0, boxes: 0, debtCount: 0, debtAmount: 0, cancelCount: 0,
+      consignmentCount: 0, consignmentProfit: 0, consignmentBoxes: 0, consignmentOwnerAmount: 0,
+      allTime: allTimeSalesMap[email] || { count: 0, revenue: 0, profit: 0, debtCount: 0 }
+    };
+    map[email].consignmentCount++;
+    map[email].consignmentProfit += s.seller_profit || 0;
+    map[email].consignmentBoxes += s.boxes_sold || 0;
+    map[email].consignmentOwnerAmount += s.owner_amount || 0;
+    // Прибыль с реализации добавляется в общую прибыль сотрудника
+    map[email].profit += s.seller_profit || 0;
+    // Коробки с реализации добавляются в общее количество
+    map[email].boxes += s.boxes_sold || 0;
   });
   return Object.values(map);
 }
@@ -135,6 +157,7 @@ export default function EmployeeAnalytics() {
   const [loading, setLoading]         = useState(true);
   const [employees, setEmployees]     = useState([]);
   const [sales, setSales]             = useState([]);
+  const [consignmentSales, setConsignmentSales] = useState([]);
   const [period, setPeriod]           = useState('30d');
   const [hideAmounts, setHideAmounts] = useState(false);
   const [sortBy, setSortBy]           = useState('revenue');
@@ -155,12 +178,14 @@ export default function EmployeeAnalytics() {
     try {
       const biz = window.__barakatBusiness;
       if (!biz) return;
-      const [emps, salesData] = await Promise.all([
+      const [emps, salesData, consignmentData] = await Promise.all([
         base44.entities.Employee.filter({ business_id: biz.id }),
         base44.entities.Sale.filter({ business_id: biz.id }),
+        base44.entities.ConsignmentSale.filter({ business_id: biz.id }),
       ]);
       setEmployees(emps);
       setSales(salesData);
+      setConsignmentSales(consignmentData);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -170,6 +195,8 @@ export default function EmployeeAnalytics() {
 
   const periodSales   = useMemo(() => filterSales(sales, from, to),   [sales, from, to]);
   const prevSales     = useMemo(() => filterSales(sales, pFrom, pTo), [sales, pFrom, pTo]);
+  const periodConsignment = useMemo(() => filterSales(consignmentSales, from, to), [consignmentSales, from, to]);
+  const prevConsignment   = useMemo(() => filterSales(consignmentSales, pFrom, pTo), [consignmentSales, pFrom, pTo]);
 
   const allTimeSalesMap = useMemo(() => {
     const map = {};
@@ -180,11 +207,17 @@ export default function EmployeeAnalytics() {
       map[e].profit += s.profit || 0;
       if (s.is_debt) map[e].debtCount++;
     });
+    // Добавляем прибыль с реализации чужих товаров (только seller_profit)
+    consignmentSales.filter(s => !s.is_cancelled).forEach(s => {
+      const e = s.seller_email || s.created_by; if (!e) return;
+      if (!map[e]) map[e] = { count: 0, revenue: 0, profit: 0, debtCount: 0 };
+      map[e].profit += s.seller_profit || 0;
+    });
     return map;
-  }, [sales]);
+  }, [sales, consignmentSales]);
 
   const employeeStats = useMemo(() => {
-    const stats = buildStats(employees, periodSales, allTimeSalesMap);
+    const stats = buildStats(employees, periodSales, allTimeSalesMap, periodConsignment);
     return stats.sort((a, b) => {
       if (sortBy === 'count')  return b.count - a.count;
       if (sortBy === 'profit') return b.profit - a.profit;
@@ -195,7 +228,7 @@ export default function EmployeeAnalytics() {
   }, [periodSales, employees, sortBy, allTimeSalesMap]);
 
   const prevStatsMap = useMemo(() => {
-    const stats = buildStats(employees, prevSales, allTimeSalesMap);
+    const stats = buildStats(employees, prevSales, allTimeSalesMap, prevConsignment);
     const map = {};
     stats.forEach(e => { map[e.email] = e; });
     return map;
@@ -204,16 +237,18 @@ export default function EmployeeAnalytics() {
   const totals = useMemo(() => ({
     count:    periodSales.length,
     revenue:  periodSales.reduce((s, x) => s + (x.total_amount || 0), 0),
-    profit:   periodSales.reduce((s, x) => s + (x.profit || 0), 0),
-    boxes:    periodSales.reduce((s, x) => s + (x.boxes_sold || 0), 0),
+    profit:   periodSales.reduce((s, x) => s + (x.profit || 0), 0) + periodConsignment.reduce((s, x) => s + (x.seller_profit || 0), 0),
+    boxes:    periodSales.reduce((s, x) => s + (x.boxes_sold || 0), 0) + periodConsignment.reduce((s, x) => s + (x.boxes_sold || 0), 0),
     debtCount: periodSales.filter(s => s.is_debt).length,
-  }), [periodSales]);
+    consignmentProfit: periodConsignment.reduce((s, x) => s + (x.seller_profit || 0), 0),
+    consignmentCount: periodConsignment.length,
+  }), [periodSales, periodConsignment]);
 
   const prevTotals = useMemo(() => ({
     count:   prevSales.length,
     revenue: prevSales.reduce((s, x) => s + (x.total_amount || 0), 0),
-    profit:  prevSales.reduce((s, x) => s + (x.profit || 0), 0),
-  }), [prevSales]);
+    profit:  prevSales.reduce((s, x) => s + (x.profit || 0), 0) + prevConsignment.reduce((s, x) => s + (x.seller_profit || 0), 0),
+  }), [prevSales, prevConsignment]);
 
   // Timeline data
   const timelineData = useMemo(() => {
@@ -780,6 +815,24 @@ export default function EmployeeAnalytics() {
                     <MiniStat label="Продаж в долг" value={emp.allTime.debtCount} color="text-red-500" />
                   </div>
                 </div>
+
+                {/* Consignment stats */}
+                {emp.consignmentCount > 0 && (
+                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+                    <h3 className="font-semibold text-slate-900 mb-3 text-sm flex items-center gap-2">
+                      <PackageOpen className="w-4 h-4 text-teal-500" /> Чужие товары (реализация)
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                      <MiniStat label="Продаж чужих" value={emp.consignmentCount} color="text-teal-600" />
+                      <MiniStat label="Коробок продано" value={emp.consignmentBoxes} color="text-indigo-600" />
+                      <MiniStat label="Прибыль с реализации" value={fmt(emp.consignmentProfit)} color="text-emerald-600" />
+                      <MiniStat label="Владельцам товаров" value={fmt(emp.consignmentOwnerAmount)} color="text-amber-600" />
+                    </div>
+                    <div className="mt-3 p-2 bg-teal-50 rounded-lg text-xs text-teal-700 text-center">
+                      💡 Из общей прибыли сотрудника {fmt(emp.profit)}, прибыль с реализации чужих товаров составляет {fmt(emp.consignmentProfit)}. Сумма {fmt(emp.consignmentOwnerAmount)} должна быть выплачена владельцам.
+                    </div>
+                  </div>
+                )}
 
                 {/* Radar */}
                 {emp.count > 0 && activeEmps.length > 1 && (
