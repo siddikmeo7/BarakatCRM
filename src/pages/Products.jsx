@@ -32,6 +32,7 @@ import {
   DollarSign,
   CheckCheck,
   Layers,
+  PackageOpen,
   AlertCircle,
   Info,
   ChevronDown,
@@ -96,6 +97,9 @@ export default function Products() {
   const [formData, setFormData] = useState({
     brand: '',
     model: '',
+    is_consignment: false,
+    owner_name: '',
+    owner_email: '',
     product_type: 'Туфли',
     color: 'Чёрный',
     size_from: 39,
@@ -130,17 +134,22 @@ export default function Products() {
       if (!cachedBiz) return;
 
       // Загружаем свежие данные бизнеса из БД, чтобы custom_pairs_per_box и другие поля были актуальны
-      const [bizList, productsData, warehousesData] = await Promise.all([
+      const [bizList, productsData, warehousesData, consignmentData] = await Promise.all([
         base44.entities.Business.filter({ id: cachedBiz.id }),
         base44.entities.Product.filter({ business_id: cachedBiz.id }),
-        base44.entities.Warehouse.filter({ business_id: cachedBiz.id })
+        base44.entities.Warehouse.filter({ business_id: cachedBiz.id }),
+        base44.entities.ConsignmentProduct.filter({ business_id: cachedBiz.id })
       ]);
 
       const biz = bizList[0] || cachedBiz;
       setBusiness(biz);
       setLang(biz.language || 'ru');
-      // Дедупликация по id на случай двойной загрузки
-      const uniqueProducts = [...new Map(productsData.map(p => [p.id, p])).values()];
+      // Объединяем свои товары и товары на реализации
+      const mergedProducts = [
+        ...productsData.map(p => ({ ...p, _isConsignment: false })),
+        ...consignmentData.map(p => ({ ...p, _isConsignment: true, purchase_price: p.owner_price }))
+      ];
+      const uniqueProducts = [...new Map(mergedProducts.map(p => [p.id, p])).values()];
       setProducts(uniqueProducts);
       setWarehouses(warehousesData);
 
@@ -180,12 +189,15 @@ export default function Products() {
       setFormData({
         brand: product.brand || '',
         model: product.model || '',
+        is_consignment: product._isConsignment || false,
+        owner_name: product.owner_name || '',
+        owner_email: product.owner_email || '',
         product_type: product.product_type || 'Туфли',
         color: product.color || 'Чёрный',
         size_from: product.size_from || 39,
         size_to: product.size_to || 44,
         pairs_per_box: product.pairs_per_box || 6,
-        purchase_price: product.purchase_price || '',
+        purchase_price: product._isConsignment ? (product.owner_price || '') : (product.purchase_price || ''),
         sale_price: product.sale_price || '',
         boxes_in_stock: product.boxes_in_stock || 0,
         warehouse_id: product.warehouse_id || '',
@@ -196,6 +208,9 @@ export default function Products() {
       setFormData({
         brand: '',
         model: '',
+        is_consignment: false,
+        owner_name: '',
+        owner_email: '',
         product_type: business?.default_product_type || 'Туфли',
         color: business?.default_color || 'Чёрный',
         size_from: business?.default_size_from || 39,
@@ -230,6 +245,48 @@ export default function Products() {
 
     try {
       const user = await base44.auth.me().catch(() => ({ email: 'unknown' }));
+      const emp = window.__barakatEmployee;
+
+      // === Сохранение товара на реализации (чужой товар) ===
+      if (formData.is_consignment) {
+        const consignmentData = {
+          business_id: business.id,
+          owner_name: formData.owner_name || business?.default_consignment_owner || '',
+          owner_email: formData.owner_email || business?.default_consignment_owner_email || '',
+          seller_email: user.email,
+          seller_name: emp?.name || user.full_name || user.email,
+          brand: formData.brand,
+          model: formData.model,
+          product_type: formData.product_type,
+          color: formData.color,
+          size_from: parseInt(formData.size_from) || 39,
+          size_to: parseInt(formData.size_to) || 44,
+          pairs_per_box: parseInt(formData.pairs_per_box) || 6,
+          photo_url: formData.photo_url,
+          owner_price: parseFloat(formData.purchase_price) || 0,
+          sale_price: parseFloat(formData.sale_price) || 0,
+          boxes_in_stock: parseInt(formData.boxes_in_stock) || 0
+        };
+        if (editingProduct?._isConsignment) {
+          await base44.entities.ConsignmentProduct.update(editingProduct.id, consignmentData);
+          await base44.entities.ActivityLog.create({
+            business_id: business.id, action_type: 'update', entity_type: 'ConsignmentProduct',
+            entity_id: editingProduct.id, entity_data: consignmentData, user_email: user.email,
+            description: `Обновлён товар на реализации: ${consignmentData.brand} ${consignmentData.model} (владелец: ${consignmentData.owner_name})`
+          });
+        } else {
+          const created = await base44.entities.ConsignmentProduct.create(consignmentData);
+          await base44.entities.ActivityLog.create({
+            business_id: business.id, action_type: 'create', entity_type: 'ConsignmentProduct',
+            entity_id: created.id, entity_data: consignmentData, user_email: user.email,
+            description: `Добавлен товар на реализацию: ${consignmentData.brand} ${consignmentData.model} (${consignmentData.boxes_in_stock} кор., владелец: ${consignmentData.owner_name})`
+          });
+        }
+        setDialogOpen(false);
+        await loadData();
+        return;
+      }
+
       if (editingProduct) {
         // Вычисляем diff — что изменилось
         const changedFields = {};
@@ -298,7 +355,11 @@ export default function Products() {
           description: `Удалён товар: ${product.brand} ${product.model}`
         });
         
-        await base44.entities.Product.delete(productId);
+        if (product._isConsignment) {
+          await base44.entities.ConsignmentProduct.delete(productId);
+        } else {
+          await base44.entities.Product.delete(productId);
+        }
         await loadData();
       } catch (error) {
         console.error('Error deleting product:', error);
@@ -352,9 +413,10 @@ export default function Products() {
       if (bulkAction === 'delete') {
         await Promise.all(ids.map(async id => {
           const product = products.find(p => p.id === id);
-          await base44.entities.Product.delete(id);
+          const entity = product?._isConsignment ? base44.entities.ConsignmentProduct : base44.entities.Product;
+          await entity.delete(id);
           await base44.entities.ActivityLog.create({
-            business_id: business.id, action_type: 'delete', entity_type: 'Product',
+            business_id: business.id, action_type: 'delete', entity_type: product?._isConsignment ? 'ConsignmentProduct' : 'Product',
             entity_id: id, entity_data: product, user_email: user.email,
             description: `Удалён товар: ${product?.brand} ${product?.model}`
           });
@@ -369,7 +431,10 @@ export default function Products() {
           ? parseFloat(bulkValue) || 0
           : bulkValue;
         await Promise.all(ids.map(async id => {
-          await base44.entities.Product.update(id, { [field]: val });
+          const product = products.find(p => p.id === id);
+          const entity = product?._isConsignment ? base44.entities.ConsignmentProduct : base44.entities.Product;
+          const updateField = (product?._isConsignment && field === 'purchase_price') ? 'owner_price' : field;
+          await entity.update(id, { [updateField]: val });
         }));
         await base44.entities.ActivityLog.create({
           business_id: business.id, action_type: 'update', entity_type: 'Product',
@@ -702,7 +767,10 @@ export default function Products() {
                   )}
                   <div className="min-w-0 flex-1">
                   <span className="text-[10px] font-mono text-slate-300 select-none">{idx + 1}</span>
-                    <p className={`font-bold text-sm truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand}</p>
+                    <div className="flex items-center gap-1">
+                      <p className={`font-bold text-sm truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand}</p>
+                      {product._isConsignment && <span className="text-[8px] font-bold bg-teal-100 text-teal-700 px-1 py-0.5 rounded flex-shrink-0">РЕАЛИЗ.</span>}
+                    </div>
                     <p className={`text-xs truncate ${isLowStock ? 'text-red-500' : 'text-slate-500'}`}>{product.model}</p>
                     </div>
                     </div>
@@ -760,7 +828,10 @@ export default function Products() {
                   )}
                 </div>
                 <div className="p-2">
-                  <p className={`font-semibold text-xs truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand}</p>
+                  <div className="flex items-center gap-1">
+                    <p className={`font-semibold text-xs truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand}</p>
+                    {product._isConsignment && <span className="text-[8px] font-bold bg-teal-100 text-teal-700 px-1 py-0.5 rounded flex-shrink-0">РЕАЛИЗ.</span>}
+                  </div>
                   <p className={`text-[10px] truncate ${isLowStock ? 'text-red-400' : 'text-slate-500'}`}>{product.model}</p>
                   <div className="flex items-center justify-between mt-1.5">
                     <span className={`text-xs font-bold ${isLowStock ? 'text-red-600' : 'text-indigo-600'}`}>{product.boxes_in_stock || 0} кор.</span>
@@ -799,8 +870,11 @@ export default function Products() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand} {product.model}</p>
-                      <p className="text-xs text-slate-400 truncate">{product.product_type} · {product.color}</p>
+                      <div className="flex items-center gap-1">
+                        <p className={`text-sm font-semibold truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand} {product.model}</p>
+                        {product._isConsignment && <span className="text-[8px] font-bold bg-teal-100 text-teal-700 px-1 py-0.5 rounded flex-shrink-0">РЕАЛИЗ.</span>}
+                      </div>
+                      <p className="text-xs text-slate-400 truncate">{product.product_type} · {product.color}{product._isConsignment && product.owner_name ? ` · 👤 ${product.owner_name}` : ''}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className={`text-sm font-bold ${isLowStock ? 'text-red-600' : 'text-indigo-600'}`}>{product.boxes_in_stock || 0} кор.</p>
@@ -936,6 +1010,45 @@ export default function Products() {
                     <History className="w-3 h-3" />
                     {editingProduct.updated_date ? format(parseISO(editingProduct.updated_date), 'dd MMM yyyy, HH:mm:ss', { locale: ru }) : '—'}
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* Consignment toggle */}
+            <div
+              className={`flex items-center gap-3 p-4 rounded-xl cursor-pointer border-2 transition-all ${formData.is_consignment ? 'bg-teal-50 border-teal-300' : 'bg-slate-50 border-transparent hover:border-slate-200'} ${editingProduct ? 'opacity-70 cursor-default' : ''}`}
+              onClick={() => { if (!editingProduct) setFormData({ ...formData, is_consignment: !formData.is_consignment }); }}
+            >
+              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${formData.is_consignment ? 'bg-teal-500 border-teal-500' : 'border-slate-300'}`}>
+                {formData.is_consignment && <CheckCheck className="w-3 h-3 text-white" />}
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-slate-900">Не мой товар (реализация)</p>
+                <p className="text-xs text-slate-500">Товар принадлежит другому человеку — вы продаёте его и оставляете прибыль себе</p>
+              </div>
+              {formData.is_consignment && <PackageOpen className="w-5 h-5 text-teal-500 flex-shrink-0" />}
+            </div>
+
+            {/* Owner fields when consignment */}
+            {formData.is_consignment && (
+              <div className="grid grid-cols-2 gap-4 p-4 bg-teal-50 rounded-xl">
+                <div>
+                  <Label>Имя владельца *</Label>
+                  <Input
+                    value={formData.owner_name}
+                    onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })}
+                    placeholder="Имя владельца товара"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label>Email владельца</Label>
+                  <Input
+                    value={formData.owner_email}
+                    onChange={(e) => setFormData({ ...formData, owner_email: e.target.value })}
+                    placeholder="email@example.com"
+                    className="mt-1.5"
+                  />
                 </div>
               </div>
             )}
@@ -1165,9 +1278,9 @@ export default function Products() {
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              {(can('view_purchase_price') || can('edit_product_purchase_price')) && (
+              {(can('view_purchase_price') || can('edit_product_purchase_price') || formData.is_consignment) && (
               <div>
-                <Label>{t(lang,'prod_purchase_price')} *</Label>
+                <Label>{formData.is_consignment ? 'Цена владельца за кор.' : t(lang,'prod_purchase_price')} *</Label>
                 <Input 
                   type="text"
                   pattern="[0-9.]*"
@@ -1310,7 +1423,7 @@ export default function Products() {
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={savingRef.current || !formData.brand || !formData.model || (!!duplicateProduct && !editingProduct)}
+              disabled={savingRef.current || !formData.brand || !formData.model || (!!duplicateProduct && !editingProduct) || (formData.is_consignment && !formData.owner_name)}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingProduct ? t(lang,'prod_save') : t(lang,'prod_add')}

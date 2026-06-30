@@ -48,8 +48,6 @@ const ALL_MENU_ITEMS = [
   { name: 'Expenses',          icon: TrendingDown,     labelKey: 'nav_expenses',     color: 'text-red-500',     activeBg: 'bg-red-500',     activeText: 'text-red-600',    permKey: 'view_expenses' },
   { name: 'AIAssistant',       icon: Bot,              labelKey: 'nav_ai',           color: 'text-purple-500',  activeBg: 'bg-purple-500',  activeText: 'text-purple-600', permKey: 'view_ai_assistant' },
   { name: 'EmployeeAnalytics', icon: Users,            labelKey: 'nav_emp_analytics', color: 'text-rose-500',    activeBg: 'bg-rose-500',    activeText: 'text-rose-600', permKey: 'view_employee_analytics', ownerOnly: false },
-  { name: 'ConsignmentProducts', icon: PackageOpen,    labelKey: 'nav_consignment',    color: 'text-teal-500',    activeBg: 'bg-teal-500',    activeText: 'text-teal-600',    permKey: null },
-  { name: 'OwnerPayments',       icon: Wallet,          labelKey: 'nav_owner_payments', color: 'text-amber-500',   activeBg: 'bg-amber-500',   activeText: 'text-amber-600',   permKey: null },
   { name: 'Settings',            icon: Settings,         labelKey: 'nav_settings',     color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600', permKey: null },
 ];
 
