@@ -6,6 +6,7 @@ import { t } from '@/components/i18n/translations';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
 
+import BrandedLoader from '@/components/ui/BrandedLoader';
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
 import { saveBusinessToHistory } from '@/components/settings/RecentBusinessesPanel';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -362,11 +363,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <BrandedLoader fullScreen message="Загрузка BarakatCRM..." />;
   }
 
   const isAdmin = user?.email === ADMIN_EMAIL;

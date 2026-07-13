@@ -118,21 +118,30 @@ export default function Sales() {
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
-        const [salesData, productsData, warehousesData, customersData, consignmentProdData, consignmentSaleData] = await Promise.all([
+        const [salesData, productsData, warehousesData, customersData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
           base44.entities.Warehouse.filter({ business_id: biz.id }),
-          base44.entities.Customer.filter({ business_id: biz.id }),
-          base44.entities.ConsignmentProduct.filter({ business_id: biz.id }),
-          base44.entities.ConsignmentSale.filter({ business_id: biz.id })
+          base44.entities.Customer.filter({ business_id: biz.id })
         ]);
         
         setSales(salesData.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
         setProducts(productsData);
-        setConsignmentProducts(consignmentProdData);
-        setConsignmentSales(consignmentSaleData);
         setWarehouses(warehousesData);
         setCustomers(customersData);
+
+        // Загружаем данные по реализации отдельно — не должны ломать основной поток
+        try {
+          const [consignmentProdData, consignmentSaleData] = await Promise.all([
+            base44.entities.ConsignmentProduct.filter({ business_id: biz.id }),
+            base44.entities.ConsignmentSale.filter({ business_id: biz.id })
+          ]);
+          setConsignmentProducts(consignmentProdData);
+          setConsignmentSales(consignmentSaleData);
+        } catch (_) {
+          setConsignmentProducts([]);
+          setConsignmentSales([]);
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error);

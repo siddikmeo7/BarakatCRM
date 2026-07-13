@@ -134,17 +134,22 @@ export default function Products() {
       if (!cachedBiz) return;
 
       // Загружаем свежие данные бизнеса из БД, чтобы custom_pairs_per_box и другие поля были актуальны
-      const [bizList, productsData, warehousesData, consignmentData] = await Promise.all([
+      const [bizList, productsData, warehousesData] = await Promise.all([
         base44.entities.Business.filter({ id: cachedBiz.id }),
         base44.entities.Product.filter({ business_id: cachedBiz.id }),
-        base44.entities.Warehouse.filter({ business_id: cachedBiz.id }),
-        base44.entities.ConsignmentProduct.filter({ business_id: cachedBiz.id })
+        base44.entities.Warehouse.filter({ business_id: cachedBiz.id })
       ]);
 
       const biz = bizList[0] || cachedBiz;
       setBusiness(biz);
       setLang(biz.language || 'ru');
-      // Объединяем свои товары и товары на реализации
+
+      // Загружаем товары на реализации отдельно — не должна ломать основной список
+      let consignmentData = [];
+      try {
+        consignmentData = await base44.entities.ConsignmentProduct.filter({ business_id: cachedBiz.id });
+      } catch (_) {}
+
       const mergedProducts = [
         ...productsData.map(p => ({ ...p, _isConsignment: false })),
         ...consignmentData.map(p => ({ ...p, _isConsignment: true, purchase_price: p.owner_price }))

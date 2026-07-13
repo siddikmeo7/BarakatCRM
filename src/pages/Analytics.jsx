@@ -41,6 +41,7 @@ import SalesForecast from '@/components/analytics/SalesForecast';
 import CustomerSegmentation from '@/components/analytics/CustomerSegmentation';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import BackButton from '@/components/ui/BackButton';
+import BrandedLoader from '@/components/ui/BrandedLoader';
 
 const DEFAULT_RATES = { TJS: 1, USD: 0.091, RUB: 8.5, EUR: 0.084, CNY: 0.66 };
 const RATES_CACHE_KEY = 'exchange_rates_cache';
@@ -152,19 +153,25 @@ export default function Analytics() {
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
-        const [salesData, productsData, customersData, expensesData, consignmentData] = await Promise.all([
+        const [salesData, productsData, customersData, expensesData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
           base44.entities.Customer.filter({ business_id: biz.id }),
           base44.entities.Expense.filter({ business_id: biz.id }),
-          base44.entities.ConsignmentSale.filter({ business_id: biz.id }),
         ]);
         
         setSales(salesData);
         setProducts(productsData);
         setCustomers(customersData);
         setExpenses(expensesData);
-        setConsignmentSales(consignmentData);
+
+        // Загружаем продажи на реализации отдельно
+        try {
+          const consignmentData = await base44.entities.ConsignmentSale.filter({ business_id: biz.id });
+          setConsignmentSales(consignmentData);
+        } catch (_) {
+          setConsignmentSales([]);
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -256,11 +263,7 @@ export default function Analytics() {
   const profitMargin = totalRevenue ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <BrandedLoader message="Загрузка аналитики..." />;
   }
 
   // Нет доступа к аналитике
@@ -335,10 +338,10 @@ export default function Analytics() {
            </Button>
          </div>
         {/* Bottom row: filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
-          <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger className="w-36">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+           <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+           <Select value={currency} onValueChange={setCurrency}>
+            <SelectTrigger className="w-32 md:w-36">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -378,7 +381,7 @@ export default function Analytics() {
       </div>
 
       {/* Main Stats - Responsive sizing */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         <StatCard
           title={t(lang,'analytics_revenue')}
           value={convertCurrency(totalRevenue)}
@@ -421,7 +424,7 @@ export default function Analytics() {
 
       {/* Loss + Expenses + Net Profit row */}
       {can('view_profit') && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
           {/* Убытки от продаж — кликабельная карточка */}
           <button
             onClick={() => lossSales.length > 0 && setShowLossModal(true)}
@@ -487,7 +490,7 @@ export default function Analytics() {
       )}
 
       {/* Inventory Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         {can('view_stock_value') ? (
           <StatCard
             title={t(lang,'analytics_stock_value')}
@@ -551,9 +554,9 @@ export default function Analytics() {
       </div>
 
       {/* All Charts Together */}
-      <div className="space-y-6">
-        <h2 className="text-xl md:text-2xl font-bold text-slate-900">Графики</h2>
-        <div className="grid lg:grid-cols-2 gap-6">
+      <div className="space-y-4 md:space-y-6">
+        <h2 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Графики</h2>
+        <div className="grid lg:grid-cols-2 gap-3 md:gap-6">
           {/* Sales & Profit Chart */}
           <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
             <h3 className="font-semibold text-slate-900 text-sm md:text-base mb-4">{t(lang,'analytics_dynamics')}</h3>
@@ -598,8 +601,8 @@ export default function Analytics() {
       </div>
 
       {/* Advanced Analytics Section */}
-      <div className="space-y-6">
-        <h2 className="text-xl md:text-2xl font-bold text-slate-900">Расширенная аналитика</h2>
+      <div className="space-y-4 md:space-y-6">
+        <h2 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">Расширенная аналитика</h2>
 
         <SalesForecast sales={filteredSales} days={30} />
         <CustomerSegmentation customers={customers} sales={filteredSales} />
