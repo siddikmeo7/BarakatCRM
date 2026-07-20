@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MoveProductsDialog from '@/components/warehouses/MoveProductsDialog';
+import DeleteWarehouseDialog from '@/components/warehouses/DeleteWarehouseDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
 import DuplicateProductsDialog from '@/components/products/DuplicateProductsDialog';
 import { 
@@ -45,6 +46,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import ViewToggle from '@/components/ui/ViewToggle';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import BrandedLoader from '@/components/ui/BrandedLoader';
 
 const WAREHOUSE_ICONS = [
   { key: 'Warehouse', icon: WarehouseIcon, label: 'Склад' },
@@ -82,6 +84,8 @@ export default function Warehouses() {
   const [selectMode, setSelectMode] = useState(false);
   const [deletingProducts, setDeletingProducts] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(null); // { type: 'one'|'selected'|'warehouse'|'all', productId?, label }
+  const [deleteWarehouseDialog, setDeleteWarehouseDialog] = useState(null); // warehouse object
+  const [deletingWarehouse, setDeletingWarehouse] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -179,10 +183,34 @@ export default function Warehouses() {
     }
   };
 
-  const handleDelete = async (warehouseId) => {
-    if (confirm('Удалить этот склад?')) {
-      await base44.entities.Warehouse.delete(warehouseId);
+  const handleDeleteWarehouse = async () => {
+    if (!deleteWarehouseDialog) return;
+    setDeletingWarehouse(true);
+    try {
+      const user = await base44.auth.me();
+      const wh = deleteWarehouseDialog;
+      // Логируем удаление склада
+      await Promise.all([
+        base44.entities.Warehouse.delete(wh.id),
+        base44.entities.ActivityLog.create({
+          business_id: business.id,
+          action_type: 'delete',
+          entity_type: 'Warehouse',
+          entity_id: wh.id,
+          entity_data: wh,
+          user_email: user.email,
+          description: `Удалён склад: ${wh.name}`,
+          is_restored: false,
+        })
+      ]);
+      setDeleteWarehouseDialog(null);
+      setSelectedWarehouse(null);
       await loadData();
+    } catch (error) {
+      console.error('Error deleting warehouse:', error);
+      alert('Ошибка при удалении склада');
+    } finally {
+      setDeletingWarehouse(false);
     }
   };
 
@@ -338,11 +366,7 @@ export default function Warehouses() {
       })()
     : [];
 
-  if (!isReady) return (
-    <div className="flex items-center justify-center min-h-[50vh]">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-    </div>
-  );
+  if (!isReady) return <BrandedLoader fullScreen message="Загрузка складов..." />;
   if (!can('view_warehouses')) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -359,11 +383,7 @@ export default function Warehouses() {
     );
   }
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <BrandedLoader fullScreen message="Загрузка складов..." />;
   }
 
   return (
@@ -525,7 +545,11 @@ export default function Warehouses() {
             return (
               <div 
                 key={warehouse.id} 
-                className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                className={`bg-white rounded-2xl shadow-sm border-2 overflow-hidden hover:shadow-md transition-shadow cursor-pointer ${
+                  stats.totalBoxes >= 50 || stats.productsCount >= 10
+                    ? 'border-red-300 animate-pulse-border'
+                    : 'border-slate-100'
+                }`}
                 onClick={() => setSelectedWarehouse(warehouse)}
               >
                 <div className="p-6">
@@ -535,20 +559,12 @@ export default function Warehouses() {
                     </div>
                     <div className="flex gap-1">
                       {can('manage_warehouses') && (
-                        <>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleOpenDialog(warehouse); }}
-                            className="p-2 hover:bg-slate-100 rounded-lg"
-                          >
-                            <Edit2 className="w-4 h-4 text-slate-500" />
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleDelete(warehouse.id); }}
-                            className="p-2 hover:bg-red-50 rounded-lg"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </button>
-                        </>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleOpenDialog(warehouse); }}
+                          className="p-2 hover:bg-slate-100 rounded-lg"
+                        >
+                          <Edit2 className="w-4 h-4 text-slate-500" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -623,7 +639,7 @@ export default function Warehouses() {
               {filteredWarehouses.map(warehouse => {
                 const stats = getWarehouseStats(warehouse.id);
                 return (
-                  <tr key={warehouse.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setSelectedWarehouse(warehouse)}>
+                  <tr key={warehouse.id} className={`hover:bg-slate-50 cursor-pointer ${stats.totalBoxes >= 50 || stats.productsCount >= 10 ? 'border-l-4 border-l-red-400' : ''}`} onClick={() => setSelectedWarehouse(warehouse)}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-purple-100 rounded-lg">
@@ -645,20 +661,12 @@ export default function Warehouses() {
                     <td className="px-4 py-3">
                       <div className="flex gap-1 justify-end">
                        {can('manage_warehouses') && (
-                         <>
                            <button 
                              onClick={(e) => { e.stopPropagation(); handleOpenDialog(warehouse); }}
                              className="p-1.5 hover:bg-slate-100 rounded-lg"
                            >
                              <Edit2 className="w-4 h-4 text-slate-500" />
                            </button>
-                           <button 
-                             onClick={(e) => { e.stopPropagation(); handleDelete(warehouse.id); }}
-                             className="p-1.5 hover:bg-red-50 rounded-lg"
-                           >
-                             <Trash2 className="w-4 h-4 text-red-500" />
-                           </button>
-                         </>
                        )}
                       </div>
                     </td>
@@ -716,6 +724,16 @@ export default function Warehouses() {
                 <Package className="w-4 h-4" />
                 Все товары
               </Button>
+              {can('manage_warehouses') && (
+                <Button
+                  onClick={() => setDeleteWarehouseDialog(selectedWarehouse)}
+                  variant="outline"
+                  className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Удалить склад
+                </Button>
+              )}
             </div>
           </div>
 
@@ -1028,6 +1046,17 @@ export default function Warehouses() {
         duplicateGroups={duplicateGroups}
         onSaved={loadData}
       />
+
+      {/* Delete Warehouse Dialog (multi-step) */}
+      {deleteWarehouseDialog && (
+        <DeleteWarehouseDialog
+          warehouse={deleteWarehouseDialog}
+          stats={getWarehouseStats(deleteWarehouseDialog.id)}
+          onConfirm={handleDeleteWarehouse}
+          onClose={() => setDeleteWarehouseDialog(null)}
+          deleting={deletingWarehouse}
+        />
+      )}
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

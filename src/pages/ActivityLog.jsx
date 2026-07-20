@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import BrandedLoader from '@/components/ui/BrandedLoader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,6 +35,7 @@ const ACTION_LABELS = { create: 'Создание', update: 'Изменение'
 
 export default function ActivityLog() {
   const navigate = useNavigate();
+  const { can, isReady } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [logs, setLogs] = useState([]);
   const [employees, setEmployees] = useState([]); // для имён сотрудников
@@ -277,11 +280,23 @@ export default function ActivityLog() {
     </button>
   );
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[50vh]">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
-    </div>
-  );
+  if (!isReady || loading) return <BrandedLoader fullScreen message="Загрузка истории действий..." />;
+
+  if (!can('view_activity_log')) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+            <History className="w-8 h-8 text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Нет доступа</h3>
+            <p className="text-slate-600">У вас нет прав для просмотра истории действий.<br/>Обратитесь к владельцу бизнеса.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

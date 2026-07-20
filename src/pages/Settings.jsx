@@ -367,6 +367,18 @@ export default function Settings() {
           </div>
         </div>
         <EmployeeProfilePanel employee={currentEmployee} business={business} user={user} mergedPermissions={window.__barakatMergedPermissions} />
+        {canPerm('view_activity_log') && (
+          <div onClick={() => navigate(createPageUrl('ActivityLog'))} className="bg-white hover:bg-indigo-50 rounded-2xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition-all shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-100 rounded-lg"><History className="w-5 h-5 text-indigo-600" /></div>
+              <div>
+                <h3 className="font-semibold text-slate-900">История действий</h3>
+                <p className="text-xs text-slate-500">Все изменения, удаления и создания</p>
+              </div>
+            </div>
+            <ChevronDown className="w-5 h-5 text-slate-400 -rotate-90" />
+          </div>
+        )}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
           <p className="text-sm font-semibold text-slate-700 mb-3">🌐 Язык интерфейса</p>
           <Select value={lang} onValueChange={async (v) => { setLang(v); if (business) await base44.entities.Business.update(business.id, { language: v }); }}>
@@ -398,19 +410,19 @@ export default function Settings() {
       <PageHeader title={t(lang, 'settings_title')} subtitle={t(lang, 'settings_subtitle')} />
 
       {/* Аккаунт карточка */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
-        <div className="flex items-center gap-3">
+      <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-2xl shadow-lg border border-indigo-100 p-5 space-y-4">
+        <div className="flex items-center gap-4">
           {(() => {
             const avatarUrl = currentEmployee?.avatar_url || user?.avatar_url;
-            if (avatarUrl) return <AvatarDisplay avatarUrl={avatarUrl} name={user?.full_name} size="md" />;
-            return <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md flex-shrink-0"><span className="text-white font-bold text-lg">{user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}</span></div>;
+            if (avatarUrl) return <div className="ring-4 ring-white rounded-2xl overflow-hidden shadow-xl flex-shrink-0"><AvatarDisplay avatarUrl={avatarUrl} name={user?.full_name} size="md" /></div>;
+            return <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl flex-shrink-0 ring-4 ring-white"><span className="text-white font-bold text-xl">{user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}</span></div>;
           })()}
           <div>
-            <p className="font-semibold text-slate-900">{user?.full_name || t(lang,'settings_user')}</p>
+            <p className="font-bold text-slate-900 text-lg">{user?.full_name || t(lang,'settings_user')}</p>
             <p className="text-sm text-slate-500">{user?.email}</p>
-            {!currentEmployee ? <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium mt-0.5">👑 Владелец</span>
-              : currentEmployee.is_admin ? <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium mt-0.5">🛡️ Администратор</span>
-              : <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium mt-0.5">👤 Сотрудник</span>}
+            {!currentEmployee ? <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold mt-1">👑 Владелец</span>
+              : currentEmployee.is_admin ? <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold mt-1">🛡️ Администратор</span>
+              : <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold mt-1">👤 Сотрудник</span>}
           </div>
         </div>
 
