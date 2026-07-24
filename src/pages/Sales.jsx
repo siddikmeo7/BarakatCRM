@@ -278,7 +278,8 @@ export default function Sales() {
           }
           await base44.entities.Customer.update(formData.customer_id, {
             total_debt: (customer.total_debt || 0) + remainingDebt,
-            total_paid: (customer.total_paid || 0) + partialPay
+            total_paid: (customer.total_paid || 0) + partialPay,
+            purchase_count: (customer.purchase_count || 0) + 1
           });
 
           // Если была частичная оплата — создаём запись в DebtPayment для истории
