@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Package, ArrowLeft, Box, Layers, Hash, TrendingUp, Calendar } from 'lucide-react';
+import { Package, ArrowLeft, Box, Layers, Hash, TrendingUp, Calendar, User } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -12,6 +12,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [sales, setSales] = useState([]);
   const [warehouse, setWarehouse] = useState(null);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,6 +42,14 @@ export default function ProductDetail() {
       const prod = productData[0];
       setProduct(prod);
       setSales(salesData.sort((a, b) => new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date)));
+
+      // Load customers for this product's sales
+      if (prod.business_id) {
+        try {
+          const customersData = await base44.entities.Customer.filter({ business_id: prod.business_id });
+          setCustomers(customersData);
+        } catch (_) {}
+      }
 
       if (prod.warehouse_id) {
         const warehouseData = await base44.entities.Warehouse.filter({ id: prod.warehouse_id });
@@ -217,6 +226,8 @@ export default function ProductDetail() {
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Сумма</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Прибыль</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Тип</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Клиент</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Продавец</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -247,6 +258,12 @@ export default function ProductDetail() {
                         Наличные
                       </span>
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                    {sale.customer_id ? (customers.find(c => c.id === sale.customer_id)?.name || sale.customer_name || '—') : (sale.customer_name && sale.customer_name !== 'Неизвестный' ? sale.customer_name : '—')}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                    {sale.seller_name || sale.seller_email || '—'}
                   </td>
                 </tr>
               ))}

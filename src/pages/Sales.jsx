@@ -48,6 +48,7 @@ export default function Sales() {
   const [consignmentSales, setConsignmentSales] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -68,6 +69,7 @@ export default function Sales() {
   const [filterCustomerSearch, setFilterCustomerSearch] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [filterTime, setFilterTime] = useState('');
+  const [filterEmployee, setFilterEmployee] = useState('all');
   
   const [formData, setFormData] = useState({
     product_id: '',
@@ -118,17 +120,19 @@ export default function Sales() {
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
-        const [salesData, productsData, warehousesData, customersData] = await Promise.all([
+        const [salesData, productsData, warehousesData, customersData, employeesData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
           base44.entities.Warehouse.filter({ business_id: biz.id }),
-          base44.entities.Customer.filter({ business_id: biz.id })
+          base44.entities.Customer.filter({ business_id: biz.id }),
+          base44.entities.Employee.filter({ business_id: biz.id })
         ]);
         
         setSales(salesData.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
         setProducts(productsData);
         setWarehouses(warehousesData);
         setCustomers(customersData);
+        setEmployees(employeesData);
 
         // Загружаем данные по реализации отдельно — не должны ломать основной поток
         try {
@@ -203,6 +207,7 @@ export default function Sales() {
           entity_id: created.id,
           entity_data: consignmentSaleData,
           user_email: user.email,
+          user_name: emp?.name || user.full_name || user.email,
           description: `Реализация: ${selectedProduct?.brand} ${selectedProduct?.model}, ${formData.boxes_sold} кор. × ${actualSalePrice.toLocaleString()} с. = ${totalAmount.toLocaleString()} с. (прибыль: ${profit.toLocaleString()} с., владельцу: ${ownerAmount.toLocaleString()} с.)`
         });
         await loadData();
@@ -222,6 +227,8 @@ export default function Sales() {
     const partialPay = formData.is_debt ? parseFloat(formData.partial_payment) || 0 : 0;
     const remainingDebt = totalAmount - partialPay;
     
+    const emp = window.__barakatEmployee;
+    const currentUser = await base44.auth.me();
     const saleData = {
       business_id: business.id,
       product_id: formData.product_id,
@@ -238,7 +245,9 @@ export default function Sales() {
       customer_id: formData.is_debt ? formData.customer_id : '',
       customer_name: formData.customer_name || 'Неизвестный',
       customer_address: formData.customer_address || '',
-      partial_payment: partialPay
+      partial_payment: partialPay,
+      seller_email: currentUser.email,
+      seller_name: emp?.name || currentUser.full_name || currentUser.email
     };
 
     // Optimistic UI update
@@ -246,7 +255,6 @@ export default function Sales() {
     setSales(prev => [optimisticSale, ...prev]);
 
     try {
-      const user = await base44.auth.me();
       const createdSale = await base44.entities.Sale.create(saleData);
 
       // Логируем создание продажи
@@ -256,7 +264,8 @@ export default function Sales() {
         entity_type: 'Sale',
         entity_id: createdSale.id,
         entity_data: saleData,
-        user_email: user.email,
+        user_email: currentUser.email,
+        user_name: emp?.name || currentUser.full_name || currentUser.email,
         description: `Продажа: ${selectedProduct?.brand} ${selectedProduct?.model}, ${saleData.boxes_sold} кор. × ${saleData.sale_price?.toLocaleString()} с. = ${saleData.total_amount?.toLocaleString()} с.${saleData.is_debt ? ' (в долг)' : ''}`
       });
 
@@ -360,6 +369,8 @@ export default function Sales() {
       sale.customer_name?.toLowerCase().includes(q);
     const matchesWarehouse = filterWarehouse === 'all' || sale.warehouse_id === filterWarehouse;
     const matchesCustomer = filterCustomer === 'all' || sale.customer_id === filterCustomer;
+    const saleSellerEmail = sale.seller_email || '';
+    const matchesEmployee = filterEmployee === 'all' || saleSellerEmail === filterEmployee;
     
     let matchesDate = true;
     if (dateRange?.from) {
@@ -374,7 +385,7 @@ export default function Sales() {
       matchesTime = saleHHMM === filterTime;
     }
     
-    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer && matchesTime;
+    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer && matchesTime && matchesEmployee;
   });
 
   // Сортировка
@@ -605,6 +616,17 @@ export default function Sales() {
               </div>
             )}
           </div>
+          <Select value={filterEmployee} onValueChange={(v) => { setFilterEmployee(v); setSalesPage(1); }}>
+            <SelectTrigger className="w-32 h-8 text-xs">
+              <SelectValue placeholder="Сотрудник" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все сотрудники</SelectItem>
+              {employees.map(emp => (
+                <SelectItem key={emp.id} value={emp.user_email}>{emp.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-28 h-8 text-xs">
               <SelectValue placeholder="Сортировка" />
@@ -637,6 +659,7 @@ export default function Sales() {
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'sales_amount')}</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'sales_profit')}</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">{t(lang,'sales_type')}</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Продавец</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -752,6 +775,9 @@ export default function Sales() {
                     {can('view_sale_customer') && (customer?.name || sale.customer_name) && sale.customer_name !== 'Неизвестный' && (
                       <p className="text-xs text-slate-500 mt-1">👤 {customer?.name || sale.customer_name}</p>
                     )}
+                    {(sale.seller_name || sale.seller_email) && (
+                      <p className="text-xs text-slate-400 mt-0.5">🛍️ {sale.seller_name || sale.seller_email}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -844,10 +870,13 @@ export default function Sales() {
                   <span className="text-slate-600">{displayUnit === 'boxes' ? 'Кор.' : displayUnit === 'pairs' ? 'Пар' : 'Шт'}:</span>
                   <span className="font-semibold text-indigo-600">{displayQty}</span>
                 </div>
-                <div className="pt-2 border-t border-slate-100">
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
                   <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
                     {sale.is_debt ? `${t(lang,'sales_in_debt')}${can('view_sale_customer') && customer?.name ? ` (${customer.name})` : ''}` : t(lang,'sales_cash')}
                   </span>
+                  {(sale.seller_name || sale.seller_email) && (
+                    <span className="text-xs text-slate-400 truncate">🛍️ {sale.seller_name || sale.seller_email}</span>
+                  )}
                 </div>
               </div>
             </div>

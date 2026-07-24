@@ -107,6 +107,7 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
             note: editData.note
           },
           user_email: user.email,
+          user_name: window.__barakatEmployee?.name || user.full_name || user.email,
           description: `Обновлена продажа (${changes.map(c => `${c.label}: ${c.from} → ${c.to}`).join(', ')})`
         });
       } catch (_) {}
@@ -161,6 +162,7 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
           entity_id: sale.id,
           entity_data: sale,
           user_email: user.email,
+          user_name: window.__barakatEmployee?.name || user.full_name || user.email,
           description: `Отменена продажа: ${product?.brand || ''} ${product?.model || ''}, ${sale.boxes_sold} кор., ${sale.total_amount?.toLocaleString()} с.`
         });
       } catch (_) {}
@@ -288,6 +290,20 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
               </p>
             </div>
           </div>
+
+          {/* Продавец */}
+          {sale.seller_name && (
+            <div className="flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-sm">{sale.seller_name.charAt(0).toUpperCase()}</span>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Продавец</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">{sale.seller_name}</p>
+                {sale.seller_email && <p className="text-xs text-slate-400">{sale.seller_email}</p>}
+              </div>
+            </div>
+          )}
 
           {/* Цифры */}
           {mode === 'view' ? (

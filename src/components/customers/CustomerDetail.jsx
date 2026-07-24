@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,8 +12,10 @@ import {
 
 export default function CustomerDetail({ customer, onBack, onEdit, onDelete, business }) {
   const { can } = useEmployeeAccess();
+  const navigate = useNavigate();
   const [sales, setSales] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loadingExtra, setLoadingExtra] = useState(true);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
@@ -27,12 +31,14 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
 
   const loadCustomerActivity = async () => {
     try {
-      const [salesData, paymentsData] = await Promise.all([
+      const [salesData, paymentsData, productsData] = await Promise.all([
         base44.entities.Sale.filter({ customer_id: customer.id }),
-        base44.entities.DebtPayment.filter({ customer_id: customer.id })
+        base44.entities.DebtPayment.filter({ customer_id: customer.id }),
+        business?.id ? base44.entities.Product.filter({ business_id: business.id }) : Promise.resolve([])
       ]);
       setSales(salesData);
       setPayments(paymentsData);
+      setProducts(productsData);
     } catch (e) {
       console.error('Error loading customer activity:', e);
     } finally {
@@ -262,14 +268,23 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
-            {sales.slice(0, 15).map(sale => (
-              <div key={sale.id} className="px-3 py-2 flex items-center gap-2">
+            {sales.slice(0, 15).map(sale => {
+              const product = products.find(p => p.id === sale.product_id);
+              return (
+              <div key={sale.id}
+                   className="px-3 py-2 flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                   onClick={() => product && navigate(createPageUrl('ProductDetail') + `?id=${product.id}`)}>
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sale.is_cancelled ? 'bg-red-400' : 'bg-green-400'}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                    {sale.boxes_sold || 0} кор. · {(sale.total_amount || 0).toLocaleString()} с.
+                    {product ? `${product.brand} ${product.model}` : 'Товар удалён'}
                   </p>
-                  <p className="text-[10px] text-slate-400">{formatDate(sale.sale_date)}</p>
+                  <p className="text-[10px] text-slate-400">
+                    {sale.boxes_sold || 0} кор. × {(sale.sale_price || 0).toLocaleString()} с. · {formatDate(sale.sale_date)}
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{(sale.total_amount || 0).toLocaleString()} с.</p>
                 </div>
                 {sale.is_debt && (
                   <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full text-[10px] font-semibold">Долг</span>
@@ -278,7 +293,8 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
                   <span className="px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full text-[10px] font-semibold">Отменён</span>
                 )}
               </div>
-            ))}
+              );
+            })}
             {sales.length > 15 && (
               <div className="px-3 py-2 text-center text-xs text-slate-400">И ещё {sales.length - 15}...</div>
             )}

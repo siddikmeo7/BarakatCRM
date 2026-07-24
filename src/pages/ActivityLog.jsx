@@ -203,8 +203,9 @@ export default function ActivityLog() {
   };
 
   // Helper: get display name for a user email
-  const getUserLabel = (email) => {
+  const getUserLabel = (email, name) => {
     if (!email) return 'Система';
+    if (name) return `${name} (${email})`;
     const emp = employees.find(e => e.user_email === email);
     if (emp) return `${emp.name} (${email})`;
     return email;
@@ -254,7 +255,7 @@ export default function ActivityLog() {
     // Потом заполняем данными из логов
     logs.forEach(log => {
       const u = log.user_email || 'Система';
-      if (!map[u]) map[u] = { email: u, name: null, total: 0, create: 0, update: 0, delete: 0, last: null };
+      if (!map[u]) map[u] = { email: u, name: log.user_name || null, total: 0, create: 0, update: 0, delete: 0, last: null };
       map[u].total++;
       map[u][log.action_type] = (map[u][log.action_type] || 0) + 1;
       const d = new Date(log.created_date);
@@ -530,7 +531,7 @@ export default function ActivityLog() {
                           )}
                           <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 flex-wrap">
                             <span className="flex items-center gap-1">
-                              <User className="w-3 h-3" />{getUserLabel(log.user_email)}
+                              <User className="w-3 h-3" />{getUserLabel(log.user_email, log.user_name)}
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
@@ -768,7 +769,7 @@ export default function ActivityLog() {
                             onClick={(e) => { e.stopPropagation(); setFilterUser(log.user_email); }}
                             className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
                             <User className="w-3 h-3" />
-                            {getUserLabel(log.user_email)}
+                            {getUserLabel(log.user_email, log.user_name)}
                           </button>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
@@ -827,7 +828,7 @@ export default function ActivityLog() {
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-slate-400" />
                   <span className="text-slate-500">Кто:</span>
-                  <span className="font-semibold text-slate-800">{getUserLabel(detailLog.user_email)}</span>
+                  <span className="font-semibold text-slate-800">{getUserLabel(detailLog.user_email, detailLog.user_name)}</span>
                   <button onClick={() => { setFilterUser(detailLog.user_email); setDetailLog(null); }}
                     className="ml-auto text-xs text-indigo-500 hover:text-indigo-700 px-2 py-0.5 bg-indigo-50 rounded">
                     Фильтровать по сотруднику

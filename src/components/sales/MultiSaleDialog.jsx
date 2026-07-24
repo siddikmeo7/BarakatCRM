@@ -117,7 +117,9 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
           customer_name: customerName || 'Неизвестный',
           customer_address: customerAddress || '',
           partial_payment: itemPartial,
-          payment_due_date: isDebt && paymentDueDate ? paymentDueDate : null
+          payment_due_date: isDebt && paymentDueDate ? paymentDueDate : null,
+          seller_email: currentUser.email,
+          seller_name: window.__barakatEmployee?.name || currentUser.full_name || currentUser.email
         };
 
         const created = await base44.entities.Sale.create(saleData);
@@ -131,6 +133,7 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
           entity_id: created.id,
           entity_data: saleData,
           user_email: currentUser.email,
+          user_name: window.__barakatEmployee?.name || currentUser.full_name || currentUser.email,
           description: `Продажа: ${product?.brand} ${product?.model}, ${saleData.boxes_sold} кор. × ${calc.price?.toLocaleString()} с. = ${calc.totalAmount?.toLocaleString()} с.${isDebt ? ' (в долг)' : ''}`
         });
 
