@@ -39,6 +39,7 @@ import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
 import SalesForecast from '@/components/analytics/SalesForecast';
 import CustomerSegmentation from '@/components/analytics/CustomerSegmentation';
+import EmployeeEfficiency from '@/components/analytics/EmployeeEfficiency';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import BackButton from '@/components/ui/BackButton';
 import BrandedLoader from '@/components/ui/BrandedLoader';
@@ -725,6 +726,14 @@ export default function Analytics() {
           )}
         </div>
       )}
+
+      {/* Employee Efficiency with day filters */}
+      <EmployeeEfficiency
+        sales={sales}
+        canViewProfit={can('view_profit')}
+        hideData={hideData}
+        lang={lang}
+      />
 
       {/* Top Products by Revenue - Moved to End */}
       <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
