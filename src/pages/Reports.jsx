@@ -325,9 +325,9 @@ export default function Reports() {
               <th style="${hS}">Выручка</th><th style="${hS}">Прибыль</th><th style="${hS}">Маржа</th>
               <th style="${hS}">Коробок</th><th style="${hS}">Пар</th>
             </tr>
-            ${topProducts.slice(0, 15).map((tp, i) => {
-              const m = tp.revenue > 0 ? ((tp.profit / tp.revenue) * 100).toFixed(1) : 0;
-              const pairs = tp.boxes * (tp.product.pairs_per_box || 6);
+            ${topProducts.map((tp, i) => {
+               const m = tp.revenue > 0 ? ((tp.profit / tp.revenue) * 100).toFixed(1) : 0;
+               const pairs = tp.boxes * (tp.product.pairs_per_box || 6);
               return `<tr>
                 <td style="${tS}">${i + 1}</td>
                 <td style="${tS}"><b>${tp.product.brand} ${tp.product.model}</b></td>
@@ -357,19 +357,50 @@ export default function Reports() {
             </tr>`).join('')}
           </table>
 
+          <h2 style="${h2S}">👥 Все клиенты (${customers.length})</h2>
+          <table style="${tableS}">
+            <tr>
+              <th style="${hS}">#</th><th style="${hS}">Клиент</th><th style="${hS}">Телефон</th>
+              <th style="${hS}">Долг</th><th style="${hS}">Оплачено</th>
+            </tr>
+            ${customers.sort((a, b) => (b.total_debt || 0) - (a.total_debt || 0)).map((c, i) => `<tr>
+              <td style="${tS}">${i + 1}</td>
+              <td style="${tS}"><b>${c.name}</b></td>
+              <td style="${tS}">${c.phone || '—'}</td>
+              <td style="${tS};color:#ef4444;">${Math.round(c.total_debt || 0).toLocaleString()} с.</td>
+              <td style="${tS}">${Math.round(c.total_paid || 0).toLocaleString()} с.</td>
+            </tr>`).join('')}
+          </table>
+
+          <h2 style="${h2S}">🧑‍💼 Сотрудники (${employeeStats.length})</h2>
+          <table style="${tableS}">
+            <tr>
+              <th style="${hS}">#</th><th style="${hS}">Сотрудник</th><th style="${hS}">Выручка</th>
+              <th style="${hS}">Прибыль</th><th style="${hS}">Коробок</th><th style="${hS}">Продаж</th>
+            </tr>
+            ${employeeStats.map((e, i) => `<tr>
+              <td style="${tS}">${i + 1}</td>
+              <td style="${tS}"><b>${e.employee?.name || e.email}</b></td>
+              <td style="${tS}">${Math.round(e.revenue).toLocaleString()} с.</td>
+              <td style="${tS}">${Math.round(e.profit).toLocaleString()} с.</td>
+              <td style="${tS}">${e.boxes}</td>
+              <td style="${tS}">${e.count}</td>
+            </tr>`).join('')}
+          </table>
+
           <h2 style="${h2S}">💳 Должники (${debtors.length})</h2>
           ${debtors.length > 0 ? `<table style="${tableS}">
             <tr>
               <th style="${hS}">#</th><th style="${hS}">Клиент</th><th style="${hS}">Телефон</th>
               <th style="${hS}">Долг</th><th style="${hS}">Оплачено</th>
             </tr>
-            ${debtors.slice(0, 20).map((c, i) => `<tr>
-              <td style="${tS}">${i + 1}</td>
-              <td style="${tS}"><b>${c.name}</b></td>
-              <td style="${tS}">${c.phone || '—'}</td>
-              <td style="${tS};color:#ef4444;font-weight:700;">${Math.round(c.total_debt || 0).toLocaleString()} с.</td>
-              <td style="${tS}">${Math.round(c.total_paid || 0).toLocaleString()} с.</td>
-            </tr>`).join('')}
+            ${debtors.map((c, i) => `<tr>
+               <td style="${tS}">${i + 1}</td>
+               <td style="${tS}"><b>${c.name}</b></td>
+               <td style="${tS}">${c.phone || '—'}</td>
+               <td style="${tS};color:#ef4444;font-weight:700;">${Math.round(c.total_debt || 0).toLocaleString()} с.</td>
+               <td style="${tS}">${Math.round(c.total_paid || 0).toLocaleString()} с.</td>
+             </tr>`).join('')}
             <tr style="background:#fef2f2;">
               <td style="${tS}" colspan="3"><b>ИТОГО ДОЛГ</b></td>
               <td style="${tS};color:#ef4444;font-weight:700;">${Math.round(totalDebt).toLocaleString()} с.</td>
@@ -490,7 +521,7 @@ export default function Reports() {
     h2('🛒 ТОП ТОВАРОВ ПО ВЫРУЧКЕ');
     row('#', 'Товар', 'Тип', 'Выручка', 'Прибыль', 'Маржа', 'Коробок', 'Пар', 'Продаж');
     divider(9);
-    topProducts.slice(0, 15).forEach((tp, i) => {
+    topProducts.forEach((tp, i) => {
       const m = tp.revenue > 0 ? ((tp.profit / tp.revenue) * 100).toFixed(1) : 0;
       const pairs = tp.boxes * (tp.product.pairs_per_box || 6);
       row(i + 1, `${tp.product.brand} ${tp.product.model}`, tp.product.product_type || '—',
@@ -506,10 +537,39 @@ export default function Reports() {
     } else {
       row('#', 'Клиент', 'Выручка', 'Покупок', 'Долг');
       divider(5);
-      topCustomers.slice(0, 15).forEach((c, i) => {
+      topCustomers.forEach((c, i) => {
         row(i + 1, c.name, `${Math.round(c.revenue).toLocaleString()} с.`, c.count,
           c.debt > 0 ? `**${Math.round(c.debt).toLocaleString()} с.**` : '—');
       });
+    }
+    sep();
+    hr();
+
+    h2('👥 ВСЕ КЛИЕНТЫ');
+    li(`Всего клиентов: **${customers.length}**`);
+    if (customers.length > 0) {
+      sep();
+      row('#', 'Клиент', 'Телефон', 'Долг', 'Оплачено');
+      divider(5);
+      customers.sort((a, b) => (b.total_debt || 0) - (a.total_debt || 0)).forEach((c, i) => {
+        row(i + 1, c.name, c.phone || '—',
+          c.total_debt > 0 ? `**${Math.round(c.total_debt).toLocaleString()} с.**` : '—',
+          `${Math.round(c.total_paid || 0).toLocaleString()} с.`);
+      });
+    }
+    sep();
+    hr();
+
+    h2('🧑‍💼 СОТРУДНИКИ');
+    if (employeeStats.length > 0) {
+      row('#', 'Сотрудник', 'Выручка', 'Прибыль', 'Коробок', 'Продаж', 'Долговых');
+      divider(7);
+      employeeStats.forEach((e, i) => {
+        row(i + 1, e.employee?.name || e.email, `${Math.round(e.revenue).toLocaleString()} с.`,
+          `${Math.round(e.profit).toLocaleString()} с.`, e.boxes, e.count, e.debtCount);
+      });
+    } else {
+      li('Нет данных по сотрудникам');
     }
     sep();
     hr();
@@ -523,7 +583,7 @@ export default function Reports() {
       sep();
       row('#', 'Клиент', 'Долг', 'Оплачено', 'Телефон');
       divider(5);
-      debtors.slice(0, 20).forEach((c, i) => {
+      debtors.forEach((c, i) => {
         row(i + 1, c.name, `**${Math.round(c.total_debt || 0).toLocaleString()} с.**`,
           `${Math.round(c.total_paid || 0).toLocaleString()} с.`, c.phone || '—');
       });
@@ -732,6 +792,13 @@ export default function Reports() {
       debtRows.push([i + 1, c.name, c.phone || '—', c.total_debt || 0, c.total_paid || 0]);
     });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(debtRows), 'Должники');
+
+    // Employee stats
+    const empRows = [['#', 'Сотрудник', 'Выручка (с.)', 'Прибыль (с.)', 'Коробок', 'Продаж', 'Долговых продаж']];
+    employeeStats.forEach((e, i) => {
+      empRows.push([i + 1, e.employee?.name || e.email, Math.round(e.revenue), Math.round(e.profit), e.boxes, e.count, e.debtCount]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(empRows), 'Сотрудники');
 
     // Warehouses
     const whRows = [['Склад', 'Товаров', 'Коробок', 'Стоимость склада', 'Продаж за период', 'Выручка за период']];
@@ -1317,8 +1384,8 @@ export default function Reports() {
           <h2 className="font-semibold text-slate-800 mb-4">Все клиенты ({customers.length})</h2>
           <div className="custom-scroll max-h-[50vh] overflow-y-auto space-y-2">
             {customers.sort((a, b) => (b.total_paid || 0) + (b.total_debt || 0) - ((a.total_paid || 0) + (a.total_debt || 0))).map((c, i) => (
-              <div key={c.id}
-                onClick={() => window.location.href = '/Customers'}
+              <Link key={c.id}
+                to={`${createPageUrl('Customers')}?customerId=${c.id}`}
                 className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-indigo-50 hover:border-indigo-200 cursor-pointer group transition-colors">
                 <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold flex-shrink-0">
                   {i + 1}
@@ -1335,7 +1402,7 @@ export default function Reports() {
                   {(c.total_debt || 0) > 0 && <p className="text-xs text-red-500 font-semibold">Долг: {Math.round(c.total_debt).toLocaleString()} с.</p>}
                 </div>
                 <ExternalLink className="w-4 h-4 text-slate-300 group-hover:text-indigo-400 flex-shrink-0" />
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -1358,24 +1425,38 @@ export default function Reports() {
             ))}
           </div>
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-            <h2 className="font-semibold text-slate-800 mb-4">Должники</h2>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h2 className="font-semibold text-slate-800">Должники</h2>
+              <div className="flex gap-2">
+                <Link to={createPageUrl('Customers')}>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                    <Users className="w-3.5 h-3.5" /> Все клиенты
+                  </Button>
+                </Link>
+                <Link to={createPageUrl('Debts')}>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                    <CreditCard className="w-3.5 h-3.5" /> Все должники
+                  </Button>
+                </Link>
+              </div>
+            </div>
             <div className="custom-scroll max-h-[50vh] overflow-y-auto space-y-2">
-              {debtors.map((c, i) => (
-                 <div key={c.id}
-                   onClick={() => window.location.href = '/Debts'}
-                   className="flex items-center gap-3 p-3 rounded-xl border border-red-100 bg-red-50 hover:bg-red-100 cursor-pointer group transition-colors">
-                   <div className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{i + 1}</div>
-                   <div className="flex-1 min-w-0">
-                     <p className="text-sm font-medium text-slate-800 truncate group-hover:text-red-700">{c.name}</p>
-                     <p className="text-xs text-slate-400">{c.phone || '—'}</p>
-                   </div>
-                   <div className="text-right flex-shrink-0">
-                     <p className="text-sm font-bold text-red-600">{Math.round(c.total_debt).toLocaleString()} с.</p>
-                     <p className="text-xs text-slate-400">Оплачено: {Math.round(c.total_paid || 0).toLocaleString()} с.</p>
-                   </div>
-                   <ExternalLink className="w-4 h-4 text-red-300 group-hover:text-red-500 flex-shrink-0" />
-                 </div>
-              ))}
+               {debtors.map((c, i) => (
+                  <Link key={c.id}
+                    to={`${createPageUrl('Debts')}?customerId=${c.id}`}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-red-100 bg-red-50 hover:bg-red-100 cursor-pointer group transition-colors">
+                    <div className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{i + 1}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate group-hover:text-red-700">{c.name}</p>
+                      <p className="text-xs text-slate-400">{c.phone || '—'}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-bold text-red-600">{Math.round(c.total_debt).toLocaleString()} с.</p>
+                      <p className="text-xs text-slate-400">Оплачено: {Math.round(c.total_paid || 0).toLocaleString()} с.</p>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-red-300 group-hover:text-red-500 flex-shrink-0" />
+                  </Link>
+               ))}
               {debtors.length === 0 && <p className="text-center text-slate-400 py-8">Нет должников 🎉</p>}
             </div>
           </div>

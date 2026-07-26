@@ -65,6 +65,14 @@ export default function Customers() {
         ]);
         setCustomers(customersData);
         setEmployees(empData);
+
+        // Если пришли с выбранным customerId — открываем его
+        const urlParams = new URLSearchParams(window.location.search);
+        const custId = urlParams.get('customerId');
+        if (custId) {
+          const found = customersData.find(c => c.id === custId);
+          if (found) setSelectedCustomer(found);
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error);
