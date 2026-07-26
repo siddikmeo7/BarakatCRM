@@ -28,6 +28,7 @@ import { t } from '@/components/i18n/translations';
 import { useNavigate } from 'react-router-dom';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import PageLoader from '@/components/ui/PageLoader';
+import { formatCompact } from '@/lib/formatCompact';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -185,12 +186,12 @@ export default function Dashboard() {
         {(widgets.length === 0 ? ['sales', 'profit', 'boxes', 'stock'] : widgets.filter(w => ['sales', 'profit', 'boxes', 'pairs', 'stock', 'debt', 'customers'].includes(w.widget_type))).map((widget) => {
           const widgetType = typeof widget === 'string' ? widget : widget.widget_type;
           const widgetConfigs = {
-            sales: { title: t(lang,'dash_sales'), value: (hideData || !can('view_analytics')) ? masked : totalRevenue.toLocaleString(), subtitle: t(lang,'dash_somoni'), icon: ShoppingCart, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
-            profit: { title: t(lang,'dash_profit'), value: (hideData || !can('view_profit')) ? masked : totalProfit.toLocaleString(), subtitle: t(lang,'dash_somoni'), icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+            sales: { title: t(lang,'dash_sales'), value: (hideData || !can('view_analytics')) ? masked : formatCompact(totalRevenue, lang), subtitle: t(lang,'dash_somoni'), icon: ShoppingCart, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
+            profit: { title: t(lang,'dash_profit'), value: (hideData || !can('view_profit')) ? masked : formatCompact(totalProfit, lang), subtitle: t(lang,'dash_somoni'), icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
             boxes: { title: t(lang,'dash_boxes_sold'), value: hideData ? masked : totalBoxes, icon: Box, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
             pairs: { title: t(lang,'dash_pairs_sold'), value: hideData ? masked : totalPairs, icon: Layers, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
-            stock: { title: t(lang,'dash_stock'), value: hideData ? masked : `${totalStock} ${t(lang,'dash_boxes')}`, subtitle: (hideData || !can('view_stock_value')) ? masked : `${t(lang,'dash_purchase')}: ${totalPurchaseValue.toLocaleString()} с.`, icon: Warehouse, iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
-            debt: { title: t(lang,'dash_debt'), value: hideData ? masked : totalDebt.toLocaleString(), subtitle: t(lang,'dash_somoni'), icon: Users, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
+            stock: { title: t(lang,'dash_stock'), value: hideData ? masked : `${formatCompact(totalStock, lang)} ${t(lang,'dash_boxes')}`, subtitle: (hideData || !can('view_stock_value')) ? masked : `${t(lang,'dash_purchase')}: ${formatCompact(totalPurchaseValue, lang)} с.`, icon: Warehouse, iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
+            debt: { title: t(lang,'dash_debt'), value: hideData ? masked : formatCompact(totalDebt, lang), subtitle: t(lang,'dash_somoni'), icon: Users, iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
             customers: { title: t(lang,'dash_customers'), value: customers.length, icon: Users, iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' }
           };
           const config = widgetConfigs[widgetType];
@@ -222,7 +223,7 @@ export default function Dashboard() {
                   </div>
                   <p className="text-lg font-bold text-emerald-600">{hideData ? masked : `${totalSalesValue ? ((cashAmount / totalSalesValue) * 100).toFixed(1) : 0}%`}</p>
                   <p className="text-xs text-slate-500">{cashSales.length} {t(lang,'dash_sales_count')}</p>
-                  <p className="text-sm font-semibold text-slate-900">{hideData ? masked : `${cashAmount.toLocaleString()} с.`}</p>
+                  <p className="text-sm font-semibold text-slate-900">{hideData ? masked : `${formatCompact(cashAmount, lang)} с.`}</p>
                 </div>
                 <div className="text-center p-2 bg-amber-50 rounded-lg">
                   <div className="flex items-center justify-center gap-1 mb-1">
@@ -231,7 +232,7 @@ export default function Dashboard() {
                   </div>
                   <p className="text-lg font-bold text-amber-600">{hideData ? masked : `${totalSalesValue ? ((debtAmount / totalSalesValue) * 100).toFixed(1) : 0}%`}</p>
                   <p className="text-xs text-slate-500">{debtSales.length} {t(lang,'dash_sales_count')}</p>
-                  <p className="text-sm font-semibold text-slate-900">{hideData ? masked : `${debtAmount.toLocaleString()} с.`}</p>
+                  <p className="text-sm font-semibold text-slate-900">{hideData ? masked : `${formatCompact(debtAmount, lang)} с.`}</p>
                 </div>
               </div>
             </div>
@@ -268,7 +269,7 @@ export default function Dashboard() {
                   <p className="text-xs font-medium text-slate-900 truncate">{item.product.brand} {item.product.model}</p>
                   <p className="text-xs text-slate-400">{item.boxes} {t(lang,'dash_boxes')}</p>
                 </div>
-                <p className="text-xs font-semibold text-slate-900 flex-shrink-0">{(hideData || !can('view_stock_value')) ? masked : `${item.revenue.toLocaleString()} с.`}</p>
+                <p className="text-xs font-semibold text-slate-900 flex-shrink-0">{(hideData || !can('view_stock_value')) ? masked : `${formatCompact(item.revenue, lang)} с.`}</p>
               </div>
             )) : (
               <p className="text-center text-slate-400 py-4 text-xs">{t(lang,'dash_no_sales')}</p>

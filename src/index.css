@@ -211,3 +211,29 @@
   0%, 100% { background-color: #fff1f2; }
   50% { background-color: #fee2e2; }
 }
+
+/* Custom scrollbar for large scrollable lists */
+.custom-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: hsl(0 0% 95%);
+  border-radius: 4px;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 70%);
+  border-radius: 4px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 50%);
+}
+.dark .custom-scroll::-webkit-scrollbar-track {
+  background: hsl(0 0% 15%);
+}
+.dark .custom-scroll::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 35%);
+}
+.dark .custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 45%);
+}

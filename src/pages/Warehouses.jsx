@@ -466,6 +466,50 @@ export default function Warehouses() {
         </div>
       </div>
 
+      {/* Summary banner — totals across all warehouses */}
+      {!selectedWarehouse && (
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 md:p-6 shadow-lg shadow-indigo-500/20">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart2 className="w-5 h-5 text-white" />
+            <h3 className="text-sm md:text-base font-bold text-white">Сводка по всем складам</h3>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="bg-white/15 backdrop-blur rounded-xl p-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Package className="w-4 h-4 text-white/80" />
+                <p className="text-xs text-white/80 font-medium">Товаров</p>
+              </div>
+              <p className="text-2xl font-bold text-white">{products.length}</p>
+            </div>
+            <div className="bg-white/15 backdrop-blur rounded-xl p-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Box className="w-4 h-4 text-white/80" />
+                <p className="text-xs text-white/80 font-medium">Коробок всего</p>
+              </div>
+              <p className="text-2xl font-bold text-white">{products.reduce((s, p) => s + (p.boxes_in_stock || 0), 0)}</p>
+            </div>
+            <div className="bg-white/15 backdrop-blur rounded-xl p-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <TrendingUp className="w-4 h-4 text-white/80" />
+                <p className="text-xs text-white/80 font-medium">Выручка</p>
+              </div>
+              <p className="text-xl font-bold text-white">
+                {can('view_revenue') ? `${sales.filter(s => !s.is_cancelled).reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()} с.` : '•••••'}
+              </p>
+            </div>
+            <div className="bg-white/15 backdrop-blur rounded-xl p-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <DollarSign className="w-4 h-4 text-white/80" />
+                <p className="text-xs text-white/80 font-medium">Ожид. прибыль</p>
+              </div>
+              <p className="text-xl font-bold text-white">
+                {can('view_profit') ? `+${products.reduce((s, p) => s + ((p.boxes_in_stock || 0) * ((p.sale_price || 0) - (p.purchase_price || 0))), 0).toLocaleString()} с.` : '•••••'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Глобальный поиск товара по складам */}
       {globalSearchOpen && (
         <div className="bg-white rounded-2xl shadow-sm border border-indigo-200 p-4 space-y-4">

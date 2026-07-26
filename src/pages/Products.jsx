@@ -531,9 +531,11 @@ export default function Products() {
     });
   }
 
-  // Пагинация
-  const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
-  const paginatedProducts = filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // Для list-режима показываем все товары в одном скроллируемом контейнере
+  const totalPages = view === 'grid' ? Math.ceil(filteredProducts.length / PAGE_SIZE) : 1;
+  const paginatedProducts = view === 'grid'
+    ? filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    : filteredProducts;
 
   // Расчёт общей стоимости
   const totalStockValue = filteredProducts.reduce((sum, p) => 
@@ -849,7 +851,7 @@ export default function Products() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="divide-y divide-slate-100">
+          <div className="max-h-[70vh] overflow-y-auto custom-scroll divide-y divide-slate-100">
             {paginatedProducts.map((product, idx) => {
               const globalIdx = (page - 1) * PAGE_SIZE + idx;
               const totalPairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);

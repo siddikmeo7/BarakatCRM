@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/ui/PageHeader';
 import SearchInput from '@/components/filters/SearchInput';
@@ -10,12 +11,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { 
   CreditCard, DollarSign, User, Package, Clock, MessageCircle, Send,
   Phone, MapPin, Loader2, History, ChevronRight, PlusCircle, Plus,
-  CheckCircle, ArrowLeft, X
+  CheckCircle, ArrowLeft, X, List
 } from 'lucide-react';
 import { format, parseISO, isToday, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import { createPageUrl } from '@/utils';
 
 // Проверяет, есть ли у клиента продажа с просроченным или сегодняшним сроком оплаты
 const getDueDateStatus = (salesList) => {
@@ -32,6 +34,7 @@ const getDueDateStatus = (salesList) => {
 
 export default function Debts() {
   const { can } = useEmployeeAccess();
+  const navigate = useNavigate();
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -40,6 +43,7 @@ export default function Debts() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [lang, setLang] = useState('ru');
+  const [fromCustomers, setFromCustomers] = useState(false); // пришли из раздела клиентов
 
   // Детальный вид клиента
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -110,6 +114,16 @@ export default function Debts() {
         setProducts(productsData);
         setCustomers(customersData);
         setPayments(paymentsData);
+
+        // Если пришли из раздела клиентов с выбранным customerId — открываем его
+        const urlParams = new URLSearchParams(window.location.search);
+        const custId = urlParams.get('customerId');
+        const fromSrc = urlParams.get('from');
+        if (custId) {
+          const found = customersData.find(c => c.id === custId);
+          if (found) setSelectedCustomer(found);
+          if (fromSrc === 'customers') setFromCustomers(true);
+        }
 
         // Обновляем выбранного клиента если он открыт
         if (selectedCustomer) {
@@ -430,13 +444,23 @@ export default function Debts() {
         {/* Хедер */}
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => { setSelectedCustomer(null); setExpandedSaleHistory({}); }} className="gap-1 flex-shrink-0">
-              <ArrowLeft className="w-4 h-4" /> Назад
+            <Button variant="ghost" size="sm" onClick={() => {
+              setSelectedCustomer(null);
+              setExpandedSaleHistory({});
+              // Если пришли из клиентов — возвращаемся туда
+              if (fromCustomers) {
+                navigate(createPageUrl('Customers'));
+              }
+            }} className="gap-1 flex-shrink-0">
+              <ArrowLeft className="w-4 h-4" /> {fromCustomers ? 'К клиентам' : 'Назад'}
             </Button>
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-bold text-slate-900 truncate">{c.name}</h1>
               {c.phone && <p className="text-sm text-slate-500 flex items-center gap-1"><Phone className="w-3 h-3" />{c.phone}</p>}
             </div>
+            <Button variant="outline" size="sm" onClick={() => { setSelectedCustomer(null); setExpandedSaleHistory({}); setFromCustomers(false); navigate(createPageUrl('Debts')); }} className="gap-1.5 flex-shrink-0 text-xs">
+              <List className="w-4 h-4" /> Все долги
+            </Button>
           </div>
           <div className="flex gap-2 flex-wrap">
             {can('add_debt_manual') && (

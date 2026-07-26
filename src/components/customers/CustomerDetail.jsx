@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import {
   ChevronLeft, Edit2, Trash2, Phone, Mail, MapPin, MessageCircle, Send,
-  CreditCard, Wallet, ShoppingBag, UserCheck, Clock, FileText, Save, X, AlertCircle
+  CreditCard, Wallet, ShoppingBag, UserCheck, Clock, FileText, Save, X, AlertCircle,
+  DollarSign
 } from 'lucide-react';
 
 export default function CustomerDetail({ customer, onBack, onEdit, onDelete, business }) {
@@ -95,6 +96,17 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
           </button>
         )}
       </div>
+
+      {/* Pay Debt Button — redirects to Debts page for this customer */}
+      {can('view_customer_debt') && (c.total_debt || 0) > 0 && can('manage_debts') && (
+        <Button
+          onClick={() => navigate(createPageUrl('Debts') + `?customerId=${c.id}&from=customers`)}
+          className="w-full bg-emerald-600 hover:bg-emerald-700 gap-2 h-11"
+        >
+          <DollarSign className="w-4 h-4" />
+          Погасить долг клиента — {(c.total_debt || 0).toLocaleString()} с.
+        </Button>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-2">

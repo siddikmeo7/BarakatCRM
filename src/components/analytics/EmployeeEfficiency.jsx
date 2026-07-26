@@ -1,77 +1,60 @@
 import React, { useState, useMemo } from 'react';
 import {
   startOfDay, endOfDay, isWithinInterval, parseISO, format, subDays,
-  isSameDay
+  isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
+  startOfYear, endOfYear, subWeeks, subMonths
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Users, TrendingUp, ShoppingCart, Calendar, ChevronRight } from 'lucide-react';
+import { Users, TrendingUp, ShoppingCart, Calendar, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatCompact } from '@/lib/formatCompact';
 
-/**
- * Employee efficiency section with quick day filters (today / yesterday / day before / custom).
- * Shows revenue and profit per employee for the selected period.
- *
- * Props:
- *  - sales: array of Sale records (already filtered by business; must NOT be pre-filtered by date)
- *  - canViewProfit: boolean
- *  - hideData: boolean
- *  - lang: string
- */
+const PERIODS = [
+  { key: 'today', label: 'Сегодня' },
+  { key: 'yesterday', label: 'Вчера' },
+  { key: 'dayBefore', label: 'Позавчера' },
+  { key: 'week', label: 'Неделя' },
+  { key: '2weeks', label: '2 недели' },
+  { key: 'month', label: 'Месяц' },
+  { key: 'year', label: 'Год' },
+  { key: 'all', label: 'Всё время' },
+];
+
+function getPeriodDates(key) {
+  const today = new Date();
+  switch (key) {
+    case 'today': return { from: today, to: today };
+    case 'yesterday': { const d = subDays(today, 1); return { from: d, to: d }; }
+    case 'dayBefore': { const d = subDays(today, 2); return { from: d, to: d }; }
+    case 'week': return { from: startOfWeek(today, { weekStartsOn: 1 }), to: endOfWeek(today, { weekStartsOn: 1 }) };
+    case '2weeks': return { from: subWeeks(today, 2), to: today };
+    case 'month': return { from: startOfMonth(today), to: endOfMonth(today) };
+    case 'year': return { from: startOfYear(today), to: endOfYear(today) };
+    case 'all': return null;
+    default: return { from: today, to: today };
+  }
+}
+
 export default function EmployeeEfficiency({ sales, canViewProfit = true, hideData = false, lang = 'ru' }) {
-  // period: { from: Date, to: Date } | null  (null = all)
-  const [period, setPeriod] = useState({ from: new Date(), to: new Date() });
-  const [mode, setMode] = useState('today'); // today | yesterday | dayBefore | custom
+  const [periodKey, setPeriodKey] = useState('today');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const [useCustom, setUseCustom] = useState(false);
 
   const masked = '•••••';
 
-  const setQuick = (key) => {
-    const today = new Date();
-    if (key === 'today') {
-      setPeriod({ from: today, to: today });
-      setMode('today');
-    } else if (key === 'yesterday') {
-      const d = subDays(today, 1);
-      setPeriod({ from: d, to: d });
-      setMode('yesterday');
-    } else if (key === 'dayBefore') {
-      const d = subDays(today, 2);
-      setPeriod({ from: d, to: d });
-      setMode('dayBefore');
-    }
-  };
+  const period = useCustom && customFrom
+    ? { from: new Date(customFrom), to: new Date(customTo || customFrom) }
+    : getPeriodDates(periodKey);
 
-  const onCustomFrom = (e) => {
-    const val = e.target.value;
-    if (!val) return;
-    const from = startOfDay(new Date(val));
-    setPeriod(prev => ({
-      from,
-      to: prev?.to && prev.to >= from ? prev.to : from
-    }));
-    setMode('custom');
-  };
-
-  const onCustomTo = (e) => {
-    const val = e.target.value;
-    if (!val) return;
-    const to = endOfDay(new Date(val));
-    setPeriod(prev => ({
-      from: prev?.from || startOfDay(new Date(val)),
-      to
-    }));
-    setMode('custom');
-  };
-
-  // Filter sales by selected period (exclude cancelled)
   const periodSales = useMemo(() => {
-    if (!period?.from) return sales.filter(s => !s.is_cancelled);
+    const base = sales.filter(s => !s.is_cancelled);
+    if (!period) return base;
     try {
       const start = startOfDay(period.from);
       const end = endOfDay(period.to || period.from);
-      return sales.filter(s => {
-        if (s.is_cancelled) return false;
+      return base.filter(s => {
         const d = parseISO(s.sale_date || s.created_date);
         return isWithinInterval(d, { start, end });
       });
@@ -80,20 +63,12 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
     }
   }, [sales, period]);
 
-  // Aggregate per employee
   const employeeStats = useMemo(() => {
     const map = {};
     periodSales.forEach(s => {
       const key = s.seller_email || s.seller_name || 'Неизвестно';
       if (!map[key]) {
-        map[key] = {
-          name: s.seller_name || s.seller_email || 'Неизвестно',
-          email: s.seller_email || '',
-          revenue: 0,
-          profit: 0,
-          boxes: 0,
-          count: 0,
-        };
+        map[key] = { name: s.seller_name || s.seller_email || 'Неизвестно', email: s.seller_email || '', revenue: 0, profit: 0, boxes: 0, count: 0 };
       }
       map[key].revenue += s.total_amount || 0;
       map[key].profit += s.profit || 0;
@@ -105,18 +80,15 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
 
   const totalRevenue = employeeStats.reduce((s, e) => s + e.revenue, 0);
   const totalProfit = employeeStats.reduce((s, e) => s + e.profit, 0);
+  const totalBoxes = employeeStats.reduce((s, e) => s + e.boxes, 0);
 
   const fmt = (v) => hideData ? masked : `${formatCompact(v, lang)} с.`;
 
-  // date input values
-  const fromStr = period?.from ? format(period.from, 'yyyy-MM-dd') : '';
-  const toStr = period?.to ? format(period.to, 'yyyy-MM-dd') : '';
-
-  const periodLabel = period?.from
-    ? isSameDay(period.from, period.to)
+  const periodLabel = !period
+    ? 'Всё время'
+    : isSameDay(period.from, period.to)
       ? format(period.from, 'dd MMM yyyy', { locale: ru })
-      : `${format(period.from, 'dd MMM', { locale: ru })} — ${format(period.to, 'dd MMM yyyy', { locale: ru })}`
-    : 'Всё время';
+      : `${format(period.from, 'dd MMM', { locale: ru })} — ${format(period.to, 'dd MMM yyyy', { locale: ru })}`;
 
   return (
     <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
@@ -127,76 +99,80 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
         </h3>
         <span className="text-xs text-slate-400 flex items-center gap-1">
           <Calendar className="w-3 h-3" />
-          {periodLabel} · {periodSales.length} продаж
+          {periodLabel} · {periodSales.length} продаж · {totalBoxes} кор.
         </span>
       </div>
 
-      {/* Quick day filters */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <Button
-          size="sm"
-          variant={mode === 'today' ? 'default' : 'outline'}
-          onClick={() => setQuick('today')}
-          className={cn(mode === 'today' && 'bg-rose-500 hover:bg-rose-600 text-white')}
-        >
-          Сегодня
-        </Button>
-        <Button
-          size="sm"
-          variant={mode === 'yesterday' ? 'default' : 'outline'}
-          onClick={() => setQuick('yesterday')}
-          className={cn(mode === 'yesterday' && 'bg-rose-500 hover:bg-rose-600 text-white')}
-        >
-          Вчера
-        </Button>
-        <Button
-          size="sm"
-          variant={mode === 'dayBefore' ? 'default' : 'outline'}
-          onClick={() => setQuick('dayBefore')}
-          className={cn(mode === 'dayBefore' && 'bg-rose-500 hover:bg-rose-600 text-white')}
-        >
-          Позавчера
-        </Button>
-        <div className="flex items-center gap-1.5 ml-1">
-          <span className="text-xs text-slate-400">от</span>
-          <input
-            type="date"
-            value={fromStr}
-            onChange={onCustomFrom}
-            className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
-          />
-          <span className="text-xs text-slate-400">до</span>
-          <input
-            type="date"
-            value={toStr}
-            onChange={onCustomTo}
-            className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
-          />
-        </div>
+      {/* Quick period filters */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-3">
+        {PERIODS.map(p => (
+          <button
+            key={p.key}
+            onClick={() => { setPeriodKey(p.key); setUseCustom(false); }}
+            className={cn(
+              "px-2.5 py-1 rounded-lg text-xs font-medium border transition-all",
+              !useCustom && periodKey === p.key
+                ? "bg-rose-500 text-white border-rose-500"
+                : "bg-white text-slate-600 border-slate-200 hover:border-rose-300"
+            )}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Custom date range */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-4">
+        <span className="text-xs text-slate-400">Кастомный период:</span>
+        <input
+          type="date"
+          value={customFrom}
+          onChange={e => { setCustomFrom(e.target.value); setUseCustom(true); }}
+          className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+        />
+        <span className="text-xs text-slate-400">—</span>
+        <input
+          type="date"
+          value={customTo}
+          onChange={e => { setCustomTo(e.target.value); setUseCustom(true); }}
+          className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+        />
+        {useCustom && (
+          <button onClick={() => setUseCustom(false)} className="text-xs text-slate-400 hover:text-slate-600 underline">сбросить</button>
+        )}
       </div>
 
       {/* Totals row */}
-      <div className="grid grid-cols-2 gap-2 md:gap-3 mb-4">
-        <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 flex items-center gap-3">
+      <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4">
+        <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
             <ShoppingCart className="w-5 h-5 text-blue-600" />
           </div>
-          <div>
-            <p className="text-xs text-slate-500 font-medium">Выручка за период</p>
-            <p className="text-lg font-bold text-blue-600">{fmt(totalRevenue)}</p>
+          <div className="min-w-0">
+            <p className="text-[10px] text-slate-500 font-medium leading-tight">Выручка</p>
+            <p className="text-sm md:text-lg font-bold text-blue-600 truncate">{fmt(totalRevenue)}</p>
           </div>
         </div>
         {canViewProfit && (
-          <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3 flex items-center gap-3">
+          <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3 flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
               <TrendingUp className="w-5 h-5 text-emerald-600" />
             </div>
-            <div>
-              <p className="text-xs text-slate-500 font-medium">Прибыль за период</p>
-              <p className="text-lg font-bold text-emerald-600">{fmt(totalProfit)}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] text-slate-500 font-medium leading-tight">Прибыль</p>
+              <p className="text-sm md:text-lg font-bold text-emerald-600 truncate">{fmt(totalProfit)}</p>
             </div>
           </div>
         )}
+        <div className="rounded-xl bg-amber-50 border border-amber-100 p-3 flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <Package className="w-5 h-5 text-amber-600" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] text-slate-500 font-medium leading-tight">Коробок</p>
+            <p className="text-sm md:text-lg font-bold text-amber-600 truncate">{totalBoxes}</p>
+          </div>
+        </div>
       </div>
 
       {/* Employee list */}
@@ -206,7 +182,7 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
           <p className="text-sm">Нет продаж за выбранный период</p>
         </div>
       ) : (
-        <div className="space-y-2 max-h-[500px] overflow-y-auto">
+        <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
           {employeeStats.map((emp, i) => {
             const share = totalRevenue ? ((emp.revenue / totalRevenue) * 100).toFixed(1) : 0;
             return (
@@ -222,9 +198,8 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500 mt-0.5">
                     <span>📦 {emp.boxes} кор.</span>
                     <span>🛒 {emp.count} продаж</span>
-                    <span className="text-slate-400">{share}% от выручки</span>
+                    <span className="text-slate-400">{share}%</span>
                   </div>
-                  {/* revenue bar */}
                   <div className="mt-1.5 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-rose-400 rounded-full" style={{ width: `${share}%` }} />
                   </div>
