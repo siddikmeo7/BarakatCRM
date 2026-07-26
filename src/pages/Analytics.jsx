@@ -42,6 +42,7 @@ import CustomerSegmentation from '@/components/analytics/CustomerSegmentation';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import BackButton from '@/components/ui/BackButton';
 import BrandedLoader from '@/components/ui/BrandedLoader';
+import { formatCompact } from '@/lib/formatCompact';
 
 const DEFAULT_RATES = { TJS: 1, USD: 0.091, RUB: 8.5, EUR: 0.084, CNY: 0.66 };
 const RATES_CACHE_KEY = 'exchange_rates_cache';
@@ -283,7 +284,8 @@ export default function Analytics() {
 
   const convertCurrency = (amount) => {
     if (hideData) return masked;
-    return (amount * (exchangeRates[currency] || DEFAULT_RATES[currency] || 1)).toFixed(2);
+    const converted = amount * (exchangeRates[currency] || DEFAULT_RATES[currency] || 1);
+    return formatCompact(converted, lang);
   };
 
   const getCurrencySymbol = () => {
@@ -436,7 +438,7 @@ export default function Analytics() {
             <div className="flex-1">
               <p className="text-sm text-slate-500 font-medium">Убыток от продаж</p>
               <p className={`text-2xl font-bold ${totalLoss < 0 ? 'text-red-600' : 'text-slate-400'}`}>
-                {hideData ? masked : `${Math.round(totalLoss).toLocaleString()} с.`}
+                {hideData ? masked : `${formatCompact(totalLoss, lang)} с.`}
               </p>
               <p className="text-xs text-slate-400">{lossSales.length} продаж ниже себестоимости</p>
             </div>
@@ -452,7 +454,7 @@ export default function Analytics() {
             <div className="flex-1 min-w-0">
               <p className="text-sm text-slate-500 font-medium">Расходы за период</p>
               <p className={`text-2xl font-bold ${totalExpenses > 0 ? 'text-orange-600' : 'text-slate-400'}`}>
-                {hideData ? masked : `−${totalExpenses.toLocaleString()} с.`}
+                {hideData ? masked : `−${formatCompact(totalExpenses, lang)} с.`}
               </p>
               <p className="text-xs text-slate-400">{filteredExpenses.length} транзакций</p>
             </div>
@@ -468,7 +470,7 @@ export default function Analytics() {
             <div>
               <p className="text-sm text-slate-500 font-medium">Чистая прибыль</p>
               <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {hideData ? masked : `${Math.round(netProfit).toLocaleString()} с.`}
+                {hideData ? masked : `${formatCompact(netProfit, lang)} с.`}
               </p>
               <p className="text-xs text-slate-400">после расходов</p>
             </div>
@@ -481,9 +483,9 @@ export default function Analytics() {
             <div>
               <p className="text-sm text-slate-500 font-medium">Прибыль с реализации</p>
               <p className={`text-2xl font-bold ${consignmentProfit > 0 ? 'text-teal-600' : 'text-slate-400'}`}>
-                {hideData ? masked : `${Math.round(consignmentProfit).toLocaleString()} с.`}
+                {hideData ? masked : `${formatCompact(consignmentProfit, lang)} с.`}
               </p>
-              <p className="text-xs text-slate-400">{consignmentBoxes} кор. · владельцам: {hideData ? masked : `${Math.round(consignmentOwnerAmount).toLocaleString()} с.`}</p>
+              <p className="text-xs text-slate-400">{consignmentBoxes} кор. · владельцам: {hideData ? masked : `${formatCompact(consignmentOwnerAmount, lang)} с.`}</p>
             </div>
           </div>
         </div>
@@ -584,7 +586,7 @@ export default function Analytics() {
                 </div>
                 <p className="text-xl md:text-3xl font-bold text-emerald-600">{hideData ? masked : `${cashPercent}%`}</p>
                 <p className="text-xs md:text-sm text-slate-500 mt-1">{cashSales.length}</p>
-                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{hideData ? masked : `${(cashAmount / 1000).toFixed(1)}K с.`}</p>
+                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{hideData ? masked : `${formatCompact(cashAmount, lang)} с.`}</p>
               </div>
               <div className="text-center p-3 md:p-4 bg-amber-50 rounded-xl">
                 <div className="flex items-center justify-center gap-2 mb-2">
@@ -593,7 +595,7 @@ export default function Analytics() {
                 </div>
                 <p className="text-xl md:text-3xl font-bold text-amber-600">{hideData ? masked : `${debtPercent}%`}</p>
                 <p className="text-xs md:text-sm text-slate-500 mt-1">{debtSales.length}</p>
-                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{hideData ? masked : `${(debtAmount / 1000).toFixed(1)}K с.`}</p>
+                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{hideData ? masked : `${formatCompact(debtAmount, lang)} с.`}</p>
               </div>
             </div>
           </div>
@@ -641,7 +643,7 @@ export default function Analytics() {
                   <div className="flex-1">
                     <div className="flex justify-between text-xs mb-1">
                       <span className="font-medium text-slate-700">{cat.label}</span>
-                      <span className="text-slate-500">{hideData ? masked : `${total.toLocaleString()} с.`} ({pct}%)</span>
+                      <span className="text-slate-500">{hideData ? masked : `${formatCompact(total, lang)} с.`} ({pct}%)</span>
                     </div>
                     <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div className="h-full bg-orange-400 rounded-full" style={{ width: `${pct}%` }} />
@@ -708,10 +710,10 @@ export default function Analytics() {
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="font-bold text-slate-900 text-sm">{hideData ? masked : `${Math.round(stats.revenue).toLocaleString()} с.`}</p>
+                          <p className="font-bold text-slate-900 text-sm">{hideData ? masked : `${formatCompact(stats.revenue, lang)} с.`}</p>
                           {can('view_profit') && (
                             <p className={`text-xs font-medium ${stats.profit >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                              {hideData ? masked : `${stats.profit >= 0 ? '+' : ''}${Math.round(stats.profit).toLocaleString()} с.`}
+                              {hideData ? masked : `${stats.profit >= 0 ? '+' : ''}${formatCompact(stats.profit, lang)} с.`}
                             </p>
                           )}
                         </div>
@@ -785,10 +787,10 @@ export default function Analytics() {
                     <p className="text-xs text-slate-500">{stats.boxes} кор.</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-semibold text-slate-900 text-xs md:text-sm">{hideData ? masked : `${Math.round(stats.revenue)} с.`}</p>
+                    <p className="font-semibold text-slate-900 text-xs md:text-sm">{hideData ? masked : `${formatCompact(stats.revenue, lang)} с.`}</p>
                     {can('view_profit') && (
                       <p className={`text-xs md:text-sm font-medium ${stats.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                        {hideData ? masked : `${stats.profit >= 0 ? '+' : ''}${Math.round(stats.profit)} с.`}
+                        {hideData ? masked : `${stats.profit >= 0 ? '+' : ''}${formatCompact(stats.profit, lang)} с.`}
                       </p>
                     )}
                   </div>
@@ -813,7 +815,7 @@ export default function Analytics() {
             {/* Итог */}
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center justify-between">
               <span className="text-sm font-medium text-red-700">Общий убыток:</span>
-              <span className="text-lg font-bold text-red-600">{Math.round(totalLoss).toLocaleString()} с.</span>
+              <span className="text-lg font-bold text-red-600">{formatCompact(totalLoss, lang)} с.</span>
             </div>
 
             {/* Список продаж */}
@@ -854,7 +856,7 @@ export default function Analytics() {
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-base font-bold text-red-600">{Math.round(sale.profit || 0).toLocaleString()} с.</p>
+                        <p className="text-base font-bold text-red-600">{formatCompact(sale.profit || 0, lang)} с.</p>
                         <p className="text-xs text-red-400">{lossPerBox.toLocaleString()} с./кор.</p>
                       </div>
                     </div>
