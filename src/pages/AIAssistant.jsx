@@ -42,7 +42,7 @@ export default function AIAssistant() {
       setBusiness(biz);
       setLang(biz.language || 'ru');
 
-      const [products, sales, customers, warehouses, returns, activityLogs, chatsData, payments, employees, expenses] = await Promise.all([
+      const [products, sales, customers, warehouses, returns, activityLogs, chatsData, payments, employees, expenses, consignmentSales, consignmentProducts] = await Promise.all([
         base44.entities.Product.filter({ business_id: biz.id }),
         base44.entities.Sale.filter({ business_id: biz.id }),
         base44.entities.Customer.filter({ business_id: biz.id }),
@@ -53,6 +53,8 @@ export default function AIAssistant() {
         base44.entities.DebtPayment.filter({ business_id: biz.id }),
         base44.entities.Employee.filter({ business_id: biz.id }),
         base44.entities.Expense.filter({ business_id: biz.id }),
+        base44.entities.ConsignmentSale.filter({ business_id: biz.id }).catch(() => []),
+        base44.entities.ConsignmentProduct.filter({ business_id: biz.id }).catch(() => []),
       ]);
 
       // --- Статистика ---
@@ -74,17 +76,23 @@ export default function AIAssistant() {
         productSalesMap[sale.product_id].profit += sale.profit || 0;
       });
       const topProducts = Object.entries(productSalesMap)
-        .sort((a, b) => b[1].boxes - a[1].boxes).slice(0, 10)
-        .map(([id, d]) => {
+        .sort((a, b) => b[1].boxes - a[1].boxes)
+        .map(([id, d], i) => {
           const p = products.find(pr => pr.id === id);
-          return p ? `${p.brand} ${p.model} (${p.color}, ${p.size_from}-${p.size_to}р): продано ${d.boxes} кор., выручка ${d.revenue.toLocaleString()}с., прибыль ${d.profit.toLocaleString()}с.` : null;
+          return p ? `${i + 1}. ${p.brand} ${p.model} (${p.color}, ${p.size_from}-${p.size_to}р): продано ${d.boxes} кор., выручка ${d.revenue.toLocaleString()}с., прибыль ${d.profit.toLocaleString()}с.` : null;
         }).filter(Boolean);
 
       // Должники
       const topDebtors = customers
         .filter(c => (c.total_debt || 0) > 0)
-        .sort((a, b) => b.total_debt - a.total_debt).slice(0, 10)
+        .sort((a, b) => b.total_debt - a.total_debt)
         .map(c => `${c.name} (тел: ${c.phone}): долг ${c.total_debt.toLocaleString()}с., оплачено ${(c.total_paid || 0).toLocaleString()}с.`);
+
+      // Клиенты, полностью оплатившие (нет долгов)
+      const paidInFullCustomers = customers
+        .filter(c => (c.total_debt || 0) === 0 && (c.total_paid || 0) > 0)
+        .sort((a, b) => (b.total_paid || 0) - (a.total_paid || 0))
+        .map(c => `${c.name} (тел: ${c.phone}): оплачено ${(c.total_paid||0).toLocaleString()}с., долгов нет`);
 
       // Склады
       const warehouseInfo = warehouses.map(w => {
@@ -94,24 +102,38 @@ export default function AIAssistant() {
         return `Склад "${w.name}": ${wProds.length} товаров, ${boxes} коробок, стоимость ${value.toLocaleString()}с.`;
       });
 
-      // История активности (последние 50)
+      // История активности (последние 500 — для полноты ответов)
       const recentLogs = activityLogs
         .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
-        .slice(0, 50)
+        .slice(0, 500)
         .map(log => {
           const typeMap = { create: 'Создан', update: 'Изменён', delete: 'Удалён' };
-          return `[${format(new Date(log.created_date), 'dd.MM.yy HH:mm')}] ${typeMap[log.action_type] || log.action_type} ${log.entity_type}: ${log.description || ''}`;
+          const who = log.user_name || log.user_email || 'неизвестно';
+          return `[${format(new Date(log.created_date), 'dd.MM.yy HH:mm')}] ${typeMap[log.action_type] || log.action_type} ${log.entity_type}: ${log.description || ''} → выполнил: ${who}`;
         });
 
-      // Удалённые объекты
-      const deletedLogs = activityLogs.filter(l => l.action_type === 'delete');
+      // Удалённые объекты (с указанием КЕМ удалено)
+      const deletedLogs = activityLogs.filter(l => l.action_type === 'delete')
+        .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
       const deletedProducts = deletedLogs.filter(l => l.entity_type === 'Product').map(l => {
         const d = l.entity_data || {};
-        return `${d.brand || ''} ${d.model || ''} (удалён ${format(new Date(l.created_date), 'dd.MM.yy')})`;
+        const who = l.user_name || l.user_email || 'неизвестно';
+        return `${d.brand || ''} ${d.model || ''} (${d.color || ''}, р.${d.size_from || ''}-${d.size_to || ''}) — удалён ${format(new Date(l.created_date), 'dd.MM.yy HH:mm')}, удалил: ${who}`;
       });
       const deletedCustomers = deletedLogs.filter(l => l.entity_type === 'Customer').map(l => {
         const d = l.entity_data || {};
-        return `${d.name || ''} тел.${d.phone || ''} (удалён ${format(new Date(l.created_date), 'dd.MM.yy')})`;
+        const who = l.user_name || l.user_email || 'неизвестно';
+        return `${d.name || ''} тел.${d.phone || ''} — удалён(а) ${format(new Date(l.created_date), 'dd.MM.yy HH:mm')}, удалил: ${who}`;
+      });
+      const deletedSales = deletedLogs.filter(l => l.entity_type === 'Sale').map(l => {
+        const d = l.entity_data || {};
+        const who = l.user_name || l.user_email || 'неизвестно';
+        return `${d.customer_name || 'Клиент'}: ${d.boxes_sold || 0} кор., ${d.total_amount || 0}с. — удалена ${format(new Date(l.created_date), 'dd.MM.yy HH:mm')}, удалил: ${who}`;
+      });
+      const deletedWarehouses = deletedLogs.filter(l => l.entity_type === 'Warehouse').map(l => {
+        const d = l.entity_data || {};
+        const who = l.user_name || l.user_email || 'неизвестно';
+        return `Склад "${d.name || ''}" — удалён ${format(new Date(l.created_date), 'dd.MM.yy HH:mm')}, удалил: ${who}`;
       });
 
       // Все товары
@@ -130,19 +152,19 @@ export default function AIAssistant() {
         return `Возврат ${r.boxes_returned} кор. товара ${p ? `${p.brand} ${p.model}` : 'неизвестный'}, сумма ${r.refund_amount}с., состояние: ${r.condition}`;
       });
 
-      // Все продажи с деталями (последние 200)
+      // Все продажи с деталями (последние 500)
       const recentSalesDetailed = activeSales
         .sort((a, b) => new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date))
-        .slice(0, 200)
+        .slice(0, 500)
         .map(s => {
           const p = products.find(pr => pr.id === s.product_id);
           const c = customers.find(cu => cu.id === s.customer_id);
           const w = warehouses.find(wh => wh.id === s.warehouse_id);
-          const emp = employees.find(e => e.user_email === s.created_by_id || e.id === s.created_by_id);
+          const sellerName = s.seller_name || s.seller_email || 'неизвестен';
           const dt = s.sale_date || s.created_date;
           const dateStr = dt ? format(new Date(dt), 'dd.MM.yyyy HH:mm') : 'дата неизвестна';
           const payType = s.is_debt ? (s.partial_payment > 0 ? `долг (предоплата ${s.partial_payment}с.)` : 'в долг') : 'наличный';
-          return `[${dateStr}] ${p ? `${p.brand} ${p.model} (${p.color})` : 'Товар удалён'} | ${s.boxes_sold}кор. | сумма ${(s.total_amount||0).toLocaleString()}с. | ${payType} | клиент: ${c ? c.name : (s.customer_name || 'нет')} | склад: ${w ? w.name : '-'} | продавец: ${emp ? emp.name : 'неизвестен'} | прибыль: ${(s.profit||0).toLocaleString()}с.`;
+          return `[${dateStr}] ${p ? `${p.brand} ${p.model} (${p.color})` : 'Товар удалён'} | ${s.boxes_sold}кор. | сумма ${(s.total_amount||0).toLocaleString()}с. | ${payType} | клиент: ${c ? c.name : (s.customer_name || 'нет')} | склад: ${w ? w.name : '-'} | продавец: ${sellerName} | прибыль: ${(s.profit||0).toLocaleString()}с.`;
         });
 
       // Статистика по сотрудникам
@@ -159,7 +181,8 @@ export default function AIAssistant() {
       const employeeStats = employees.map(emp => {
         const stats = employeeStatsMap[emp.id] || employeeStatsMap[emp.user_email] || { boxes: 0, revenue: 0, profit: 0, count: 0 };
         const lastActive = emp.last_login_at ? format(new Date(emp.last_login_at), 'dd.MM.yyyy HH:mm') : 'никогда';
-        return `${emp.name} (${emp.is_admin ? 'Админ' : 'Сотрудник'}${emp.is_frozen ? ', ЗАМОРОЖЕН' : ''}): продаж ${stats.count}, коробок ${stats.boxes}, выручка ${stats.revenue.toLocaleString()}с., прибыль ${stats.profit.toLocaleString()}с. | последний вход: ${lastActive}`;
+        const status = emp.is_frozen ? 'ЗАМОРОЖЕН' : (emp.is_active ? 'активен' : 'неактивен');
+        return `${emp.name} (${emp.is_admin ? 'Админ' : 'Сотрудник'}, ${status}): продаж ${stats.count}, коробок ${stats.boxes}, выручка ${stats.revenue.toLocaleString()}с., прибыль ${stats.profit.toLocaleString()}с. | тел: ${emp.phone || '-'} | последний вход: ${lastActive}`;
       });
 
       // Должники с деталями (кто ещё не заплатил)
@@ -187,6 +210,30 @@ export default function AIAssistant() {
         });
       const totalExpenses = expenses.reduce((s, e) => s + (e.amount || 0), 0);
 
+      // Платежи по долгам (все)
+      const paymentsInfo = payments
+        .sort((a, b) => new Date(b.payment_date || b.created_date) - new Date(a.payment_date || a.created_date))
+        .slice(0, 300)
+        .map(p => {
+          const c = customers.find(cu => cu.id === p.customer_id);
+          const dt = p.payment_date || p.created_date;
+          return `[${dt ? format(new Date(dt), 'dd.MM.yyyy') : '?'}] ${c?.name || 'клиент'}: оплата ${(p.amount||0).toLocaleString()}с. ${p.note ? `(${p.note})` : ''}`;
+        });
+
+      // Продажи на реализации
+      const activeConsignmentSales = (consignmentSales || []).filter(s => !s.is_cancelled);
+      const consignmentSalesInfo = activeConsignmentSales
+        .sort((a, b) => new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date))
+        .slice(0, 200)
+        .map(s => {
+          const dt = s.sale_date || s.created_date;
+          return `[${dt ? format(new Date(dt), 'dd.MM.yyyy') : '?'}] ${s.brand || ''} ${s.model || ''} | ${s.boxes_sold}кор. | сумма ${(s.total_amount||0).toLocaleString()}с. | прибыль продавца: ${(s.seller_profit||0).toLocaleString()}с. | владелец: ${s.owner_name || '?'} | продавец: ${s.seller_name || '?'}`;
+        });
+      const consignmentTotalProfit = activeConsignmentSales.reduce((s, x) => s + (x.seller_profit || 0), 0);
+      const consignmentProductsInfo = (consignmentProducts || []).map(p =>
+        `${p.brand} ${p.model} | владелец: ${p.owner_name} | ${p.boxes_in_stock}кор. | цена владельца: ${p.owner_price}с. | цена продажи: ${p.sale_price}с.`
+      );
+
       setDataStats({
         totalProducts: products.length,
         totalStock,
@@ -209,18 +256,24 @@ export default function AIAssistant() {
         businessName: biz.name,
         totalSales, totalProfit, totalBoxesSold, totalStock, totalDebt,
         customersCount: customers.length, warehousesCount: warehouses.length,
-        topProducts, topDebtors, warehouseInfo,
+        topProducts, topDebtors, paidInFullCustomers, warehouseInfo,
         allProductsInfo,
         allCustomersInfo,
         returnsInfo,
         recentLogs,
         deletedProducts,
         deletedCustomers,
+        deletedSales,
+        deletedWarehouses,
         recentSalesDetailed,
         employeeStats,
         activeDebtors,
         expensesInfo,
         totalExpenses,
+        paymentsInfo,
+        consignmentSalesInfo,
+        consignmentProductsInfo,
+        consignmentTotalProfit,
       });
 
       const sorted = chatsData.sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date));
@@ -293,9 +346,22 @@ export default function AIAssistant() {
     try {
       const langInstruction = t(lang, 'ai_lang_instruction');
 
-      const context = `Ты AI-ассистент бизнеса "${businessData.businessName}".
+      const context = `Ты — продвинутый AI-ассистент бизнеса "${businessData.businessName}" (система BarakatCRM).
 ${langInstruction}
-Ты знаешь всё о бизнесе: продажи, товары, клиентов, сотрудников, долги, расходы. Отвечай детально, точно, используя реальные данные из базы.
+
+ТЫ ЗНАЕШЬ АБСОЛЮТНО ВСЁ О БИЗНЕСЕ. У тебя есть полный доступ ко всем данным системы: продажи, товары, клиенты, сотрудники, склады, долги, расходы, возвраты, платежи, удаления, история действий. Ты можешь ответить на ЛЮБОЙ вопрос о бизнесе.
+
+ПРАВИЛА ОТВЕТА:
+1. Отвечай ТОЛЬКО на основе реальных данных из базы, приведённых ниже.
+2. Если спрашивают "топ N" — отсортируй товары по нужному критерию и выведи ровно N штук.
+3. Если спрашивают "что было удалено сегодня и кем" — найди в разделе "УДАЛЁННЫЕ ОБЪЕКТЫ" записи за сегодняшнюю дату и укажи КТО удалил (поле "удалил:").
+4. Если спрашивают о должниках — используй раздел "ДОЛЖНИКИ", укажи имена, телефоны и суммы.
+5. Если спрашивают "кто полностью оплатил" — используй раздел "КЛИЕНТЫ БЕЗ ДОЛГОВ".
+6. Если спрашивают о конкретном сотруднике — ищи в "СТАТИСТИКА СОТРУДНИКОВ" и в "ИСТОРИИ ДЕЙСТВИЙ".
+7. Если спрашивают о продажах за период — фильтруй по датам в "ПРОДАЖАХ".
+8. ВСЕГДА указывай конкретные имена, даты, суммы — не общие фразы.
+9. Форматируй ответ с заголовками, списками и таблицами для читаемости.
+10. Если данных недостаточно — честно скажи, что не нашёл, и предложи уточнить вопрос.
 
 === ОБЩАЯ СТАТИСТИКА ===
 - Товаров в базе: ${businessData.totalProducts || 0}
@@ -305,13 +371,15 @@ ${langInstruction}
 - Коробок продано: ${businessData.totalBoxesSold || 0}
 - Общий долг клиентов: ${(businessData.totalDebt||0).toLocaleString()} с.
 - Клиентов: ${businessData.customersCount || 0}
-- Должников (не заплатили): ${dataStats?.debtorsCount || 0}
+- Должников (есть долг): ${dataStats?.debtorsCount || 0}
+- Клиентов без долгов (полностью оплатили): ${(businessData.paidInFullCustomers||[]).length}
 - Сотрудников: ${dataStats?.employeesCount || 0}
 - Складов: ${businessData.warehousesCount || 0}
 - Возвратов: ${dataStats?.returnsCount || 0}
 - Отменённых продаж: ${dataStats?.cancelledCount || 0}
 - Общие расходы: ${(businessData.totalExpenses||0).toLocaleString()} с.
-- Чистая прибыль (прибыль - расходы): ${((businessData.totalProfit||0) - (businessData.totalExpenses||0)).toLocaleString()} с.
+- Чистая прибыль (прибыль − расходы): ${((businessData.totalProfit||0) - (businessData.totalExpenses||0)).toLocaleString()} с.
+- Прибыль с реализации (чужие товары): ${(businessData.consignmentTotalProfit||0).toLocaleString()} с.
 
 === СКЛАДЫ ===
 ${businessData.warehouseInfo.join('\n') || 'Нет складов'}
@@ -319,19 +387,25 @@ ${businessData.warehouseInfo.join('\n') || 'Нет складов'}
 === ВСЕ ТОВАРЫ (${(businessData.allProductsInfo||[]).length} шт.) ===
 ${(businessData.allProductsInfo||[]).join('\n') || 'Нет товаров'}
 
-=== ТОП-10 ТОВАРОВ ПО ПРОДАЖАМ ===
+=== РЕЙТИНГ ТОВАРОВ ПО ПРОДАЖАМ (все товары, отсортированы) ===
 ${(businessData.topProducts||[]).join('\n') || 'Нет данных'}
 
 === ВСЕ КЛИЕНТЫ ===
 ${(businessData.allCustomersInfo||[]).join('\n') || 'Нет клиентов'}
 
-=== ДОЛЖНИКИ (кто ещё не заплатил) ===
+=== КЛИЕНТЫ БЕЗ ДОЛГОВ (полностью оплатили всё) ===
+${(businessData.paidInFullCustomers||[]).join('\n') || 'Нет клиентов без долгов'}
+
+=== ДОЛЖНИКИ (кто ещё не заплатил, с детализацией продаж) ===
 ${(businessData.activeDebtors||[]).join('\n\n') || 'Должников нет'}
+
+=== ПЛАТЕЖИ ПО ДОЛГАМ (последние 300) ===
+${(businessData.paymentsInfo||[]).join('\n') || 'Платежей нет'}
 
 === СТАТИСТИКА СОТРУДНИКОВ ===
 ${(businessData.employeeStats||[]).join('\n') || 'Нет сотрудников'}
 
-=== ПОСЛЕДНИЕ 200 ПРОДАЖ (с датой, временем, продавцом, клиентом, типом оплаты) ===
+=== ПОСЛЕДНИЕ 500 ПРОДАЖ (с датой, временем, продавцом, клиентом, типом оплаты) ===
 ${(businessData.recentSalesDetailed||[]).join('\n') || 'Нет продаж'}
 
 === ВОЗВРАТЫ ===
@@ -340,23 +414,35 @@ ${(businessData.returnsInfo||[]).join('\n') || 'Возвратов нет'}
 === РАСХОДЫ (последние 100) ===
 ${(businessData.expensesInfo||[]).join('\n') || 'Расходов нет'}
 
-=== УДАЛЁННЫЕ ТОВАРЫ ===
-${(businessData.deletedProducts||[]).join('\n') || 'Нет'}
+=== ПРОДАЖИ НА РЕАЛИЗАЦИИ (чужие товары, последние 200) ===
+${(businessData.consignmentSalesInfo||[]).join('\n') || 'Нет продаж на реализации'}
 
-=== УДАЛЁННЫЕ КЛИЕНТЫ ===
-${(businessData.deletedCustomers||[]).join('\n') || 'Нет'}
+=== ТОВАРЫ НА РЕАЛИЗАЦИИ ===
+${(businessData.consignmentProductsInfo||[]).join('\n') || 'Нет товаров на реализации'}
 
-=== ПОСЛЕДНИЕ 50 ДЕЙСТВИЙ В СИСТЕМЕ ===
-${(businessData.recentLogs||[]).join('\n') || 'Нет'}
+=== УДАЛЁННЫЕ ТОВАРЫ (с указанием КЕМ удалено) ===
+${(businessData.deletedProducts||[]).join('\n') || 'Нет удалённых товаров'}
+
+=== УДАЛЁННЫЕ КЛИЕНТЫ (с указанием КЕМ удалено) ===
+${(businessData.deletedCustomers||[]).join('\n') || 'Нет удалённых клиентов'}
+
+=== УДАЛЁННЫЕ ПРОДАЖИ (с указанием КЕМ удалено) ===
+${(businessData.deletedSales||[]).join('\n') || 'Нет удалённых продаж'}
+
+=== УДАЛЁННЫЕ СКЛАДЫ (с указанием КЕМ удалено) ===
+${(businessData.deletedWarehouses||[]).join('\n') || 'Нет удалённых складов'}
+
+=== ИСТОРИЯ ВСЕХ ДЕЙСТВИЙ В СИСТЕМЕ (последние 500, с указанием КТО выполнил) ===
+${(businessData.recentLogs||[]).join('\n') || 'Нет действий'}
 
 История переписки (для контекста):
 ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользователь' : 'AI'}: ${m.content}`).join('\n')}
 
 Вопрос пользователя: ${userMsg.content}
 
-Отвечай детально и по существу. Если спрашивают о конкретной дате/времени/клиенте/сотруднике — ищи в данных выше и давай точный ответ.`;
+Отвечай детально и по существу. Ищи точные данные в разделах выше. Если спрашивают о топ-N — выведи ровно N позиций из рейтинга. Если о датах — фильтруй по датам в записях. Если об удалениях — ищи в разделах "УДАЛЁННЫЕ" и указывай кто удалил.`;
 
-      const response = await base44.integrations.Core.InvokeLLM({ prompt: context });
+      const response = await base44.integrations.Core.InvokeLLM({ prompt: context, model: 'claude_sonnet_4_6' });
 
       const assistantMsg = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
       const updatedMessages = [...newMessages, assistantMsg];
@@ -392,8 +478,10 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
 
   const suggestions = [
     t(lang, 'ai_q1'), t(lang, 'ai_q2'), t(lang, 'ai_q3'), t(lang, 'ai_q4'), t(lang, 'ai_q5'),
-    lang === 'ru' ? 'Покажи все удалённые товары' : lang === 'tj' ? 'Ҳамаи молҳои нестшударо нишон деҳ' : 'Show all deleted products',
-    lang === 'ru' ? 'Какие изменения были сегодня?' : lang === 'tj' ? 'Имрӯз кадом тағйиротҳо буданд?' : 'What changes happened today?',
+    lang === 'ru' ? 'Дай топ 25 самых продаваемых товаров' : 'Top 25 best selling products',
+    lang === 'ru' ? 'Что было удалено сегодня и кем?' : 'What was deleted today and by whom?',
+    lang === 'ru' ? 'Какие клиенты должны деньги?' : 'Which customers owe money?',
+    lang === 'ru' ? 'Кто из клиентов полностью оплатил долги?' : 'Who fully paid their debts?',
   ];
 
   if (loading || !isReady) {
