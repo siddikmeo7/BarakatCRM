@@ -4,10 +4,12 @@ import SearchInput from '@/components/filters/SearchInput';
 import PullToRefresh from '@/components/ui/PullToRefresh';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useNavigate } from 'react-router-dom';
 import {
   Plus, Users, ChevronLeft, ChevronRight,
   UserCheck, CreditCard, Wallet, ShoppingCart, TrendingUp
 } from 'lucide-react';
+import { createPageUrl } from '@/utils';
 import CustomerForm from '@/components/customers/CustomerForm';
 import CustomerDetail from '@/components/customers/CustomerDetail';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
@@ -16,6 +18,7 @@ const PAGE_SIZE = 20;
 
 export default function Customers() {
   const { can, isReady } = useEmployeeAccess();
+  const navigate = useNavigate();
   const [business, setBusiness] = useState(null);
   const [user, setUser] = useState(null);
   const [customers, setCustomers] = useState([]);
@@ -262,11 +265,16 @@ export default function Customers() {
               Всего {stats.total} · долг {stats.totalDebtAmount.toLocaleString()} с.
             </p>
           </div>
-          {can('manage_customers') && (
-            <Button onClick={() => { setEditingCustomer(null); setFormOpen(true); }} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
-              <Plus className="w-3.5 h-3.5" /> Добавить
+          <div className="flex gap-2">
+            <Button onClick={() => navigate(createPageUrl('Debts'))} variant="outline" size="sm" className="gap-1.5 text-xs">
+              <CreditCard className="w-3.5 h-3.5" /> Все долги
             </Button>
-          )}
+            {can('manage_customers') && (
+              <Button onClick={() => { setEditingCustomer(null); setFormOpen(true); }} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
+                <Plus className="w-3.5 h-3.5" /> Добавить
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Summary Stats Cards */}

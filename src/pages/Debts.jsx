@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
-  CreditCard, DollarSign, User, Package, Clock, MessageCircle, Send,
+  CreditCard, DollarSign, User, Users, Package, Clock, MessageCircle, Send,
   Phone, MapPin, Loader2, History, ChevronRight, PlusCircle, Plus,
   CheckCircle, ArrowLeft, X, List
 } from 'lucide-react';
@@ -827,11 +827,16 @@ export default function Debts() {
           <h1 className="text-xl font-bold text-slate-900">{t(lang,'debts_title')}</h1>
           <p className="text-xs text-slate-400">{totalDebtors} должников · {totalDebt.toLocaleString()} с.</p>
         </div>
-        {can('add_debt_manual') && (
-          <Button onClick={() => setAddDebtOpen(true)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
-            <PlusCircle className="w-3.5 h-3.5" /> Добавить
+        <div className="flex gap-2">
+          <Button onClick={() => navigate(createPageUrl('Customers'))} variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Users className="w-3.5 h-3.5" /> Все клиенты
           </Button>
-        )}
+          {can('add_debt_manual') && (
+            <Button onClick={() => setAddDebtOpen(true)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
+              <PlusCircle className="w-3.5 h-3.5" /> Добавить
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Поиск, сортировка, фильтры */}

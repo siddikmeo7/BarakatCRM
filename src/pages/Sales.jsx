@@ -644,7 +644,7 @@ export default function Sales() {
 
       {/* Sales List/Grid */}
       {view === 'list' ? (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 max-h-[70vh] overflow-y-auto custom-scroll">
         {/* Desktop */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
@@ -664,8 +664,8 @@ export default function Sales() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {paginatedSales.map((sale, idx) => {
-                const globalIdx = (salesPage - 1) * SALES_PAGE_SIZE + idx;
+              {filteredSales.map((sale, idx) => {
+                const globalIdx = idx;
                 const product = sale._isConsignment ? consignmentProducts.find(p => p.id === sale.product_id) : products.find(p => p.id === sale.product_id);
                 const customer = customers.find(c => c.id === sale.customer_id);
                 const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
@@ -727,7 +727,7 @@ export default function Sales() {
 
         {/* Mobile Cards */}
         <div className="md:hidden divide-y divide-slate-100">
-          {paginatedSales.map(sale => {
+          {filteredSales.map(sale => {
             const product = sale._isConsignment ? consignmentProducts.find(p => p.id === sale.product_id) : products.find(p => p.id === sale.product_id);
             const customer = customers.find(c => c.id === sale.customer_id);
             return (
@@ -789,36 +789,6 @@ export default function Sales() {
           <div className="text-center py-12 text-slate-500">
             <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-slate-300" />
             <p>{t(lang,'sales_not_found')}</p>
-          </div>
-        )}
-        {totalSalesPages > 1 && (
-          <div className="flex items-center justify-center gap-1.5 py-3 border-t border-slate-100 flex-wrap">
-            <Button variant="outline" size="sm" onClick={() => setSalesPage(1)} disabled={salesPage === 1} className="text-xs px-2">«</Button>
-            <Button variant="outline" size="sm" onClick={() => setSalesPage(p => Math.max(1, p - 1))} disabled={salesPage === 1}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            {Array.from({ length: totalSalesPages }, (_, i) => i + 1)
-              .filter(p => p === 1 || p === totalSalesPages || Math.abs(p - salesPage) <= 2)
-              .reduce((acc, p, idx, arr) => {
-                if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
-                acc.push(p);
-                return acc;
-              }, [])
-              .map((p, i) => p === '...' ? (
-                <span key={`ellipsis-${i}`} className="text-slate-400 px-1 text-sm">…</span>
-              ) : (
-                <Button key={p} variant={salesPage === p ? 'default' : 'outline'} size="sm"
-                  onClick={() => setSalesPage(p)}
-                  className={`w-8 text-xs ${salesPage === p ? 'bg-indigo-600 hover:bg-indigo-700' : ''}`}>
-                  {p}
-                </Button>
-              ))
-            }
-            <Button variant="outline" size="sm" onClick={() => setSalesPage(p => Math.min(totalSalesPages, p + 1))} disabled={salesPage === totalSalesPages}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setSalesPage(totalSalesPages)} disabled={salesPage === totalSalesPages} className="text-xs px-2">»</Button>
-            <span className="text-xs text-slate-400 ml-2">{filteredSales.length} продаж</span>
           </div>
         )}
         </div>

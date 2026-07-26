@@ -24,6 +24,8 @@ import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 const DATE_PRESETS = [
   { label: 'Сегодня', getValue: () => ({ from: startOfDay(new Date()), to: endOfDay(new Date()) }) },
@@ -1024,9 +1026,10 @@ export default function Reports() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-slate-800">Все продажи ({filteredSales.length})</h2>
           </div>
-          <div className="overflow-x-auto">
+          <div className="custom-scroll max-h-[60vh] overflow-y-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-slate-100">
+               <th className="text-center py-2 px-2 text-xs font-semibold text-slate-500 w-8">#</th>
                <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Дата</th>
                <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Товар</th>
                <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Кор.</th>
@@ -1037,14 +1040,15 @@ export default function Reports() {
                <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Клиент</th>
               </tr></thead>
               <tbody>
-               {filteredSales.slice(0, 100).map((s, i) => {
+               {filteredSales.map((s, i) => {
                  const prod = products.find(p => p.id === s.product_id);
                  const boxes = s.boxes_sold || 0;
                  const pairs = s.pairs_sold || boxes * (prod?.pairs_per_box || 6);
                  return (
                    <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50">
+                     <td className="py-1.5 px-2 text-xs text-center text-slate-400 font-mono">{i + 1}</td>
                      <td className="py-1.5 px-2 text-xs text-slate-500">{s.sale_date ? format(parseISO(s.sale_date), 'dd.MM HH:mm') : '—'}</td>
-                     <td className="py-1.5 px-2 text-xs font-medium text-slate-700 max-w-[120px] truncate">{prod ? `${prod.brand} ${prod.model}` : '—'}</td>
+                     <td className="py-1.5 px-2 text-xs font-medium text-slate-700 max-w-[120px] truncate">{prod ? <Link to={`${createPageUrl('ProductDetail')}?id=${prod.id}`} className="hover:text-indigo-600">{prod.brand} {prod.model}</Link> : '—'}</td>
                      <td className="py-1.5 px-2 text-xs text-right font-semibold text-indigo-700">{boxes}</td>
                      <td className="py-1.5 px-2 text-xs text-right text-slate-500">{pairs}</td>
                      <td className="py-1.5 px-2 text-xs text-right text-indigo-600 font-semibold">{Math.round(s.total_amount || 0).toLocaleString()} с.</td>
@@ -1056,6 +1060,7 @@ export default function Reports() {
                })}
               </tbody>
               <tfoot><tr className="bg-slate-50 font-semibold">
+               <td className="py-2 px-2"></td>
                <td colSpan={2} className="py-2 px-2 text-xs">Итого</td>
                <td className="py-2 px-2 text-xs text-right text-indigo-700">{totalBoxes} кор.</td>
                <td className="py-2 px-2 text-xs text-right text-slate-500">{filteredSales.reduce((s, x) => s + (x.pairs_sold || (x.boxes_sold||0)*6), 0)} пар</td>
@@ -1064,7 +1069,7 @@ export default function Reports() {
                <td colSpan={2}></td>
               </tr></tfoot>
             </table>
-            {filteredSales.length > 100 && <p className="text-xs text-slate-400 text-center mt-2">Показано 100 из {filteredSales.length}. Скачайте Excel для полного отчёта.</p>}
+
           </div>
         </div>
       )}
@@ -1081,10 +1086,10 @@ export default function Reports() {
                 <p className="text-sm font-semibold text-red-700 mb-2">⚠️ Мало на складе ({lowStock.length} товаров)</p>
                 <div className="flex flex-wrap gap-2">
                   {lowStock.map(p => (
-                    <button key={p.id} onClick={() => window.location.href = '/Products'}
-                      className="px-2.5 py-1 bg-red-100 border border-red-200 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 flex items-center gap-1">
-                      {p.brand} {p.model} — {p.boxes_in_stock} кор. <ExternalLink className="w-3 h-3" />
-                    </button>
+                    <Link key={p.id} to={`${createPageUrl('ProductDetail')}?id=${p.id}`}
+                     className="px-2.5 py-1 bg-red-100 border border-red-200 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 flex items-center gap-1">
+                     {p.brand} {p.model} — {p.boxes_in_stock} кор. <ExternalLink className="w-3 h-3" />
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -1138,6 +1143,7 @@ export default function Reports() {
 
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <h2 className="font-semibold text-slate-800 mb-4">Топ товаров по продажам</h2>
+            <div className="custom-scroll max-h-[50vh] overflow-y-auto -mx-1 px-1">
             {(() => {
               let filtered = topProducts.filter(tp => {
                 const q = productSearch.toLowerCase();
@@ -1154,7 +1160,7 @@ export default function Reports() {
               if (sorted.length === 0) return <p className="text-slate-400 text-sm text-center py-8">Нет данных</p>;
               return (
                 <div className="space-y-3">
-                  {sorted.slice(0, 20).map((tp, i) => {
+                  {sorted.map((tp, i) => {
                     const pct = Math.round((tp.revenue / (sorted[0]?.revenue || 1)) * 100);
                     const margin = tp.revenue > 0 ? ((tp.profit / tp.revenue) * 100).toFixed(1) : 0;
                     return (
@@ -1163,12 +1169,12 @@ export default function Reports() {
                           i === 0 ? "bg-amber-400 text-white" : i === 1 ? "bg-slate-300 text-slate-700" : i === 2 ? "bg-orange-300 text-white" : "bg-slate-100 text-slate-600")}>{i + 1}</div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1 gap-2">
-                            <button
-                              onClick={() => window.location.href = '/Products'}
+                            <Link
+                              to={`${createPageUrl('ProductDetail')}?id=${tp.product.id}`}
                               className="text-sm font-medium text-slate-800 hover:text-indigo-600 truncate flex items-center gap-1 text-left">
                               {tp.product.brand} {tp.product.model}
                               <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-60 flex-shrink-0" />
-                            </button>
+                            </Link>
                             <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full flex-shrink-0">{tp.product.product_type}</span>
                             <span className="text-sm font-bold text-slate-900 ml-auto flex-shrink-0">{Math.round(tp.revenue).toLocaleString()} с.</span>
                           </div>
@@ -1187,6 +1193,7 @@ export default function Reports() {
                 </div>
               );
             })()}
+            </div>
           </div>
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
@@ -1196,9 +1203,10 @@ export default function Reports() {
                 <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg font-semibold">{products.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.pairs_per_box || 6), 0)} пар</span>
               </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="custom-scroll max-h-[50vh] overflow-y-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-slate-100">
+                  <th className="text-center py-2 px-2 text-xs font-semibold text-slate-500 w-8">#</th>
                   <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Товар</th>
                   <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Тип</th>
                   <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Коробок</th>
@@ -1208,12 +1216,13 @@ export default function Reports() {
                   <th className="text-right py-2 px-2 text-xs font-semibold text-slate-500">Стоимость</th>
                 </tr></thead>
                 <tbody>
-                  {[...products].sort((a, b) => (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0)).map((p) => {
+                  {[...products].sort((a, b) => (b.boxes_in_stock || 0) - (a.boxes_in_stock || 0)).map((p, pi) => {
                     const boxes = p.boxes_in_stock || 0;
                     const pairs = boxes * (p.pairs_per_box || 6);
                     return (
                       <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
-                        <td className="py-1.5 px-2 text-xs font-medium text-slate-700">{p.brand} {p.model}</td>
+                        <td className="py-1.5 px-2 text-xs text-center text-slate-400 font-mono">{pi + 1}</td>
+                        <td className="py-1.5 px-2 text-xs font-medium text-slate-700"><Link to={`${createPageUrl('ProductDetail')}?id=${p.id}`} className="hover:text-indigo-600">{p.brand} {p.model}</Link></td>
                         <td className="py-1.5 px-2 text-xs text-slate-500">{p.product_type || '—'}</td>
                         <td className="py-1.5 px-2 text-xs text-right font-semibold text-indigo-700">{boxes}</td>
                         <td className="py-1.5 px-2 text-xs text-right text-slate-500">{pairs}</td>
@@ -1225,6 +1234,7 @@ export default function Reports() {
                   })}
                 </tbody>
                 <tfoot><tr className="bg-slate-50 font-semibold">
+                  <td className="py-2 px-2"></td>
                   <td colSpan={2} className="py-2 px-2 text-xs">Итого</td>
                   <td className="py-2 px-2 text-xs text-right text-indigo-700">{products.reduce((s, p) => s + (p.boxes_in_stock || 0), 0)} кор.</td>
                   <td className="py-2 px-2 text-xs text-right">{products.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.pairs_per_box || 6), 0)} пар</td>
@@ -1248,7 +1258,7 @@ export default function Reports() {
           ) : (
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
               <h2 className="font-semibold text-slate-800 mb-4">Статистика по сотрудникам ({employeeStats.length})</h2>
-              <div className="space-y-3">
+              <div className="custom-scroll max-h-[60vh] overflow-y-auto space-y-3">
                 {employeeStats.map((stat, i) => {
                   const name = stat.employee?.name || stat.email || 'Неизвестно';
                   const pct = Math.round((stat.revenue / (employeeStats[0]?.revenue || 1)) * 100);
@@ -1305,11 +1315,14 @@ export default function Reports() {
       {activeTab === 'customers' && (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <h2 className="font-semibold text-slate-800 mb-4">Все клиенты ({customers.length})</h2>
-          <div className="space-y-2">
+          <div className="custom-scroll max-h-[50vh] overflow-y-auto space-y-2">
             {customers.sort((a, b) => (b.total_paid || 0) + (b.total_debt || 0) - ((a.total_paid || 0) + (a.total_debt || 0))).map((c, i) => (
               <div key={c.id}
                 onClick={() => window.location.href = '/Customers'}
                 className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-indigo-50 hover:border-indigo-200 cursor-pointer group transition-colors">
+                <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold flex-shrink-0">
+                  {i + 1}
+                </div>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                   {c.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
@@ -1346,7 +1359,7 @@ export default function Reports() {
           </div>
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <h2 className="font-semibold text-slate-800 mb-4">Должники</h2>
-            <div className="space-y-2">
+            <div className="custom-scroll max-h-[50vh] overflow-y-auto space-y-2">
               {debtors.map((c, i) => (
                  <div key={c.id}
                    onClick={() => window.location.href = '/Debts'}
@@ -1418,9 +1431,10 @@ export default function Reports() {
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <h2 className="font-semibold text-slate-800 mb-4">Все возвраты</h2>
             {filteredReturns.length === 0 ? <p className="text-center text-slate-400 py-8">Нет возвратов за период</p> : (
-              <div className="overflow-x-auto">
+              <div className="custom-scroll max-h-[50vh] overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="border-b border-slate-100">
+                    <th className="text-center py-2 px-2 text-xs font-semibold text-slate-500 w-8">#</th>
                     <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Дата</th>
                     <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Товар</th>
                     <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Клиент</th>
@@ -1434,6 +1448,7 @@ export default function Reports() {
                       const cust = customers.find(c => c.id === r.customer_id);
                       return (
                         <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
+                          <td className="py-1.5 px-2 text-xs text-center text-slate-400 font-mono">{i + 1}</td>
                           <td className="py-1.5 px-2 text-xs text-slate-500">{r.return_date ? format(parseISO(r.return_date), 'dd.MM.yyyy') : '—'}</td>
                           <td className="py-1.5 px-2 text-xs font-medium text-slate-700">{prod ? `${prod.brand} ${prod.model}` : '—'}</td>
                           <td className="py-1.5 px-2 text-xs text-slate-500">{cust?.name || '—'}</td>

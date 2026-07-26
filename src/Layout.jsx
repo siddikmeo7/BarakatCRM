@@ -398,14 +398,11 @@ export default function Layout({ children, currentPageName }) {
     <div className="flex flex-col h-full">
       {/* Drawer Header */}
       <div className="h-16 flex items-center justify-between px-5 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <Package className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <span className="font-bold text-slate-900 dark:text-white text-base">BarakatCRM</span>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{t(lang, 'app_subtitle')}</p>
-          </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{business?.name || 'Бизнес'}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+            {currentEmployee ? (currentEmployee.is_admin ? '👑 Админ' : '🛍️ Сотрудник') : '👑 Владелец'}
+          </p>
         </div>
         <button
           onClick={() => setDrawerOpen(false)}
@@ -415,25 +412,7 @@ export default function Layout({ children, currentPageName }) {
         </button>
       </div>
 
-      {/* Admin toggle */}
-      {isAdmin && (
-        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex gap-2">
-            <Link to={createPageUrl('Dashboard')} className="flex-1" onClick={() => setDrawerOpen(false)}>
-              <Button variant={!isAdminPage ? "default" : "outline"} size="sm"
-                className={cn("w-full", !isAdminPage && "bg-indigo-600 hover:bg-indigo-700")}>
-                {t(lang, 'nav_business')}
-              </Button>
-            </Link>
-            <Link to={createPageUrl('AdminDashboard')} className="flex-1" onClick={() => setDrawerOpen(false)}>
-              <Button variant={isAdminPage ? "default" : "outline"} size="sm"
-                className={cn("w-full", isAdminPage && "bg-indigo-600 hover:bg-indigo-700")}>
-                {t(lang, 'nav_admin_btn')}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      )}
+
 
       {/* Menu Items */}
       <nav className="flex-1 overflow-y-auto py-3 px-3">
@@ -507,17 +486,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
         )}
 
-        {/* Dark mode toggle in drawer */}
-        <button
-          onClick={toggleDark}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-        >
-          {isDark
-            ? <Sun className="w-4 h-4 text-amber-400 flex-shrink-0" />
-            : <Moon className="w-4 h-4 text-slate-500 flex-shrink-0" />
-          }
-          <span className="text-sm text-slate-700 dark:text-slate-300">{isDark ? 'Светлая тема' : 'Тёмная тема'}</span>
-        </button>
+
       </div>
     </div>
   );
