@@ -411,10 +411,7 @@ export default function Layout({ children, currentPageName }) {
       {/* Drawer Header */}
       <div className="h-16 flex items-center justify-between px-5 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{business?.name || 'Бизнес'}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-            {currentEmployee ? (currentEmployee.is_admin ? '👑 Админ' : '🛍️ Сотрудник') : '👑 Владелец'}
-          </p>
+          <p className="font-black text-slate-900 dark:text-white text-lg uppercase tracking-tight truncate">{business?.name || 'Бизнес'}</p>
         </div>
         <button
           onClick={() => setDrawerOpen(false)}
