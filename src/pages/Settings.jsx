@@ -21,7 +21,7 @@ import {
   Settings as SettingsIcon, Building2, Palette, Users, Plus, Trash2, Loader2, Save,
   CheckCircle, MessageCircle, Mail, Bell, Edit2, LogOut, History, Download, Shield,
   RotateCcw, AlertCircle, RefreshCw, ChevronDown, Lock, Database, Zap, Package,
-  ShoppingCart, Eye, Search, Check, Copy, ArrowLeftRight, Moon, Sun, PackageOpen
+  ShoppingCart, Eye, Search, Check, Copy, ArrowLeftRight, Moon, Sun, PackageOpen, Globe, Phone, MapPin
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
@@ -70,7 +70,7 @@ export default function Settings() {
   const [clearingCache, setClearingCache] = useState(false);
   
   const [formData, setFormData] = useState({
-    name: '', phone: '', address: '', language: 'ru',
+    name: '', phone: '', phone2: '', address: '', language: 'ru',
     default_color: 'Чёрный', default_size_from: 39, default_size_to: 44,
     default_pairs_per_box: 6, default_product_type: 'Туфли', low_stock_limit: 2,
     default_consignment_owner: '', default_consignment_owner_email: ''
@@ -140,7 +140,7 @@ export default function Settings() {
             const biz = bizList[0];
             setBusiness(biz);
             setLang(biz.language || 'ru');
-            setFormData({ name: biz.name || '', phone: biz.phone || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
+            setFormData({ name: biz.name || '', phone: biz.phone || '', phone2: biz.phone2 || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
           }
         }
         setLoading(false);
@@ -153,7 +153,7 @@ export default function Settings() {
         const biz = businesses[0];
         setBusiness(biz);
         setLang(biz.language || 'ru');
-        setFormData({ name: biz.name || '', phone: biz.phone || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
+        setFormData({ name: biz.name || '', phone: biz.phone || '', phone2: biz.phone2 || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
 
         let rolesData = await base44.entities.Role.filter({ business_id: biz.id });
         const hasSeller = rolesData.some(r => r.name === 'Продавец');
@@ -181,6 +181,7 @@ export default function Settings() {
       await base44.entities.Business.update(business.id, {
         name: formData.name,
         phone: formData.phone,
+        phone2: formData.phone2,
         address: formData.address,
         language: formData.language,
         default_color: formData.default_color,
@@ -448,12 +449,39 @@ export default function Settings() {
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.business ? 'rotate-180 text-blue-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6 space-y-4">
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6 space-y-5">
+            {/* Read-only info cards */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                <p className="text-xs text-slate-400 mb-0.5">🔑 Код бизнеса</p>
+                <p className="text-sm font-mono font-bold text-slate-800 dark:text-slate-200 break-all">{business?.business_code || '—'}</p>
+              </div>
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                <p className="text-xs text-slate-400 mb-0.5">📧 Email владельца</p>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{business?.owner_email || '—'}</p>
+              </div>
+            </div>
+
+            {/* Editable fields */}
             <div className="grid gap-4 max-w-2xl">
-              <div><Label>{t(lang,'settings_biz_name')}</Label><Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="mt-1.5" /></div>
-              <div><Label>{t(lang,'settings_phone')}</Label><Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+992 XXX XX XX XX" className="mt-1.5" /></div>
-              <div><Label>{t(lang,'settings_address')}</Label><Input value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder={t(lang,'settings_address')} className="mt-1.5" /></div>
-              <div><Label>{t(lang, 'settings_language')}</Label><Select value={formData.language} onValueChange={async (v) => { setFormData({ ...formData, language: v }); setLang(v); if (business) await base44.entities.Business.update(business.id, { language: v }); }}><SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger><SelectContent>{LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent></Select></div>
+              <div>
+                <Label className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-slate-400" />{t(lang,'settings_biz_name')}</Label>
+                <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="mt-1.5" placeholder="Название бизнеса" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-slate-400" />Телефон 1</Label>
+                  <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+992 XXX XX XX XX" className="mt-1.5" />
+                </div>
+                <div>
+                  <Label className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-slate-400" />Телефон 2</Label>
+                  <Input value={formData.phone2} onChange={(e) => setFormData({ ...formData, phone2: e.target.value })} placeholder="+992 XXX XX XX XX" className="mt-1.5" />
+                </div>
+              </div>
+              <div>
+                <Label className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-slate-400" />{t(lang,'settings_address')}</Label>
+                <Input value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder={t(lang,'settings_address')} className="mt-1.5" />
+              </div>
             </div>
           </CollapsibleContent>
         </Collapsible></div> : null}
@@ -708,6 +736,23 @@ export default function Settings() {
             </div>}
           </CollapsibleContent>
         </Collapsible></div> : null}
+
+        {/* Language selector — at the very bottom, below security */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+          <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30"><Globe className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /></div>
+              <div>
+                <h3 className="font-semibold text-slate-900 dark:text-white">🌐 Язык интерфейса</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Выберите язык системы</p>
+              </div>
+            </div>
+            <Select value={formData.language} onValueChange={async (v) => { setFormData({ ...formData, language: v }); setLang(v); if (business) await base44.entities.Business.update(business.id, { language: v }); }}>
+              <SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>{LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       {/* Save Button — sticky bottom bar */}
