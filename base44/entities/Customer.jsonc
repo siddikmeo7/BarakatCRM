@@ -47,11 +47,11 @@
     },
     "debt_limit": {
       "type": "number",
-      "description": "\u041b\u0438\u043c\u0438\u0442 \u0434\u043e\u043b\u0433\u0430 (\u043c\u0430\u043a\u0441\u0438\u043c\u0430\u043b\u044c\u043d\u0430\u044f \u0441\u0443\u043c\u043c\u0430 \u0434\u043e\u043b\u0433\u0430 \u043a\u043b\u0438\u0435\u043d\u0442\u0430)"
+      "description": "\u041b\u0438\u043c\u0438\u0442 \u0434\u043e\u043b\u0433\u0430"
     },
     "notes": {
       "type": "string",
-      "description": "\u041f\u0440\u0438\u043c\u0435\u0447\u0430\u043d\u0438\u0435 \u043e \u043a\u043b\u0438\u0435\u043d\u0442\u0435 \u2014 \u043a\u0442\u043e \u044d\u0442\u043e, \u0447\u0435\u043c \u0437\u0430\u043d\u0438\u043c\u0430\u0435\u0442\u0441\u044f \u0438 \u0442.\u0434."
+      "description": "\u041f\u0440\u0438\u043c\u0435\u0447\u0430\u043d\u0438\u0435 \u043e \u043a\u043b\u0438\u0435\u043d\u0442\u0435"
     },
     "added_by_employee_id": {
       "type": "string",
@@ -84,5 +84,55 @@
     "business_id",
     "name",
     "phone"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
 }

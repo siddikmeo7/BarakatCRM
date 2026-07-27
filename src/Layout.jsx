@@ -229,6 +229,10 @@ export default function Layout({ children, currentPageName }) {
                   alert('Ваша сессия была завершена администратором. Войдите снова.');
                   // Продолжаем как гость/владелец
                 } else {
+                  // Persist business_id for RLS security
+                  if (currentUser.email !== ADMIN_EMAIL && currentUser.data?.business_id !== emp.business_id) {
+                    await base44.auth.updateMe({ business_id: emp.business_id });
+                  }
                   const bizList = await base44.entities.Business.filter({ id: emp.business_id });
                   if (bizList.length > 0) {
                     const biz = bizList[0];
@@ -291,6 +295,10 @@ export default function Layout({ children, currentPageName }) {
 
             // По умолчанию: если есть свой бизнес — владелец
             if (businesses.length > 0) {
+              // Persist business_id for RLS security
+              if (currentUser.email !== ADMIN_EMAIL && currentUser.data?.business_id !== businesses[0].id) {
+                await base44.auth.updateMe({ business_id: businesses[0].id });
+              }
               setBusiness(businesses[0]);
               setLang(businesses[0].language || 'ru');
               setEmployeePermissions(null);
@@ -304,6 +312,10 @@ export default function Layout({ children, currentPageName }) {
             // Нет своего бизнеса — входим как сотрудник автоматически (только незамороженные)
             const activeEmp = employeeRecords.find(e => !e.is_frozen);
             if (activeEmp) {
+              // Persist business_id for RLS security
+              if (currentUser.email !== ADMIN_EMAIL && currentUser.data?.business_id !== activeEmp.business_id) {
+                await base44.auth.updateMe({ business_id: activeEmp.business_id });
+              }
               const bizList = await base44.entities.Business.filter({ id: activeEmp.business_id });
               if (bizList.length > 0) {
                 setBusiness(bizList[0]);
