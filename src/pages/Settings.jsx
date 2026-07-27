@@ -28,6 +28,9 @@ import EmployeePermissionsDialog from '@/components/employees/EmployeePermission
 import EmployeeCard from '@/components/employees/EmployeeCard';
 import SwitchAccountDialog from '@/components/settings/SwitchAccountDialog';
 import EmployeeProfilePanel from '@/components/settings/EmployeeProfilePanel';
+import ProfileCard from '@/components/settings/ProfileCard';
+import ProfileDetailDialog from '@/components/settings/ProfileDetailDialog';
+import { recordLogin } from '@/lib/loginTracker';
 
 const LANGUAGES = [
   { value: 'ru', label: 'Русский' },
@@ -108,9 +111,11 @@ export default function Settings() {
   const [showAddEmployeeForm, setShowAddEmployeeForm] = useState(false);
   const [empRefreshing, setEmpRefreshing] = useState(false);
   const [selectedEmp, setSelectedEmp] = useState(null);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   useEffect(() => {
     loadData();
+    if (user?.email) recordLogin(user.email);
     const interval = setInterval(() => {
       if (business?.id) base44.entities.Employee.filter({ business_id: business?.id }).then(setEmployees);
     }, 15 * 60 * 1000);
@@ -409,79 +414,30 @@ export default function Settings() {
     <div className="space-y-6">
       <PageHeader title={t(lang, 'settings_title')} subtitle={t(lang, 'settings_subtitle')} />
 
-      {/* Аккаунт карточка */}
-      <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-2xl shadow-lg border border-indigo-100 p-5 space-y-4">
-        <div className="flex items-center gap-4">
-          {(() => {
-            const avatarUrl = currentEmployee?.avatar_url || user?.avatar_url;
-            if (avatarUrl) return <div className="ring-4 ring-white rounded-2xl overflow-hidden shadow-xl flex-shrink-0"><AvatarDisplay avatarUrl={avatarUrl} name={user?.full_name} size="md" /></div>;
-            return <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl flex-shrink-0 ring-4 ring-white"><span className="text-white font-bold text-xl">{user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}</span></div>;
-          })()}
-          <div>
-            <p className="font-bold text-slate-900 text-lg">{user?.full_name || t(lang,'settings_user')}</p>
-            <p className="text-sm text-slate-500">{user?.email}</p>
-            {!currentEmployee ? <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold mt-1">👑 Владелец</span>
-              : currentEmployee.is_admin ? <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold mt-1">🛡️ Администратор</span>
-              : <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold mt-1">👤 Сотрудник</span>}
-          </div>
-        </div>
+      {/* Новая карточка профиля */}
+      <ProfileCard
+        user={user}
+        currentEmployee={currentEmployee}
+        business={business}
+        lang={lang}
+        onOpenProfile={() => setProfileDialogOpen(true)}
+        onSwitchAccount={() => setSwitchAccountOpen(true)}
+        onLogout={() => {
+          if (confirm(t(lang, 'settings_logout_confirm'))) {
+            const mode = localStorage.getItem('barakatcrm_mode');
+            if (mode && mode.startsWith('employee_')) { const empId = mode.replace('employee_', ''); localStorage.removeItem(`barakat_emp_token_${empId}`); localStorage.removeItem('barakatcrm_mode'); }
+            base44.auth.logout();
+          }
+        }}
+      />
 
-        {currentEmployee && business && (
-          <div className="border-t border-slate-100 pt-3">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">🏢 Текущий бизнес</p>
-            <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm"><span className="text-white font-bold text-base">{business.name?.charAt(0)?.toUpperCase()}</span></div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-slate-900 truncate">{business.name}</p>
-                {currentEmployee.name && <p className="text-xs text-slate-500 truncate">Вы вошли как: <span className="font-medium text-indigo-600">{currentEmployee.name}</span></p>}
-              </div>
-              <span className="flex items-center gap-1 text-xs text-green-600 font-medium flex-shrink-0"><span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse" />Активен</span>
-            </div>
-          </div>
-        )}
-
-        <div className="border-t border-slate-100 pt-3">
-          <AvatarPicker key={currentEmployee?.avatar_url || user?.avatar_url || 'no-avatar'} currentAvatar={currentEmployee?.avatar_url || user?.avatar_url || null}
-            onSave={async (newAvatarUrl) => {
-              if (currentEmployee) { await base44.entities.Employee.update(currentEmployee.id, { avatar_url: newAvatarUrl }); window.__barakatEmployee = { ...currentEmployee, avatar_url: newAvatarUrl }; }
-              else { await base44.auth.updateMe({ avatar_url: newAvatarUrl }); }
-              await loadData();
-            }} />
-        </div>
-
-        <div className="border-t border-slate-100 pt-3">
-          <Button variant="outline" className="gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 w-full" onClick={() => setSwitchAccountOpen(true)}>
-            <ArrowLeftRight className="w-4 h-4" />Переключить аккаунт
-          </Button>
-        </div>
-
-        <div className="border-t border-slate-100 pt-3">
-          <Button variant="outline" className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 w-full"
-            onClick={() => {
-              if (confirm(t(lang, 'settings_logout_confirm'))) {
-                const mode = localStorage.getItem('barakatcrm_mode');
-                if (mode && mode.startsWith('employee_')) { const empId = mode.replace('employee_', ''); localStorage.removeItem(`barakat_emp_token_${empId}`); localStorage.removeItem('barakatcrm_mode'); }
-                base44.auth.logout();
-              }
-            }}>
-            <LogOut className="w-4 h-4" />{t(lang, 'settings_logout')}
-          </Button>
-        </div>
-
-        <div className="border-t border-slate-100 pt-3">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-slate-50 rounded-xl p-3"><p className="text-xs text-slate-400 mb-0.5">В системе с</p><p className="text-sm font-semibold text-slate-800">{user?.created_date ? format(new Date(user.created_date), 'dd.MM.yyyy') : '—'}</p></div>
-            <div className="bg-indigo-50 rounded-xl p-3"><p className="text-xs text-slate-400 mb-0.5">Дней активности</p><p className="text-sm font-bold text-indigo-600">{user?.created_date ? Math.floor((Date.now() - new Date(user.created_date).getTime()) / (1000 * 60 * 60 * 24)) + ' дн.' : '—'}</p></div>
-            <div className="col-span-2 flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /><span className="text-xs text-green-600 font-medium">Активен сейчас</span></div>
-          </div>
-        </div>
-
-        {currentEmployee?.is_admin && (
-          <div className="border-t border-slate-100 pt-3">
-            <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg"><p className="text-xs text-emerald-700 font-medium">✅ Полный доступ — все разрешения как у владельца</p></div>
-          </div>
-        )}
-      </div>
+      <ProfileDetailDialog
+        open={profileDialogOpen}
+        onClose={() => setProfileDialogOpen(false)}
+        user={user}
+        currentEmployee={currentEmployee}
+        business={business}
+      />
 
       <div className="space-y-3">
         {/* Business Settings */}
