@@ -43,6 +43,14 @@
           "type": "boolean",
           "default": false
         },
+        "view_revenue": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_employee_analytics": {
+          "type": "boolean",
+          "default": false
+        },
         "view_products": {
           "type": "boolean",
           "default": true
@@ -63,9 +71,25 @@
           "type": "boolean",
           "default": false
         },
+        "view_products_cost": {
+          "type": "boolean",
+          "default": false
+        },
+        "edit_product_purchase_price": {
+          "type": "boolean",
+          "default": false
+        },
+        "edit_product_sale_price": {
+          "type": "boolean",
+          "default": false
+        },
         "view_sales": {
           "type": "boolean",
           "default": true
+        },
+        "view_own_sales_only": {
+          "type": "boolean",
+          "default": false
         },
         "add_sales": {
           "type": "boolean",
@@ -79,15 +103,47 @@
           "type": "boolean",
           "default": false
         },
+        "cancel_any_sale": {
+          "type": "boolean",
+          "default": false
+        },
         "manage_discounts": {
           "type": "boolean",
           "default": false
+        },
+        "edit_sale_price": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_sale_profit": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_sale_purchase_price": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_sale_customer": {
+          "type": "boolean",
+          "default": true
         },
         "view_warehouses": {
           "type": "boolean",
           "default": true
         },
         "manage_warehouses": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_warehouse_value": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_warehouse_revenue": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_warehouse_cost": {
           "type": "boolean",
           "default": false
         },
@@ -99,6 +155,18 @@
           "type": "boolean",
           "default": false
         },
+        "delete_customers": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_customer_debt": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_customer_contacts": {
+          "type": "boolean",
+          "default": true
+        },
         "view_debts": {
           "type": "boolean",
           "default": false
@@ -107,11 +175,35 @@
           "type": "boolean",
           "default": false
         },
+        "add_debt_manual": {
+          "type": "boolean",
+          "default": false
+        },
+        "send_debt_reminders": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_expenses": {
+          "type": "boolean",
+          "default": false
+        },
+        "manage_expenses": {
+          "type": "boolean",
+          "default": false
+        },
         "manage_returns": {
           "type": "boolean",
           "default": false
         },
+        "view_returns": {
+          "type": "boolean",
+          "default": false
+        },
         "view_reports": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_reports_detailed": {
           "type": "boolean",
           "default": false
         },
@@ -120,6 +212,26 @@
           "default": false
         },
         "export_reports": {
+          "type": "boolean",
+          "default": false
+        },
+        "export_excel": {
+          "type": "boolean",
+          "default": false
+        },
+        "delete_activity_log": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_ai_assistant": {
+          "type": "boolean",
+          "default": false
+        },
+        "manage_telegram": {
+          "type": "boolean",
+          "default": false
+        },
+        "send_notifications": {
           "type": "boolean",
           "default": false
         },
@@ -160,6 +272,14 @@
           "default": false
         },
         "view_settings_codes": {
+          "type": "boolean",
+          "default": false
+        },
+        "backup_data": {
+          "type": "boolean",
+          "default": false
+        },
+        "delete_all_data": {
           "type": "boolean",
           "default": false
         }

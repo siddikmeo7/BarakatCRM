@@ -62,6 +62,7 @@ export const PERMISSIONS = {
   MANAGE_WAREHOUSES: 'manage_warehouses',
   VIEW_WAREHOUSE_VALUE: 'view_warehouse_value',
   VIEW_WAREHOUSE_REVENUE: 'view_warehouse_revenue',
+  VIEW_WAREHOUSE_COST: 'view_warehouse_cost',
 
   // Клиенты
   VIEW_CUSTOMERS: 'view_customers',
