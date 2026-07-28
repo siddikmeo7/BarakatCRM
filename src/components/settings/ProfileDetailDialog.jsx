@@ -102,16 +102,28 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
       setTotalDays(getTotalLoginDays(user.email));
       setCalendar(getActivityCalendar(user.email, 30));
     }
-    if (open && currentEmployee) {
-      setPersonalInfo({
-        full_name: currentEmployee.full_name || currentEmployee.name || '',
-        phone: currentEmployee.phone || '',
-        phone2: currentEmployee.phone2 || '',
-        whatsapp: currentEmployee.whatsapp || '',
-        telegram: currentEmployee.telegram || '',
-        age: currentEmployee.age || '',
-        address: currentEmployee.address || '',
-      });
+    if (open) {
+      if (currentEmployee) {
+        setPersonalInfo({
+          full_name: currentEmployee.full_name || currentEmployee.name || '',
+          phone: currentEmployee.phone || '',
+          phone2: currentEmployee.phone2 || '',
+          whatsapp: currentEmployee.whatsapp || '',
+          telegram: currentEmployee.telegram || '',
+          age: currentEmployee.age || '',
+          address: currentEmployee.address || '',
+        });
+      } else if (user) {
+        setPersonalInfo({
+          full_name: user.full_name || user.data?.full_name || '',
+          phone: user.data?.phone || '',
+          phone2: user.data?.phone2 || '',
+          whatsapp: user.data?.whatsapp || '',
+          telegram: user.data?.telegram || '',
+          age: user.data?.age || '',
+          address: user.data?.address || '',
+        });
+      }
     }
   }, [open, user?.email, currentEmployee]);
 
@@ -123,23 +135,37 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
   }, [isOwner, currentEmployee, can]);
 
   const grantedCount = permissions.filter(p => p.granted).length;
-  const lastLogin = currentEmployee?.last_login_at || user?.created_date;
-  const deviceInfo = currentEmployee?.device_info || '';
+  const lastLogin = currentEmployee?.last_login_at || user?.data?.last_login_at || user?.created_date;
+  const deviceInfo = currentEmployee?.device_info || navigator.userAgent || '';
 
   const handleSavePersonalInfo = async () => {
     setSaving(true);
     try {
-      await base44.entities.Employee.update(currentEmployee.id, {
-        full_name: personalInfo.full_name,
-        phone: personalInfo.phone,
-        phone2: personalInfo.phone2,
-        whatsapp: personalInfo.whatsapp,
-        telegram: personalInfo.telegram,
-        age: personalInfo.age ? Number(personalInfo.age) : null,
-        address: personalInfo.address,
-      });
-      if (window.__barakatEmployee) {
-        window.__barakatEmployee = { ...window.__barakatEmployee, ...personalInfo };
+      if (isOwner || !currentEmployee) {
+        // Owner — save via updateMe
+        await base44.auth.updateMe({
+          full_name: personalInfo.full_name,
+          phone: personalInfo.phone,
+          phone2: personalInfo.phone2,
+          whatsapp: personalInfo.whatsapp,
+          telegram: personalInfo.telegram,
+          age: personalInfo.age ? Number(personalInfo.age) : null,
+          address: personalInfo.address,
+        });
+      } else {
+        // Employee — save to Employee entity
+        await base44.entities.Employee.update(currentEmployee.id, {
+          full_name: personalInfo.full_name,
+          phone: personalInfo.phone,
+          phone2: personalInfo.phone2,
+          whatsapp: personalInfo.whatsapp,
+          telegram: personalInfo.telegram,
+          age: personalInfo.age ? Number(personalInfo.age) : null,
+          address: personalInfo.address,
+        });
+        if (window.__barakatEmployee) {
+          window.__barakatEmployee = { ...window.__barakatEmployee, ...personalInfo };
+        }
       }
       setSaved(true);
       setTimeout(() => { setSaved(false); setEditing(false); }, 1500);
@@ -188,22 +214,20 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
                 <UserIcon className="w-4 h-4 text-indigo-500" />
                 <h3 className="font-semibold text-slate-900 dark:text-white">Личная информация</h3>
               </div>
-              {currentEmployee && !isOwner && (
-                editing ? (
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setEditing(false)} disabled={saving}>Отмена</Button>
-                    <Button size="sm" className="h-7 text-xs gap-1.5" onClick={handleSavePersonalInfo} disabled={saving}>
-                      {saving ? <><Loader2 className="w-3 h-3 animate-spin" />Сохранение...</> : saved ? <><CheckCircle2 className="w-3 h-3" />Сохранено!</> : <><Save className="w-3 h-3" />Сохранить</>}
-                    </Button>
-                  </div>
-                ) : (
-                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setEditing(true)}>✏️ Редактировать</Button>
-                )
+              {editing ? (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setEditing(false)} disabled={saving}>Отмена</Button>
+                  <Button size="sm" className="h-7 text-xs gap-1.5" onClick={handleSavePersonalInfo} disabled={saving}>
+                    {saving ? <><Loader2 className="w-3 h-3 animate-spin" />Сохранение...</> : saved ? <><CheckCircle2 className="w-3 h-3" />Сохранено!</> : <><Save className="w-3 h-3" />Сохранить</>}
+                  </Button>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setEditing(true)}>✏️ Редактировать</Button>
               )}
             </div>
 
-            {currentEmployee && !isOwner && editing ? (
-              /* EDITABLE FORM for employees */
+            {editing ? (
+              /* EDITABLE FORM */
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><UserIcon className="w-3 h-3" />Полное имя</Label>
@@ -237,14 +261,14 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
             ) : (
               /* READ-ONLY display */
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <InfoRow icon={UserIcon} label="Имя" value={currentEmployee?.full_name || currentEmployee?.name || user?.full_name || '—'} />
+                <InfoRow icon={UserIcon} label="Имя" value={currentEmployee?.full_name || currentEmployee?.name || user?.full_name || user?.data?.full_name || '—'} />
                 <InfoRow icon={Mail} label="Email" value={user?.email || '—'} />
-                <InfoRow icon={Phone} label="Телефон 1" value={currentEmployee?.phone || '—'} />
-                <InfoRow icon={Phone} label="Телефон 2" value={currentEmployee?.phone2 || '—'} />
-                <InfoRow icon={MessageCircle} label="WhatsApp" value={currentEmployee?.whatsapp || '—'} />
-                <InfoRow icon={MessageCircle} label="Telegram" value={currentEmployee?.telegram || '—'} />
-                {currentEmployee?.age && <InfoRow icon={Calendar} label="Возраст" value={String(currentEmployee.age)} />}
-                {currentEmployee?.address && <InfoRow icon={MapPin} label="Адрес" value={currentEmployee.address} />}
+                <InfoRow icon={Phone} label="Телефон 1" value={currentEmployee?.phone || user?.data?.phone || '—'} />
+                <InfoRow icon={Phone} label="Телефон 2" value={currentEmployee?.phone2 || user?.data?.phone2 || '—'} />
+                <InfoRow icon={MessageCircle} label="WhatsApp" value={currentEmployee?.whatsapp || user?.data?.whatsapp || '—'} />
+                <InfoRow icon={MessageCircle} label="Telegram" value={currentEmployee?.telegram || user?.data?.telegram || '—'} />
+                {(currentEmployee?.age || user?.data?.age) && <InfoRow icon={Calendar} label="Возраст" value={String(currentEmployee?.age || user?.data?.age)} />}
+                {(currentEmployee?.address || user?.data?.address) && <InfoRow icon={MapPin} label="Адрес" value={currentEmployee?.address || user?.data?.address} />}
                 <InfoRow icon={Crown} label="Роль" value={!currentEmployee ? '👑 Владелец' : currentEmployee.is_admin ? '🛡️ Администратор' : '👤 Сотрудник'} />
                 <InfoRow icon={Calendar} label="В системе с" value={user?.created_date ? format(new Date(user.created_date), 'dd MMM yyyy') : '—'} />
                 <InfoRow icon={Clock} label="Последний вход" value={lastLogin ? format(new Date(lastLogin), 'dd MMM yyyy, HH:mm') : '—'} />

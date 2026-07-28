@@ -9,6 +9,7 @@ import { mergePermissions } from '@/components/permissions/permissionsHelper';
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
 import { saveBusinessToHistory } from '@/components/settings/RecentBusinessesPanel';
+import { recordLogin } from '@/lib/loginTracker';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -148,6 +149,7 @@ export default function Layout({ children, currentPageName }) {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+      recordLogin(currentUser.email);
 
       // Редирект на Products после первого входа
       const firstLoginKey = `first_login_${currentUser.email}`;
@@ -267,6 +269,12 @@ export default function Layout({ children, currentPageName }) {
               window.dispatchEvent(new Event('barakatAccessReady'));
               // Регистрируем сессию владельца
               await registerDeviceSession(businesses[0].id, currentUser.email, currentUser.full_name || currentUser.email, 'owner');
+              // Track last login (once per day) for owner profile
+              const _todayStr = new Date().toISOString().split('T')[0];
+              const _lastLoginDay = currentUser.data?.last_login_at?.split('T')[0];
+              if (_lastLoginDay !== _todayStr) {
+                try { await base44.auth.updateMe({ last_login_at: new Date().toISOString() }); } catch (_) {}
+              }
             } else if (employeeRecords.length > 0) {
               // Нет своего бизнеса — входим как сотрудник автоматически
               const activeEmp = employeeRecords.find(e => !e.is_frozen);

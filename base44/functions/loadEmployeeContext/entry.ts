@@ -4,35 +4,37 @@ export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Не авторизован' }, { status: 401 });
+    if (!user) return Response.json({ error: 'Не авторизован' });
 
     const body = await req.json();
     const employeeId = body?.employee_id;
-    if (!employeeId) return Response.json({ error: 'employee_id required' }, { status: 400 });
+    if (!employeeId) return Response.json({ error: 'employee_id required' });
 
     // Load employee (service role — bypass RLS)
     const empList = await base44.asServiceRole.entities.Employee.filter({ id: employeeId });
     if (empList.length === 0) {
-      return Response.json({ error: 'Сотрудник не найден' }, { status: 404 });
+      return Response.json({ error: 'Сотрудник не найден' });
     }
     const emp = empList[0];
 
     // Security: verify this employee belongs to the current user
     if (emp.user_email !== user.email) {
-      return Response.json({ error: 'Нет доступа к этому профилю сотрудника' }, { status: 403 });
+      return Response.json({ error: 'Нет доступа к этому профилю сотрудника' });
     }
 
     if (emp.is_frozen) {
-      return Response.json({ error: 'Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.' }, { status: 403 });
+      return Response.json({ error: 'Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.' });
     }
 
     if (emp.is_active === false) {
-      return Response.json({ error: 'Ваш аккаунт сотрудника деактивирован. Обратитесь к владельцу бизнеса.' }, { status: 403 });
+      return Response.json({ error: 'Ваш аккаунт сотрудника деактивирован. Обратитесь к владельцу бизнеса.' });
     }
 
-    // Update business_id on user for RLS (user-scoped client updates token)
+    // Update business_id on user for RLS
     if (user.data?.business_id !== emp.business_id) {
-      await base44.auth.updateMe({ business_id: emp.business_id });
+      try {
+        await base44.auth.updateMe({ business_id: emp.business_id });
+      } catch (_) {}
     }
 
     // Load business (service role — bypass RLS)
@@ -52,6 +54,6 @@ export default async function(req) {
       role_permissions: rolePermissions
     });
   } catch (error) {
-    return Response.json({ error: error.message || 'Внутренняя ошибка' }, { status: 500 });
+    return Response.json({ error: error.message || 'Внутренняя ошибка' });
   }
 }

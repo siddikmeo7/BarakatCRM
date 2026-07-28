@@ -31,26 +31,17 @@ export default function BusinessAccess() {
       setUser(currentUser);
       setEmail(currentUser.email);
 
-      const [businesses, empRecords] = await Promise.all([
-        base44.entities.Business.filter({ owner_email: currentUser.email }),
-        base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true })
-      ]);
+      // Use backend function to bypass RLS
+      const res = await base44.functions.invoke('getEmployeeBusinesses', {});
+      const data = res.data || {};
 
-      if (businesses.length > 0) {
-        setBusiness(businesses[0]);
+      if (data.ownedBusinesses && data.ownedBusinesses.length > 0) {
+        setBusiness(data.ownedBusinesses[0]);
       }
 
+      const empRecords = data.employees || [];
       setEmployeeRecords(empRecords);
-
-      // Загружаем бизнесы где пользователь является сотрудником
-      if (empRecords.length > 0) {
-        const bizMap = {};
-        for (const emp of empRecords) {
-          const bizList = await base44.entities.Business.filter({ id: emp.business_id });
-          if (bizList.length > 0) bizMap[emp.id] = bizList[0];
-        }
-        setEmployeeBusinesses(bizMap);
-      }
+      setEmployeeBusinesses(data.businesses || {});
     } catch (err) {
       console.error('Error loading user:', err);
     }
@@ -129,15 +120,10 @@ export default function BusinessAccess() {
         accessCode: accessCode.trim()
       });
 
-      if (res.data?.error) {
-        setError('❌ ' + res.data.error);
+      if (!res.data?.success) {
+        setError('❌ ' + (res.data?.error || 'Ошибка входа'));
         setLoading(false);
         return;
-      }
-
-      // Persist business_id for RLS security
-      if (user.data?.business_id !== res.data.business_id) {
-        await base44.auth.updateMe({ business_id: res.data.business_id });
       }
 
       // Устанавливаем режим сотрудника и перезагружаем

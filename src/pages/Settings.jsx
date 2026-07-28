@@ -131,14 +131,15 @@ export default function Settings() {
       
       if (isEmployeeMode) {
         const empId = savedMode.replace('employee_', '');
-        const empList = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
-        const emp = empList.find(e => e.id === empId) || empList[0];
+        const res = await base44.functions.invoke('getEmployeeBusinesses', {});
+        const data = res.data || {};
+        const empRecords = data.employees || [];
+        const emp = empRecords.find(e => e.id === empId) || empRecords[0];
         if (emp) {
           window.__barakatEmployee = emp;
           setCurrentEmployee(emp);
-          const bizList = await base44.entities.Business.filter({ id: emp.business_id });
-          if (bizList.length > 0) {
-            const biz = bizList[0];
+          const biz = data.businesses?.[emp.id];
+          if (biz) {
             setBusiness(biz);
             setLang(biz.language || 'ru');
             setFormData({ name: biz.name || '', phone: biz.phone || '', phone2: biz.phone2 || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
