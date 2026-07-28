@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
+import EmployeePersonalInfoPanel from '@/components/employees/EmployeePersonalInfoPanel';
 import EmployeeCard from '@/components/employees/EmployeeCard';
 import SwitchAccountDialog from '@/components/settings/SwitchAccountDialog';
 import EmployeeProfilePanel from '@/components/settings/EmployeeProfilePanel';
@@ -312,7 +313,13 @@ export default function Settings() {
 
   const canPerm = (key) => {
     if (!currentEmployee) return true;
-    if (currentEmployee.is_admin) return true;
+    if (currentEmployee.is_admin) {
+      const override = currentEmployee.permissions?.[key];
+      if (override === false) return false;
+      return true;
+    }
+    const mergedPerms = window.__barakatMergedPermissions;
+    if (mergedPerms && mergedPerms[key] !== undefined) return mergedPerms[key] === true;
     return !!(currentEmployee.permissions?.[key]);
   };
 
@@ -372,6 +379,7 @@ export default function Settings() {
             <Button variant="outline" className="gap-1.5 text-red-600 hover:bg-red-50 border-red-200 text-sm" onClick={() => { if (confirm('Выйти из аккаунта?')) { const mode = localStorage.getItem('barakatcrm_mode'); if (mode?.startsWith('employee_')) { const empId = mode.replace('employee_', ''); localStorage.removeItem(`barakat_emp_token_${empId}`); localStorage.removeItem('barakatcrm_mode'); } base44.auth.logout(); } }}><LogOut className="w-4 h-4" /> Выйти</Button>
           </div>
         </div>
+        <EmployeePersonalInfoPanel employee={currentEmployee} onSaved={loadData} />
         <EmployeeProfilePanel employee={currentEmployee} business={business} user={user} mergedPermissions={window.__barakatMergedPermissions} />
         {canPerm('view_activity_log') && (
           <div onClick={() => navigate(createPageUrl('ActivityLog'))} className="bg-white hover:bg-indigo-50 rounded-2xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition-all shadow-sm">
