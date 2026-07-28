@@ -212,22 +212,12 @@ export default function Layout({ children, currentPageName }) {
                 } catch (_) {}
               }
               if (emp) {
-                // Проверяем токен персистентной сессии
-                const savedToken = localStorage.getItem(`barakat_emp_token_${empId}`);
-                const tokenValid = !savedToken || !emp.login_session_token || emp.login_session_token === savedToken;
-
                 if (emp.is_frozen) {
                   // Аккаунт заморожен — сбрасываем сессию
                   localStorage.removeItem('barakatcrm_mode');
                   localStorage.removeItem(`barakat_emp_token_${empId}`);
                   alert('Аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.');
                   // Не возвращаемся — продолжаем загрузку ниже (владелец или BusinessAccess)
-                } else if (!tokenValid) {
-                  // Токен сброшен администратором — выходим
-                  localStorage.removeItem('barakatcrm_mode');
-                  localStorage.removeItem(`barakat_emp_token_${empId}`);
-                  alert('Ваша сессия была завершена администратором. Войдите снова.');
-                  // Продолжаем как гость/владелец
                 } else {
                   // Persist business_id for RLS security
                   if (currentUser.email !== ADMIN_EMAIL && currentUser.data?.business_id !== emp.business_id) {

@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import {
   Flame, Calendar, Clock, Shield, Building2, User as UserIcon, CheckCircle, XCircle,
-  Activity, Smartphone, Mail, Phone, MapPin, Crown, TrendingUp
+  Activity, Smartphone, Mail, Phone, MapPin, Crown, TrendingUp, MessageCircle, Save, Loader2, CheckCircle2
 } from 'lucide-react';
 import { computeStreak, getActivityCalendar, getTotalLoginDays } from '@/lib/loginTracker';
 
@@ -13,25 +16,66 @@ const PERMISSION_LABELS = [
   { key: 'view_dashboard', label: 'Дашборд', icon: '📊' },
   { key: 'view_analytics', label: 'Аналитика', icon: '📈' },
   { key: 'view_profit', label: 'Прибыль', icon: '💰' },
+  { key: 'view_revenue', label: 'Выручка', icon: '💵' },
+  { key: 'view_stock_value', label: 'Стоимость склада', icon: '🏗️' },
+  { key: 'view_purchase_price', label: 'Цены закупки', icon: '🛒' },
+  { key: 'view_employee_analytics', label: 'Аналитика сотрудников', icon: '👥' },
   { key: 'view_products', label: 'Товары', icon: '📦' },
   { key: 'add_products', label: 'Добавление товаров', icon: '➕' },
   { key: 'edit_products', label: 'Редактирование товаров', icon: '✏️' },
   { key: 'delete_products', label: 'Удаление товаров', icon: '🗑️' },
+  { key: 'move_products', label: 'Перемещение товаров', icon: '↔️' },
+  { key: 'view_products_cost', label: 'Стоимость товаров', icon: '💲' },
+  { key: 'edit_product_purchase_price', label: 'Ред. цену закупки', icon: '✏️' },
+  { key: 'edit_product_sale_price', label: 'Ред. цену продажи', icon: '✏️' },
   { key: 'view_sales', label: 'Продажи', icon: '🛒' },
+  { key: 'view_own_sales_only', label: 'Только свои продажи', icon: '👤' },
   { key: 'add_sales', label: 'Добавление продаж', icon: '➕' },
-  { key: 'edit_sales', label: 'Редактирование продаж', icon: '✏️' },
+  { key: 'edit_sales', label: 'Ред. продаж', icon: '✏️' },
   { key: 'cancel_sales', label: 'Отмена продаж', icon: '❌' },
+  { key: 'cancel_any_sale', label: 'Отмена любых продаж', icon: '🚫' },
+  { key: 'manage_discounts', label: 'Скидки', icon: '🏷️' },
+  { key: 'edit_sale_price', label: 'Изм. цену', icon: '✏️' },
+  { key: 'view_sale_profit', label: 'Прибыль продаж', icon: '💰' },
+  { key: 'view_sale_purchase_price', label: 'Закупка продаж', icon: '🛒' },
+  { key: 'view_sale_customer', label: 'Клиент продажи', icon: '👥' },
+  { key: 'view_warehouses', label: 'Склады', icon: '🏢' },
+  { key: 'manage_warehouses', label: 'Управление складами', icon: '⚙️' },
+  { key: 'view_warehouse_value', label: 'Стоимость склада', icon: '💲' },
+  { key: 'view_warehouse_revenue', label: 'Выручка склада', icon: '📈' },
+  { key: 'view_warehouse_cost', label: 'Стоимость всех складов', icon: '🏗️' },
   { key: 'view_customers', label: 'Клиенты', icon: '👥' },
   { key: 'manage_customers', label: 'Управление клиентами', icon: '⚙️' },
+  { key: 'delete_customers', label: 'Удаление клиентов', icon: '🗑️' },
+  { key: 'view_customer_debt', label: 'Долг клиента', icon: '💳' },
+  { key: 'view_customer_contacts', label: 'Контакты клиента', icon: '📞' },
   { key: 'view_debts', label: 'Долги', icon: '💳' },
   { key: 'manage_debts', label: 'Управление долгами', icon: '⚙️' },
-  { key: 'view_warehouses', label: 'Склады', icon: '🏢' },
+  { key: 'add_debt_manual', label: 'Добавить долг вручную', icon: '➕' },
+  { key: 'send_debt_reminders', label: 'Напоминания о долгах', icon: '🔔' },
+  { key: 'view_returns', label: 'Возвраты', icon: '↩️' },
+  { key: 'manage_returns', label: 'Оформление возвратов', icon: '⚙️' },
   { key: 'view_reports', label: 'Отчёты', icon: '📋' },
+  { key: 'view_reports_detailed', label: 'Детальные отчёты', icon: '📊' },
   { key: 'view_activity_log', label: 'Журнал действий', icon: '📜' },
   { key: 'export_reports', label: 'Экспорт отчётов', icon: '📤' },
+  { key: 'export_excel', label: 'Экспорт Excel', icon: '📗' },
+  { key: 'delete_activity_log', label: 'Удаление истории', icon: '🗑️' },
   { key: 'view_ai_assistant', label: 'ИИ-ассистент', icon: '🤖' },
+  { key: 'manage_telegram', label: 'Настройки Telegram', icon: '📲' },
+  { key: 'send_notifications', label: 'Отправка уведомлений', icon: '📢' },
+  { key: 'view_settings_language', label: 'Язык интерфейса', icon: '🌐' },
+  { key: 'view_settings_defaults', label: 'Просмотр настроек', icon: '👁️' },
+  { key: 'manage_settings_defaults', label: 'Изменение настроек', icon: '⚙️' },
+  { key: 'view_settings_custom', label: 'Кастомные поля', icon: '🎨' },
+  { key: 'manage_settings_custom', label: 'Упр. кастомными полями', icon: '⚙️' },
+  { key: 'view_settings_security', label: 'Безопасность', icon: '🔒' },
+  { key: 'view_settings_codes', label: 'Коды доступа', icon: '🔑' },
+  { key: 'manage_settings', label: 'Полные настройки', icon: '⚙️' },
   { key: 'manage_employees', label: 'Управление сотрудниками', icon: '👔' },
-  { key: 'manage_settings', label: 'Настройки', icon: '⚙️' },
+  { key: 'manage_roles', label: 'Управление ролями', icon: '🎭' },
+  { key: 'backup_data', label: 'Резервные копии', icon: '💾' },
+  { key: 'delete_all_data', label: 'Удалить все данные', icon: '⚠️' },
 ];
 
 export default function ProfileDetailDialog({ open, onClose, user, currentEmployee, business }) {
@@ -39,6 +83,18 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
   const [streak, setStreak] = useState(0);
   const [totalDays, setTotalDays] = useState(0);
   const [calendar, setCalendar] = useState([]);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [personalInfo, setPersonalInfo] = useState({
+    full_name: '',
+    phone: '',
+    phone2: '',
+    whatsapp: '',
+    telegram: '',
+    age: '',
+    address: '',
+  });
 
   useEffect(() => {
     if (open && user?.email) {
@@ -46,26 +102,59 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
       setTotalDays(getTotalLoginDays(user.email));
       setCalendar(getActivityCalendar(user.email, 30));
     }
-  }, [open, user?.email]);
+    if (open && currentEmployee) {
+      setPersonalInfo({
+        full_name: currentEmployee.full_name || currentEmployee.name || '',
+        phone: currentEmployee.phone || '',
+        phone2: currentEmployee.phone2 || '',
+        whatsapp: currentEmployee.whatsapp || '',
+        telegram: currentEmployee.telegram || '',
+        age: currentEmployee.age || '',
+        address: currentEmployee.address || '',
+      });
+    }
+  }, [open, user?.email, currentEmployee]);
 
   const permissions = useMemo(() => {
     if (isOwner || currentEmployee?.is_admin) {
       return PERMISSION_LABELS.map(p => ({ ...p, granted: true }));
     }
-    const merged = window.__barakatMergedPermissions || currentEmployee?.permissions || {};
     return PERMISSION_LABELS.map(p => ({ ...p, granted: can(p.key) }));
   }, [isOwner, currentEmployee, can]);
 
   const grantedCount = permissions.filter(p => p.granted).length;
-
   const lastLogin = currentEmployee?.last_login_at || user?.created_date;
   const deviceInfo = currentEmployee?.device_info || '';
 
+  const handleSavePersonalInfo = async () => {
+    setSaving(true);
+    try {
+      await base44.entities.Employee.update(currentEmployee.id, {
+        full_name: personalInfo.full_name,
+        phone: personalInfo.phone,
+        phone2: personalInfo.phone2,
+        whatsapp: personalInfo.whatsapp,
+        telegram: personalInfo.telegram,
+        age: personalInfo.age ? Number(personalInfo.age) : null,
+        address: personalInfo.address,
+      });
+      if (window.__barakatEmployee) {
+        window.__barakatEmployee = { ...window.__barakatEmployee, ...personalInfo };
+      }
+      setSaved(true);
+      setTimeout(() => { setSaved(false); setEditing(false); }, 1500);
+    } catch (err) {
+      alert('Ошибка: ' + (err?.message || err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto custom-scroll">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto custom-scroll bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
+          <DialogTitle className="flex items-center gap-2 text-xl text-slate-900 dark:text-white">
             <UserIcon className="w-5 h-5 text-indigo-500" />
             Мой профиль
           </DialogTitle>
@@ -92,22 +181,77 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
             </div>
           </div>
 
-          {/* === PROFILE INFO === */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <UserIcon className="w-4 h-4 text-indigo-500" />
-              <h3 className="font-semibold text-slate-900 dark:text-white">Личная информация</h3>
+          {/* === PERSONAL INFO (editable for employees) === */}
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <UserIcon className="w-4 h-4 text-indigo-500" />
+                <h3 className="font-semibold text-slate-900 dark:text-white">Личная информация</h3>
+              </div>
+              {currentEmployee && !isOwner && (
+                editing ? (
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setEditing(false)} disabled={saving}>Отмена</Button>
+                    <Button size="sm" className="h-7 text-xs gap-1.5" onClick={handleSavePersonalInfo} disabled={saving}>
+                      {saving ? <><Loader2 className="w-3 h-3 animate-spin" />Сохранение...</> : saved ? <><CheckCircle2 className="w-3 h-3" />Сохранено!</> : <><Save className="w-3 h-3" />Сохранить</>}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setEditing(true)}>✏️ Редактировать</Button>
+                )
+              )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <InfoRow icon={UserIcon} label="Имя" value={currentEmployee?.name || user?.full_name || '—'} />
-              <InfoRow icon={Mail} label="Email" value={user?.email || '—'} />
-              <InfoRow icon={Phone} label="Телефон" value={currentEmployee?.phone || '—'} />
-              <InfoRow icon={Crown} label="Роль" value={!currentEmployee ? '👑 Владелец' : currentEmployee.is_admin ? '🛡️ Администратор' : '👤 Сотрудник'} />
-              <InfoRow icon={Calendar} label="В системе с" value={user?.created_date ? format(new Date(user.created_date), 'dd MMM yyyy') : '—'} />
-              <InfoRow icon={Clock} label="Последний вход" value={lastLogin ? format(new Date(lastLogin), 'dd MMM yyyy, HH:mm') : '—'} />
-            </div>
+
+            {currentEmployee && !isOwner && editing ? (
+              /* EDITABLE FORM for employees */
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><UserIcon className="w-3 h-3" />Полное имя</Label>
+                  <Input value={personalInfo.full_name} onChange={e => setPersonalInfo(p => ({ ...p, full_name: e.target.value }))} placeholder="Иванов Иван Иванович" className="h-9 text-sm bg-white dark:bg-slate-900" />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><Calendar className="w-3 h-3" />Возраст</Label>
+                  <Input type="number" value={personalInfo.age} onChange={e => setPersonalInfo(p => ({ ...p, age: e.target.value }))} placeholder="25" className="h-9 text-sm bg-white dark:bg-slate-900" />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><Phone className="w-3 h-3" />Телефон 1</Label>
+                  <Input value={personalInfo.phone} onChange={e => setPersonalInfo(p => ({ ...p, phone: e.target.value }))} placeholder="+992 XXX XX XX XX" className="h-9 text-sm bg-white dark:bg-slate-900" />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><Phone className="w-3 h-3" />Телефон 2</Label>
+                  <Input value={personalInfo.phone2} onChange={e => setPersonalInfo(p => ({ ...p, phone2: e.target.value }))} placeholder="+992 XXX XX XX XX" className="h-9 text-sm bg-white dark:bg-slate-900" />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><MessageCircle className="w-3 h-3" />WhatsApp</Label>
+                  <Input value={personalInfo.whatsapp} onChange={e => setPersonalInfo(p => ({ ...p, whatsapp: e.target.value }))} placeholder="+992 XXX XX XX XX" className="h-9 text-sm bg-white dark:bg-slate-900" />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><MessageCircle className="w-3 h-3" />Telegram</Label>
+                  <Input value={personalInfo.telegram} onChange={e => setPersonalInfo(p => ({ ...p, telegram: e.target.value }))} placeholder="@username" className="h-9 text-sm bg-white dark:bg-slate-900" />
+                </div>
+                <div className="col-span-1 sm:col-span-2">
+                  <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><MapPin className="w-3 h-3" />Адрес проживания</Label>
+                  <Input value={personalInfo.address} onChange={e => setPersonalInfo(p => ({ ...p, address: e.target.value }))} placeholder="Город, улица, дом" className="h-9 text-sm bg-white dark:bg-slate-900" />
+                </div>
+              </div>
+            ) : (
+              /* READ-ONLY display */
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <InfoRow icon={UserIcon} label="Имя" value={currentEmployee?.full_name || currentEmployee?.name || user?.full_name || '—'} />
+                <InfoRow icon={Mail} label="Email" value={user?.email || '—'} />
+                <InfoRow icon={Phone} label="Телефон 1" value={currentEmployee?.phone || '—'} />
+                <InfoRow icon={Phone} label="Телефон 2" value={currentEmployee?.phone2 || '—'} />
+                <InfoRow icon={MessageCircle} label="WhatsApp" value={currentEmployee?.whatsapp || '—'} />
+                <InfoRow icon={MessageCircle} label="Telegram" value={currentEmployee?.telegram || '—'} />
+                {currentEmployee?.age && <InfoRow icon={Calendar} label="Возраст" value={String(currentEmployee.age)} />}
+                {currentEmployee?.address && <InfoRow icon={MapPin} label="Адрес" value={currentEmployee.address} />}
+                <InfoRow icon={Crown} label="Роль" value={!currentEmployee ? '👑 Владелец' : currentEmployee.is_admin ? '🛡️ Администратор' : '👤 Сотрудник'} />
+                <InfoRow icon={Calendar} label="В системе с" value={user?.created_date ? format(new Date(user.created_date), 'dd MMM yyyy') : '—'} />
+                <InfoRow icon={Clock} label="Последний вход" value={lastLogin ? format(new Date(lastLogin), 'dd MMM yyyy, HH:mm') : '—'} />
+              </div>
+            )}
             {deviceInfo && (
-              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
                 <div className="flex items-start gap-2">
                   <Smartphone className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
                   <div>
@@ -121,7 +265,7 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
 
           {/* === BUSINESS INFO === */}
           {business && (
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Building2 className="w-4 h-4 text-blue-500" />
                 <h3 className="font-semibold text-slate-900 dark:text-white">Информация о бизнесе</h3>
@@ -129,6 +273,7 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <InfoRow icon={Building2} label="Название" value={business.name || '—'} />
                 <InfoRow icon={Phone} label="Телефон" value={business.phone || '—'} />
+                {business.phone2 && <InfoRow icon={Phone} label="Телефон 2" value={business.phone2} />}
                 <InfoRow icon={MapPin} label="Адрес" value={business.address || '—'} />
                 <InfoRow icon={Activity} label="Статус" value={business.is_active ? '✅ Активен' : '❌ Неактивен'} />
               </div>
@@ -136,7 +281,7 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
           )}
 
           {/* === PERMISSIONS === */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-emerald-500" />
@@ -155,7 +300,7 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
             )}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {permissions.map(p => (
-                <div key={p.key} className={`flex items-center gap-2 p-2 rounded-lg ${p.granted ? 'bg-emerald-50 dark:bg-emerald-900/10' : 'bg-slate-50 dark:bg-slate-700/30'}`}>
+                <div key={p.key} className={`flex items-center gap-2 p-2 rounded-lg ${p.granted ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-slate-100 dark:bg-slate-700/40'}`}>
                   {p.granted
                     ? <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                     : <XCircle className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />}
@@ -168,12 +313,11 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
           </div>
 
           {/* === ACTIVITY CALENDAR === */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5">
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="w-4 h-4 text-purple-500" />
               <h3 className="font-semibold text-slate-900 dark:text-white">Активность за 30 дней</h3>
             </div>
-            {/* Calendar grid */}
             <div className="grid grid-cols-7 gap-1.5 mb-4">
               {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(d => (
                 <div key={d} className="text-center text-[10px] font-semibold text-slate-400 pb-1">{d}</div>
@@ -191,7 +335,7 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
                       className={`aspect-square rounded-lg flex flex-col items-center justify-center transition-all ${
                         day.loggedIn
                           ? 'bg-gradient-to-br from-emerald-400 to-green-500 text-white shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-700/40 text-slate-400'
+                          : 'bg-slate-200 dark:bg-slate-700/40 text-slate-400'
                       }`}
                       title={`${day.date} — ${day.loggedIn ? 'Был вход' : 'Нет входа'}`}
                     >
@@ -202,14 +346,13 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
                 );
               })}
             </div>
-            {/* Legend */}
             <div className="flex items-center gap-4 text-xs text-slate-500">
               <div className="flex items-center gap-1.5">
                 <div className="w-4 h-4 rounded bg-gradient-to-br from-emerald-400 to-green-500" />
                 <span>Был вход</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded bg-slate-100 dark:bg-slate-700/40" />
+                <div className="w-4 h-4 rounded bg-slate-200 dark:bg-slate-700/40" />
                 <span>Нет входа</span>
               </div>
               <div className="ml-auto font-semibold text-slate-600 dark:text-slate-300">
@@ -225,7 +368,7 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
 
 function InfoRow({ icon: Icon, label, value }) {
   return (
-    <div className="flex items-start gap-2.5 p-2.5 bg-slate-50 dark:bg-slate-700/30 rounded-lg">
+    <div className="flex items-start gap-2.5 p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
       <Icon className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
       <div className="min-w-0">
         <p className="text-xs text-slate-400">{label}</p>

@@ -299,8 +299,6 @@ export default function Settings() {
     try {
       const newCode = type === 'business' ? generateCodeLocal(12) : generateCodeLocal(8);
       await base44.entities.Business.update(business.id, type === 'business' ? { business_code: newCode } : { access_code: newCode });
-      const allEmps = await base44.entities.Employee.filter({ business_id: business.id });
-      await Promise.all(allEmps.map(emp => base44.entities.Employee.update(emp.id, { login_session_token: newCode + '_' + Date.now() })));
       const updated = await base44.entities.Business.filter({ id: business.id });
       if (updated.length > 0) setBusiness(updated[0]);
       alert(`✅ Код успешно изменён: ${newCode}`);
