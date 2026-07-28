@@ -14,13 +14,37 @@
       "type": "string",
       "description": "\u0418\u043c\u044f \u0441\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u0430"
     },
+    "full_name": {
+      "type": "string",
+      "description": "\u041f\u043e\u043b\u043d\u043e\u0435 \u0438\u043c\u044f \u0441\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u0430"
+    },
     "role_id": {
       "type": "string",
       "description": "ID \u0440\u043e\u043b\u0438 \u0441\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u0430"
     },
     "phone": {
       "type": "string",
-      "description": "\u0422\u0435\u043b\u0435\u0444\u043e\u043d"
+      "description": "\u0422\u0435\u043b\u0435\u0444\u043e\u043d 1"
+    },
+    "phone2": {
+      "type": "string",
+      "description": "\u0422\u0435\u043b\u0435\u0444\u043e\u043d 2"
+    },
+    "whatsapp": {
+      "type": "string",
+      "description": "\u041d\u043e\u043c\u0435\u0440 WhatsApp"
+    },
+    "telegram": {
+      "type": "string",
+      "description": "\u041d\u043e\u043c\u0435\u0440/username Telegram"
+    },
+    "age": {
+      "type": "number",
+      "description": "\u0412\u043e\u0437\u0440\u0430\u0441\u0442 \u0441\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u0430"
+    },
+    "address": {
+      "type": "string",
+      "description": "\u0410\u0434\u0440\u0435\u0441 \u043f\u0440\u043e\u0436\u0438\u0432\u0430\u043d\u0438\u044f"
     },
     "avatar_url": {
       "type": "string",
@@ -152,6 +176,9 @@
         "view_warehouse_revenue": {
           "type": "boolean"
         },
+        "view_warehouse_cost": {
+          "type": "boolean"
+        },
         "view_customers": {
           "type": "boolean"
         },
@@ -177,6 +204,12 @@
           "type": "boolean"
         },
         "send_debt_reminders": {
+          "type": "boolean"
+        },
+        "view_expenses": {
+          "type": "boolean"
+        },
+        "manage_expenses": {
           "type": "boolean"
         },
         "manage_returns": {
@@ -328,6 +361,9 @@
     },
     "update": {
       "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
         {
           "data.business_id": "{{user.data.business_id}}"
         },
