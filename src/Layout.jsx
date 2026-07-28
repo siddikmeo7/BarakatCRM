@@ -200,86 +200,55 @@ export default function Layout({ children, currentPageName }) {
             };
 
             if (savedMode && savedMode.startsWith('employee_')) {
-              // Режим сотрудника выбран явно — ищем сначала среди загруженных, потом в БД напрямую
               const empId = savedMode.replace('employee_', '');
-              let emp = employeeRecords.find(e => e.id === empId);
-              // Если не нашли среди активных записей этого пользователя — пробуем загрузить напрямую
-              // (сотрудник может быть из другого бизнеса)
-              if (!emp) {
-                try {
-                  const directList = await base44.entities.Employee.filter({ id: empId });
-                  if (directList.length > 0) emp = directList[0];
-                } catch (_) {}
-              }
-              if (emp) {
-                if (emp.is_frozen) {
-                  // Аккаунт заморожен — сбрасываем сессию
+              try {
+                const ctxRes = await base44.functions.invoke('loadEmployeeContext', { employee_id: empId });
+                const ctx = ctxRes.data;
+                if (ctx.error) {
                   localStorage.removeItem('barakatcrm_mode');
                   localStorage.removeItem(`barakat_emp_token_${empId}`);
-                  alert('Аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.');
-                  // Не возвращаемся — продолжаем загрузку ниже (владелец или BusinessAccess)
+                  alert(ctx.error);
                 } else {
-                  // Persist business_id for RLS security
-                  if (currentUser.email !== ADMIN_EMAIL && currentUser.data?.business_id !== emp.business_id) {
-                    await base44.auth.updateMe({ business_id: emp.business_id });
+                  const emp = ctx.employee;
+                  const biz = ctx.business;
+                  setBusiness(biz);
+                  setLang(biz?.language || 'ru');
+                  let mergedPerms = null;
+                  if (emp.is_admin) {
+                    setEmployeePermissions(null);
+                  } else {
+                    const rolePerms = ctx.role_permissions || {};
+                    mergedPerms = mergePermissions(rolePerms, emp.permissions || {});
+                    setEmployeePermissions(mergedPerms);
                   }
-                  const bizList = await base44.entities.Business.filter({ id: emp.business_id });
-                  if (bizList.length > 0) {
-                    const biz = bizList[0];
-                    setBusiness(biz);
-                    setLang(biz.language || 'ru');
-                    // Если сотрудник — администратор, даём полный доступ (null = как у владельца)
-                    let mergedPerms = null;
-                    if (emp.is_admin) {
-                      setEmployeePermissions(null);
-                      mergedPerms = null;
-                    } else if (emp.role_id) {
-                      // Мержим разрешения роли + персональные переопределения
-                      try {
-                        const roleList = await base44.entities.Role.filter({ id: emp.role_id });
-                        const rolePerms = roleList[0]?.permissions || {};
-                        mergedPerms = mergePermissions(rolePerms, emp.permissions || {});
-                        setEmployeePermissions(mergedPerms);
-                      } catch (_) {
-                        mergedPerms = emp.permissions || {};
-                        setEmployeePermissions(mergedPerms);
-                      }
-                    } else {
-                      mergedPerms = emp.permissions || {};
-                      setEmployeePermissions(mergedPerms);
-                    }
-                    setCurrentEmployee(emp);
-                    window.__barakatEmployee = emp;
-                    window.__barakatBusiness = biz;
-                    window.__barakatMergedPermissions = mergedPerms;
-                    window.__barakatAccessReady = true;
-                    window.dispatchEvent(new Event('barakatAccessReady'));
-                    // Регистрируем сессию устройства
-                    await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
-                    // Сохраняем режим сотрудника постоянно (переживает перезапуск браузера)
-                    localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
-                    // Сохраняем токен сессии для персистентности
-                    if (emp.login_session_token) {
-                      localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
-                    }
-                    // Сохраняем в историю бизнесов
-                    saveBusinessToHistory(biz.id, biz.name, emp.id, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee');
-                    // Показываем приветственный экран только при первом входе за браузерную сессию
-                    const welcomeKey = `welcomed_${emp.id}`;
-                    // Обновляем last_login_at и device_info при входе
-                    const deviceInfo = `${navigator.userAgent}`;
+                  setCurrentEmployee(emp);
+                  window.__barakatEmployee = emp;
+                  window.__barakatBusiness = biz;
+                  window.__barakatMergedPermissions = mergedPerms;
+                  window.__barakatAccessReady = true;
+                  window.dispatchEvent(new Event('barakatAccessReady'));
+                  await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
+                  localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
+                  if (emp.login_session_token) {
+                    localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
+                  }
+                  saveBusinessToHistory(biz.id, biz.name, emp.id, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee');
+                  const welcomeKey = `welcomed_${emp.id}`;
+                  try {
                     await base44.entities.Employee.update(emp.id, {
                       last_login_at: new Date().toISOString(),
-                      device_info: deviceInfo
+                      device_info: navigator.userAgent
                     });
-
-                    if (!sessionStorage.getItem(welcomeKey)) {
-                      setShowWelcome(true);
-                    }
-                    setLoading(false);
-                    return;
+                  } catch (_) {}
+                  if (!sessionStorage.getItem(welcomeKey)) {
+                    setShowWelcome(true);
                   }
+                  setLoading(false);
+                  return;
                 }
+              } catch (ctxErr) {
+                console.error('loadEmployeeContext error:', ctxErr);
+                localStorage.removeItem('barakatcrm_mode');
               }
             }
 
@@ -299,54 +268,45 @@ export default function Layout({ children, currentPageName }) {
               // Регистрируем сессию владельца
               await registerDeviceSession(businesses[0].id, currentUser.email, currentUser.full_name || currentUser.email, 'owner');
             } else if (employeeRecords.length > 0) {
-            // Нет своего бизнеса — входим как сотрудник автоматически (только незамороженные)
-            const activeEmp = employeeRecords.find(e => !e.is_frozen);
-            if (activeEmp) {
-              // Persist business_id for RLS security
-              if (currentUser.email !== ADMIN_EMAIL && currentUser.data?.business_id !== activeEmp.business_id) {
-                await base44.auth.updateMe({ business_id: activeEmp.business_id });
-              }
-              const bizList = await base44.entities.Business.filter({ id: activeEmp.business_id });
-              if (bizList.length > 0) {
-                setBusiness(bizList[0]);
-                setLang(bizList[0].language || 'ru');
-                let mergedPerms2 = null;
-                if (activeEmp.is_admin) {
-                  setEmployeePermissions(null);
-                  mergedPerms2 = null;
-                } else if (activeEmp.role_id) {
-                  try {
-                    const roleList = await base44.entities.Role.filter({ id: activeEmp.role_id });
-                    const rolePerms = roleList[0]?.permissions || {};
-                    mergedPerms2 = mergePermissions(rolePerms, activeEmp.permissions || {});
-                    setEmployeePermissions(mergedPerms2);
-                  } catch (_) {
-                    mergedPerms2 = activeEmp.permissions || {};
-                    setEmployeePermissions(mergedPerms2);
+              // Нет своего бизнеса — входим как сотрудник автоматически
+              const activeEmp = employeeRecords.find(e => !e.is_frozen);
+              if (activeEmp) {
+                try {
+                  const ctxRes = await base44.functions.invoke('loadEmployeeContext', { employee_id: activeEmp.id });
+                  const ctx = ctxRes.data;
+                  if (!ctx.error) {
+                    const emp = ctx.employee;
+                    const biz = ctx.business;
+                    setBusiness(biz);
+                    setLang(biz?.language || 'ru');
+                    let mergedPerms2 = null;
+                    if (emp.is_admin) {
+                      setEmployeePermissions(null);
+                    } else {
+                      const rolePerms = ctx.role_permissions || {};
+                      mergedPerms2 = mergePermissions(rolePerms, emp.permissions || {});
+                      setEmployeePermissions(mergedPerms2);
+                    }
+                    setCurrentEmployee(emp);
+                    window.__barakatEmployee = emp;
+                    window.__barakatBusiness = biz;
+                    window.__barakatMergedPermissions = mergedPerms2;
+                    window.__barakatAccessReady = true;
+                    window.dispatchEvent(new Event('barakatAccessReady'));
+                    await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
+                    localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
+                    saveBusinessToHistory(biz.id, biz.name, emp.id, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee');
+                    try {
+                      await base44.entities.Employee.update(emp.id, {
+                        last_login_at: new Date().toISOString(),
+                        device_info: navigator.userAgent
+                      });
+                    } catch (_) {}
                   }
-                } else {
-                  mergedPerms2 = activeEmp.permissions || {};
-                  setEmployeePermissions(mergedPerms2);
+                } catch (ctxErr) {
+                  console.error('loadEmployeeContext error:', ctxErr);
                 }
-                setCurrentEmployee(activeEmp);
-                window.__barakatEmployee = activeEmp;
-                window.__barakatBusiness = bizList[0];
-                window.__barakatMergedPermissions = mergedPerms2;
-                window.__barakatAccessReady = true;
-                window.dispatchEvent(new Event('barakatAccessReady'));
-                // Регистрируем сессию устройства
-                await registerDeviceSession(bizList[0].id, currentUser.email, activeEmp.name || currentUser.full_name, activeEmp.is_admin ? 'admin' : 'employee', activeEmp.id);
-                // Сохраняем постоянно в localStorage чтобы не сбрасывалось
-                localStorage.setItem('barakatcrm_mode', `employee_${activeEmp.id}`);
-                // Сохраняем в историю бизнесов
-                saveBusinessToHistory(bizList[0].id, bizList[0].name, activeEmp.id, activeEmp.name || currentUser.full_name, activeEmp.is_admin ? 'admin' : 'employee');
-                // Обновляем last_login_at и device_info при входе
-                await base44.entities.Employee.update(activeEmp.id, {
-                  last_login_at: new Date().toISOString(),
-                  device_info: navigator.userAgent
-                });
-              }
-            } else if (currentPageName !== 'BusinessAccess') {
+              } else if (currentPageName !== 'BusinessAccess') {
                 navigate(createPageUrl('BusinessAccess'));
                 setLoading(false);
                 return;

@@ -179,7 +179,7 @@ export default function BusinessAccess() {
                 </div>
 
                 <Button
-                  onClick={() => { localStorage.removeItem('barakatcrm_mode'); sessionStorage.removeItem('barakatcrm_mode'); navigate(createPageUrl('Dashboard')); }}
+                  onClick={() => { localStorage.removeItem('barakatcrm_mode'); sessionStorage.removeItem('barakatcrm_mode'); window.location.href = '/'; }}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 h-10"
                 >
                   Войти как владелец
@@ -210,7 +210,7 @@ export default function BusinessAccess() {
                       return (
                         <Button
                           key={emp.id}
-                          onClick={() => { localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); navigate(createPageUrl('Dashboard')); }}
+                          onClick={() => { localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); window.location.href = '/'; }}
                           variant="outline"
                           className="w-full h-10 border-purple-300 text-purple-700 hover:bg-purple-50"
                         >
@@ -264,7 +264,7 @@ export default function BusinessAccess() {
                   return (
                     <Button
                       key={emp.id}
-                      onClick={() => { localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); navigate(createPageUrl('Dashboard')); }}
+                      onClick={() => { localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`); window.location.href = '/'; }}
                       className="w-full h-12 bg-indigo-600 hover:bg-indigo-700"
                     >
                       <Users className="w-4 h-4 mr-2" />

@@ -29,44 +29,36 @@ export default async function(req) {
       return Response.json({ error: 'Этот бизнес неактивен. Обратитесь к владельцу.' }, { status: 403 });
     }
 
-    // Ищем существующую запись сотрудника (service role — обходим RLS)
+    // Ищем существующую запись сотрудника в ЭТОМ бизнесе (service role — обходим RLS)
     const existingEmps = await base44.asServiceRole.entities.Employee.filter({
       user_email: user.email,
       business_id: biz.id
     });
 
-    let emp;
-    if (existingEmps.length > 0) {
-      emp = existingEmps[0];
-      if (emp.is_frozen) {
-        return Response.json({ error: 'Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.' }, { status: 403 });
-      }
-      if (!emp.is_active) {
-        // Реактивируем
-        emp = await base44.asServiceRole.entities.Employee.update(emp.id, {
-          is_active: true,
-          last_login_at: new Date().toISOString()
-        });
-      }
-    } else {
-      // Находим роль по умолчанию
-      const defaultRoles = await base44.asServiceRole.entities.Role.filter({
-        business_id: biz.id,
-        is_default: true
-      });
-      const roleId = defaultRoles.length > 0 ? defaultRoles[0].id : null;
+    if (existingEmps.length === 0) {
+      // Сотрудник не зарегистрирован в этом бизнесе
+      return Response.json({
+        error: 'Вы не зарегистрированы как сотрудник в этом бизнесе. Попросите владельца бизнеса добавить вас в список сотрудников, после чего вы сможете войти.'
+      }, { status: 403 });
+    }
 
-      emp = await base44.asServiceRole.entities.Employee.create({
-        business_id: biz.id,
-        user_email: user.email,
-        name: user.full_name || user.email.split('@')[0],
-        role_id: roleId || '',
-        is_active: true,
-        is_frozen: false,
-        is_admin: false,
-        last_login_at: new Date().toISOString(),
-        device_info: ''
-      });
+    const emp = existingEmps[0];
+
+    if (emp.is_frozen) {
+      return Response.json({
+        error: 'Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.'
+      }, { status: 403 });
+    }
+
+    if (emp.is_active === false) {
+      return Response.json({
+        error: 'Ваш аккаунт сотрудника деактивирован. Обратитесь к владельцу бизнеса.'
+      }, { status: 403 });
+    }
+
+    // Update business_id on user for RLS (updates token immediately)
+    if (user.data?.business_id !== biz.id) {
+      await base44.auth.updateMe({ business_id: biz.id });
     }
 
     return Response.json({

@@ -92,11 +92,10 @@ function BusinessDetailCard({ entry, onClose, onRemove }) {
       saveBusinessToHistory(entry.businessId, entry.businessName, entry.employeeId, entry.employeeName, entry.role);
       localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
       sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
-      // Сохраняем токен для персистентной сессии
       if (emp.login_session_token) {
         localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
       }
-      navigate(createPageUrl('Dashboard'));
+      window.location.href = '/';
     } catch (e) { setError('Ошибка: ' + e.message); }
     finally { setLoginLoading(false); }
   };
@@ -287,11 +286,10 @@ export default function RecentBusinessesPanel({ currentUser }) {
       saveBusinessToHistory(entry.businessId, entry.businessName, entry.employeeId, entry.employeeName, entry.role);
       localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
       sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
-      // Сохраняем токен для персистентной сессии
       if (emp.login_session_token) {
         localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
       }
-      navigate(createPageUrl('Dashboard'));
+      window.location.href = '/';
     } catch (e) { setError('Ошибка: ' + e.message); }
     finally { setQuickLoading(null); }
   };
