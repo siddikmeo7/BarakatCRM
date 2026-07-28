@@ -116,8 +116,94 @@ export default function BusinessAccess() {
   };
 
   const handleJoinBusiness = async () => {
-    // Сотрудники будут входить через обычный Base44 логин и система автоматически определит их как сотрудников
-    setError('Используйте обычный вход с вашей почтой и паролем. Вас автоматически добавим как сотрудника.');
+    if (!businessCode.trim() || !accessCode.trim()) {
+      setError('Введите код бизнеса и код доступа');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      // 1. Находим бизнес по коду бизнеса
+      const bizList = await base44.entities.Business.filter({ business_code: businessCode.trim() });
+      if (bizList.length === 0) {
+        setError('❌ Бизнес с таким кодом не найден. Проверьте код бизнеса.');
+        setLoading(false);
+        return;
+      }
+      const biz = bizList[0];
+
+      // 2. Проверяем код доступа
+      if (biz.access_code !== accessCode.trim()) {
+        setError('❌ Неверный код доступа. Проверьте код доступа.');
+        setLoading(false);
+        return;
+      }
+
+      // 3. Проверяем, активен ли бизнес
+      if (biz.is_active === false) {
+        setError('❌ Этот бизнес неактивен. Обратитесь к владельцу.');
+        setLoading(false);
+        return;
+      }
+
+      // 4. Ищем существующую запись сотрудника
+      const existingEmps = await base44.entities.Employee.filter({
+        user_email: user.email,
+        business_id: biz.id,
+        is_active: true
+      });
+
+      let emp;
+      if (existingEmps.length > 0) {
+        // Сотрудник уже существует
+        emp = existingEmps[0];
+        if (emp.is_frozen) {
+          setError('❌ Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.');
+          setLoading(false);
+          return;
+        }
+      } else {
+        // 5. Создаём новую запись сотрудника (с минимальными правами)
+        // Находим роль по умолчанию в этом бизнесе
+        const defaultRoles = await base44.entities.Role.filter({
+          business_id: biz.id,
+          is_default: true
+        });
+        const roleId = defaultRoles.length > 0 ? defaultRoles[0].id : null;
+
+        emp = await base44.entities.Employee.create({
+          business_id: biz.id,
+          user_email: user.email,
+          name: user.full_name || user.email.split('@')[0],
+          role_id: roleId || '',
+          is_active: true,
+          is_frozen: false,
+          is_admin: false,
+          last_login_at: new Date().toISOString(),
+          device_info: navigator.userAgent
+        });
+      }
+
+      // 6. Persist business_id for RLS security
+      if (user.data?.business_id !== biz.id) {
+        await base44.auth.updateMe({ business_id: biz.id });
+      }
+
+      // 7. Устанавливаем режим сотрудника и переходим в систему
+      localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
+      sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
+      if (emp.login_session_token) {
+        localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
+      }
+      // Принудительно перезагружаем, чтобы Layout заново инициализировал сессию сотрудника
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Join business error:', err);
+      setError('❌ Ошибка входа: ' + (err?.message || 'неизвестная ошибка'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const copyToClipboard = (text) => {
@@ -324,36 +410,43 @@ export default function BusinessAccess() {
             </button>
 
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Вход как сотрудник</h2>
-            <p className="text-sm text-slate-500 mb-6">Используйте вашу почту и пароль для входа в систему</p>
+            <p className="text-sm text-slate-500 mb-6">Введите коды доступа, которые дал владелец бизнеса</p>
 
             <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                <p className="font-medium mb-2">ℹ️ Вход для сотрудников</p>
-                <p>Вы можете войти с помощью вашей почты и пароля, которые установлены в вашем аккаунте. Владелец бизнеса уже авторизовал вас в системе.</p>
-              </div>
-
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Ваш Email</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Код бизнеса</label>
                 <Input
-                  type="email"
-                  placeholder="ваш@email.com"
-                  value={email}
-                  disabled
-                  className="bg-slate-100"
+                  placeholder="Например: 123456789012"
+                  value={businessCode}
+                  onChange={(e) => setBusinessCode(e.target.value)}
+                  className="font-mono"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleJoinBusiness(); }}
                 />
               </div>
 
-              {error && <div className="bg-blue-100 text-blue-800 p-3 rounded text-sm border border-blue-300">{error}</div>}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Код доступа</label>
+                <Input
+                  placeholder="Код доступа от владельца"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value)}
+                  className="font-mono"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleJoinBusiness(); }}
+                />
+              </div>
+
+              {error && <div className="bg-red-100 text-red-700 p-3 rounded text-sm border border-red-300">{error}</div>}
 
               <Button
-                disabled
-                className="w-full bg-slate-400 cursor-default h-10"
+                onClick={handleJoinBusiness}
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 h-10"
               >
-                Вход производится автоматически через основной логин
+                {loading ? 'Вход...' : 'Войти как сотрудник'}
               </Button>
 
               <p className="text-xs text-slate-500 text-center">
-                При следующем входе в систему вам будет предложено выбрать режим входа (владелец или сотрудник)
+                Ваш email: {email}
               </p>
             </div>
           </div>
