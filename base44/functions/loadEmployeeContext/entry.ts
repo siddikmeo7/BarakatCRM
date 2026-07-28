@@ -6,9 +6,11 @@ export default async function(req) {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Не авторизован' });
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const employeeId = body?.employee_id;
     if (!employeeId) return Response.json({ error: 'employee_id required' });
+
+    const userEmailLower = (user.email || '').toLowerCase().trim();
 
     // Load employee (service role — bypass RLS)
     const empList = await base44.asServiceRole.entities.Employee.filter({ id: employeeId });
@@ -17,8 +19,8 @@ export default async function(req) {
     }
     const emp = empList[0];
 
-    // Security: verify this employee belongs to the current user
-    if (emp.user_email !== user.email) {
+    // Security: verify this employee belongs to the current user (case-insensitive)
+    if ((emp.user_email || '').toLowerCase().trim() !== userEmailLower) {
       return Response.json({ error: 'Нет доступа к этому профилю сотрудника' });
     }
 
@@ -28,6 +30,13 @@ export default async function(req) {
 
     if (emp.is_active === false) {
       return Response.json({ error: 'Ваш аккаунт сотрудника деактивирован. Обратитесь к владельцу бизнеса.' });
+    }
+
+    // Normalize the email in the Employee record if casing differs
+    if (emp.user_email !== user.email && emp.user_email?.toLowerCase() === user.email?.toLowerCase()) {
+      try {
+        await base44.asServiceRole.entities.Employee.update(emp.id, { user_email: user.email });
+      } catch (_) {}
     }
 
     // Update business_id on user for RLS

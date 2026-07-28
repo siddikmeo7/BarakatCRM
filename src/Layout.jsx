@@ -163,11 +163,12 @@ export default function Layout({ children, currentPageName }) {
             // Проверяем: есть ли выбранный режим (сотрудник или владелец) в localStorage
             const savedMode = localStorage.getItem('barakatcrm_mode'); // 'owner' | 'employee_<empId>'
 
-            // Параллельно грузим бизнес и сотрудника
-            const [businesses, employeeRecords] = await Promise.all([
-              base44.entities.Business.filter({ owner_email: currentUser.email }),
-              base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true })
-            ]);
+            // Грузим бизнесы и записи сотрудника через backend функцию
+            // (case-insensitive email matching, bypass RLS)
+            const empBizRes = await base44.functions.invoke('getEmployeeBusinesses', {});
+            const empBizData = empBizRes.data || {};
+            const businesses = empBizData.ownedBusinesses || [];
+            const employeeRecords = empBizData.employees || [];
 
             // Функция регистрации сессии устройства
             const registerDeviceSession = async (bizId, userEmail, userName, role, empId = null) => {
@@ -207,9 +208,9 @@ export default function Layout({ children, currentPageName }) {
                 const ctxRes = await base44.functions.invoke('loadEmployeeContext', { employee_id: empId });
                 const ctx = ctxRes.data;
                 if (ctx.error) {
+                  console.error('loadEmployeeContext error:', ctx.error);
                   localStorage.removeItem('barakatcrm_mode');
                   localStorage.removeItem(`barakat_emp_token_${empId}`);
-                  alert(ctx.error);
                 } else {
                   const emp = ctx.employee;
                   const biz = ctx.business;
