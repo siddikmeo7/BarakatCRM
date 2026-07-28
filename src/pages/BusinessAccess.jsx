@@ -124,83 +124,30 @@ export default function BusinessAccess() {
     setLoading(true);
     setError('');
     try {
-      // 1. Находим бизнес по коду бизнеса
-      const bizList = await base44.entities.Business.filter({ business_code: businessCode.trim() });
-      if (bizList.length === 0) {
-        setError('❌ Бизнес с таким кодом не найден. Проверьте код бизнеса.');
-        setLoading(false);
-        return;
-      }
-      const biz = bizList[0];
-
-      // 2. Проверяем код доступа
-      if (biz.access_code !== accessCode.trim()) {
-        setError('❌ Неверный код доступа. Проверьте код доступа.');
-        setLoading(false);
-        return;
-      }
-
-      // 3. Проверяем, активен ли бизнес
-      if (biz.is_active === false) {
-        setError('❌ Этот бизнес неактивен. Обратитесь к владельцу.');
-        setLoading(false);
-        return;
-      }
-
-      // 4. Ищем существующую запись сотрудника
-      const existingEmps = await base44.entities.Employee.filter({
-        user_email: user.email,
-        business_id: biz.id,
-        is_active: true
+      const res = await base44.functions.invoke('joinBusinessByCodes', {
+        businessCode: businessCode.trim(),
+        accessCode: accessCode.trim()
       });
 
-      let emp;
-      if (existingEmps.length > 0) {
-        // Сотрудник уже существует
-        emp = existingEmps[0];
-        if (emp.is_frozen) {
-          setError('❌ Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.');
-          setLoading(false);
-          return;
-        }
-      } else {
-        // 5. Создаём новую запись сотрудника (с минимальными правами)
-        // Находим роль по умолчанию в этом бизнесе
-        const defaultRoles = await base44.entities.Role.filter({
-          business_id: biz.id,
-          is_default: true
-        });
-        const roleId = defaultRoles.length > 0 ? defaultRoles[0].id : null;
-
-        emp = await base44.entities.Employee.create({
-          business_id: biz.id,
-          user_email: user.email,
-          name: user.full_name || user.email.split('@')[0],
-          role_id: roleId || '',
-          is_active: true,
-          is_frozen: false,
-          is_admin: false,
-          last_login_at: new Date().toISOString(),
-          device_info: navigator.userAgent
-        });
+      if (res.data?.error) {
+        setError('❌ ' + res.data.error);
+        setLoading(false);
+        return;
       }
 
-      // 6. Persist business_id for RLS security
-      if (user.data?.business_id !== biz.id) {
-        await base44.auth.updateMe({ business_id: biz.id });
+      // Persist business_id for RLS security
+      if (user.data?.business_id !== res.data.business_id) {
+        await base44.auth.updateMe({ business_id: res.data.business_id });
       }
 
-      // 7. Устанавливаем режим сотрудника и переходим в систему
-      localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
-      sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
-      if (emp.login_session_token) {
-        localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
-      }
-      // Принудительно перезагружаем, чтобы Layout заново инициализировал сессию сотрудника
+      // Устанавливаем режим сотрудника и перезагружаем
+      localStorage.setItem('barakatcrm_mode', `employee_${res.data.employee_id}`);
+      sessionStorage.setItem('barakatcrm_mode', `employee_${res.data.employee_id}`);
       window.location.href = '/';
     } catch (err) {
       console.error('Join business error:', err);
-      setError('❌ Ошибка входа: ' + (err?.message || 'неизвестная ошибка'));
+      const msg = err?.response?.data?.error || err?.message || 'неизвестная ошибка';
+      setError('❌ ' + msg);
     } finally {
       setLoading(false);
     }
