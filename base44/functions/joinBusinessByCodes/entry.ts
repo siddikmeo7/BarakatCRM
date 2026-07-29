@@ -7,8 +7,8 @@ export default async function(req) {
     if (!user) return Response.json({ success: false, error: 'Не авторизован' });
 
     const body = await req.json().catch(() => ({}));
-    const businessCode = (body?.businessCode || '').toString().trim();
-    const accessCode = (body?.accessCode || '').toString().trim();
+    const businessCode = (body?.businessCode || '').toString().trim().toUpperCase();
+    const accessCode = (body?.accessCode || '').toString().trim().toUpperCase();
 
     if (!businessCode || !accessCode) {
       return Response.json({ success: false, error: 'Введите код бизнеса и код доступа' });
@@ -16,31 +16,24 @@ export default async function(req) {
 
     const userEmailLower = (user.email || '').toLowerCase().trim();
 
-    // Service role — bypass RLS to find business by code
-    // Try exact match first (uppercase, since generateBusinessCodes produces uppercase)
-    let bizList = await base44.asServiceRole.entities.Business.filter({
-      business_code: businessCode.toUpperCase()
-    });
+    // Load all businesses (service role — bypass RLS) and do case-insensitive match in code.
+    // This is more reliable than a MongoDB exact-match filter which can intermittently
+    // fail to return results due to indexing/caching edge cases.
+    const allBiz = await base44.asServiceRole.entities.Business.list('-created_date', 1000);
+    const biz = allBiz.find(b =>
+      (b.business_code || '').toString().trim().toUpperCase() === businessCode
+    );
 
-    // If not found, try case-insensitive search across all businesses
-    if (bizList.length === 0) {
-      const allBiz = await base44.asServiceRole.entities.Business.list('-created_date', 500);
-      bizList = allBiz.filter(b =>
-        (b.business_code || '').toString().trim().toLowerCase() === businessCode.toLowerCase()
-      );
-    }
-
-    if (bizList.length === 0) {
+    if (!biz) {
       return Response.json({
         success: false,
         error: `Бизнес с кодом «${businessCode}» не найден. Проверьте код бизнеса.`
       });
     }
-    const biz = bizList[0];
 
     // Case-insensitive, trimmed comparison for access_code
-    const storedCode = (biz.access_code || '').toString().trim().toLowerCase();
-    if (!storedCode || storedCode !== accessCode.toLowerCase()) {
+    const storedCode = (biz.access_code || '').toString().trim().toUpperCase();
+    if (!storedCode || storedCode !== accessCode) {
       return Response.json({
         success: false,
         error: 'Неверный код доступа. Проверьте код доступа.'
@@ -52,8 +45,6 @@ export default async function(req) {
     }
 
     // Find employee record for this user in this business (service role)
-    // Case-insensitive email matching — MongoDB filter is case-sensitive, so we
-    // load all employees for this business and match in code
     const allEmps = await base44.asServiceRole.entities.Employee.filter({
       business_id: biz.id
     });
@@ -65,16 +56,16 @@ export default async function(req) {
     if (!emp) {
       return Response.json({
         success: false,
-        error: `Вы не зарегистрированы как сотрудник в бизнесе «${biz.name}». Попросите владельца добавить вас в список сотрудников.`
+        error: `NOT_REGISTERED: Вы не зарегистрированы как сотрудник в бизнесе «${biz.name}». Попросите владельца добавить вас в список сотрудников.`
       });
     }
 
     if (emp.is_frozen) {
-      return Response.json({ success: false, error: 'Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.' });
+      return Response.json({ success: false, error: 'FROZEN: Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.' });
     }
 
     if (emp.is_active === false) {
-      return Response.json({ success: false, error: 'Ваш аккаунт сотрудника деактивирован. Обратитесь к владельцу бизнеса.' });
+      return Response.json({ success: false, error: 'DEACTIVATED: Ваш аккаунт сотрудника деактивирован. Обратитесь к владельцу бизнеса.' });
     }
 
     // Normalize the email in the Employee record if it has different casing

@@ -628,8 +628,8 @@ export default function Settings() {
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-6">
             <div className="space-y-4">
               <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg"><p className="text-sm text-yellow-800">🔒 Введите коды, полученные от владельца бизнеса.</p></div>
-              <div><Label>Код бизнеса</Label><Input value={empLoginCode} onChange={(e) => setEmpLoginCode(e.target.value.toUpperCase())} placeholder="XXXXXXXXXXXX" className="mt-1.5 font-mono" /></div>
-              <div><Label>Код доступа</Label><Input value={empAccessCode} onChange={(e) => setEmpAccessCode(e.target.value.toUpperCase())} placeholder="XXXXXXXX" className="mt-1.5 font-mono" /></div>
+              <div><Label>Код бизнеса</Label><Input value={empLoginCode} onChange={(e) => { setEmpLoginCode(e.target.value.toUpperCase()); if (empLoginError) setEmpLoginError(''); if (empLoginSuccess) setEmpLoginSuccess(null); }} placeholder="XXXXXXXXXXXX" className="mt-1.5 font-mono" /></div>
+              <div><Label>Код доступа</Label><Input value={empAccessCode} onChange={(e) => { setEmpAccessCode(e.target.value.toUpperCase()); if (empLoginError) setEmpLoginError(''); if (empLoginSuccess) setEmpLoginSuccess(null); }} placeholder="XXXXXXXX" className="mt-1.5 font-mono" /></div>
               {empLoginError && <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{empLoginError}</div>}
               {empLoginSuccess && (
                 <div className="bg-emerald-100 text-emerald-700 p-4 rounded-lg text-sm flex items-start gap-3">
@@ -646,17 +646,20 @@ export default function Settings() {
               <Button onClick={async () => {
                 setEmpLoginLoading(true); setEmpLoginError(''); setEmpLoginSuccess(null);
                 try {
-                  // Используем backend-функцию — обходит RLS через service role
                   const res = await base44.functions.invoke('joinBusinessByCodes', {
                     businessCode: empLoginCode.trim(),
                     accessCode: empAccessCode.trim()
                   });
                   if (!res.data?.success) {
-                    const err = res.data?.error || 'Неверные коды доступа';
-                    if (err.includes('не добавлены') || err.includes('сотрудник')) {
-                      setEmpLoginError('❌ Вы не зарегистрированы как сотрудник этого бизнеса. Обратитесь к владельцу, чтобы вас добавили.');
+                    const rawErr = res.data?.error || 'Неверные коды доступа';
+                    if (rawErr.startsWith('NOT_REGISTERED')) {
+                      setEmpLoginError('❌ К сожалению, вы не зарегистрированы как сотрудник этого бизнеса. Обратитесь к владельцу, чтобы вас добавили в список сотрудников.');
+                    } else if (rawErr.startsWith('FROZEN')) {
+                      setEmpLoginError('❌ Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.');
+                    } else if (rawErr.startsWith('DEACTIVATED')) {
+                      setEmpLoginError('❌ Ваш аккаунт сотрудника деактивирован. Обратитесь к владельцу бизнеса.');
                     } else {
-                      setEmpLoginError('❌ ' + err);
+                      setEmpLoginError('❌ ' + rawErr);
                     }
                     return;
                   }
@@ -668,10 +671,11 @@ export default function Settings() {
                   localStorage.setItem('barakatcrm_mode', `employee_${empId}`);
                   sessionStorage.setItem('barakatcrm_mode', `employee_${empId}`);
                   saveBusinessToHistory(bizId, bizName, empId, empName, isAdmin ? 'admin' : 'employee');
-                  setEmpLoginLoading(false);
                   setEmpLoginSuccess(bizName);
-                  setTimeout(() => { window.location.href = '/'; }, 1800);
-                } catch (e) { setEmpLoginError('❌ Ошибка: ' + (e?.message || 'неизвестная ошибка')); } finally { setEmpLoginLoading(false); }
+                  setTimeout(() => { window.location.href = '/'; }, 2000);
+                } catch (e) {
+                  setEmpLoginError('❌ Ошибка: ' + (e?.message || 'неизвестная ошибка'));
+                } finally { setEmpLoginLoading(false); }
               }} disabled={empLoginLoading || !empLoginCode || !empAccessCode} className="w-full bg-purple-600 hover:bg-purple-700 gap-2">
                 {empLoginLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}Войти как сотрудник
               </Button>
