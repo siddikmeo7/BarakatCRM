@@ -471,14 +471,14 @@ export default function Warehouses() {
                 <Package className="w-4 h-4 text-white/80" />
                 <p className="text-xs text-white/80 font-medium">Товаров</p>
               </div>
-              <p className="text-2xl font-bold text-white">{products.length}</p>
+              <p className="text-2xl font-bold text-white">{can('view_warehouse_quantities') ? products.length : '•••'}</p>
             </div>
             <div className="bg-white/15 backdrop-blur rounded-xl p-3">
               <div className="flex items-center gap-1.5 mb-1">
                 <Box className="w-4 h-4 text-white/80" />
                 <p className="text-xs text-white/80 font-medium">Коробок всего</p>
               </div>
-              <p className="text-2xl font-bold text-white">{products.reduce((s, p) => s + (p.boxes_in_stock || 0), 0)}</p>
+              <p className="text-2xl font-bold text-white">{can('view_warehouse_quantities') ? products.reduce((s, p) => s + (p.boxes_in_stock || 0), 0) : '•••'}</p>
             </div>
             <div className="bg-white/15 backdrop-blur rounded-xl p-3">
               <div className="flex items-center gap-1.5 mb-1">
@@ -619,7 +619,7 @@ export default function Warehouses() {
 
                   <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
                     <div>
-                      <p className="text-2xl font-bold text-slate-900">{stats.totalBoxes}</p>
+                      <p className="text-2xl font-bold text-slate-900">{can('view_warehouse_quantities') ? stats.totalBoxes : '•••••'}</p>
                       <p className="text-xs text-slate-500">коробок</p>
                     </div>
                     <div>
@@ -631,7 +631,7 @@ export default function Warehouses() {
                       <p className="text-xs text-slate-500">розн. стоимость</p>
                     </div>
                     <div>
-                      <p className="text-lg font-semibold text-slate-700">{stats.productsCount}</p>
+                      <p className="text-lg font-semibold text-slate-700">{can('view_warehouse_quantities') ? stats.productsCount : '•••••'}</p>
                       <p className="text-xs text-slate-500">товаров</p>
                     </div>
                     <div>
@@ -690,8 +690,8 @@ export default function Warehouses() {
                          </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">{stats.productsCount}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-purple-600">{stats.totalBoxes}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-900">{can('view_warehouse_quantities') ? stats.productsCount : '•••'}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-purple-600">{can('view_warehouse_quantities') ? stats.totalBoxes : '•••'}</td>
                     <td className="px-4 py-3 text-right font-semibold text-emerald-600">{can('view_warehouse_value') ? `${stats.totalValue.toLocaleString()} с.` : '••••• с.'}</td>
                     <td className="px-4 py-3 text-center text-blue-600 font-semibold">{stats.soldBoxes}</td>
                     <td className="px-4 py-3">
@@ -787,11 +787,11 @@ export default function Warehouses() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                   <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
                     <p className="text-xs text-slate-500 mb-1">Товаров</p>
-                    <p className="text-2xl font-bold text-slate-900">{stats.productsCount}</p>
+                    <p className="text-2xl font-bold text-slate-900">{can('view_warehouse_quantities') ? stats.productsCount : '•••'}</p>
                   </div>
                   <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
                     <p className="text-xs text-slate-500 mb-1">Коробок</p>
-                    <p className="text-2xl font-bold text-purple-600">{stats.totalBoxes}</p>
+                    <p className="text-2xl font-bold text-purple-600">{can('view_warehouse_quantities') ? stats.totalBoxes : '•••'}</p>
                   </div>
                   <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
                     <p className="text-xs text-slate-500 mb-1">Опт. стоимость</p>

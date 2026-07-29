@@ -313,7 +313,7 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
                 { label: 'Пар', value: sale.pairs_sold || sale.boxes_sold * pairsPerBox, color: 'text-slate-700' },
                 { label: 'Цена / коробка', value: `${sale.sale_price?.toLocaleString()} с.`, color: 'text-slate-700' },
                 { label: 'Итого', value: `${sale.total_amount?.toLocaleString()} с.`, color: 'text-blue-600' },
-                { label: 'Прибыль', value: `+${sale.profit?.toLocaleString()} с.`, color: 'text-emerald-600' },
+                ...(can('view_sale_profit') ? [{ label: 'Прибыль', value: `+${sale.profit?.toLocaleString()} с.`, color: 'text-emerald-600' }] : []),
                 { label: 'Тип оплаты', value: sale.is_debt ? 'В долг' : 'Наличные', color: sale.is_debt ? 'text-orange-600' : 'text-emerald-600' },
               ].map((item, i) => (
                 <div key={i} className="p-3 bg-white border border-slate-100 rounded-xl">
@@ -350,7 +350,7 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <span className="text-slate-600">Итого: <b>{newTotal.toLocaleString()} с.</b></span>
-                <span className="text-emerald-700">Прибыль: <b>+{newProfit.toLocaleString()} с.</b></span>
+                {can('view_sale_profit') && <span className="text-emerald-700">Прибыль: <b>+{newProfit.toLocaleString()} с.</b></span>}
               </div>
               <div>
                 <Label className="text-xs">Причина изменения</Label>

@@ -365,7 +365,8 @@ export default function Customers() {
         </div>
 
         {/* Customer List */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <div className="overflow-y-auto custom-scroll divide-y divide-slate-100 dark:divide-slate-800" style={{ maxHeight: 'calc(100vh - 340px)', minHeight: '200px' }}>
           {paginatedCustomers.length === 0 ? (
             <div className="text-center py-10 text-slate-400 dark:text-slate-500">
               <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
@@ -438,6 +439,7 @@ export default function Customers() {
               </Button>
             </div>
           )}
+          </div>
         </div>
 
         {/* Add/Edit Dialog */}

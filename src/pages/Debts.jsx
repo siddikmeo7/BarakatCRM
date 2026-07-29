@@ -895,6 +895,7 @@ export default function Debts() {
 
       {/* Список клиентов */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="overflow-y-auto custom-scroll" style={{ maxHeight: 'calc(100vh - 340px)', minHeight: '200px' }}>
         {applyDebtorFilters(debtorList).length === 0 ? (
           <div className="text-center py-12 text-slate-400">
             <CreditCard className="w-12 h-12 mx-auto mb-4 text-slate-300" />
@@ -937,6 +938,7 @@ export default function Debts() {
           })}
           </div>
         )}
+        </div>
       </div>
 
       {/* Add Debt Dialog */}

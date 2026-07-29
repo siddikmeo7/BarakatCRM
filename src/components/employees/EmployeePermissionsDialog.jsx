@@ -56,6 +56,7 @@ const PERMISSION_GROUPS = [
       { key: 'view_warehouse_value',   label: 'Стоимость товаров на складе' },
       { key: 'view_warehouse_revenue', label: 'Выручка по складам' },
       { key: 'view_warehouse_cost',    label: 'Стоимость всех складов' },
+      { key: 'view_warehouse_quantities', label: 'Количество товаров и коробок' },
     ]
   },
   {

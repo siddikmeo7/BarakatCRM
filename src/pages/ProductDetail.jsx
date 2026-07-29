@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Package, ArrowLeft, Box, Layers, Hash, TrendingUp, Calendar, User } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 export default function ProductDetail() {
   const navigate = useNavigate();
+  const { can } = useEmployeeAccess();
   const [product, setProduct] = useState(null);
   const [sales, setSales] = useState([]);
   const [warehouse, setWarehouse] = useState(null);
@@ -161,7 +163,7 @@ export default function ProductDetail() {
             <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
               <div>
                 <p className="text-sm text-slate-500">Цена закупки</p>
-                <p className="text-xl font-bold text-slate-900">{product.purchase_price?.toLocaleString()} с.</p>
+                <p className="text-xl font-bold text-slate-900">{can('view_products_cost') ? `${product.purchase_price?.toLocaleString()} с.` : '•••••'}</p>
               </div>
               <div>
                 <p className="text-sm text-slate-500">Цена продажи</p>
@@ -177,22 +179,22 @@ export default function ProductDetail() {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <Box className="w-5 h-5 text-indigo-600 mb-2" />
           <p className="text-sm text-slate-500">На складе</p>
-          <p className="text-2xl font-bold text-indigo-600">{product.boxes_in_stock || 0} коробок</p>
+          <p className="text-2xl font-bold text-indigo-600">{can('view_warehouse_quantities') ? `${product.boxes_in_stock || 0} коробок` : '•••••'}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <Layers className="w-5 h-5 text-purple-600 mb-2" />
           <p className="text-sm text-slate-500">Пар</p>
-          <p className="text-2xl font-bold text-slate-900">{totalPairs}</p>
+          <p className="text-2xl font-bold text-slate-900">{can('view_warehouse_quantities') ? totalPairs : '•••••'}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <Package className="w-5 h-5 text-cyan-600 mb-2" />
           <p className="text-sm text-slate-500">Стоимость склада</p>
-          <p className="text-2xl font-bold text-slate-900">{totalStockValue.toLocaleString()} с.</p>
+          <p className="text-2xl font-bold text-slate-900">{can('view_warehouse_value') ? `${totalStockValue.toLocaleString()} с.` : '•••••'}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <TrendingUp className="w-5 h-5 text-emerald-600 mb-2" />
           <p className="text-sm text-slate-500">Потенциальная прибыль</p>
-          <p className="text-2xl font-bold text-emerald-600">{potentialProfit.toLocaleString()} с.</p>
+          <p className="text-2xl font-bold text-emerald-600">{can('view_warehouse_cost') ? `${potentialProfit.toLocaleString()} с.` : '•••••'}</p>
         </div>
       </div>
 
@@ -208,7 +210,7 @@ export default function ProductDetail() {
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <p className="text-sm text-slate-500">Прибыль</p>
-          <p className="text-2xl font-bold text-emerald-600">{totalProfit.toLocaleString()} с.</p>
+          <p className="text-2xl font-bold text-emerald-600">{can('view_warehouse_cost') ? `${totalProfit.toLocaleString()} с.` : '•••••'}</p>
         </div>
       </div>
 
@@ -246,7 +248,7 @@ export default function ProductDetail() {
                     {sale.total_amount?.toLocaleString()} с.
                   </td>
                   <td className="px-4 py-3 text-right font-semibold text-emerald-600">
-                    +{sale.profit?.toLocaleString()} с.
+                    {can('view_warehouse_cost') ? `+${sale.profit?.toLocaleString()} с.` : '•••••'}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {sale.is_debt ? (

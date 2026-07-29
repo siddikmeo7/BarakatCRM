@@ -510,7 +510,7 @@ export default function Sales() {
             <TrendingUp className="w-4 h-4 text-emerald-600" />
             <span className="text-xs text-slate-500 truncate">{t(lang,'sales_profit')}</span>
           </div>
-          {can('view_profit') ? (
+          {can('view_sale_profit') ? (
             <p className="text-xl font-bold text-emerald-600">{totals.profit.toLocaleString()}</p>
           ) : (
             <p className="text-xl font-bold text-slate-300">•••</p>
@@ -519,7 +519,7 @@ export default function Sales() {
       </div>
 
       {/* Consignment stats */}
-      {consignmentStats.count > 0 && can('view_profit') && (
+      {consignmentStats.count > 0 && can('view_sale_profit') && (
         <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3 border border-teal-200 dark:border-teal-800 flex flex-wrap items-center gap-4 text-sm">
           <div className="flex items-center gap-2">
             <PackageOpen className="w-4 h-4 text-teal-600" />
@@ -698,7 +698,7 @@ export default function Sales() {
                       {sale.total_amount?.toLocaleString()} с.
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-emerald-600 whitespace-nowrap">
-                      {can('view_profit') ? `+${sale.profit?.toLocaleString()} с.` : '••• с.'}
+                      {can('view_sale_profit') ? `+${sale.profit?.toLocaleString()} с.` : '••• с.'}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex flex-col items-center gap-1">
@@ -752,7 +752,7 @@ export default function Sales() {
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="font-bold text-slate-900 text-sm">{sale.total_amount?.toLocaleString()} с.</p>
-                        <p className="text-xs text-emerald-600">{can('view_profit') ? `+${sale.profit?.toLocaleString()} с.` : '••• с.'}</p>
+                        <p className="text-xs text-emerald-600">{can('view_sale_profit') ? `+${sale.profit?.toLocaleString()} с.` : '••• с.'}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-2">
@@ -823,7 +823,7 @@ export default function Sales() {
                   <span className="text-slate-600">Сумма:</span>
                   <span className="font-semibold text-slate-900">{sale.total_amount?.toLocaleString()} с.</span>
                 </div>
-                {can('view_profit') && (
+                {can('view_sale_profit') && (
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Прибыль:</span>
                   <span className="font-semibold text-emerald-600">+{sale.profit?.toLocaleString()} с.</span>
@@ -1065,13 +1065,13 @@ export default function Sales() {
                   <p className="text-sm text-slate-500">{t(lang,'sales_amount')}</p>
                   <p className="text-lg font-semibold text-slate-900">{totalAmount.toLocaleString()} с.</p>
                 </div>
-                {can('view_profit') && (
+                {can('view_sale_profit') && (
                 <div>
                   <p className="text-sm text-slate-500">{t(lang,'sales_profit')}</p>
                   <p className="text-lg font-semibold text-emerald-600">+{profit.toLocaleString()} с.</p>
                 </div>
                 )}
-                {formData.is_consignment && can('view_profit') && (
+                {formData.is_consignment && can('view_sale_profit') && (
                 <div>
                   <p className="text-sm text-slate-500">Владельцу</p>
                   <p className="text-lg font-semibold text-amber-600">{ownerAmount.toLocaleString()} с.</p>

@@ -147,6 +147,10 @@
           "type": "boolean",
           "default": false
         },
+        "view_warehouse_quantities": {
+          "type": "boolean",
+          "default": false
+        },
         "view_customers": {
           "type": "boolean",
           "default": true

@@ -179,6 +179,9 @@
         "view_warehouse_cost": {
           "type": "boolean"
         },
+        "view_warehouse_quantities": {
+          "type": "boolean"
+        },
         "view_customers": {
           "type": "boolean"
         },
