@@ -31,7 +31,11 @@ export default function ProfileCard({ user, currentEmployee, business, lang, onO
         <div className="flex items-end gap-4 mb-4">
           {avatarUrl ? (
             <div className="ring-4 ring-white dark:ring-slate-900 rounded-2xl overflow-hidden shadow-xl flex-shrink-0 w-20 h-20">
-              <AvatarDisplay avatarUrl={avatarUrl} name={displayName} size="lg" />
+              {avatarUrl.startsWith('emoji:') ? (
+                <AvatarDisplay avatarUrl={avatarUrl} name={displayName} />
+              ) : (
+                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+              )}
             </div>
           ) : (
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl flex-shrink-0 ring-4 ring-white dark:ring-slate-900">

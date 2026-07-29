@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
-import { Save, Mail, CheckCheck, Zap } from 'lucide-react';
+import { Save, Mail, CheckCheck, Zap, CheckSquare, Square } from 'lucide-react';
 
 const PERMISSION_GROUPS = [
   {
@@ -241,24 +241,26 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
   const getEnabled = (key) => isAdmin ? (permissions[key] !== false) : !!permissions[key];
   const totalPermissions = PERMISSION_GROUPS.reduce((sum, g) => sum + g.permissions.length, 0);
   const enabledCount = PERMISSION_GROUPS.reduce((sum, g) => sum + g.permissions.filter(p => getEnabled(p.key)).length, 0);
+  const isAllSelected = PERMISSION_GROUPS.every(g => g.permissions.every(p => getEnabled(p.key)));
+  const toggleAllPermissions = () => {
+    if (isAllSelected) {
+      setIsAdmin(false);
+      const none = {};
+      PERMISSION_GROUPS.forEach(g => g.permissions.forEach(p => { none[p.key] = false; }));
+      setPermissions(none);
+    } else {
+      giveAllPermissions();
+    }
+  };
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl w-[95vw] p-0 overflow-hidden flex flex-col" style={{ maxHeight: '92vh' }}>
+      <DialogContent className="max-w-2xl w-[95vw] p-0 overflow-hidden flex flex-col [&>button:last-child]:hidden" style={{ maxHeight: '92vh' }}>
         {/* Header — employee info (READ ONLY) */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex-shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center overflow-hidden flex-shrink-0">
-              {employee?.avatar_url
-                ? <img src={employee.avatar_url} alt={employee?.name} className="w-full h-full object-cover" />
-                : <span className="text-white text-sm font-bold">{employee?.name?.charAt(0)?.toUpperCase()}</span>
-              }
-            </div>
-            <div className="min-w-0">
-              <p className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate">{employee?.full_name || employee?.name}</p>
-              <p className="text-xs text-slate-400 truncate flex items-center gap-1"><Mail className="w-3 h-3 flex-shrink-0" />{employee?.user_email}</p>
-              {employee?.phone && <p className="text-xs text-slate-400 truncate">📞 {employee.phone}</p>}
-            </div>
+          <div className="min-w-0">
+            <p className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate">{employee?.full_name || employee?.name}</p>
+            <p className="text-xs text-slate-400 truncate flex items-center gap-1"><Mail className="w-3 h-3 flex-shrink-0" />{employee?.user_email}</p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
             <Button variant="outline" size="sm" onClick={onClose} className="h-8 text-xs">Отмена</Button>
@@ -287,6 +289,17 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
             </div>
             {/* Permission count */}
             <span className="text-xs text-slate-400 ml-auto">{enabledCount}/{totalPermissions}</span>
+            <button
+              onClick={toggleAllPermissions}
+              className={`text-xs font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1 ${
+                isAllSelected
+                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200'
+                  : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200'
+              }`}
+            >
+              {isAllSelected ? <Square className="w-3 h-3" /> : <CheckSquare className="w-3 h-3" />}
+              {isAllSelected ? 'Снять все' : 'Выбрать все'}
+            </button>
           </div>
 
           {/* Role + presets */}

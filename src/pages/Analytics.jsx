@@ -370,6 +370,7 @@ export default function Analytics() {
 
       {/* Main Stats - Responsive sizing */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+        {can('view_revenue') ? (
         <StatCard
           title={t(lang,'analytics_revenue')}
           value={convertCurrency(totalRevenue)}
@@ -379,6 +380,18 @@ export default function Analytics() {
           iconColor="text-blue-600"
           className="text-sm md:text-base"
         />
+        ) : (
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+              <ShoppingCart className="w-5 h-5 text-slate-400" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">{t(lang,'analytics_revenue')}</p>
+              <p className="text-xl font-bold text-slate-400">••••• с.</p>
+              <p className="text-xs text-slate-400">Нет доступа</p>
+            </div>
+          </div>
+        )}
         {can('view_profit') && (
         <StatCard
           title={t(lang,'analytics_profit')}
@@ -572,7 +585,7 @@ export default function Analytics() {
                 </div>
                 <p className="text-xl md:text-3xl font-bold text-emerald-600">{hideData ? masked : `${cashPercent}%`}</p>
                 <p className="text-xs md:text-sm text-slate-500 mt-1">{cashSales.length}</p>
-                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{hideData ? masked : `${formatCompact(cashAmount, lang)} с.`}</p>
+                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{(hideData || !can('view_revenue')) ? masked : `${formatCompact(cashAmount, lang)} с.`}</p>
               </div>
               <div className="text-center p-3 md:p-4 bg-amber-50 rounded-xl">
                 <div className="flex items-center justify-center gap-2 mb-2">
@@ -581,7 +594,7 @@ export default function Analytics() {
                 </div>
                 <p className="text-xl md:text-3xl font-bold text-amber-600">{hideData ? masked : `${debtPercent}%`}</p>
                 <p className="text-xs md:text-sm text-slate-500 mt-1">{debtSales.length}</p>
-                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{hideData ? masked : `${formatCompact(debtAmount, lang)} с.`}</p>
+                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{(hideData || !can('view_revenue')) ? masked : `${formatCompact(debtAmount, lang)} с.`}</p>
               </div>
             </div>
           </div>
@@ -696,7 +709,7 @@ export default function Analytics() {
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="font-bold text-slate-900 text-sm">{hideData ? masked : `${formatCompact(stats.revenue, lang)} с.`}</p>
+                          <p className="font-bold text-slate-900 text-sm">{(hideData || !can('view_revenue')) ? masked : `${formatCompact(stats.revenue, lang)} с.`}</p>
                           {can('view_profit') && (
                             <p className={`text-xs font-medium ${stats.profit >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                               {hideData ? masked : `${stats.profit >= 0 ? '+' : ''}${formatCompact(stats.profit, lang)} с.`}
@@ -783,7 +796,7 @@ export default function Analytics() {
                     <p className="text-xs text-slate-500">{stats.boxes} кор.</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-semibold text-slate-900 text-xs md:text-sm">{hideData ? masked : `${formatCompact(stats.revenue, lang)} с.`}</p>
+                    <p className="font-semibold text-slate-900 text-xs md:text-sm">{(hideData || !can('view_revenue')) ? masked : `${formatCompact(stats.revenue, lang)} с.`}</p>
                     {can('view_profit') && (
                       <p className={`text-xs md:text-sm font-medium ${stats.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                         {hideData ? masked : `${stats.profit >= 0 ? '+' : ''}${formatCompact(stats.profit, lang)} с.`}

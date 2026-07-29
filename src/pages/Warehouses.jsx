@@ -486,7 +486,7 @@ export default function Warehouses() {
                 <p className="text-xs text-white/80 font-medium">Выручка</p>
               </div>
               <p className="text-xl font-bold text-white">
-                {can('view_revenue') ? `${sales.filter(s => !s.is_cancelled).reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()} с.` : '•••••'}
+                {can('view_warehouse_revenue') ? `${sales.filter(s => !s.is_cancelled).reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()} с.` : '•••••'}
               </p>
             </div>
             <div className="bg-white/15 backdrop-blur rounded-xl p-3">
@@ -495,7 +495,7 @@ export default function Warehouses() {
                 <p className="text-xs text-white/80 font-medium">Ожид. прибыль</p>
               </div>
               <p className="text-xl font-bold text-white">
-                {can('view_profit') ? `+${products.reduce((s, p) => s + ((p.boxes_in_stock || 0) * ((p.sale_price || 0) - (p.purchase_price || 0))), 0).toLocaleString()} с.` : '•••••'}
+                {can('view_warehouse_cost') ? `+${products.reduce((s, p) => s + ((p.boxes_in_stock || 0) * ((p.sale_price || 0) - (p.purchase_price || 0))), 0).toLocaleString()} с.` : '•••••'}
               </p>
             </div>
           </div>
@@ -623,11 +623,11 @@ export default function Warehouses() {
                       <p className="text-xs text-slate-500">коробок</p>
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-orange-600">{can('view_stock_value') ? stats.totalWholesaleValue.toLocaleString() : '•••••'}</p>
+                      <p className="text-lg font-bold text-orange-600">{can('view_warehouse_value') ? stats.totalWholesaleValue.toLocaleString() : '•••••'}</p>
                       <p className="text-xs text-slate-500">опт. стоимость</p>
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-emerald-600">{can('view_stock_value') ? stats.totalValue.toLocaleString() : '•••••'}</p>
+                      <p className="text-lg font-bold text-emerald-600">{can('view_warehouse_value') ? stats.totalValue.toLocaleString() : '•••••'}</p>
                       <p className="text-xs text-slate-500">розн. стоимость</p>
                     </div>
                     <div>
@@ -692,7 +692,7 @@ export default function Warehouses() {
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-900">{stats.productsCount}</td>
                     <td className="px-4 py-3 text-right font-semibold text-purple-600">{stats.totalBoxes}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">{can('view_stock_value') ? `${stats.totalValue.toLocaleString()} с.` : '••••• с.'}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">{can('view_warehouse_value') ? `${stats.totalValue.toLocaleString()} с.` : '••••• с.'}</td>
                     <td className="px-4 py-3 text-center text-blue-600 font-semibold">{stats.soldBoxes}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 justify-end">
@@ -795,20 +795,20 @@ export default function Warehouses() {
                   </div>
                   <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
                     <p className="text-xs text-slate-500 mb-1">Опт. стоимость</p>
-                    <p className="text-lg font-bold text-orange-600">{can('view_stock_value') ? `${stats.totalWholesaleValue.toLocaleString()} с.` : '•••••'}</p>
+                    <p className="text-lg font-bold text-orange-600">{can('view_warehouse_value') ? `${stats.totalWholesaleValue.toLocaleString()} с.` : '•••••'}</p>
                   </div>
                   <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
                     <p className="text-xs text-slate-500 mb-1">Розн. стоимость</p>
-                    <p className="text-lg font-bold text-emerald-600">{can('view_stock_value') ? `${stats.totalValue.toLocaleString()} с.` : '•••••'}</p>
+                    <p className="text-lg font-bold text-emerald-600">{can('view_warehouse_value') ? `${stats.totalValue.toLocaleString()} с.` : '•••••'}</p>
                   </div>
                   <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
                     <p className="text-xs text-slate-500 mb-1">Потенц. прибыль</p>
-                    <p className="text-lg font-bold text-indigo-600">{can('view_profit') ? `+${potentialProfit.toLocaleString()} с.` : '•••••'}</p>
+                    <p className="text-lg font-bold text-indigo-600">{can('view_warehouse_cost') ? `+${potentialProfit.toLocaleString()} с.` : '•••••'}</p>
                   </div>
                   <div className="bg-white rounded-xl p-3 shadow-sm border border-blue-100 border text-center cursor-pointer hover:bg-blue-50 transition-colors"
                     onClick={() => window.location.href = createPageUrl('WarehouseSalesHistory') + '?id=' + selectedWarehouse.id}>
                     <p className="text-xs text-blue-500 mb-1">Выручка</p>
-                    <p className="text-lg font-bold text-blue-600">{can('view_revenue') ? `${revenue.toLocaleString()} с.` : '•••••'}</p>
+                    <p className="text-lg font-bold text-blue-600">{can('view_warehouse_revenue') ? `${revenue.toLocaleString()} с.` : '•••••'}</p>
                   </div>
                 </div>
                 {/* Alerts row */}
