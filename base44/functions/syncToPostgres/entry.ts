@@ -49,6 +49,7 @@ Deno.serve(async (req) => {
     if (body.full_sync) {
       const user = await base44.auth.me();
       if (user?.role !== 'admin') {
+        await sql.end();
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
 
@@ -75,6 +76,18 @@ Deno.serve(async (req) => {
     if (!event) {
       await sql.end();
       return Response.json({ error: 'No event provided' }, { status: 400 });
+    }
+
+    // Authenticate the caller — prevents unauthenticated data deletion/tampering
+    let eventUser;
+    try {
+      eventUser = await base44.auth.me();
+    } catch {
+      eventUser = null;
+    }
+    if (!eventUser) {
+      await sql.end();
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const tableName = ENTITY_TABLE_MAP[event.entity_name];

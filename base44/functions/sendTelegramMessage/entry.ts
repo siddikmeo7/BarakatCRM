@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { verifyBusinessAccess } from '../../shared/businessAuth.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -10,6 +11,7 @@ Deno.serve(async (req) => {
     }
 
     const {
+      business_id,
       telegram_id,
       customer_name,
       product_name,
@@ -19,8 +21,35 @@ Deno.serve(async (req) => {
       type = 'payment' // 'payment' или 'reminder'
     } = await req.json();
 
+    if (!business_id) {
+      return Response.json({ error: 'Missing business_id' }, { status: 400 });
+    }
+
     if (!telegram_id) {
       return Response.json({ error: 'Missing telegram_id' }, { status: 400 });
+    }
+
+    // Verify the caller owns or is employed by this business
+    const access = await verifyBusinessAccess(base44, business_id);
+    if (!access.authorized) {
+      return Response.json({ error: access.error }, { status: access.status });
+    }
+
+    // Verify the telegram_id belongs to a customer (or admin employee) of this business
+    const customers = await base44.asServiceRole.entities.Customer.filter({ business_id });
+    const matchingCustomer = customers.find(
+      (c: any) => c.telegram && c.telegram.toString().trim() === telegram_id.toString().trim()
+    );
+
+    if (!matchingCustomer) {
+      // Also check if it's an admin employee's telegram
+      const employees = await base44.asServiceRole.entities.Employee.filter({ business_id, is_active: true });
+      const matchingEmp = employees.find(
+        (e: any) => e.telegram && e.telegram.toString().trim() === telegram_id.toString().trim()
+      );
+      if (!matchingEmp || !matchingEmp.is_admin) {
+        return Response.json({ error: 'Telegram ID does not belong to a customer or admin of this business' }, { status: 403 });
+      }
     }
 
     const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');

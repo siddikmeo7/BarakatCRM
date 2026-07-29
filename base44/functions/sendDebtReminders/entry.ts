@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { verifyBusinessAccess } from '../../shared/businessAuth.ts';
 
 const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
 
@@ -18,8 +19,10 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     const { business_id } = payload;
 
-    if (!business_id) {
-      return Response.json({ error: 'business_id required' }, { status: 400 });
+    // Verify caller is owner or employee of this business
+    const access = await verifyBusinessAccess(base44, business_id);
+    if (!access.authorized) {
+      return Response.json({ error: access.error }, { status: access.status });
     }
 
     // Get business

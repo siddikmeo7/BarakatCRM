@@ -1,5 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+function escapeHtml(str: string): string {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -57,6 +66,12 @@ Deno.serve(async (req) => {
     const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
     const results = [];
 
+    // Escape all user-controlled values to prevent HTML injection in emails
+    const safeProductName = escapeHtml(productName);
+    const safeBusinessName = escapeHtml(business.name);
+    const safeStockCount = escapeHtml(stockCount);
+    const safeLimit = escapeHtml(limit);
+
     for (const recipient of recipients) {
       // Send email
       try {
@@ -65,10 +80,10 @@ Deno.serve(async (req) => {
           subject: `⚠️ Мало товара на складе — ${productName}`,
           body: `
 <h2>⚠️ Уведомление: Мало товара на складе</h2>
-<p><strong>Бизнес:</strong> ${business.name}</p>
-<p><strong>Товар:</strong> ${productName}</p>
-<p><strong>Остаток:</strong> <strong style="color:red">${stockCount} кор.</strong></p>
-<p><strong>Лимит:</strong> ${limit} кор.</p>
+<p><strong>Бизнес:</strong> ${safeBusinessName}</p>
+<p><strong>Товар:</strong> ${safeProductName}</p>
+<p><strong>Остаток:</strong> <strong style="color:red">${safeStockCount} кор.</strong></p>
+<p><strong>Лимит:</strong> ${safeLimit} кор.</p>
 <p>Пожалуйста, пополните запас как можно скорее.</p>
 <hr>
 <small>Это автоматическое уведомление от BarakatCRM</small>

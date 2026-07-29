@@ -1,10 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { verifyBusinessAccess } from '../../shared/businessAuth.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const {
       business_id,
@@ -18,7 +17,11 @@ Deno.serve(async (req) => {
       total_debt,
     } = await req.json();
 
-    if (!business_id) return Response.json({ error: 'business_id required' }, { status: 400 });
+    // Verify the caller owns or is employed by this business
+    const access = await verifyBusinessAccess(base44, business_id);
+    if (!access.authorized) {
+      return Response.json({ error: access.error }, { status: access.status });
+    }
 
     const businesses = await base44.asServiceRole.entities.Business.filter({ id: business_id });
     if (!businesses.length) return Response.json({ error: 'Business not found' }, { status: 404 });
