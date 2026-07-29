@@ -48,29 +48,19 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    loadData();
-  }, [navigate]);
-
-  // Редирект на Analytics в мобильной версии убран — сотрудники остаются на Dashboard
+    if (window.__barakatAccessReady) {
+      loadData();
+    } else {
+      const handler = () => loadData();
+      window.addEventListener('barakatAccessReady', handler);
+      return () => window.removeEventListener('barakatAccessReady', handler);
+    }
+  }, []);
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
-      let biz = null;
-      const savedMode = localStorage.getItem('barakatcrm_mode') || sessionStorage.getItem('barakatcrm_mode');
-      if (savedMode && savedMode.startsWith('employee_')) {
-        const empId = savedMode.replace('employee_', '');
-        const empRecords = await base44.entities.Employee.filter({ user_email: user.email, is_active: true });
-        const emp = empRecords.find(e => e.id === empId) || empRecords[0];
-        if (emp && !emp.is_frozen) {
-          const bizList = await base44.entities.Business.filter({ id: emp.business_id });
-          if (bizList.length > 0) biz = bizList[0];
-        }
-      }
-      if (!biz) {
-        const businesses = await base44.entities.Business.filter({ owner_email: user.email });
-        if (businesses.length > 0) biz = businesses[0];
-      }
+      const biz = window.__barakatBusiness;
+      if (!biz) { setLoading(false); return; }
       
       if (biz) {
         setBusiness(biz);

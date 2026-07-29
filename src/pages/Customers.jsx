@@ -34,28 +34,21 @@ export default function Customers() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   useEffect(() => {
-    loadData();
+    if (window.__barakatAccessReady) {
+      loadData();
+    } else {
+      const handler = () => loadData();
+      window.addEventListener('barakatAccessReady', handler);
+      return () => window.removeEventListener('barakatAccessReady', handler);
+    }
   }, []);
 
   const loadData = async () => {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
-      let biz = null;
-      const savedMode = localStorage.getItem('barakatcrm_mode') || sessionStorage.getItem('barakatcrm_mode');
-      if (savedMode && savedMode.startsWith('employee_')) {
-        const empId = savedMode.replace('employee_', '');
-        const empRecords = await base44.entities.Employee.filter({ user_email: currentUser.email, is_active: true });
-        const emp = empRecords.find(e => e.id === empId) || empRecords[0];
-        if (emp && !emp.is_frozen) {
-          const bizList = await base44.entities.Business.filter({ id: emp.business_id });
-          if (bizList.length > 0) biz = bizList[0];
-        }
-      }
-      if (!biz) {
-        const businesses = await base44.entities.Business.filter({ owner_email: currentUser.email });
-        if (businesses.length > 0) biz = businesses[0];
-      }
+      const biz = window.__barakatBusiness;
+      if (!biz) { setLoading(false); return; }
 
       if (biz) {
         setBusiness(biz);

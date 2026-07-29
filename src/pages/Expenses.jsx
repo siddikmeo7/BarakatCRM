@@ -54,12 +54,8 @@ export default function Expenses() {
   const loadData = async () => {
     setLoading(true);
     try {
-      let biz = window.__barakatBusiness;
-      if (!biz) {
-        const user = await base44.auth.me();
-        const list = await base44.entities.Business.filter({ owner_email: user.email });
-        biz = list[0];
-      }
+      const biz = window.__barakatBusiness;
+      if (!biz) { setLoading(false); return; }
       if (biz) {
         setBusiness(biz);
         const data = await base44.entities.Expense.filter({ business_id: biz.id });

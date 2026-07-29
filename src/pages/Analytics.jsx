@@ -133,23 +133,8 @@ export default function Analytics() {
     try {
       const user = await base44.auth.me();
       setCurrentUserEmail(user.email);
-      let biz = window.__barakatBusiness || null;
-      if (!biz) {
-      const savedMode = localStorage.getItem('barakatcrm_mode');
-      if (savedMode && savedMode.startsWith('employee_')) {
-        const empId = savedMode.replace('employee_', '');
-        const empRecords = await base44.entities.Employee.filter({ user_email: user.email, is_active: true });
-        const emp = empRecords.find(e => e.id === empId) || empRecords[0];
-        if (emp && !emp.is_frozen) {
-          const bizList = await base44.entities.Business.filter({ id: emp.business_id });
-          if (bizList.length > 0) biz = bizList[0];
-        }
-      }
-      }
-      if (!biz) {
-        const businesses = await base44.entities.Business.filter({ owner_email: user.email });
-        if (businesses.length > 0) biz = businesses[0];
-      }
+      const biz = window.__barakatBusiness;
+      if (!biz) { setLoading(false); return; }
       
       if (biz) {
         setBusiness(biz);
@@ -728,12 +713,14 @@ export default function Analytics() {
       )}
 
       {/* Employee Efficiency with day filters */}
-      <EmployeeEfficiency
-        sales={sales}
-        canViewProfit={can('view_profit')}
-        hideData={hideData}
-        lang={lang}
-      />
+      {can('view_employee_analytics') && (
+        <EmployeeEfficiency
+          sales={sales}
+          canViewProfit={can('view_profit')}
+          hideData={hideData}
+          lang={lang}
+        />
+      )}
 
       {/* Top Products by Revenue - Moved to End */}
       <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">

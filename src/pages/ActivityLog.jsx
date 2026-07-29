@@ -67,30 +67,22 @@ export default function ActivityLog() {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [selectedUserEmail, setSelectedUserEmail] = useState(null); // для детального просмотра действий по сотруднику
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    if (window.__barakatAccessReady) {
+      loadData();
+    } else {
+      const handler = () => loadData();
+      window.addEventListener('barakatAccessReady', handler);
+      return () => window.removeEventListener('barakatAccessReady', handler);
+    }
+  }, []);
 
   const loadData = async () => {
     setLoading(true);
     setSelected(new Set());
     try {
-      const user = await base44.auth.me();
-
-      // Поддержка режима сотрудника
-      const savedMode = sessionStorage.getItem('barakatcrm_mode');
-      let biz = null;
-
-      if (savedMode && savedMode.startsWith('employee_')) {
-        const emp = window.__barakatEmployee;
-        if (emp?.business_id) {
-          const bizList = await base44.entities.Business.filter({ id: emp.business_id });
-          if (bizList.length > 0) biz = bizList[0];
-        }
-      }
-
-      if (!biz) {
-        const businesses = await base44.entities.Business.filter({ owner_email: user.email });
-        if (businesses.length > 0) biz = businesses[0];
-      }
+      const biz = window.__barakatBusiness;
+      if (!biz) { setLoading(false); return; }
 
       if (biz) {
         setBusiness(biz);
