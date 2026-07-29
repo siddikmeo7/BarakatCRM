@@ -39,24 +39,28 @@ export default function SwitchAccountDialog({ open, onClose, currentUser, curren
       const history = getBusinessHistory();
       if (history.length === 0) { setAccounts([]); setLoading(false); return; }
 
-      // Загружаем всех сотрудников и бизнесы параллельно
-      const empIds = [...new Set(history.filter(e => e.employeeId).map(e => e.employeeId))];
-      const bizIds = [...new Set(history.map(e => e.businessId))];
+      // Используем backend-функцию — обходит RLS через service role
+      const res = await base44.functions.invoke('getEmployeeBusinesses', {});
+      const data = res.data || {};
+      const employees = data.employees || [];
+      const businessesMap = data.businesses || {};
+      const ownedBusinesses = data.ownedBusinesses || [];
 
-      const [empResults, bizResults] = await Promise.all([
-        Promise.all(empIds.map(id => base44.entities.Employee.filter({ id }).then(r => r[0]).catch(() => null))),
-        Promise.all(bizIds.map(id => base44.entities.Business.filter({ id }).then(r => r[0]).catch(() => null)))
-      ]);
-
+      // Строим карты сотрудников и бизнесов
       const empMap = {};
-      empIds.forEach((id, i) => { if (empResults[i]) empMap[id] = empResults[i]; });
+      employees.forEach(emp => { empMap[emp.id] = emp; });
+      // Добавляем бизнесы из businessesMap (ключ — employeeId)
+      const bizByEmpId = {};
+      Object.entries(businessesMap).forEach(([empId, biz]) => { bizByEmpId[empId] = biz; });
+      // Добавляем собственные бизнесы
       const bizMap = {};
-      bizIds.forEach((id, i) => { if (bizResults[i]) bizMap[id] = bizResults[i]; });
+      ownedBusinesses.forEach(biz => { bizMap[biz.id] = biz; });
+      Object.values(businessesMap).forEach(biz => { if (biz) bizMap[biz.id] = biz; });
 
       const enriched = history.map(entry => ({
         ...entry,
         emp: empMap[entry.employeeId] || null,
-        biz: bizMap[entry.businessId] || null,
+        biz: bizMap[entry.businessId] || bizByEmpId[entry.employeeId] || null,
       }));
 
       setAccounts(enriched);
@@ -107,25 +111,28 @@ export default function SwitchAccountDialog({ open, onClose, currentUser, curren
     setAddLoading(true);
     setAddError('');
     try {
-      const bizList = await base44.entities.Business.filter({
-        business_code: bizCode.trim().toUpperCase(),
-        access_code: accessCode.trim().toUpperCase()
+      // Используем backend-функцию — она обходит RLS через service role
+      // и делает регистронезависимое сравнение кодов и email
+      const res = await base44.functions.invoke('joinBusinessByCodes', {
+        businessCode: bizCode.trim(),
+        accessCode: accessCode.trim()
       });
-      if (bizList.length === 0) { setAddError('Неверные коды доступа'); return; }
-      const biz = bizList[0];
-      const empList = await base44.entities.Employee.filter({ business_id: biz.id, user_email: currentUser?.email });
-      if (empList.length === 0) { setAddError('Вы не добавлены как сотрудник этого бизнеса.'); return; }
-      const emp = empList[0];
-      saveBusinessToHistory(biz.id, biz.name, emp.id, emp.name || '', 'employee');
-      if (emp.login_session_token) {
-        localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
+      if (!res.data?.success) {
+        setAddError(res.data?.error || 'Неверные коды доступа');
+        return;
       }
+      const empId = res.data.employee_id;
+      const bizId = res.data.business_id;
+      const bizName = res.data.business_name;
+      const empName = res.data.employee_name;
+      const isAdmin = res.data.is_admin;
+      saveBusinessToHistory(bizId, bizName, empId, empName, isAdmin ? 'admin' : 'employee');
       setBizCode('');
       setAccessCode('');
       setShowAddForm(false);
       await loadAccounts();
     } catch (e) {
-      setAddError('Ошибка: ' + e.message);
+      setAddError('Ошибка: ' + (e?.message || 'неизвестная ошибка'));
     } finally {
       setAddLoading(false);
     }

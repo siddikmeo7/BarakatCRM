@@ -72,12 +72,14 @@ function BusinessDetailCard({ entry, onClose, onRemove }) {
     (async () => {
       setLoading(true);
       try {
-        const [bizList, empList] = await Promise.all([
-          base44.entities.Business.filter({ id: entry.businessId }),
-          entry.employeeId ? base44.entities.Employee.filter({ id: entry.employeeId }) : Promise.resolve([])
-        ]);
-        setBiz(bizList[0] || null);
-        setEmp(empList[0] || null);
+        // Backend-функция обходит RLS через service role
+        const res = await base44.functions.invoke('getEmployeeBusinesses', {});
+        const data = res.data || {};
+        const employees = data.employees || [];
+        const emp = employees.find(e => e.id === entry.employeeId) || null;
+        const biz = emp ? (data.businesses?.[emp.id]) : (data.ownedBusinesses || []).find(b => b.id === entry.businessId) || null;
+        setBiz(biz || null);
+        setEmp(emp);
       } catch (_) {}
       setLoading(false);
     })();
@@ -274,21 +276,19 @@ export default function RecentBusinessesPanel({ currentUser }) {
     setQuickLoading(entry.employeeId);
     setError('');
     try {
-      const empList = await base44.entities.Employee.filter({ id: entry.employeeId });
-      if (!empList || empList.length === 0) {
-        setError(`Сотрудник не найден в бизнесе "${entry.businessName}".`);
+      // loadEmployeeContext обходит RLS, проверяет frozen/active и ставит business_id
+      const ctxRes = await base44.functions.invoke('loadEmployeeContext', { employee_id: entry.employeeId });
+      const ctx = ctxRes.data;
+      if (ctx.error) {
+        setError(ctx.error);
         removeFromHistory(entry.businessId, entry.employeeId);
         setHistory(getBusinessHistory());
         return;
       }
-      const emp = empList[0];
-      if (emp.is_frozen) { setError(`Аккаунт в "${entry.businessName}" заморожен.`); return; }
-      saveBusinessToHistory(entry.businessId, entry.businessName, entry.employeeId, entry.employeeName, entry.role);
+      const emp = ctx.employee;
+      saveBusinessToHistory(entry.businessId, entry.businessName, emp.id, emp.name || entry.employeeName, emp.is_admin ? 'admin' : entry.role);
       localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
       sessionStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
-      if (emp.login_session_token) {
-        localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
-      }
       window.location.href = '/';
     } catch (e) { setError('Ошибка: ' + e.message); }
     finally { setQuickLoading(null); }
