@@ -13,15 +13,35 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const payload = await req.json();
-    const { event, data } = payload;
+    // Authenticate the caller — prevents unauthenticated alert spoofing
+    let authUser;
+    try {
+      authUser = await base44.auth.me();
+    } catch {
+      authUser = null;
+    }
+    if (!authUser) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // Only react to product updates
-    if (!data || data.boxes_in_stock === undefined) {
+    const payload = await req.json();
+    const { event } = payload;
+
+    if (!event?.entity_id) {
+      return Response.json({ skipped: true, reason: 'no entity_id' });
+    }
+
+    // Fetch the actual product from the database rather than trusting payload data
+    const products = await base44.asServiceRole.entities.Product.filter({ id: event.entity_id });
+    if (!products.length) {
+      return Response.json({ skipped: true, reason: 'product not found in database' });
+    }
+    const product = products[0];
+
+    if (product.boxes_in_stock === undefined) {
       return Response.json({ skipped: true, reason: 'no boxes_in_stock field' });
     }
 
-    const product = data;
     const businessId = product.business_id;
     if (!businessId) {
       return Response.json({ skipped: true, reason: 'no business_id' });
@@ -39,10 +59,6 @@ Deno.serve(async (req) => {
     if (product.boxes_in_stock > limit) {
       return Response.json({ skipped: true, reason: 'stock above limit' });
     }
-
-    // Deduplicate: skip if we already notified for this product at this stock level recently
-    // We use a simple check: only notify if this is exactly at the limit or just crossed it
-    // (i.e. boxes_in_stock <= limit)
 
     const productName = `${product.brand || ''} ${product.model || ''}`.trim() || 'Товар';
     const stockCount = product.boxes_in_stock;

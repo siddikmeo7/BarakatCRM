@@ -1,5 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+function escapeHtml(str: string): string {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -59,10 +68,20 @@ Deno.serve(async (req) => {
       .filter(([, v]) => v)
       .map(([k]) => PERM_LABELS[k] || k);
 
-    const permissionsHtml = grantedPerms.length > 0 
+    // Escape all user-supplied values to prevent HTML injection
+    const safeEmployeeName = escapeHtml(employeeName);
+    const safeBusinessName = escapeHtml(businessName);
+    const safeEmail = escapeHtml(email);
+    const safeEmployeePassword = escapeHtml(employeePassword);
+    const safeLoginCode = escapeHtml(loginCode);
+    const safeRoleName = escapeHtml(roleName);
+    const safeOwnerName = escapeHtml(user.full_name || 'Владелец');
+    const safeGrantedPerms = grantedPerms.map(escapeHtml);
+
+    const permissionsHtml = safeGrantedPerms.length > 0 
       ? `<div style="background: white; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
            <div style="font-weight: bold; color: #667eea; font-size: 12px; text-transform: uppercase; margin-bottom: 10px;">📋 Ваши разрешения</div>
-           <div>${grantedPerms.map(perm => `<span style="display: inline-block; background: #e8f0fe; color: #1967d2; padding: 5px 10px; border-radius: 20px; margin: 5px 5px 5px 0; font-size: 12px;">${perm}</span>`).join('')}</div>
+           <div>${safeGrantedPerms.map(perm => `<span style="display: inline-block; background: #e8f0fe; color: #1967d2; padding: 5px 10px; border-radius: 20px; margin: 5px 5px 5px 0; font-size: 12px;">${perm}</span>`).join('')}</div>
          </div>`
       : '';
 
@@ -91,12 +110,12 @@ Deno.serve(async (req) => {
     </div>
 
     <div class="content">
-      <p>Привет, <strong>${employeeName}</strong>!</p>
-      <p>${user.full_name || 'Владелец'} добавил вас как сотрудника в бизнес <strong>${businessName}</strong>.</p>
+      <p>Привет, <strong>${safeEmployeeName}</strong>!</p>
+      <p>${safeOwnerName} добавил вас как сотрудника в бизнес <strong>${safeBusinessName}</strong>.</p>
 
       <div class="info-block">
         <div class="label">Ваша роль</div>
-        <div style="font-size: 14px; color: #333;">${roleName}</div>
+        <div style="font-size: 14px; color: #333;">${safeRoleName}</div>
       </div>
 
       ${permissionsHtml}
@@ -109,19 +128,19 @@ Deno.serve(async (req) => {
         </div>
         <div class="step">
             <span class="step-number">2</span>
-            <strong>Введите вашу почту:</strong> <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">${email}</code>
+            <strong>Введите вашу почту:</strong> <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">${safeEmail}</code>
           </div>
           <div class="step">
             <span class="step-number">3</span>
-            <strong>Введите ваш пароль:</strong> <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">${employeePassword || 'N/A'}</code>
+            <strong>Введите ваш пароль:</strong> <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">${safeEmployeePassword || 'N/A'}</code>
           </div>
           <div class="step">
             <span class="step-number">4</span>
-            <strong>Введите код входа:</strong> <code style="background: #fff3cd; padding: 5px 10px; border-radius: 3px; font-weight: bold; letter-spacing: 2px;">${loginCode || 'N/A'}</code>
+            <strong>Введите код входа:</strong> <code style="background: #fff3cd; padding: 5px 10px; border-radius: 3px; font-weight: bold; letter-spacing: 2px;">${safeLoginCode || 'N/A'}</code>
           </div>
           <div class="step">
             <span class="step-number">5</span>
-            <strong>После входа выберите роль сотрудника</strong> в бизнесе "${businessName}"
+            <strong>После входа выберите роль сотрудника</strong> в бизнесе "${safeBusinessName}"
           </div>
       </div>
 
