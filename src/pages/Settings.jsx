@@ -633,19 +633,22 @@ export default function Settings() {
               <Button onClick={async () => {
                 setEmpLoginLoading(true); setEmpLoginError('');
                 try {
-                  const bizes = await base44.entities.Business.filter({ business_code: empLoginCode.trim(), access_code: empAccessCode.trim() });
-                  if (!bizes.length) { setEmpLoginError('Неверные коды доступа'); return; }
-                  const biz = bizes[0];
-                  const cu = await base44.auth.me();
-                  const emp = await base44.entities.Employee.filter({ business_id: biz.id, user_email: cu.email });
-                  if (!emp.length) { setEmpLoginError('Вы не добавлены как сотрудник этого бизнеса.'); return; }
-                  const empRecord = emp[0];
-                  localStorage.setItem('barakatcrm_mode', `employee_${empRecord.id}`);
-                  sessionStorage.setItem('barakatcrm_mode', `employee_${empRecord.id}`);
-                  if (empRecord.login_session_token) localStorage.setItem(`barakat_emp_token_${empRecord.id}`, empRecord.login_session_token);
-                  saveBusinessToHistory(biz.id, biz.name, empRecord.id, empRecord.name || '', 'employee');
-                  navigate(createPageUrl('Dashboard'));
-                } catch (e) { setEmpLoginError('Ошибка: ' + e.message); } finally { setEmpLoginLoading(false); }
+                  // Используем backend-функцию — обходит RLS через service role
+                  const res = await base44.functions.invoke('joinBusinessByCodes', {
+                    businessCode: empLoginCode.trim(),
+                    accessCode: empAccessCode.trim()
+                  });
+                  if (!res.data?.success) { setEmpLoginError(res.data?.error || 'Неверные коды доступа'); return; }
+                  const empId = res.data.employee_id;
+                  const bizId = res.data.business_id;
+                  const bizName = res.data.business_name;
+                  const empName = res.data.employee_name;
+                  const isAdmin = res.data.is_admin;
+                  localStorage.setItem('barakatcrm_mode', `employee_${empId}`);
+                  sessionStorage.setItem('barakatcrm_mode', `employee_${empId}`);
+                  saveBusinessToHistory(bizId, bizName, empId, empName, isAdmin ? 'admin' : 'employee');
+                  window.location.href = '/';
+                } catch (e) { setEmpLoginError('Ошибка: ' + (e?.message || 'неизвестная ошибка')); } finally { setEmpLoginLoading(false); }
               }} disabled={empLoginLoading || !empLoginCode || !empAccessCode} className="w-full bg-purple-600 hover:bg-purple-700 gap-2">
                 {empLoginLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}Войти как сотрудник
               </Button>
