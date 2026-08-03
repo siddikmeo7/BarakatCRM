@@ -1089,7 +1089,7 @@ export default function Reports() {
           </div>
           <div className="custom-scroll max-h-[60vh] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead><tr className="border-b border-slate-100">
+              <thead className="bg-white sticky top-0 z-10 shadow-sm"><tr className="border-b border-slate-100">
                <th className="text-center py-2 px-2 text-xs font-semibold text-slate-500 w-8">#</th>
                <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Дата</th>
                <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Товар</th>
@@ -1266,7 +1266,7 @@ export default function Reports() {
             </div>
             <div className="custom-scroll max-h-[50vh] overflow-y-auto">
               <table className="w-full text-sm">
-                <thead><tr className="border-b border-slate-100">
+                <thead className="bg-white sticky top-0 z-10 shadow-sm"><tr className="border-b border-slate-100">
                   <th className="text-center py-2 px-2 text-xs font-semibold text-slate-500 w-8">#</th>
                   <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Товар</th>
                   <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Тип</th>
@@ -1508,7 +1508,7 @@ export default function Reports() {
             {filteredReturns.length === 0 ? <p className="text-center text-slate-400 py-8">Нет возвратов за период</p> : (
               <div className="custom-scroll max-h-[50vh] overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead><tr className="border-b border-slate-100">
+                  <thead className="bg-white sticky top-0 z-10 shadow-sm"><tr className="border-b border-slate-100">
                     <th className="text-center py-2 px-2 text-xs font-semibold text-slate-500 w-8">#</th>
                     <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Дата</th>
                     <th className="text-left py-2 px-2 text-xs font-semibold text-slate-500">Товар</th>
