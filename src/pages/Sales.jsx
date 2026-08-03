@@ -13,6 +13,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
 import SaleDetailDialog from '@/components/sales/SaleDetailDialog';
 import MultiSaleDialog from '@/components/sales/MultiSaleDialog';
+import CustomerGroupedView from '@/components/sales/CustomerGroupedView';
+import CustomerPurchasesDialog from '@/components/sales/CustomerPurchasesDialog';
 import { 
   Plus, 
   ShoppingCart, 
@@ -71,6 +73,8 @@ export default function Sales() {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [filterTime, setFilterTime] = useState('');
   const [filterEmployee, setFilterEmployee] = useState('all');
+  const [filterPaymentType, setFilterPaymentType] = useState('all'); // all, cash, debt
+  const [selectedCustomerGroup, setSelectedCustomerGroup] = useState(null);
   
   const [formData, setFormData] = useState({
     product_id: '',
@@ -370,6 +374,7 @@ export default function Sales() {
       sale.customer_name?.toLowerCase().includes(q);
     const matchesWarehouse = filterWarehouse === 'all' || sale.warehouse_id === filterWarehouse;
     const matchesCustomer = filterCustomer === 'all' || sale.customer_id === filterCustomer;
+    const matchesPaymentType = filterPaymentType === 'all' || (filterPaymentType === 'debt' ? !!sale.is_debt : !sale.is_debt);
     const saleSellerEmail = sale.seller_email || '';
     const matchesEmployee = filterEmployee === 'all' || saleSellerEmail === filterEmployee;
     
@@ -386,7 +391,7 @@ export default function Sales() {
       matchesTime = saleHHMM === filterTime;
     }
     
-    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer && matchesTime && matchesEmployee;
+    return matchesSearch && matchesWarehouse && matchesDate && matchesCustomer && matchesTime && matchesEmployee && matchesPaymentType;
   });
 
   // Сортировка
@@ -559,7 +564,7 @@ export default function Sales() {
             </button>
           ))}
           <DateFilter dateRange={dateRange} onDateRangeChange={r => { setDateRange(r); setSalesPage(1); }} />
-          <ViewToggle view={view} onChange={setView} />
+          <ViewToggle view={view} onChange={setView} enableCustomersView />
           <span className="ml-auto text-xs text-slate-400">{filteredSales.length}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -628,6 +633,16 @@ export default function Sales() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={filterPaymentType} onValueChange={(v) => { setFilterPaymentType(v); setSalesPage(1); }}>
+            <SelectTrigger className="w-28 h-8 text-xs">
+              <SelectValue placeholder="Оплата" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все оплаты</SelectItem>
+              <SelectItem value="cash">Наличные</SelectItem>
+              <SelectItem value="debt">В долг</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-28 h-8 text-xs">
               <SelectValue placeholder="Сортировка" />
@@ -644,7 +659,18 @@ export default function Sales() {
       </div>
 
       {/* Sales List/Grid */}
-      {view === 'list' ? (
+      {view === 'customers' ? (
+        <CustomerGroupedView
+          sales={activeSales}
+          customers={customers}
+          products={products}
+          consignmentProducts={consignmentProducts}
+          lang={lang}
+          can={can}
+          displayUnit={displayUnit}
+          onSelectCustomer={setSelectedCustomerGroup}
+        />
+      ) : view === 'list' ? (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 max-h-[70vh] overflow-auto custom-scroll">
         {/* Desktop */}
         <div className="hidden md:block">
@@ -899,6 +925,20 @@ export default function Sales() {
           customer={customers.find(c => c.id === selectedSale.customer_id)}
           onClose={() => setSelectedSale(null)}
           onUpdated={() => { loadData(); setSelectedSale(null); }}
+        />
+      )}
+
+      {/* Customer purchases detail (all products bought in period) */}
+      {selectedCustomerGroup && (
+        <CustomerPurchasesDialog
+          group={selectedCustomerGroup}
+          products={products}
+          consignmentProducts={consignmentProducts}
+          can={can}
+          displayUnit={displayUnit}
+          lang={lang}
+          onClose={() => setSelectedCustomerGroup(null)}
+          onSelectSale={(sale) => { setSelectedCustomerGroup(null); setSelectedSale(sale); }}
         />
       )}
 
