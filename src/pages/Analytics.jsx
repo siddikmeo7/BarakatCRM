@@ -67,8 +67,8 @@ export default function Analytics() {
   const [ratesDate, setRatesDate] = useState(null);
   const [hideData, setHideData] = useState(false);
   const [dateRange, setDateRange] = useState({
-    from: null,
-    to: null
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date())
   });
   const [topProductsSort, setTopProductsSort] = useState('revenue'); // revenue, profit, boxes
   const [mySalesOnly, setMySalesOnly] = useState(false);
