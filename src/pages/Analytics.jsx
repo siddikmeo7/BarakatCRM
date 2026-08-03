@@ -73,6 +73,7 @@ export default function Analytics() {
   const [topProductsSort, setTopProductsSort] = useState('revenue'); // revenue, profit, boxes
   const [mySalesOnly, setMySalesOnly] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [showLossModal, setShowLossModal] = useState(false);
 
 
@@ -133,6 +134,7 @@ export default function Analytics() {
     try {
       const user = await base44.auth.me();
       setCurrentUserEmail(user.email);
+      setCurrentUserId(user.id);
       const biz = window.__barakatBusiness;
       if (!biz) { setLoading(false); return; }
       
@@ -241,7 +243,12 @@ export default function Analytics() {
       return isWithinInterval(d, { start: startDate, end: endDate });
     } catch { return false; }
   });
-  const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+  // Сотрудники без view_all_expenses видят только свои расходы
+  const canViewAllExpenses = can('view_all_expenses');
+  const displayedExpenses = canViewAllExpenses
+    ? filteredExpenses
+    : filteredExpenses.filter(e => e.created_by_id === currentUserId);
+  const totalExpenses = displayedExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
 
   // Чистая прибыль = прибыль от продаж + прибыль с реализации − расходы
   const netProfit = totalProfit + consignmentProfit - totalExpenses;
@@ -451,11 +458,13 @@ export default function Analytics() {
               <Receipt className="w-6 h-6 text-orange-500" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-slate-500 font-medium">Расходы за период</p>
+              <p className="text-sm text-slate-500 font-medium">
+                {canViewAllExpenses ? 'Расходы за период' : 'Ваши расходы за период'}
+              </p>
               <p className={`text-2xl font-bold ${totalExpenses > 0 ? 'text-orange-600' : 'text-slate-400'}`}>
                 {hideData ? masked : `−${formatCompact(totalExpenses, lang)} с.`}
               </p>
-              <p className="text-xs text-slate-400">{filteredExpenses.length} транзакций</p>
+              <p className="text-xs text-slate-400">{displayedExpenses.length} транзакций</p>
             </div>
             <Link to={createPageUrl('Expenses')}>
               <button className="text-xs text-orange-600 hover:underline flex-shrink-0">Управление →</button>
@@ -630,7 +639,7 @@ export default function Analytics() {
               { label: 'Реклама', icon: Megaphone, color: 'bg-purple-100 text-purple-600' },
               { label: 'Прочее', icon: MoreHorizontal, color: 'bg-slate-100 text-slate-600' },
             ].map(cat => {
-              const total = filteredExpenses.filter(e => e.category === cat.label).reduce((s, e) => s + (e.amount || 0), 0);
+              const total = displayedExpenses.filter(e => e.category === cat.label).reduce((s, e) => s + (e.amount || 0), 0);
               if (!total) return null;
               const pct = totalExpenses ? ((total / totalExpenses) * 100).toFixed(0) : 0;
               const Icon = cat.icon;

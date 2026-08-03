@@ -80,6 +80,7 @@ export const PERMISSIONS = {
 
   // Расходы
   VIEW_EXPENSES: 'view_expenses',
+  VIEW_ALL_EXPENSES: 'view_all_expenses',
   MANAGE_EXPENSES: 'manage_expenses',
 
   // Возвраты

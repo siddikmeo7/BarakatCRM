@@ -191,6 +191,10 @@
           "type": "boolean",
           "default": false
         },
+        "view_all_expenses": {
+          "type": "boolean",
+          "default": false
+        },
         "manage_expenses": {
           "type": "boolean",
           "default": false

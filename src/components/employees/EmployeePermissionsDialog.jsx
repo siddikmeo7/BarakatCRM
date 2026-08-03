@@ -79,6 +79,14 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
+    label: '💰 Расходы',
+    permissions: [
+      { key: 'view_expenses',     label: 'Просматривать расходы' },
+      { key: 'view_all_expenses', label: 'Видеть все расходы (включая чужие)' },
+      { key: 'manage_expenses',   label: 'Управлять всеми расходами' },
+    ]
+  },
+  {
     label: '↩️ Возвраты',
     permissions: [
       { key: 'view_returns',   label: 'Видеть возвраты' },

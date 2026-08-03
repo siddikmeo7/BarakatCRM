@@ -212,6 +212,9 @@
         "view_expenses": {
           "type": "boolean"
         },
+        "view_all_expenses": {
+          "type": "boolean"
+        },
         "manage_expenses": {
           "type": "boolean"
         },
