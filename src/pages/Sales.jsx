@@ -28,7 +28,8 @@ import {
   ChevronLeft,
   Grid3x3,
   List,
-  Clock
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 import ViewToggle from '@/components/ui/ViewToggle';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
@@ -160,8 +161,15 @@ export default function Sales() {
   const profit = formData.boxes_sold * (actualSalePrice - ownerPrice);
   const ownerAmount = formData.is_consignment ? formData.boxes_sold * ownerPrice : 0;
 
+  // Stock validation — block sale if requested boxes exceed available stock
+  const isOverStock = selectedProduct && (parseInt(formData.boxes_sold) || 0) > (selectedProduct.boxes_in_stock || 0);
+
   const handleSave = async () => {
     if (!formData.product_id || formData.boxes_sold < 1) return;
+    if (selectedProduct && (parseInt(formData.boxes_sold) || 0) > (selectedProduct.boxes_in_stock || 0)) {
+      alert(`⚠️ Недостаточно товара на складе!\n\nТовар: ${selectedProduct?.brand || ''} ${selectedProduct?.model || ''}\nЗапрошено: ${formData.boxes_sold} кор.\nВ наличии: ${selectedProduct.boxes_in_stock || 0} кор.\n\nПродажа невозможна.`);
+      return;
+    }
     
     // === Продажа товара на реализации (чужого товара) ===
     if (formData.is_consignment) {
@@ -1026,9 +1034,19 @@ export default function Sales() {
                     const val = e.target.value.replace(/[^0-9]/g, '');
                     setFormData({ ...formData, boxes_sold: val ? parseInt(val) : '' });
                   }}
-                  className="mt-1.5"
+                  className={`mt-1.5 ${isOverStock ? 'border-red-500 animate-pulse-border text-red-600 font-bold' : ''}`}
                   inputMode="numeric"
                 />
+                {isOverStock ? (
+                  <p className="text-xs text-red-600 font-semibold mt-1 animate-pulse flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    Нет {formData.boxes_sold} кор. — есть только {selectedProduct.boxes_in_stock} кор.
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500 mt-1">
+                    {t(lang,'sales_on_stock')}: {selectedProduct?.boxes_in_stock || 0} {t(lang,'sales_boxes_label').toLowerCase()}
+                  </p>
+                )}
               </div>
               <div>
                 <Label>{t(lang,'sales_price_per_box')}</Label>
@@ -1150,13 +1168,20 @@ export default function Sales() {
             )}
           </div>
 
+          {isOverStock && (
+            <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-sm text-red-700 font-semibold flex items-center gap-2 animate-pulse">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              <span>Невозможно продать: запрошено {formData.boxes_sold} кор., а в наличии только {selectedProduct.boxes_in_stock} кор.!</span>
+            </div>
+          )}
+
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               {t(lang,'cancel')}
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={saving || !formData.product_id || formData.boxes_sold < 1 || (formData.is_debt && !formData.customer_id)}
+              disabled={saving || !formData.product_id || formData.boxes_sold < 1 || isOverStock || (formData.is_debt && !formData.customer_id)}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t(lang,'sales_sell_btn')}
