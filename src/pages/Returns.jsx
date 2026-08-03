@@ -491,8 +491,9 @@ export default function Returns() {
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-slate-900 truncate">{p?.brand} {p?.model}</p>
                             <p className="text-xs text-slate-400">
-                              {format(parseISO(s.sale_date || s.created_date), 'dd MMM yyyy', { locale: ru })} · {s.boxes_sold} кор. · {s.is_debt ? 'В долг' : 'Наличные'}
+                              {format(parseISO(s.sale_date || s.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })} · {s.boxes_sold} кор. · {s.is_debt ? 'В долг' : 'Наличные'}
                             </p>
+                            {(() => { const wh = warehouses.find(w => w.id === s.warehouse_id); return wh ? <p className="text-xs text-slate-400">📍 {wh.name}</p> : null; })()}
                           </div>
                           <div className="text-right flex-shrink-0">
                             <p className="font-bold text-slate-900 text-sm">{s.total_amount?.toLocaleString()} с.</p>
@@ -534,17 +535,17 @@ export default function Returns() {
                   onChange={(e) => {
                     const val = e.target.value.replace(/[^0-9]/g, '');
                     setFormData({ ...formData, boxes_returned: val });
-                    // Проверка: не больше чем было продано
+                    // Проверка: нельзя вернуть больше, чем клиент покупал
                     if (formData.sale_id) {
                       const sale = sales.find(s => s.id === formData.sale_id);
                       if (sale && parseInt(val) > sale.boxes_sold) {
-                        setReturnWarning(`⚠️ Нельзя вернуть больше чем было продано (${sale.boxes_sold} коробок)`);
+                        setReturnWarning(`Клиент покупал ${sale.boxes_sold} кор. — нельзя вернуть больше`);
                       } else {
                         setReturnWarning('');
                       }
                     }
                   }}
-                  className={`mt-1.5 ${returnWarning ? 'border-red-400' : ''}`}
+                  className={`mt-1.5 ${returnWarning ? 'border-red-500 animate-pulse-border text-red-600 font-bold' : ''}`}
                 />
                 {returnWarning && (
                   <p className="text-xs text-red-600 mt-1 font-medium">{returnWarning}</p>
@@ -579,6 +580,16 @@ export default function Returns() {
                 placeholder="0"
                 className="mt-1.5"
               />
+              {formData.sale_id && (() => {
+                const sale = sales.find(s => s.id === formData.sale_id);
+                if (!sale) return null;
+                return (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Клиент покупал за: <span className="font-semibold text-slate-700">{(sale.total_amount || 0).toLocaleString()} с.</span>
+                    <span className="text-slate-400"> ({sale.is_debt ? 'в долг' : 'наличные'})</span>
+                  </p>
+                );
+              })()}
             </div>
 
             <div>
