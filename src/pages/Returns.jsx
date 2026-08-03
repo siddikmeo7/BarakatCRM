@@ -136,17 +136,36 @@ export default function Returns() {
         });
       }
 
-      // Если у продажи был долг — корректируем долг клиента на сумму возврата
-      if (formData.sale_id && formData.customer_id) {
+      // Если возврат привязан к продаже — аннулируем продажу
+      // (выручка и прибыль исчезнут из аналитики, т.к. она фильтрует is_cancelled)
+      if (formData.sale_id) {
         const sale = sales.find(s => s.id === formData.sale_id);
-        if (sale?.is_debt && sale.customer_id === formData.customer_id) {
-          const customer = customers.find(c => c.id === formData.customer_id);
-          if (customer) {
-            const refundAmt = parseFloat(formData.refund_amount) || 0;
-            // Уменьшаем долг клиента на сумму возврата
-            await base44.entities.Customer.update(customer.id, {
-              total_debt: Math.max(0, (customer.total_debt || 0) - refundAmt)
+        if (sale) {
+          const isFullReturn = parseInt(formData.boxes_returned) >= (sale.boxes_sold || 0);
+
+          // Полный возврат → помечаем продажу отменённой → прибыль/выручка исчезают из аналитики
+          if (isFullReturn) {
+            await base44.entities.Sale.update(sale.id, {
+              is_cancelled: true,
+              cancelled_at: new Date().toISOString()
             });
+          }
+
+          // Для долговой продажи — списываем долг клиента (он не платил, просто вернул товар)
+          if (sale.is_debt && sale.customer_id === formData.customer_id) {
+            const customer = customers.find(c => c.id === formData.customer_id);
+            if (customer) {
+              const saleDebt = (sale.total_amount || 0) - (sale.partial_payment || 0);
+              const updates = {
+                total_debt: Math.max(0, (customer.total_debt || 0) - saleDebt),
+                purchase_count: Math.max(0, (customer.purchase_count || 0) - 1)
+              };
+              // Если была частичная оплата — возвращаем её
+              if ((sale.partial_payment || 0) > 0) {
+                updates.total_paid = Math.max(0, (customer.total_paid || 0) - (sale.partial_payment || 0));
+              }
+              await base44.entities.Customer.update(customer.id, updates);
+            }
           }
         }
       }
@@ -349,12 +368,12 @@ export default function Returns() {
 
       {/* Create Return Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-3 flex-shrink-0 border-b border-slate-100">
             <DialogTitle>Оформить возврат</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
             {/* Клиент с поиском */}
             <div>
               <Label>Клиент *</Label>
@@ -436,30 +455,54 @@ export default function Returns() {
               </div>
             </div>
 
-            {/* Оригинальная продажа — для валидации */}
-            {formData.customer_id && formData.product_id && (
+            {/* История покупок клиента — выбор товара для возврата */}
+            {formData.customer_id && (
               <div>
-                <Label>Привязать к продаже (необязательно)</Label>
-                <Select value={formData.sale_id} onValueChange={(v) => {
-                  setFormData({ ...formData, sale_id: v });
-                  setReturnWarning('');
-                }}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue placeholder="Выберите продажу" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sales.filter(s => s.customer_id === formData.customer_id && s.product_id === formData.product_id && !s.is_cancelled).map(s => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {new Date(s.sale_date || s.created_date).toLocaleDateString('ru')} — {s.boxes_sold} кор. × {s.sale_price} с.
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {formData.sale_id && (
-                  <p className="text-xs text-slate-500 mt-1">
-                    Продано: {sales.find(s => s.id === formData.sale_id)?.boxes_sold} коробок
-                  </p>
-                )}
+                <Label>Покупки клиента — выберите товар для возврата</Label>
+                <div className="mt-1.5 border border-slate-200 rounded-xl p-1.5 max-h-60 overflow-y-auto space-y-1">
+                  {(() => {
+                    const custSales = sales
+                      .filter(s => s.customer_id === formData.customer_id && !s.is_cancelled)
+                      .sort((a,b) => new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date));
+                    if (custSales.length === 0) {
+                      return <p className="px-2 py-3 text-sm text-slate-400 text-center">У этого клиента нет покупок</p>;
+                    }
+                    return custSales.map(s => {
+                      const p = products.find(x => x.id === s.product_id);
+                      const isSelected = formData.sale_id === s.id;
+                      return (
+                        <div key={s.id}
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              product_id: s.product_id,
+                              sale_id: s.id,
+                              warehouse_id: s.warehouse_id || formData.warehouse_id,
+                              boxes_returned: s.boxes_sold,
+                              refund_amount: String(s.total_amount || 0)
+                            });
+                            setProductSearchReturn(p ? `${p.brand} ${p.model}` : '');
+                            setReturnWarning('');
+                          }}
+                          className={`p-2 rounded-lg cursor-pointer text-sm flex items-center gap-3 transition-colors ${isSelected ? 'bg-indigo-100 border border-indigo-300' : 'hover:bg-slate-50 border border-transparent'}`}>
+                          {p?.photo_url
+                            ? <img src={p.photo_url} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                            : <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0"><Package className="w-4 h-4 text-slate-400"/></div>}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-slate-900 truncate">{p?.brand} {p?.model}</p>
+                            <p className="text-xs text-slate-400">
+                              {format(parseISO(s.sale_date || s.created_date), 'dd MMM yyyy', { locale: ru })} · {s.boxes_sold} кор. · {s.is_debt ? 'В долг' : 'Наличные'}
+                            </p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="font-bold text-slate-900 text-sm">{s.total_amount?.toLocaleString()} с.</p>
+                            {isSelected && <p className="text-[10px] text-indigo-600 font-medium">✓ выбрано</p>}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
             )}
 
@@ -549,7 +592,7 @@ export default function Returns() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-white flex-shrink-0">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Отмена
             </Button>
