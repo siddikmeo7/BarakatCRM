@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
-import { Plus, Trash2, Package, Search, Loader2, ShoppingCart } from 'lucide-react';
+import { Plus, Trash2, Package, Search, Loader2, ShoppingCart, AlertTriangle } from 'lucide-react';
 import { t } from '@/components/i18n/translations';
 
 export default function MultiSaleDialog({ open, onClose, products, customers, business, lang, onSaved }) {
@@ -59,11 +59,51 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
   const grandProfit = items.reduce((sum, item) => sum + calcItem(item).profit, 0);
   const remaining = grandTotal - (parseFloat(partialPayment) || 0);
 
-  const canSave = items.some(i => i.product_id && parseInt(i.boxes_sold) >= 1) && (!isDebt || customerId);
+  // Stock validation — aggregate boxes per product across all items
+  // so the same product in multiple rows is counted together.
+  const stockByProduct = {};
+  items.forEach(item => {
+    if (!item.product_id) return;
+    stockByProduct[item.product_id] = (stockByProduct[item.product_id] || 0) + (parseInt(item.boxes_sold) || 0);
+  });
+
+  // Returns available stock for an item's product, accounting for other rows with the same product
+  const getAvailableForItem = (item) => {
+    const product = getProduct(item.product_id);
+    if (!product) return 0;
+    const totalInStock = product.boxes_in_stock || 0;
+    // Sum boxes of OTHER items with the same product
+    const otherItems = items.filter(i => i.product_id === item.product_id && i.id !== item.id);
+    const otherBoxes = otherItems.reduce((s, i) => s + (parseInt(i.boxes_sold) || 0), 0);
+    return totalInStock - otherBoxes;
+  };
+
+  const isItemOverStock = (item) => {
+    if (!item.product_id) return false;
+    const product = getProduct(item.product_id);
+    if (!product) return false;
+    const requested = parseInt(item.boxes_sold) || 0;
+    return requested > (product.boxes_in_stock || 0);
+  };
+
+  const hasStockError = items.some(isItemOverStock);
+
+  const canSave = items.some(i => i.product_id && parseInt(i.boxes_sold) >= 1) && (!isDebt || customerId) && !hasStockError;
 
   const handleSave = async () => {
     const validItems = items.filter(i => i.product_id && parseInt(i.boxes_sold) >= 1);
     if (validItems.length === 0) return;
+
+    // Final stock validation — block save if any item exceeds available stock
+    const overStockItems = validItems.filter(i => {
+      const p = getProduct(i.product_id);
+      return (parseInt(i.boxes_sold) || 0) > (p?.boxes_in_stock || 0);
+    });
+    if (overStockItems.length > 0) {
+      const p = getProduct(overStockItems[0].product_id);
+      alert(`⚠️ Недостаточно товара на складе!\n\nТовар: ${p?.brand || ''} ${p?.model || ''}\nЗапрошено: ${overStockItems[0].boxes_sold} кор.\nВ наличии: ${p?.boxes_in_stock || 0} кор.\n\nПродажа невозможна.`);
+      return;
+    }
 
     setSaving(true);
     const partialPay = isDebt ? parseFloat(partialPayment) || 0 : 0;
@@ -307,9 +347,13 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
                             const val = e.target.value.replace(/[^0-9]/g, '');
                             updateItem(item.id, 'boxes_sold', val ? parseInt(val) : '');
                           }}
-                          className="mt-1 h-8 text-sm"
+                          className={`mt-1 h-8 text-sm ${isItemOverStock(item) ? 'border-red-500 animate-pulse-border text-red-600 font-bold' : ''}`}
                         />
-                        <p className="text-xs text-slate-400 mt-0.5">Есть: {product.boxes_in_stock} кор.</p>
+                        <p className={`text-xs mt-0.5 ${isItemOverStock(item) ? 'text-red-600 font-semibold animate-pulse' : 'text-slate-400'}`}>
+                          {isItemOverStock(item)
+                            ? `⚠️ Нет ${item.boxes_sold} кор. — есть только ${product.boxes_in_stock} кор.`
+                            : `Есть: ${product.boxes_in_stock} кор.`}
+                        </p>
                       </div>
                       <div>
                         <Label className="text-xs">{t(lang, 'sales_price_per_box')}</Label>
@@ -432,6 +476,13 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
             </>
           )}
         </div>
+
+        {hasStockError && (
+          <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-sm text-red-700 font-semibold flex items-center gap-2 animate-pulse">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>Невозможно продать: запрошено больше коробок, чем есть на складе!</span>
+          </div>
+        )}
 
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="outline" onClick={handleClose}>{t(lang, 'cancel')}</Button>
