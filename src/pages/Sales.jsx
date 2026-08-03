@@ -645,11 +645,11 @@ export default function Sales() {
 
       {/* Sales List/Grid */}
       {view === 'list' ? (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 max-h-[70vh] overflow-y-auto custom-scroll">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 max-h-[70vh] overflow-auto custom-scroll">
         {/* Desktop */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block">
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
               <tr>
                 <th className="px-3 py-3 text-center text-sm font-medium text-slate-400 w-8">#</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">{t(lang,'sales_date')}</th>
