@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
-import { Plus, Trash2, Package, Search, Loader2, ShoppingCart, AlertTriangle } from 'lucide-react';
+import MandatoryCustomerPicker from '@/components/sales/MandatoryCustomerPicker';
+import { Plus, Trash2, Package, Search, Loader2, ShoppingCart, AlertTriangle, Users } from 'lucide-react';
 import { t } from '@/components/i18n/translations';
 
 export default function MultiSaleDialog({ open, onClose, products, customers, business, lang, onSaved }) {
@@ -14,6 +15,7 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
   const [isDebt, setIsDebt] = useState(false);
   const [customerId, setCustomerId] = useState('');
   const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [partialPayment, setPartialPayment] = useState(0);
   const [paymentDueDate, setPaymentDueDate] = useState('');
@@ -88,7 +90,7 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
 
   const hasStockError = items.some(isItemOverStock);
 
-  const canSave = items.some(i => i.product_id && parseInt(i.boxes_sold) >= 1) && (!isDebt || customerId) && !hasStockError;
+  const canSave = items.some(i => i.product_id && parseInt(i.boxes_sold) >= 1) && (customerId || (customerName.trim() && customerPhone.trim())) && !hasStockError;
 
   const handleSave = async () => {
     const validItems = items.filter(i => i.product_id && parseInt(i.boxes_sold) >= 1);
@@ -108,10 +110,53 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
     setSaving(true);
     const partialPay = isDebt ? parseFloat(partialPayment) || 0 : 0;
 
+    // Резолвим клиента: существующий или создаём нового
+    let resolvedCustomerId = customerId || '';
+    let resolvedCustomerName = customerName || '';
+    let resolvedCustomerPhone = customerPhone || '';
+    if (!resolvedCustomerId) {
+      if (!customerName.trim() || !customerPhone.trim()) {
+        alert('⚠️ Укажите клиента!\n\nВведите имя и фамилию, а также номер телефона покупателя. Без клиента продажа невозможна.');
+        setSaving(false);
+        return;
+      }
+      try {
+        const emp = window.__barakatEmployee;
+        const user = await base44.auth.me();
+        const newCustomer = await base44.entities.Customer.create({
+          business_id: business.id,
+          name: customerName.trim(),
+          phone: customerPhone.trim(),
+          address: customerAddress || '',
+          total_debt: 0,
+          total_paid: 0,
+          purchase_count: 0,
+          added_by_employee_id: emp?.id || '',
+          added_by_employee_name: emp?.name || '',
+          added_by_email: user.email,
+          added_by_role: emp ? (emp.is_admin ? 'admin' : 'employee') : 'owner'
+        });
+        resolvedCustomerId = newCustomer.id;
+        resolvedCustomerName = newCustomer.name;
+        resolvedCustomerPhone = newCustomer.phone || customerPhone;
+      } catch (e) {
+        console.error('Error creating customer:', e);
+        alert('Не удалось сохранить клиента. Проверьте имя и номер телефона.');
+        setSaving(false);
+        return;
+      }
+    } else {
+      const existing = customers.find(c => c.id === resolvedCustomerId);
+      if (existing) {
+        resolvedCustomerName = existing.name;
+        resolvedCustomerPhone = existing.phone || '';
+      }
+    }
+
     try {
-      // Check debt limit for customer
-      if (isDebt && customerId) {
-        const customer = customers.find(c => c.id === customerId);
+      // Проверяем лимит долга клиента
+      if (isDebt) {
+        const customer = customers.find(c => c.id === resolvedCustomerId) || { total_debt: 0, total_paid: 0, purchase_count: 0, name: resolvedCustomerName, debt_limit: null };
         const totalDebtAdded = grandTotal - partialPay;
         if (customer?.debt_limit != null) {
           const newTotalDebt = (customer.total_debt || 0) + totalDebtAdded;
@@ -153,8 +198,8 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
           profit: calc.profit,
           sale_date: saleDate,
           is_debt: isDebt,
-          customer_id: isDebt ? customerId : '',
-          customer_name: customerName || 'Неизвестный',
+          customer_id: resolvedCustomerId,
+          customer_name: resolvedCustomerName,
           customer_address: customerAddress || '',
           partial_payment: itemPartial,
           payment_due_date: isDebt && paymentDueDate ? paymentDueDate : null,
@@ -182,58 +227,63 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
         await base44.entities.Product.update(item.product_id, { boxes_in_stock: newStock });
       }
 
-      // Update customer debt once for total
-      if (isDebt && customerId) {
-        const customer = customers.find(c => c.id === customerId);
+      // Обновляем статистику клиента (счётчик покупок — всегда; долг — если продажа в долг)
+      const customerRec2 = customers.find(c => c.id === resolvedCustomerId) || { total_debt: 0, total_paid: 0, purchase_count: 0, name: resolvedCustomerName, phone: resolvedCustomerPhone };
+      if (isDebt) {
         const totalDebtAdded = grandTotal - partialPay;
-        if (customer) {
-          await base44.entities.Customer.update(customerId, {
-            total_debt: (customer.total_debt || 0) + totalDebtAdded,
-            total_paid: (customer.total_paid || 0) + partialPay
+        await base44.entities.Customer.update(resolvedCustomerId, {
+          total_debt: (customerRec2.total_debt || 0) + totalDebtAdded,
+          total_paid: (customerRec2.total_paid || 0) + partialPay,
+          purchase_count: (customerRec2.purchase_count || 0) + 1
+        });
+
+        // Partial payment history
+        if (partialPay > 0) {
+          await base44.entities.DebtPayment.create({
+            business_id: business.id,
+            customer_id: resolvedCustomerId,
+            sale_id: createdSales[0].id,
+            amount: partialPay,
+            note: 'Частичная оплата при продаже',
+            payment_date: saleDate
+          });
+        }
+
+        // WhatsApp notification — с детализацией по каждому товару
+        if (totalDebtAdded > 0 && resolvedCustomerPhone) {
+          // Строим массив товаров с суммами оплаты/остатка
+          const productsArr = validItems.map((item, idx) => {
+            const p = getProduct(item.product_id);
+            const calc = calcItem(item);
+            const itemPartialPaid = createdSales[idx]?._partial || 0;
+            return {
+              name: p ? `${p.brand} ${p.model}` : 'Товар',
+              boxes: parseInt(item.boxes_sold),
+              total: calc.totalAmount,
+              paid: itemPartialPaid,
+              remaining: calc.totalAmount - itemPartialPaid
+            };
           });
 
-          // Partial payment history
-          if (partialPay > 0) {
-            await base44.entities.DebtPayment.create({
-              business_id: business.id,
-              customer_id: customerId,
-              sale_id: createdSales[0].id,
-              amount: partialPay,
-              note: 'Частичная оплата при продаже',
-              payment_date: saleDate
-            });
-          }
-
-          // WhatsApp notification — с детализацией по каждому товару
-          if (totalDebtAdded > 0 && customer.phone) {
-            // Строим массив товаров с суммами оплаты/остатка
-            const productsArr = validItems.map((item, idx) => {
-              const p = getProduct(item.product_id);
-              const calc = calcItem(item);
-              const itemPartialPaid = createdSales[idx]?._partial || 0;
-              return {
-                name: p ? `${p.brand} ${p.model}` : 'Товар',
-                boxes: parseInt(item.boxes_sold),
-                total: calc.totalAmount,
-                paid: itemPartialPaid,
-                remaining: calc.totalAmount - itemPartialPaid
-              };
-            });
-
-            const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
-              phone: customer.phone,
-              customer_name: customer.name,
-              products: productsArr,
-              total_debt: grandTotal,
-              paid_amount: partialPay,
-              remaining_debt: totalDebtAdded,
-              business_name: business.name,
-              payment_due_date: paymentDueDate || null,
-              type: 'new_debt'
-            });
-            if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
-          }
+          const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
+            phone: resolvedCustomerPhone,
+            customer_name: resolvedCustomerName,
+            products: productsArr,
+            total_debt: grandTotal,
+            paid_amount: partialPay,
+            remaining_debt: totalDebtAdded,
+            business_name: business.name,
+            payment_due_date: paymentDueDate || null,
+            type: 'new_debt'
+          });
+          if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
         }
+      } else {
+        // Наличная продажа — увеличиваем счётчик покупок и сумму оплат
+        await base44.entities.Customer.update(resolvedCustomerId, {
+          purchase_count: (customerRec2.purchase_count || 0) + 1,
+          total_paid: (customerRec2.total_paid || 0) + grandTotal
+        });
       }
 
       onSaved();
@@ -250,6 +300,7 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
     setIsDebt(false);
     setCustomerId('');
     setCustomerName('');
+    setCustomerPhone('');
     setCustomerAddress('');
     setPartialPayment(0);
     setPaymentDueDate('');
@@ -412,17 +463,17 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
             </label>
           </div>
 
-          {/* Customer */}
-          <div className="space-y-3">
-            <div>
-              <Label>{t(lang, 'sales_customer_name')}</Label>
-              <Input
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder={t(lang, 'sales_not_specified')}
-                className="mt-1.5"
-              />
+          {/* Клиент (обязательно) */}
+          <div className="p-4 rounded-xl bg-indigo-50/60 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/40 space-y-3">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-indigo-600" />
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">Клиент (обязательно)</p>
             </div>
+            <MandatoryCustomerPicker
+              customers={customers}
+              value={{ customer_id: customerId, name: customerName, phone: customerPhone }}
+              onChange={(v) => { setCustomerId(v.customer_id); setCustomerName(v.name); setCustomerPhone(v.phone); }}
+            />
             <div>
               <Label>{t(lang, 'sales_customer_address')}</Label>
               <Input
@@ -436,43 +487,32 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
 
           {isDebt && (
             <>
-              <CustomerSearchSelect
-                customers={customers}
-                value={customerId}
-                onChange={setCustomerId}
-                businessId={business.id}
-                onCustomerAdded={() => {}}
-              />
-              {customerId && (
-                <>
-                  <div>
-                    <Label>{t(lang, 'sales_partial_pay')}</Label>
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      value={partialPayment}
-                      onChange={(e) => setPartialPayment(e.target.value.replace(/[^0-9.]/g, ''))}
-                      placeholder="0"
-                      className="mt-1.5"
-                    />
-                    <p className="text-xs text-slate-500 mt-1">
-                      {t(lang, 'sales_remaining_debt')}: {remaining.toLocaleString()} с.
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-1">📅 Срок оплаты (необязательно)</Label>
-                    <Input
-                      type="date"
-                      value={paymentDueDate}
-                      onChange={(e) => setPaymentDueDate(e.target.value)}
-                      className="mt-1.5"
-                    />
-                    {paymentDueDate && (
-                      <p className="text-xs text-orange-500 mt-1">Клиент будет выделен в разделе долгов в этот день</p>
-                    )}
-                  </div>
-                </>
-              )}
+              <div>
+                <Label>{t(lang, 'sales_partial_pay')}</Label>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={partialPayment}
+                  onChange={(e) => setPartialPayment(e.target.value.replace(/[^0-9.]/g, ''))}
+                  placeholder="0"
+                  className="mt-1.5"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  {t(lang, 'sales_remaining_debt')}: {remaining.toLocaleString()} с.
+                </p>
+              </div>
+              <div>
+                <Label className="flex items-center gap-1">📅 Срок оплаты (необязательно)</Label>
+                <Input
+                  type="date"
+                  value={paymentDueDate}
+                  onChange={(e) => setPaymentDueDate(e.target.value)}
+                  className="mt-1.5"
+                />
+                {paymentDueDate && (
+                  <p className="text-xs text-orange-500 mt-1">Клиент будет выделен в разделе долгов в этот день</p>
+                )}
+              </div>
             </>
           )}
         </div>

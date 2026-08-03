@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
+import MandatoryCustomerPicker from '@/components/sales/MandatoryCustomerPicker';
 import SaleDetailDialog from '@/components/sales/SaleDetailDialog';
 import MultiSaleDialog from '@/components/sales/MultiSaleDialog';
 import CustomerGroupedView from '@/components/sales/CustomerGroupedView';
@@ -31,7 +32,8 @@ import {
   Grid3x3,
   List,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Users
 } from 'lucide-react';
 import ViewToggle from '@/components/ui/ViewToggle';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
@@ -84,6 +86,7 @@ export default function Sales() {
     is_debt: false,
     customer_id: '',
     customer_name: '',
+    customer_phone: '',
     customer_address: '',
     partial_payment: 0
   });
@@ -174,7 +177,52 @@ export default function Sales() {
       alert(`⚠️ Недостаточно товара на складе!\n\nТовар: ${selectedProduct?.brand || ''} ${selectedProduct?.model || ''}\nЗапрошено: ${formData.boxes_sold} кор.\nВ наличии: ${selectedProduct.boxes_in_stock || 0} кор.\n\nПродажа невозможна.`);
       return;
     }
-    
+
+    // Клиент обязателен — имя + телефон. Если не выбран из базы, создаём нового.
+    const hasExistingCustomer = !!formData.customer_id;
+    const hasNewCustomerData = !hasExistingCustomer && (formData.customer_name || '').trim() && (formData.customer_phone || '').trim();
+    if (!hasExistingCustomer && !hasNewCustomerData) {
+      alert('⚠️ Укажите клиента!\n\nВведите имя и фамилию, а также номер телефона покупателя. Без клиента продажа невозможна.');
+      return;
+    }
+
+    // Резолвим клиента: существующий или создаём нового
+    let resolvedCustomerId = formData.customer_id || '';
+    let resolvedCustomerName = formData.customer_name || '';
+    let resolvedCustomerPhone = formData.customer_phone || '';
+    if (!hasExistingCustomer) {
+      try {
+        const empForCustomer = window.__barakatEmployee;
+        const userForCustomer = await base44.auth.me();
+        const newCustomer = await base44.entities.Customer.create({
+          business_id: business.id,
+          name: (formData.customer_name || '').trim(),
+          phone: (formData.customer_phone || '').trim(),
+          address: formData.customer_address || '',
+          total_debt: 0,
+          total_paid: 0,
+          purchase_count: 0,
+          added_by_employee_id: empForCustomer?.id || '',
+          added_by_employee_name: empForCustomer?.name || '',
+          added_by_email: userForCustomer.email,
+          added_by_role: empForCustomer ? (empForCustomer.is_admin ? 'admin' : 'employee') : 'owner'
+        });
+        resolvedCustomerId = newCustomer.id;
+        resolvedCustomerName = newCustomer.name;
+        resolvedCustomerPhone = newCustomer.phone || (formData.customer_phone || '').trim();
+      } catch (e) {
+        console.error('Error creating customer:', e);
+        alert('Не удалось сохранить клиента. Проверьте имя и номер телефона.');
+        return;
+      }
+    } else {
+      const existing = customers.find(c => c.id === resolvedCustomerId);
+      if (existing) {
+        resolvedCustomerName = existing.name;
+        resolvedCustomerPhone = existing.phone || '';
+      }
+    }
+
     // === Продажа товара на реализации (чужого товара) ===
     if (formData.is_consignment) {
       setSaving(true);
@@ -199,7 +247,8 @@ export default function Sales() {
           seller_profit: profit,
           owner_amount: ownerAmount,
           sale_date: new Date().toISOString(),
-          customer_name: formData.customer_name || '',
+          customer_id: resolvedCustomerId,
+          customer_name: resolvedCustomerName,
           is_cancelled: false
         };
         const created = await base44.entities.ConsignmentSale.create(consignmentSaleData);
@@ -215,9 +264,17 @@ export default function Sales() {
           user_name: emp?.name || user.full_name || user.email,
           description: `Реализация: ${selectedProduct?.brand} ${selectedProduct?.model}, ${formData.boxes_sold} кор. × ${actualSalePrice.toLocaleString()} с. = ${totalAmount.toLocaleString()} с. (прибыль: ${profit.toLocaleString()} с., владельцу: ${ownerAmount.toLocaleString()} с.)`
         });
+        // Увеличиваем счётчик покупок клиента
+        try {
+          const cust = customers.find(c => c.id === resolvedCustomerId);
+          await base44.entities.Customer.update(resolvedCustomerId, {
+            purchase_count: (cust?.purchase_count || 0) + 1
+          });
+        } catch (_) {}
+
         await loadData();
         setDialogOpen(false);
-        setFormData({ product_id: '', is_consignment: false, boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_address: '', partial_payment: 0 });
+        setFormData({ product_id: '', is_consignment: false, boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_phone: '', customer_address: '', partial_payment: 0 });
         setProductSearch('');
       } catch (e) {
         console.error('Error saving consignment sale:', e);
@@ -247,8 +304,8 @@ export default function Sales() {
       profit: profit,
       sale_date: new Date().toISOString(),
       is_debt: formData.is_debt,
-      customer_id: formData.is_debt ? formData.customer_id : '',
-      customer_name: formData.customer_name || 'Неизвестный',
+      customer_id: resolvedCustomerId,
+      customer_name: resolvedCustomerName,
       customer_address: formData.customer_address || '',
       partial_payment: partialPay,
       seller_email: currentUser.email,
@@ -278,55 +335,59 @@ export default function Sales() {
       const newStock = Math.max(0, (selectedProduct.boxes_in_stock || 0) - parseInt(formData.boxes_sold));
       await base44.entities.Product.update(formData.product_id, { boxes_in_stock: newStock });
 
-      // Update customer debt
-      if (formData.is_debt && formData.customer_id) {
-        const customer = customers.find(c => c.id === formData.customer_id);
-        if (customer) {
-          // Проверяем лимит долга
-          const newTotalDebt = (customer.total_debt || 0) + remainingDebt;
-          if (customer.debt_limit != null && newTotalDebt > customer.debt_limit) {
-            setSaving(false);
-            setSales(prev => prev.filter(s => !s.id?.startsWith('temp_')));
-            alert(`⚠️ Превышен лимит долга клиента "${customer.name}"!\nЛимит: ${customer.debt_limit.toLocaleString()} с.\nТекущий долг: ${(customer.total_debt||0).toLocaleString()} с.\nНовый долг составит: ${newTotalDebt.toLocaleString()} с.`);
-            return;
-          }
-          await base44.entities.Customer.update(formData.customer_id, {
-            total_debt: (customer.total_debt || 0) + remainingDebt,
-            total_paid: (customer.total_paid || 0) + partialPay,
-            purchase_count: (customer.purchase_count || 0) + 1
-          });
-
-          // Если была частичная оплата — создаём запись в DebtPayment для истории
-          if (partialPay > 0) {
-            await base44.entities.DebtPayment.create({
-              business_id: business.id,
-              customer_id: formData.customer_id,
-              sale_id: createdSale.id,
-              amount: partialPay,
-              note: 'Частичная оплата при продаже',
-              payment_date: new Date().toISOString()
-            });
-          }
-          
-          if (remainingDebt > 0 && customer.phone) {
-            const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
-              phone: customer.phone,
-              customer_name: customer.name,
-              product_name: selectedProduct ? `${selectedProduct.brand} ${selectedProduct.model}` : 'Товар',
-              total_debt: totalAmount,
-              paid_amount: partialPay,
-              remaining_debt: remainingDebt,
-              business_name: business.name,
-              type: 'new_debt'
-            });
-            if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
-          }
+      // Обновляем статистику клиента (счётчик покупок — всегда; долг — если продажа в долг)
+      const customerRec = customers.find(c => c.id === resolvedCustomerId) || { total_debt: 0, total_paid: 0, purchase_count: 0, name: resolvedCustomerName, phone: resolvedCustomerPhone, debt_limit: null };
+      if (formData.is_debt) {
+        // Проверяем лимит долга
+        const newTotalDebt = (customerRec.total_debt || 0) + remainingDebt;
+        if (customerRec.debt_limit != null && newTotalDebt > customerRec.debt_limit) {
+          setSaving(false);
+          setSales(prev => prev.filter(s => !s.id?.startsWith('temp_')));
+          alert(`⚠️ Превышен лимит долга клиента "${customerRec.name}"!\nЛимит: ${customerRec.debt_limit.toLocaleString()} с.\nТекущий долг: ${(customerRec.total_debt||0).toLocaleString()} с.\nНовый долг составит: ${newTotalDebt.toLocaleString()} с.`);
+          return;
         }
+        await base44.entities.Customer.update(resolvedCustomerId, {
+          total_debt: (customerRec.total_debt || 0) + remainingDebt,
+          total_paid: (customerRec.total_paid || 0) + partialPay,
+          purchase_count: (customerRec.purchase_count || 0) + 1
+        });
+
+        // Если была частичная оплата — создаём запись в DebtPayment для истории
+        if (partialPay > 0) {
+          await base44.entities.DebtPayment.create({
+            business_id: business.id,
+            customer_id: resolvedCustomerId,
+            sale_id: createdSale.id,
+            amount: partialPay,
+            note: 'Частичная оплата при продаже',
+            payment_date: new Date().toISOString()
+          });
+        }
+
+        if (remainingDebt > 0 && resolvedCustomerPhone) {
+          const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
+            phone: resolvedCustomerPhone,
+            customer_name: resolvedCustomerName,
+            product_name: selectedProduct ? `${selectedProduct.brand} ${selectedProduct.model}` : 'Товар',
+            total_debt: totalAmount,
+            paid_amount: partialPay,
+            remaining_debt: remainingDebt,
+            business_name: business.name,
+            type: 'new_debt'
+          });
+          if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
+        }
+      } else {
+        // Наличная продажа — увеличиваем счётчик покупок и сумму оплат
+        await base44.entities.Customer.update(resolvedCustomerId, {
+          purchase_count: (customerRec.purchase_count || 0) + 1,
+          total_paid: (customerRec.total_paid || 0) + totalAmount
+        });
       }
       
       await loadData();
       setDialogOpen(false);
-      setFormData({ product_id: '', is_consignment: false, boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_address: '', partial_payment: 0 });
+      setFormData({ product_id: '', is_consignment: false, boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_phone: '', customer_address: '', partial_payment: 0 });
       setProductSearch('');
     } catch (error) {
       console.error('Error saving sale:', error);
@@ -1152,17 +1213,17 @@ export default function Sales() {
               </label>
             </div>
 
-            {/* Customer Info */}
-            <div className="space-y-3">
-              <div>
-                <Label>{t(lang,'sales_customer_name')}</Label>
-                <Input 
-                  value={formData.customer_name}
-                  onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                  placeholder={t(lang,'sales_not_specified')}
-                  className="mt-1.5"
-                />
+            {/* Клиент (обязательно) */}
+            <div className="p-4 rounded-xl bg-indigo-50/60 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/40 space-y-3">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-indigo-600" />
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">Клиент (обязательно)</p>
               </div>
+              <MandatoryCustomerPicker
+                customers={customers}
+                value={{ customer_id: formData.customer_id, name: formData.customer_name, phone: formData.customer_phone }}
+                onChange={(v) => setFormData({ ...formData, customer_id: v.customer_id, customer_name: v.name, customer_phone: v.phone })}
+              />
               <div>
                 <Label>{t(lang,'sales_customer_address')}</Label>
                 <Input 
@@ -1175,36 +1236,24 @@ export default function Sales() {
             </div>
 
             {formData.is_debt && (
-              <>
-                <CustomerSearchSelect
-                  customers={customers}
-                  value={formData.customer_id}
-                  onChange={(v) => setFormData({ ...formData, customer_id: v })}
-                  businessId={business.id}
-                  onCustomerAdded={loadData}
+              <div>
+                <Label>{t(lang,'sales_partial_pay')}</Label>
+                <Input 
+                  type="text"
+                  pattern="[0-9.]*"
+                  inputMode="decimal"
+                  value={formData.partial_payment}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9.]/g, '');
+                    setFormData({ ...formData, partial_payment: val });
+                  }}
+                  placeholder="0"
+                  className="mt-1.5"
                 />
-                
-                {formData.customer_id && (
-                  <div>
-                    <Label>{t(lang,'sales_partial_pay')}</Label>
-                    <Input 
-                      type="text"
-                      pattern="[0-9.]*"
-                      inputMode="decimal"
-                      value={formData.partial_payment}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9.]/g, '');
-                        setFormData({ ...formData, partial_payment: val });
-                      }}
-                      placeholder="0"
-                      className="mt-1.5"
-                    />
-                    <p className="text-xs text-slate-500 mt-1">
-                      {t(lang,'sales_remaining_debt')}: {(totalAmount - (parseFloat(formData.partial_payment) || 0)).toLocaleString()} с.
-                    </p>
-                  </div>
-                )}
-              </>
+                <p className="text-xs text-slate-500 mt-1">
+                  {t(lang,'sales_remaining_debt')}: {(totalAmount - (parseFloat(formData.partial_payment) || 0)).toLocaleString()} с.
+                </p>
+              </div>
             )}
           </div>
 
@@ -1221,7 +1270,7 @@ export default function Sales() {
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={saving || !formData.product_id || formData.boxes_sold < 1 || isOverStock || (formData.is_debt && !formData.customer_id)}
+              disabled={saving || !formData.product_id || formData.boxes_sold < 1 || isOverStock || (!formData.customer_id && (!(formData.customer_name || '').trim() || !(formData.customer_phone || '').trim()))}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t(lang,'sales_sell_btn')}
