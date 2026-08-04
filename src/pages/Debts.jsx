@@ -18,6 +18,8 @@ import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import { createPageUrl } from '@/utils';
+import SaleNotifyChannels from '@/components/sales/SaleNotifyChannels';
+import { buildPaymentMessage, notifyCustomerChannels } from '@/lib/customerNotify';
 
 // Проверяет, есть ли у клиента продажа с просроченным или сегодняшним сроком оплаты
 const getDueDateStatus = (salesList) => {
@@ -55,12 +57,14 @@ export default function Debts() {
   const [payDialog, setPayDialog] = useState(null); // { sale }
   const [payAmount, setPayAmount] = useState('');
   const [messageChannel, setMessageChannel] = useState('telegram');
+  const [payNotifyChannels, setPayNotifyChannels] = useState([]);
   const [saving, setSaving] = useState(false);
 
   // Частичное погашение всего долга клиента
   const [bulkPayOpen, setBulkPayOpen] = useState(false);
   const [bulkPayAmount, setBulkPayAmount] = useState('');
   const [bulkPaySaving, setBulkPaySaving] = useState(false);
+  const [bulkNotifyChannels, setBulkNotifyChannels] = useState([]);
 
   // Добавить долг вручную
   const [addDebtOpen, setAddDebtOpen] = useState(false);
@@ -146,6 +150,8 @@ export default function Debts() {
     const paid = getSalePaidAmount(sale.id);
     const remaining = (sale.total_amount || 0) - paid;
     setPayAmount(remaining.toString());
+    const def = business?.default_notify_channels;
+    setPayNotifyChannels(Array.isArray(def) && def.length ? def : []);
     setPayDialog({ sale });
   };
 
@@ -189,28 +195,27 @@ export default function Debts() {
         if (selectedCustomer?.id === customer.id) setSelectedCustomer(updatedCustomer);
       }
 
-      // Уведомления
-      if (customer) {
-        if (messageChannel === 'telegram' && customer.telegram) {
-          try {
-            await base44.functions.invoke('sendTelegramMessage', {
-              telegram_id: customer.telegram, customer_name: customer.name,
-              product_name: product ? `${product.brand} ${product.model}` : undefined,
-              paid_amount: actualAmount, remaining_debt: newDebt, business_name: business?.name, type: 'payment'
-            });
-          } catch (err) {}
-        } else if (messageChannel === 'whatsapp' && customer.phone) {
-          let msg = `👋 Здравствуйте, ${customer.name}!\n\n✅ Спасибо за оплату!\n\n💼 ${business?.name}\n`;
-          if (product) msg += `📦 ${product.brand} ${product.model}\n`;
-          msg += `💰 Оплачено: ${actualAmount.toLocaleString()} сомони\n`;
-          msg += newDebt > 0 ? `⏳ Остаток долга: ${newDebt.toLocaleString()} сомони\n` : `🎉 Долг полностью погашен!\n`;
-          const waUrl = `https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`;
-          window.open(waUrl, '_blank');
-        }
+      // Уведомления по выбранным каналам (WhatsApp / Telegram / Email)
+      if (customer && payNotifyChannels.length > 0) {
+        const message = buildPaymentMessage({
+          customerName: customer.name,
+          businessName: business?.name,
+          productName: product ? `${product.brand} ${product.model}` : '',
+          paidAmount: actualAmount,
+          remainingDebt: newDebt,
+          isFullPayment: newDebt <= 0
+        });
+        notifyCustomerChannels({
+          customer,
+          channels: payNotifyChannels,
+          message,
+          emailSubject: `Оплата долга — ${business?.name || ''}`
+        });
       }
 
       setPayDialog(null);
       setPayAmount('');
+      setPayNotifyChannels([]);
     } finally {
       setSaving(false);
     }
@@ -271,8 +276,27 @@ export default function Debts() {
       setCustomers(prev => prev.map(c => c.id === customer.id ? updatedCustomer : c));
       setSelectedCustomer(updatedCustomer);
 
+      // Уведомление по выбранным каналам
+      if (bulkNotifyChannels.length > 0) {
+        const message = buildPaymentMessage({
+          customerName: customer.name,
+          businessName: business?.name,
+          productName: '',
+          paidAmount: totalPaid,
+          remainingDebt: updatedCustomer.total_debt,
+          isFullPayment: updatedCustomer.total_debt <= 0
+        });
+        notifyCustomerChannels({
+          customer,
+          channels: bulkNotifyChannels,
+          message,
+          emailSubject: `Оплата долга — ${business?.name || ''}`
+        });
+      }
+
       setBulkPayOpen(false);
       setBulkPayAmount('');
+      setBulkNotifyChannels([]);
     } finally {
       setBulkPaySaving(false);
     }
@@ -746,8 +770,13 @@ export default function Debts() {
                     : <p className="text-xs text-emerald-600 mt-1">Остаток после оплаты: {((selectedCustomer?.total_debt || 0) - parseFloat(bulkPayAmount)).toLocaleString()} с.</p>
                 )}
               </div>
+              <SaleNotifyChannels
+                channels={bulkNotifyChannels}
+                onChange={setBulkNotifyChannels}
+                customer={selectedCustomer || { phone: '', email: '', use_phone_for_all: true }}
+              />
               <div className="flex gap-3 pt-1">
-                <Button variant="outline" className="flex-1" onClick={() => { setBulkPayOpen(false); setBulkPayAmount(''); }}>Отмена</Button>
+                <Button variant="outline" className="flex-1" onClick={() => { setBulkPayOpen(false); setBulkPayAmount(''); setBulkNotifyChannels([]); }}>Отмена</Button>
                 <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700"
                   disabled={bulkPaySaving || !bulkPayAmount || parseFloat(bulkPayAmount) <= 0 || parseFloat(bulkPayAmount) > (selectedCustomer?.total_debt || 0)}
                   onClick={handleBulkPayment}>
@@ -786,17 +815,11 @@ export default function Debts() {
                       <p className="text-xs text-red-500 mt-1">⚠️ Сумма превышает остаток долга ({remaining.toLocaleString()} с.)</p>
                     )}
                   </div>
-                  <div>
-                    <Label>Уведомление</Label>
-                    <Select value={messageChannel} onValueChange={setMessageChannel}>
-                      <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="telegram">📱 Telegram</SelectItem>
-                        <SelectItem value="whatsapp">💬 WhatsApp</SelectItem>
-                        <SelectItem value="none">Без уведомления</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <SaleNotifyChannels
+                    channels={payNotifyChannels}
+                    onChange={setPayNotifyChannels}
+                    customer={customers.find(c => c.id === sale.customer_id) || { phone: '', email: '', use_phone_for_all: true }}
+                  />
                   <div className="flex gap-3 pt-1">
                     <Button variant="outline" className="flex-1" onClick={() => { setPayDialog(null); setPayAmount(''); }}>Отмена</Button>
                     <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700"

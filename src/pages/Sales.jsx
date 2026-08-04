@@ -107,13 +107,15 @@ export default function Sales() {
   }, []);
 
   // При открытии окна продажи — ставим каналы по умолчанию из настроек бизнеса
+  // Внимание: зависимость только от dialogOpen, иначе сброс перетрёт выбор пользователя
   useEffect(() => {
     if (dialogOpen) {
       const def = business?.default_notify_channels;
       setNotifyChannels(Array.isArray(def) && def.length ? def : ['whatsapp']);
       setPaymentDueDate('');
     }
-  }, [dialogOpen, business?.default_notify_channels]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialogOpen]);
 
   useEffect(() => {
     if (!showCustomerDropdown) return;

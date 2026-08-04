@@ -59,6 +59,28 @@ export function sendTelegram(username, message) {
   return openWindow(`https://t.me/${u}`);
 }
 
+export function buildPaymentMessage({
+  customerName,
+  businessName,
+  productName,
+  paidAmount,
+  remainingDebt,
+  isFullPayment
+}) {
+  let msg = `Здравствуйте, ${customerName}!\n\n`;
+  msg += `✅ Спасибо за оплату!\n\n`;
+  msg += `💼 ${businessName || 'наш магазин'}\n`;
+  if (productName) msg += `📦 ${productName}\n`;
+  msg += `💰 Оплачено: ${Number(paidAmount || 0).toLocaleString('ru-RU')} с.\n`;
+  if (remainingDebt > 0) {
+    msg += `⏳ Остаток долга: ${Number(remainingDebt).toLocaleString('ru-RU')} с.\n`;
+  } else {
+    msg += `🎉 Долг полностью погашен!\n`;
+  }
+  msg += `\nСпасибо!`;
+  return msg;
+}
+
 export function notifyCustomerChannels({ customer, channels, message, emailSubject }) {
   const results = { whatsapp: false, telegram: false, email: false };
   if (!customer || !channels || !channels.length) return results;

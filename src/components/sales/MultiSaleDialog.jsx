@@ -25,12 +25,14 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
   const [notifyChannels, setNotifyChannels] = useState(['whatsapp']);
 
   // При открытии — каналы по умолчанию из настроек бизнеса
+  // Внимание: зависимость только от open, иначе сброс перетрёт выбор пользователя
   useEffect(() => {
     if (open) {
       const def = business?.default_notify_channels;
       setNotifyChannels(Array.isArray(def) && def.length ? def : ['whatsapp']);
     }
-  }, [open, business?.default_notify_channels]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const availableProducts = products.filter(p => (p.boxes_in_stock || 0) > 0);
 

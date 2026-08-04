@@ -1,5 +1,4 @@
 import React from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
 import { MessageCircle, Send, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -9,8 +8,21 @@ const CHANNELS = [
   { key: 'email', label: 'Email', icon: Mail, active: 'bg-rose-500', soft: 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800' }
 ];
 
+function channelAvailable(ch, customer) {
+  if (ch.key === 'whatsapp') {
+    return !!((customer?.use_phone_for_all ? customer?.phone : (customer?.whatsapp || customer?.phone)));
+  }
+  if (ch.key === 'email') return !!(customer?.email);
+  if (ch.key === 'telegram') {
+    const u = String((customer?.use_phone_for_all ? customer?.phone : customer?.telegram) || '').trim().replace(/^@/, '');
+    return !!u && !/^\d+$/.test(u);
+  }
+  return false;
+}
+
 export default function SaleNotifyChannels({ channels, onChange, customer }) {
-  const toggle = (key) => {
+  const toggle = (key, available) => {
+    if (!available) return; // нельзя включить недоступный канал
     if (channels.includes(key)) onChange(channels.filter(k => k !== key));
     else onChange([...channels, key]);
   };
@@ -21,18 +33,17 @@ export default function SaleNotifyChannels({ channels, onChange, customer }) {
       <div className="grid grid-cols-3 gap-2">
         {CHANNELS.map(ch => {
           const active = channels.includes(ch.key);
-          const available = ch.key === 'whatsapp'
-            ? !!((customer?.use_phone_for_all ? customer?.phone : (customer?.whatsapp || customer?.phone)))
-            : ch.key === 'email' ? !!(customer?.email) : !!((customer?.use_phone_for_all ? customer?.phone : (customer?.telegram)));
+          const available = channelAvailable(ch, customer);
           return (
             <button
               key={ch.key}
               type="button"
-              onClick={() => toggle(ch.key)}
+              disabled={!available}
+              onClick={() => toggle(ch.key, available)}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg border-2 transition-all text-xs font-medium",
                 active ? cn(ch.soft, "border-transparent ring-2 ring-offset-0") : "border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700/50",
-                !available && "opacity-40"
+                !available && "opacity-40 cursor-not-allowed hover:bg-transparent"
               )}
             >
               <ch.icon className="w-4 h-4" />
@@ -44,7 +55,7 @@ export default function SaleNotifyChannels({ channels, onChange, customer }) {
         })}
       </div>
       <p className="text-[11px] text-slate-400 dark:text-slate-500">
-        При продаже откроется готовое сообщение — вы подтвердите отправку.
+        WhatsApp/Telegram открывают чат — вы подтверждаете отправку. Email открывает почтовое приложение.
       </p>
     </div>
   );
