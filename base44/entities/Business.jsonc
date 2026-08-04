@@ -142,6 +142,21 @@
           }
         }
       }
+    },
+    "default_notify_channels": {
+      "type": "array",
+      "description": "\u041a\u0430\u043d\u0430\u043b\u044b \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u0439 \u043a\u043b\u0438\u0435\u043d\u0442\u0443 \u043e \u043f\u043e\u043a\u0443\u043f\u043a\u0435 \u043f\u043e \u0443\u043c\u043e\u043b\u0447\u0430\u043d\u0438\u044e (whatsapp, telegram, email)",
+      "default": [
+        "whatsapp"
+      ],
+      "items": {
+        "type": "string",
+        "enum": [
+          "whatsapp",
+          "telegram",
+          "email"
+        ]
+      }
     }
   },
   "required": [

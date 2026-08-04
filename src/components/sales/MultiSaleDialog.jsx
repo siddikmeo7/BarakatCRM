@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
 import MandatoryCustomerPicker from '@/components/sales/MandatoryCustomerPicker';
+import SaleNotifyChannels from '@/components/sales/SaleNotifyChannels';
+import { buildSaleMessage, notifyCustomerChannels } from '@/lib/customerNotify';
 import { Plus, Trash2, Package, Search, Loader2, ShoppingCart, AlertTriangle, Users } from 'lucide-react';
 import { t } from '@/components/i18n/translations';
 
@@ -21,6 +22,15 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
   const [paymentDueDate, setPaymentDueDate] = useState('');
   const [saving, setSaving] = useState(false);
   const [activeSearch, setActiveSearch] = useState(null); // item id with open dropdown
+  const [notifyChannels, setNotifyChannels] = useState(['whatsapp']);
+
+  // При открытии — каналы по умолчанию из настроек бизнеса
+  useEffect(() => {
+    if (open) {
+      const def = business?.default_notify_channels;
+      setNotifyChannels(Array.isArray(def) && def.length ? def : ['whatsapp']);
+    }
+  }, [open, business?.default_notify_channels]);
 
   const availableProducts = products.filter(p => (p.boxes_in_stock || 0) > 0);
 
@@ -249,41 +259,35 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
           });
         }
 
-        // WhatsApp notification — с детализацией по каждому товару
-        if (totalDebtAdded > 0 && resolvedCustomerPhone) {
-          // Строим массив товаров с суммами оплаты/остатка
-          const productsArr = validItems.map((item, idx) => {
-            const p = getProduct(item.product_id);
-            const calc = calcItem(item);
-            const itemPartialPaid = createdSales[idx]?._partial || 0;
-            return {
-              name: p ? `${p.brand} ${p.model}` : 'Товар',
-              boxes: parseInt(item.boxes_sold),
-              total: calc.totalAmount,
-              paid: itemPartialPaid,
-              remaining: calc.totalAmount - itemPartialPaid
-            };
-          });
-
-          const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
-            phone: resolvedCustomerPhone,
-            customer_name: resolvedCustomerName,
-            products: productsArr,
-            total_debt: grandTotal,
-            paid_amount: partialPay,
-            remaining_debt: totalDebtAdded,
-            business_name: business.name,
-            payment_due_date: paymentDueDate || null,
-            type: 'new_debt'
-          });
-          if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
-        }
       } else {
         // Наличная продажа — увеличиваем счётчик покупок и сумму оплат
         await base44.entities.Customer.update(resolvedCustomerId, {
           purchase_count: (customerRec2.purchase_count || 0) + 1,
           total_paid: (customerRec2.total_paid || 0) + grandTotal
         });
+      }
+
+      // Уведомление клиенту по выбранным каналам
+      if (notifyChannels.length > 0) {
+        const paidNow = isDebt ? partialPay : grandTotal;
+        const remainingDebt = isDebt ? (grandTotal - partialPay) : 0;
+        const itemsArr = validItems.map((item) => {
+          const p = getProduct(item.product_id);
+          const calc = calcItem(item);
+          return { name: p ? `${p.brand} ${p.model}` : 'Товар', boxes: parseInt(item.boxes_sold), total: calc.totalAmount };
+        });
+        const custObj = customers.find(c => c.id === resolvedCustomerId) || { phone: resolvedCustomerPhone, email: '', use_phone_for_all: true };
+        const message = buildSaleMessage({
+          customerName: resolvedCustomerName,
+          businessName: business.name,
+          items: itemsArr,
+          totalAmount: grandTotal,
+          paidAmount: paidNow,
+          remainingDebt,
+          dueDate: isDebt ? paymentDueDate : '',
+          isDebt
+        });
+        notifyCustomerChannels({ customer: custObj, channels: notifyChannels, message, emailSubject: `Ваша покупка — ${business.name}` });
       }
 
       onSaved();
@@ -515,6 +519,16 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
               </div>
             </>
           )}
+
+          {/* Каналы уведомления клиенту */}
+          <SaleNotifyChannels
+            channels={notifyChannels}
+            onChange={setNotifyChannels}
+            customer={(() => {
+              const c = customers.find(c => c.id === customerId);
+              return c || { phone: customerPhone, email: '', use_phone_for_all: true };
+            })()}
+          />
         </div>
 
         {hasStockError && (

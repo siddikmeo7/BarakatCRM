@@ -15,6 +15,7 @@ import AutomationPanel from '@/components/settings/AutomationPanel';
 import AvatarPicker, { AvatarDisplay } from '@/components/settings/AvatarPicker';
 import RecentBusinessesPanel, { saveBusinessToHistory } from '@/components/settings/RecentBusinessesPanel';
 import NotificationsSettingsPanel from '@/components/settings/NotificationsSettingsPanel';
+import CustomerNotifyDefaultsPanel from '@/components/settings/CustomerNotifyDefaultsPanel';
 import CustomFieldsPanel from '@/components/settings/CustomFieldsPanel';
 import { format } from 'date-fns';
 import { 
@@ -595,6 +596,9 @@ export default function Settings() {
               formData={formData}
               setFormData={setFormData}
             />
+            <div className="mt-3">
+              <CustomerNotifyDefaultsPanel business={business} onUpdate={setBusiness} />
+            </div>
           </CollapsibleContent>
         </Collapsible></div>
 

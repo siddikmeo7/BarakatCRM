@@ -16,6 +16,8 @@ import SaleDetailDialog from '@/components/sales/SaleDetailDialog';
 import MultiSaleDialog from '@/components/sales/MultiSaleDialog';
 import CustomerGroupedView from '@/components/sales/CustomerGroupedView';
 import CustomerPurchasesDialog from '@/components/sales/CustomerPurchasesDialog';
+import SaleNotifyChannels from '@/components/sales/SaleNotifyChannels';
+import { buildSaleMessage, notifyCustomerChannels } from '@/lib/customerNotify';
 import { 
   Plus, 
   ShoppingCart, 
@@ -91,6 +93,8 @@ export default function Sales() {
     partial_payment: 0
   });
   const [productSearch, setProductSearch] = useState('');
+  const [notifyChannels, setNotifyChannels] = useState(['whatsapp']);
+  const [paymentDueDate, setPaymentDueDate] = useState('');
 
   useEffect(() => {
     if (window.__barakatAccessReady) {
@@ -101,6 +105,15 @@ export default function Sales() {
       return () => window.removeEventListener('barakatAccessReady', handler);
     }
   }, []);
+
+  // При открытии окна продажи — ставим каналы по умолчанию из настроек бизнеса
+  useEffect(() => {
+    if (dialogOpen) {
+      const def = business?.default_notify_channels;
+      setNotifyChannels(Array.isArray(def) && def.length ? def : ['whatsapp']);
+      setPaymentDueDate('');
+    }
+  }, [dialogOpen, business?.default_notify_channels]);
 
   useEffect(() => {
     if (!showCustomerDropdown) return;
@@ -272,6 +285,22 @@ export default function Sales() {
           });
         } catch (_) {}
 
+        // Уведомление клиенту по выбранным каналам
+        if (notifyChannels.length > 0) {
+          const custObj = customers.find(c => c.id === resolvedCustomerId) || { phone: resolvedCustomerPhone, email: '', use_phone_for_all: true };
+          const message = buildSaleMessage({
+            customerName: resolvedCustomerName,
+            businessName: business.name,
+            items: [{ name: `${selectedProduct?.brand || ''} ${selectedProduct?.model || ''}`, boxes: parseInt(formData.boxes_sold), total: totalAmount }],
+            totalAmount,
+            paidAmount: totalAmount,
+            remainingDebt: 0,
+            dueDate: '',
+            isDebt: false
+          });
+          notifyCustomerChannels({ customer: custObj, channels: notifyChannels, message, emailSubject: `Ваша покупка — ${business.name}` });
+        }
+
         await loadData();
         setDialogOpen(false);
         setFormData({ product_id: '', is_consignment: false, boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_phone: '', customer_address: '', partial_payment: 0 });
@@ -307,6 +336,7 @@ export default function Sales() {
       customer_id: resolvedCustomerId,
       customer_name: resolvedCustomerName,
       customer_address: formData.customer_address || '',
+      payment_due_date: formData.is_debt ? (paymentDueDate || null) : null,
       partial_payment: partialPay,
       seller_email: currentUser.email,
       seller_name: emp?.name || currentUser.full_name || currentUser.email
@@ -364,19 +394,6 @@ export default function Sales() {
           });
         }
 
-        if (remainingDebt > 0 && resolvedCustomerPhone) {
-          const waRes = await base44.functions.invoke('sendWhatsAppDebtMessage', {
-            phone: resolvedCustomerPhone,
-            customer_name: resolvedCustomerName,
-            product_name: selectedProduct ? `${selectedProduct.brand} ${selectedProduct.model}` : 'Товар',
-            total_debt: totalAmount,
-            paid_amount: partialPay,
-            remaining_debt: remainingDebt,
-            business_name: business.name,
-            type: 'new_debt'
-          });
-          if (waRes.data?.wa_url) window.open(waRes.data.wa_url, '_blank');
-        }
       } else {
         // Наличная продажа — увеличиваем счётчик покупок и сумму оплат
         await base44.entities.Customer.update(resolvedCustomerId, {
@@ -384,7 +401,28 @@ export default function Sales() {
           total_paid: (customerRec.total_paid || 0) + totalAmount
         });
       }
-      
+
+      // Отправляем уведомление клиенту по выбранным каналам
+      if (notifyChannels.length > 0) {
+        const paidNow = formData.is_debt ? partialPay : totalAmount;
+        const remaining = formData.is_debt ? remainingDebt : 0;
+        const custObj = customers.find(c => c.id === resolvedCustomerId) || {
+          phone: resolvedCustomerPhone, name: resolvedCustomerName, email: '',
+          use_phone_for_all: true
+        };
+        const message = buildSaleMessage({
+          customerName: resolvedCustomerName,
+          businessName: business.name,
+          items: [{ name: selectedProduct ? `${selectedProduct.brand} ${selectedProduct.model}` : 'Товар', boxes: parseInt(formData.boxes_sold), total: totalAmount }],
+          totalAmount,
+          paidAmount: paidNow,
+          remainingDebt: remaining,
+          dueDate: formData.is_debt ? paymentDueDate : '',
+          isDebt: formData.is_debt
+        });
+        notifyCustomerChannels({ customer: custObj, channels: notifyChannels, message, emailSubject: `Ваша покупка — ${business.name}` });
+      }
+
       await loadData();
       setDialogOpen(false);
       setFormData({ product_id: '', is_consignment: false, boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_phone: '', customer_address: '', partial_payment: 0 });
@@ -1253,9 +1291,23 @@ export default function Sales() {
                 <p className="text-xs text-slate-500 mt-1">
                   {t(lang,'sales_remaining_debt')}: {(totalAmount - (parseFloat(formData.partial_payment) || 0)).toLocaleString()} с.
                 </p>
+                <div className="mt-2">
+                  <Label className="flex items-center gap-1">📅 Срок оплаты (необязательно)</Label>
+                  <Input type="date" value={paymentDueDate} onChange={(e) => setPaymentDueDate(e.target.value)} className="mt-1.5" />
+                </div>
               </div>
             )}
           </div>
+
+          {/* Каналы уведомления клиенту */}
+          <SaleNotifyChannels
+            channels={notifyChannels}
+            onChange={setNotifyChannels}
+            customer={(() => {
+              const c = customers.find(c => c.id === formData.customer_id);
+              return c || { phone: formData.customer_phone, email: '', use_phone_for_all: true };
+            })()}
+          />
 
           {isOverStock && (
             <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-sm text-red-700 font-semibold flex items-center gap-2 animate-pulse">
