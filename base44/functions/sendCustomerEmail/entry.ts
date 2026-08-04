@@ -15,7 +15,10 @@ export default async function(req: Request): Promise<Response> {
     const apiKey = secrets.get('RESEND_API_KEY');
     if (!apiKey) return Response.json({ error: 'RESEND_API_KEY не настроен' }, { status: 500 });
 
-    let fromEmail = secrets.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev';
+    // Тестовый адрес Resend отправляет только на email владельца аккаунта Resend.
+    // Для отправки реальным клиентам подключите свой проверенный домен в Resend
+    // и замените этот адрес.
+    const fromEmail = 'onboarding@resend.dev';
     const fromName = businessName || user.full_name || 'BarakatCRM';
     const from = `${fromName} <${fromEmail}>`;
 
