@@ -43,10 +43,16 @@ export function sendWhatsApp(phone, message) {
   return openWindow(`https://wa.me/${p}?text=${encodeURIComponent(message)}`);
 }
 
-export function sendEmail(to, subject, body) {
+export async function sendEmail(to, subject, body, businessName) {
   if (!to) return false;
-  const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject || 'Ваша покупка')}&body=${encodeURIComponent(body)}`;
-  return openWindow(url);
+  try {
+    const { base44 } = await import('@/api/base44Client');
+    const res = await base44.functions.invoke('sendCustomerEmail', { to, subject, text: body, businessName });
+    return res?.data?.ok === true;
+  } catch (e) {
+    console.error('sendEmail error:', e);
+    return false;
+  }
 }
 
 export function sendTelegram(username, message) {
@@ -81,7 +87,7 @@ export function buildPaymentMessage({
   return msg;
 }
 
-export function notifyCustomerChannels({ customer, channels, message, emailSubject }) {
+export async function notifyCustomerChannels({ customer, channels, message, emailSubject, businessName }) {
   const results = { whatsapp: false, telegram: false, email: false };
   if (!customer || !channels || !channels.length) return results;
 
@@ -90,7 +96,9 @@ export function notifyCustomerChannels({ customer, channels, message, emailSubje
 
   if (channels.includes('whatsapp') && waPhone) results.whatsapp = sendWhatsApp(waPhone, message);
   if (channels.includes('telegram') && tgUser) results.telegram = sendTelegram(tgUser, message);
-  if (channels.includes('email') && customer.email) results.email = sendEmail(customer.email, emailSubject || 'Ваша покупка', message);
+  if (channels.includes('email') && customer.email) {
+    results.email = await sendEmail(customer.email, emailSubject || 'Ваша покупка', message, businessName);
+  }
   return results;
 }
 
