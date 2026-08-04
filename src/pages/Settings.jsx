@@ -32,6 +32,7 @@ import SwitchAccountDialog from '@/components/settings/SwitchAccountDialog';
 import EmployeeProfilePanel from '@/components/settings/EmployeeProfilePanel';
 import ProfileCard from '@/components/settings/ProfileCard';
 import ProfileDetailDialog from '@/components/settings/ProfileDetailDialog';
+import DataManagementPanel from '@/components/settings/DataManagementPanel';
 import { recordLogin } from '@/lib/loginTracker';
 
 const LANGUAGES = [
@@ -99,7 +100,7 @@ export default function Settings() {
   const [expandedSections, setExpandedSections] = useState({
     business: false, access: false, defaults: false, employees: false,
     notifications: false, custom: false, history: false, security: false,
-    employee_login: false, recent_businesses: false
+    employee_login: false, recent_businesses: false, data_management: false
   });
 
   const [empLoginCode, setEmpLoginCode] = useState('');
@@ -266,27 +267,51 @@ export default function Settings() {
     }
   };
 
+  // Полный список всех бизнес-сущностей для полного удаления
+  const ALL_BUSINESS_ENTITIES = [
+    'Sale', 'DebtPayment', 'Expense', 'Return',
+    'Customer', 'Product', 'ConsignmentProduct', 'ConsignmentSale', 'ConsignmentPayout',
+    'Warehouse', 'AIChat', 'ActivityLog', 'DashboardWidget', 'ChartPreference',
+    'Role', 'Employee', 'DeviceSession'
+  ];
+
   const handleDeleteAllData = async () => {
     if (!confirm(t(lang, 'settings_sec_delete') + ' ' + t(lang, 'confirm_delete'))) return;
     if (!confirm(t(lang, 'confirm_delete'))) return;
     try {
-      const [salesData, productsData, customersData, warehousesData, returnsData, employeesData] = await Promise.all([
-        base44.entities.Sale.filter({ business_id: business.id }),
-        base44.entities.Product.filter({ business_id: business.id }),
-        base44.entities.Customer.filter({ business_id: business.id }),
-        base44.entities.Warehouse.filter({ business_id: business.id }),
-        base44.entities.Return.filter({ business_id: business.id }),
-        base44.entities.Employee.filter({ business_id: business.id }),
-      ]);
-      await Promise.all([...salesData.map(r => base44.entities.Sale.delete(r.id)), ...productsData.map(r => base44.entities.Product.delete(r.id)), ...customersData.map(r => base44.entities.Customer.delete(r.id)), ...warehousesData.map(r => base44.entities.Warehouse.delete(r.id)), ...returnsData.map(r => base44.entities.Return.delete(r.id)), ...employeesData.map(r => base44.entities.Employee.delete(r.id))]);
+      // Удаляем все сущности бизнеса пачкой через deleteMany
+      await Promise.all(
+        ALL_BUSINESS_ENTITIES.map((entityName) =>
+          base44.entities[entityName].deleteMany({ business_id: business.id })
+        )
+      );
       alert('Все данные удалены.');
       window.location.reload();
-    } catch (e) { console.error(e); alert('Ошибка при удалении данных.'); }
+    } catch (e) { console.error(e); alert('Ошибка при удалении данных: ' + (e?.message || '')); }
   };
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== user?.email) { alert('Подтверждение не совпадает.'); return; }
-    try { await handleDeleteAllData(); await base44.auth.logout(); } catch (e) { console.error(e); }
+    try {
+      // 1. Удаляем все данные бизнеса (все сущности)
+      await Promise.all(
+        ALL_BUSINESS_ENTITIES.map((entityName) =>
+          base44.entities[entityName].deleteMany({ business_id: business.id }).catch(() => {})
+        )
+      );
+      // 2. Удаляем сам бизнес
+      if (business?.id) {
+        try { await base44.entities.Business.delete(business.id); } catch (e) { console.error('Business delete:', e); }
+      }
+      // 3. Полностью очищаем локальное хранилище
+      localStorage.clear();
+      sessionStorage.clear();
+      // 4. Выходим из аккаунта (платформа удалит сессию)
+      await base44.auth.logout();
+    } catch (e) {
+      console.error(e);
+      alert('Ошибка при удалении аккаунта: ' + (e?.message || ''));
+    }
   };
 
   const generateCodeLocal = (length) => {
@@ -697,6 +722,19 @@ export default function Settings() {
           </CollapsibleTrigger>
           <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4"><RecentBusinessesPanel currentUser={user} /></CollapsibleContent>
         </Collapsible></div>
+
+        {/* Data Management — удаление по разделам */}
+        {canPerm('delete_all_data') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.data_management} onOpenChange={(open) => setExpandedSections({...expandedSections, data_management: open})}>
+          <CollapsibleTrigger asChild>
+            <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.data_management ? 'bg-rose-50' : 'hover:bg-slate-50'}`}>
+              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.data_management ? 'bg-rose-600' : 'bg-rose-100'}`}><Trash2 className={`w-5 h-5 ${expandedSections.data_management ? 'text-white' : 'text-rose-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.data_management ? 'text-rose-700' : 'text-slate-900'}`}>Управление данными</h3><p className="text-xs text-slate-500">Удаление всех записей выбранного раздела</p></div></div>
+              <ChevronDown className={`w-5 h-5 transition ${expandedSections.data_management ? 'rotate-180 text-rose-600' : 'text-slate-500'}`} />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="border-t border-slate-100 bg-slate-50 p-4">
+            {business && <DataManagementPanel business={business} />}
+          </CollapsibleContent>
+        </Collapsible></div> : null}
 
         {/* Security */}
         {canPerm('view_settings_security') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.security} onOpenChange={(open) => setExpandedSections({...expandedSections, security: open})}>
