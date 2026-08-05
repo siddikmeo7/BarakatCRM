@@ -15,6 +15,7 @@ import DateFilter from '@/components/filters/DateFilter';
 import SearchInput from '@/components/filters/SearchInput';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import BackButton from '@/components/ui/BackButton';
+import OwnerProfitControl from '@/components/expenses/OwnerProfitControl';
 
 const CATEGORIES = [
   { value: 'Аренда', label: 'Аренда', icon: Home, color: 'bg-blue-100 text-blue-600' },
@@ -280,6 +281,10 @@ export default function Expenses() {
           </Button>
         )}
       </div>
+
+      {(isOwner || employee?.is_admin || canViewAll) && business && (
+        <OwnerProfitControl business={business} />
+      )}
 
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-wrap items-center gap-3">
         <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />

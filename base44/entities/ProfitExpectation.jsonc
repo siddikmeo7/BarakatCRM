@@ -1,0 +1,102 @@
+{
+  "name": "ProfitExpectation",
+  "type": "object",
+  "properties": {
+    "business_id": {
+      "type": "string",
+      "description": "ID \u0431\u0438\u0437\u043d\u0435\u0441\u0430"
+    },
+    "period_key": {
+      "type": "string",
+      "description": "\u041a\u043b\u044e\u0447 \u043f\u0435\u0440\u0438\u043e\u0434\u0430 (today/yesterday/this_week/this_month/this_year/all_time \u0438\u043b\u0438 custom_<start>_<end>)"
+    },
+    "period_label": {
+      "type": "string",
+      "description": "\u0427\u0435\u043b\u043e\u0432\u0435\u043a\u043e\u0447\u0438\u0442\u0430\u0435\u043c\u043e\u0435 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043f\u0435\u0440\u0438\u043e\u0434\u0430"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u041d\u0430\u0447\u0430\u043b\u043e \u043f\u0435\u0440\u0438\u043e\u0434\u0430"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u041a\u043e\u043d\u0435\u0446 \u043f\u0435\u0440\u0438\u043e\u0434\u0430"
+    },
+    "expected_net_profit": {
+      "type": "number",
+      "description": "\u041e\u0436\u0438\u0434\u0430\u0435\u043c\u0430\u044f \u0447\u0438\u0441\u0442\u0430\u044f \u043f\u0440\u0438\u0431\u044b\u043b\u044c, \u043a\u043e\u0442\u043e\u0440\u0443\u044e \u043e\u0431\u044a\u044f\u0432\u0438\u043b \u0432\u043b\u0430\u0434\u0435\u043b\u0435\u0446"
+    },
+    "declared_by_name": {
+      "type": "string",
+      "description": "\u0418\u043c\u044f \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430"
+    },
+    "declared_by_email": {
+      "type": "string",
+      "description": "Email \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430"
+    },
+    "note": {
+      "type": "string",
+      "description": "\u0417\u0430\u043c\u0435\u0442\u043a\u0430 \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430"
+    }
+  },
+  "required": [
+    "business_id",
+    "period_key",
+    "period_label",
+    "period_start",
+    "period_end",
+    "expected_net_profit"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
