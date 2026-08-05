@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import {
   Plus, Trash2, Loader2, Receipt, TrendingDown, Pencil, Search,
   Home, Users, Truck, Zap, Megaphone, MoreHorizontal, Calendar,
-  UtensilsCrossed, History, User, ShoppingBasket, Heart, GraduationCap
+  UtensilsCrossed, History, User, ShoppingBasket, Heart, GraduationCap,
+  Landmark, ScrollText, UserCircle
 } from 'lucide-react';
 import { format, parseISO, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -27,6 +28,8 @@ const CATEGORIES = [
   { value: 'На дом', label: 'На дом', icon: ShoppingBasket, color: 'bg-amber-100 text-amber-600' },
   { value: 'Личные', label: 'Личные', icon: Heart, color: 'bg-pink-100 text-pink-600' },
   { value: 'Обучение', label: 'Обучение', icon: GraduationCap, color: 'bg-violet-100 text-violet-600' },
+  { value: 'Налог', label: 'Налог', icon: Landmark, color: 'bg-cyan-100 text-cyan-600' },
+  { value: 'Патент', label: 'Патент', icon: ScrollText, color: 'bg-teal-100 text-teal-600' },
   { value: 'Прочее', label: 'Прочее', icon: MoreHorizontal, color: 'bg-slate-100 text-slate-600' },
 ];
 
@@ -37,6 +40,7 @@ const DEFAULT_FORM = {
   amount: '',
   description: '',
   recipient: '',
+  spent_by_name: '',
   expense_date: new Date().toISOString().slice(0, 10),
 };
 
@@ -55,12 +59,14 @@ export default function Expenses() {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterAuthor, setFilterAuthor] = useState('all');
+  const [filterSpentBy, setFilterSpentBy] = useState('all');
   const [form, setForm] = useState(DEFAULT_FORM);
 
   // Permissions
   const hasAccess = isOwner || employee?.is_admin || can('view_expenses');
   const canViewAll = isOwner || employee?.is_admin || can('view_all_expenses');
   const canManageAny = isOwner || employee?.is_admin || can('manage_expenses');
+  const canRecordOnBehalf = isOwner || employee?.is_admin || can('record_expenses_on_behalf');
   const canAdd = hasAccess;
 
   useEffect(() => {
@@ -104,6 +110,7 @@ export default function Expenses() {
       amount: String(expense.amount),
       description: expense.description || '',
       recipient: expense.recipient || '',
+      spent_by_name: expense.spent_by_name || '',
       expense_date: (expense.expense_date || '').slice(0, 10),
     });
     setShowForm(true);
@@ -124,6 +131,7 @@ export default function Expenses() {
         if (String(editingExpense.amount) !== String(parseFloat(form.amount))) changes.push({ field: 'amount', oldValue: editingExpense.amount, newValue: parseFloat(form.amount) });
         if ((editingExpense.description || '') !== form.description) changes.push({ field: 'description', oldValue: editingExpense.description || '', newValue: form.description });
         if ((editingExpense.recipient || '') !== form.recipient) changes.push({ field: 'recipient', oldValue: editingExpense.recipient || '', newValue: form.recipient });
+        if ((editingExpense.spent_by_name || '') !== form.spent_by_name) changes.push({ field: 'spent_by_name', oldValue: editingExpense.spent_by_name || '', newValue: form.spent_by_name });
         const oldDate = (editingExpense.expense_date || '').slice(0, 10);
         if (oldDate !== form.expense_date) changes.push({ field: 'expense_date', oldValue: oldDate, newValue: form.expense_date });
 
@@ -133,6 +141,7 @@ export default function Expenses() {
           amount: parseFloat(form.amount),
           description: form.description,
           recipient: form.recipient,
+          spent_by_name: canRecordOnBehalf ? form.spent_by_name : '',
           expense_date: new Date(form.expense_date).toISOString(),
           edit_count: newCount,
           edit_history: [...(editingExpense.edit_history || []), {
@@ -159,6 +168,7 @@ export default function Expenses() {
           amount: parseFloat(form.amount),
           description: form.description,
           recipient: form.recipient,
+          spent_by_name: canRecordOnBehalf ? form.spent_by_name : '',
           expense_date: new Date(form.expense_date).toISOString(),
           created_by_name: authorName,
           created_by_role: authorRole,
@@ -173,7 +183,7 @@ export default function Expenses() {
           entity_data: expense,
           user_email: user.email,
           user_name: authorName,
-          description: `Добавлен расход: ${form.category} — ${form.amount} с. ${form.recipient ? `(${form.recipient})` : ''} ${form.description ? `| ${form.description}` : ''}`,
+          description: `Добавлен расход: ${form.category} — ${form.amount} с. ${form.recipient ? `(${form.recipient})` : ''} ${form.spent_by_name ? `[от имени: ${form.spent_by_name}]` : ''} ${form.description ? `| ${form.description}` : ''}`,
         });
       }
       setShowForm(false);
@@ -223,9 +233,10 @@ export default function Expenses() {
     }
     if (filterCategory !== 'all' && e.category !== filterCategory) return false;
     if (filterAuthor !== 'all' && (e.created_by_name || '') !== filterAuthor) return false;
+    if (filterSpentBy !== 'all' && (e.spent_by_name || '') !== filterSpentBy) return false;
     if (search) {
       const q = search.toLowerCase();
-      const hay = `${e.category} ${e.description || ''} ${e.recipient || ''} ${e.created_by_name || ''}`.toLowerCase();
+      const hay = `${e.category} ${e.description || ''} ${e.recipient || ''} ${e.created_by_name || ''} ${e.spent_by_name || ''}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -233,6 +244,10 @@ export default function Expenses() {
 
   const totalFiltered = filtered.reduce((s, e) => s + (e.amount || 0), 0);
   const authors = [...new Set(visible.map(e => e.created_by_name).filter(Boolean))];
+  const spentByNames = [...new Set(visible.map(e => e.spent_by_name).filter(Boolean))];
+  const bySpentBy = spentByNames
+    .map(name => ({ name, total: visible.filter(e => e.spent_by_name === name).reduce((s, e) => s + (e.amount || 0), 0) }))
+    .sort((a, b) => b.total - a.total);
 
   const byCategory = CATEGORIES.map(cat => ({
     ...cat,
@@ -311,6 +326,17 @@ export default function Expenses() {
             </SelectContent>
           </Select>
         )}
+        {canViewAll && spentByNames.length > 0 && (
+          <Select value={filterSpentBy} onValueChange={setFilterSpentBy}>
+            <SelectTrigger className="w-44 h-9 text-xs">
+              <SelectValue placeholder="От имени" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все лица</SelectItem>
+              {spentByNames.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <SearchInput value={search} onChange={setSearch} placeholder="Поиск..." className="flex-1 min-w-32" />
         <div className="ml-auto text-right">
           <p className="text-xs text-slate-400">Итого за период</p>
@@ -332,6 +358,42 @@ export default function Expenses() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {canViewAll && bySpentBy.length > 0 && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+          <div className="flex items-center gap-2 mb-3">
+            <UserCircle className="w-5 h-5 text-indigo-500" />
+            <h3 className="text-sm font-bold text-slate-800">Расходы от имени других лиц</h3>
+            <span className="text-xs text-slate-400">— за весь период бизнеса</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {bySpentBy.map(item => (
+              <div
+                key={item.name}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl border cursor-pointer transition-colors ${
+                  filterSpentBy === item.name
+                    ? 'border-indigo-400 bg-indigo-50'
+                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                }`}
+                onClick={() => setFilterSpentBy(prev => prev === item.name ? 'all' : item.name)}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <User className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <span className="text-sm font-medium text-slate-700 truncate">{item.name}</span>
+                </div>
+                <span className="text-sm font-bold text-red-600 flex-shrink-0">−{item.total.toLocaleString()} с.</span>
+              </div>
+            ))}
+          </div>
+          {filterSpentBy !== 'all' && (
+            <button onClick={() => setFilterSpentBy('all')} className="mt-2 text-xs text-indigo-500 hover:text-indigo-600">
+              Сбросить фильтр по лицу
+            </button>
+          )}
         </div>
       )}
 
@@ -368,6 +430,11 @@ export default function Expenses() {
                       {expense.created_by_name && (
                         <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full flex items-center gap-1">
                           <User className="w-3 h-3" /> {expense.created_by_name}
+                        </span>
+                      )}
+                      {expense.spent_by_name && (
+                        <span className="text-xs bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <UserCircle className="w-3 h-3" /> от имени: {expense.spent_by_name}
                         </span>
                       )}
                       {(expense.edit_count || 0) > 0 && (
@@ -458,6 +525,24 @@ export default function Expenses() {
               <label className="text-sm font-medium text-slate-700 mb-1.5 block">Кому / Получатель</label>
               <Input placeholder="Имя сотрудника, арендодатель..." value={form.recipient} onChange={e => setForm(f => ({ ...f, recipient: e.target.value }))} />
             </div>
+            {canRecordOnBehalf && (
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block flex items-center gap-1.5">
+                  <UserCircle className="w-4 h-4 text-cyan-600" />
+                  От имени (другое лицо)
+                </label>
+                <Input
+                  list="spent-by-options"
+                  placeholder="Имя незарегистрированного сотрудника / лица"
+                  value={form.spent_by_name}
+                  onChange={e => setForm(f => ({ ...f, spent_by_name: e.target.value }))}
+                />
+                <datalist id="spent-by-options">
+                  {spentByNames.map(n => <option key={n} value={n} />)}
+                </datalist>
+                <p className="text-xs text-slate-400 mt-1">Укажите, если фиксируете чужой расход — позже увидите сумму по этому лицу.</p>
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium text-slate-700 mb-1.5 block">Комментарий</label>
               <Input placeholder="За что? (необязательно)" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
@@ -519,6 +604,15 @@ export default function Expenses() {
                     )}
                   </p>
                 </div>
+                {viewingExpense.spent_by_name && (
+                  <div className="col-span-2">
+                    <p className="text-xs text-slate-400">От имени (другое лицо)</p>
+                    <p className="font-medium text-slate-800 flex items-center gap-1.5">
+                      <UserCircle className="w-4 h-4 text-cyan-600" />
+                      {viewingExpense.spent_by_name}
+                    </p>
+                  </div>
+                )}
                 {viewingExpense.description && (
                   <div className="col-span-2">
                     <p className="text-xs text-slate-400">Комментарий</p>

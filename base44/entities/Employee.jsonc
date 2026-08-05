@@ -218,6 +218,9 @@
         "manage_expenses": {
           "type": "boolean"
         },
+        "record_expenses_on_behalf": {
+          "type": "boolean"
+        },
         "manage_returns": {
           "type": "boolean"
         },

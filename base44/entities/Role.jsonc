@@ -199,6 +199,10 @@
           "type": "boolean",
           "default": false
         },
+        "record_expenses_on_behalf": {
+          "type": "boolean",
+          "default": false
+        },
         "manage_returns": {
           "type": "boolean",
           "default": false

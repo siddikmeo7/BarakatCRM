@@ -82,6 +82,7 @@ export const PERMISSIONS = {
   VIEW_EXPENSES: 'view_expenses',
   VIEW_ALL_EXPENSES: 'view_all_expenses',
   MANAGE_EXPENSES: 'manage_expenses',
+  RECORD_EXPENSES_ON_BEHALF: 'record_expenses_on_behalf',
 
   // Возвраты
   VIEW_RETURNS: 'view_returns',
