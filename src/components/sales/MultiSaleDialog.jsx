@@ -123,6 +123,8 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
     const partialPay = isDebt ? parseFloat(partialPayment) || 0 : 0;
 
     // Резолвим клиента: существующий или создаём нового
+    // Защита от дублей: если не выбран существующий — сначала ищем по телефону
+    const _normPhone = (p = '') => String(p).replace(/\D/g, '');
     let resolvedCustomerId = customerId || '';
     let resolvedCustomerName = customerName || '';
     let resolvedCustomerPhone = customerPhone || '';
@@ -132,30 +134,41 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
         setSaving(false);
         return;
       }
-      try {
-        const emp = window.__barakatEmployee;
-        const user = await base44.auth.me();
-        const newCustomer = await base44.entities.Customer.create({
-          business_id: business.id,
-          name: customerName.trim(),
-          phone: customerPhone.trim(),
-          address: customerAddress || '',
-          total_debt: 0,
-          total_paid: 0,
-          purchase_count: 0,
-          added_by_employee_id: emp?.id || '',
-          added_by_employee_name: emp?.name || '',
-          added_by_email: user.email,
-          added_by_role: emp ? (emp.is_admin ? 'admin' : 'employee') : 'owner'
-        });
-        resolvedCustomerId = newCustomer.id;
-        resolvedCustomerName = newCustomer.name;
-        resolvedCustomerPhone = newCustomer.phone || customerPhone;
-      } catch (e) {
-        console.error('Error creating customer:', e);
-        alert('Не удалось сохранить клиента. Проверьте имя и номер телефона.');
-        setSaving(false);
-        return;
+      const phoneNorm = _normPhone(customerPhone);
+      const existingByPhone = phoneNorm.length >= 7
+        ? customers.find(c => _normPhone(c.phone) === phoneNorm)
+        : null;
+      if (existingByPhone) {
+        // Уже есть такой клиент — используем его, не создаём дубль
+        resolvedCustomerId = existingByPhone.id;
+        resolvedCustomerName = existingByPhone.name;
+        resolvedCustomerPhone = existingByPhone.phone || customerPhone;
+      } else {
+        try {
+          const emp = window.__barakatEmployee;
+          const user = await base44.auth.me();
+          const newCustomer = await base44.entities.Customer.create({
+            business_id: business.id,
+            name: customerName.trim(),
+            phone: customerPhone.trim(),
+            address: customerAddress || '',
+            total_debt: 0,
+            total_paid: 0,
+            purchase_count: 0,
+            added_by_employee_id: emp?.id || '',
+            added_by_employee_name: emp?.name || '',
+            added_by_email: user.email,
+            added_by_role: emp ? (emp.is_admin ? 'admin' : 'employee') : 'owner'
+          });
+          resolvedCustomerId = newCustomer.id;
+          resolvedCustomerName = newCustomer.name;
+          resolvedCustomerPhone = newCustomer.phone || customerPhone;
+        } catch (e) {
+          console.error('Error creating customer:', e);
+          alert('Не удалось сохранить клиента. Проверьте имя и номер телефона.');
+          setSaving(false);
+          return;
+        }
       }
     } else {
       const existing = customers.find(c => c.id === resolvedCustomerId);
