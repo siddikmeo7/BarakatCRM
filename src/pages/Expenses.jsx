@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import {
   Plus, Trash2, Loader2, Receipt, TrendingDown, Pencil, Search,
   Home, Users, Truck, Zap, Megaphone, MoreHorizontal, Calendar,
-  UtensilsCrossed, History, User
+  UtensilsCrossed, History, User, ShoppingBasket, Heart, GraduationCap
 } from 'lucide-react';
 import { format, parseISO, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -24,11 +24,14 @@ const CATEGORIES = [
   { value: 'Коммунальные', label: 'Коммунальные', icon: Zap, color: 'bg-yellow-100 text-yellow-600' },
   { value: 'Реклама', label: 'Реклама', icon: Megaphone, color: 'bg-purple-100 text-purple-600' },
   { value: 'Еда', label: 'Еда', icon: UtensilsCrossed, color: 'bg-rose-100 text-rose-600' },
+  { value: 'На дом', label: 'На дом', icon: ShoppingBasket, color: 'bg-amber-100 text-amber-600' },
+  { value: 'Личные', label: 'Личные', icon: Heart, color: 'bg-pink-100 text-pink-600' },
+  { value: 'Обучение', label: 'Обучение', icon: GraduationCap, color: 'bg-violet-100 text-violet-600' },
   { value: 'Прочее', label: 'Прочее', icon: MoreHorizontal, color: 'bg-slate-100 text-slate-600' },
 ];
 
 const MAX_EDITS = 5;
-const getCategoryInfo = (cat) => CATEGORIES.find(c => c.value === cat) || CATEGORIES[6];
+const getCategoryInfo = (cat) => CATEGORIES.find(c => c.value === cat) || CATEGORIES[CATEGORIES.length - 1];
 const DEFAULT_FORM = {
   category: 'Аренда',
   amount: '',

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   TrendingUp, TrendingDown, Wallet, AlertTriangle, CheckCircle2,
-  Users, Loader2, Save, CalendarClock, UserCircle
+  Users, Loader2, Save, CalendarClock, UserCircle, HandCoins
 } from 'lucide-react';
 import {
   startOfDay, endOfDay, startOfWeek, endOfWeek,
@@ -14,13 +14,13 @@ import {
 import { ru } from 'date-fns/locale';
 
 const PERIODS = [
-  { key: 'today',      label: 'Сегодня',        icon: CalendarClock },
-  { key: 'yesterday',  label: 'Вчера',           icon: CalendarClock },
-  { key: 'this_week',  label: 'Эта неделя',     icon: CalendarClock },
-  { key: 'this_month',  label: 'Этот месяц',      icon: CalendarClock },
-  { key: 'this_year',   label: 'Этот год',       icon: CalendarClock },
-  { key: 'all_time',    label: 'За всё время',   icon: CalendarClock },
-  { key: 'custom',      label: 'Свой период',    icon: CalendarClock },
+  { key: 'today',      label: 'Сегодня' },
+  { key: 'yesterday',  label: 'Вчера' },
+  { key: 'this_week',  label: 'Эта неделя' },
+  { key: 'this_month',  label: 'Этот месяц' },
+  { key: 'this_year',   label: 'Этот год' },
+  { key: 'all_time',    label: 'За всё время' },
+  { key: 'custom',      label: 'Свой период' },
 ];
 
 function getRange(periodKey, customRange) {
@@ -49,8 +49,8 @@ export default function OwnerProfitControl({ business }) {
   const [sales, setSales] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [expectation, setExpectation] = useState(null);
-  const [expectedInput, setExpectedInput] = useState('');
+  const [declaration, setDeclaration] = useState(null);
+  const [moneyInput, setMoneyInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -60,7 +60,7 @@ export default function OwnerProfitControl({ business }) {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [s, e, emps, exps] = await Promise.all([
+      const [s, e, emps, decls] = await Promise.all([
         base44.entities.Sale.filter({ business_id: business.id }),
         base44.entities.Expense.filter({ business_id: business.id }),
         base44.entities.Employee.filter({ business_id: business.id }),
@@ -69,9 +69,9 @@ export default function OwnerProfitControl({ business }) {
       setSales(s);
       setExpenses(e);
       setEmployees(emps);
-      const match = exps.find(x => x.period_key === periodKeyStr);
-      setExpectation(match || null);
-      setExpectedInput(match ? String(match.expected_net_profit) : '');
+      const match = decls.find(x => x.period_key === periodKeyStr);
+      setDeclaration(match || null);
+      setMoneyInput(match ? String(match.money_in_hand) : '');
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,6 @@ export default function OwnerProfitControl({ business }) {
 
   useEffect(() => { loadAll(); /* eslint-disable-next-line */ }, [periodKeyStr]);
 
-  // Compute metrics
   const inRange = (dateStr) => {
     try { return isWithinInterval(parseISO(dateStr), { start: range.start, end: range.end }); }
     catch { return false; }
@@ -92,11 +91,16 @@ export default function OwnerProfitControl({ business }) {
   const periodExpenses = expenses.filter(e => inRange(e.expense_date));
   const totalExpenses = periodExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
 
-  const actualNet = revenue - totalExpenses;
-  const expected = expectation ? (expectation.expected_net_profit || 0) : (expectedInput ? parseFloat(expectedInput) || 0 : 0);
-  const gap = expected - actualNet; // positive = actual less than expected → unrecorded expenses suspected
+  // Что система считает, что должно быть у владельца на руках
+  // = выручка − все введённые расходы
+  const calculatedNet = revenue - totalExpenses;
 
-  // Per-author expense breakdown (employees + owner)
+  // Что владелец реально держит в руках (по его словам)
+  const inHand = declaration ? (declaration.money_in_hand || 0) : (moneyInput ? parseFloat(moneyInput) || 0 : 0);
+
+  // Если на руках МЕНЬШЕ, чем система насчитала → разница = нераспределённые/невведённые расходы
+  const gap = calculatedNet - inHand; // positive → у владельца меньше, чем должно быть
+
   const byAuthor = useMemo(() => {
     const map = new Map();
     for (const e of periodExpenses) {
@@ -111,14 +115,13 @@ export default function OwnerProfitControl({ business }) {
     return [...map.values()].sort((a, b) => b.total - a.total);
   }, [periodExpenses]);
 
-  // Active employees who entered NOTHING in the period → suspects
   const suspects = useMemo(() => {
     const authorsNames = new Set(byAuthor.map(a => a.name));
     return employees.filter(emp => emp.is_active && !authorsNames.has(emp.name));
   }, [byAuthor, employees]);
 
-  const saveExpectation = async () => {
-    const val = parseFloat(expectedInput) || 0;
+  const saveDeclaration = async () => {
+    const val = parseFloat(moneyInput) || 0;
     setSaving(true);
     try {
       const user = await base44.auth.me().catch(() => ({ email: '', full_name: '' }));
@@ -128,16 +131,16 @@ export default function OwnerProfitControl({ business }) {
         period_label: PERIODS.find(p => p.key === periodKey)?.label || 'Период',
         period_start: range.start.toISOString(),
         period_end: range.end.toISOString(),
-        expected_net_profit: val,
+        money_in_hand: val,
         declared_by_name: user.full_name || user.email || 'Владелец',
         declared_by_email: user.email || '',
       };
-      if (expectation?.id) {
-        const updated = await base44.entities.ProfitExpectation.update(expectation.id, payload);
-        setExpectation(updated);
+      if (declaration?.id) {
+        const updated = await base44.entities.ProfitExpectation.update(declaration.id, payload);
+        setDeclaration(updated);
       } else {
         const created = await base44.entities.ProfitExpectation.create(payload);
-        setExpectation(created);
+        setDeclaration(created);
       }
     } finally {
       setSaving(false);
@@ -148,6 +151,17 @@ export default function OwnerProfitControl({ business }) {
 
   return (
     <div className="space-y-4">
+      {/* Объяснение для владельца */}
+      <div className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-2xl p-4">
+        <p className="text-sm text-indigo-800 dark:text-indigo-200 flex items-start gap-2">
+          <HandCoins className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <span>
+            <b>Как это работает:</b> система считает, сколько чистой прибыли у вас <i>должно быть</i> за период (выручка минус все введённые расходы).
+            Вы вводите, сколько денег у вас <i>реально на руках</i>. Если на руках меньше, чем насчитала система — значит кто-то потратил деньги из бизнеса, но не ввёл их в расходы.
+          </span>
+        </p>
+      </div>
+
       {/* Period selector */}
       <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100">
         <div className="flex items-center gap-2 flex-wrap">
@@ -183,7 +197,7 @@ export default function OwnerProfitControl({ business }) {
         <div className="flex justify-center py-10"><Loader2 className="w-7 h-7 animate-spin text-indigo-500" /></div>
       ) : (
         <>
-          {/* Net profit control panel */}
+          {/* Метрики периода */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
               <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2">
@@ -203,39 +217,39 @@ export default function OwnerProfitControl({ business }) {
 
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
               <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2">
-                <Wallet className="w-4 h-4 text-indigo-500" /> Фактическая чистая прибыль
+                <Wallet className="w-4 h-4 text-indigo-500" /> Должно быть на руках
               </div>
-              <p className={`text-2xl font-bold ${actualNet >= 0 ? 'text-indigo-600' : 'text-red-600'}`}>{fmt(actualNet)} с.</p>
-              <p className="text-[11px] text-slate-400 mt-1">Выручка − расходы</p>
+              <p className={`text-2xl font-bold ${calculatedNet >= 0 ? 'text-indigo-600' : 'text-red-600'}`}>{fmt(calculatedNet)} с.</p>
+              <p className="text-[11px] text-slate-400 mt-1">Выручка − все расходы (по системе)</p>
             </div>
           </div>
 
-          {/* Expected vs actual — gap detection */}
+          {/* Ввод реальной суммы на руках + контроль */}
           <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-800">
             <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-              <Wallet className="w-5 h-5 text-indigo-500" />
-              Контроль чистой прибыли
+              <HandCoins className="w-5 h-5 text-indigo-500" />
+              Сколько денег у вас реально на руках за этот период?
             </h3>
             <div className="flex flex-col md:flex-row md:items-end gap-3">
               <div className="flex-1">
                 <label className="text-xs font-medium text-slate-600 dark:text-slate-300 block mb-1.5">
-                  Ожидаемая чистая прибыль за этот период (сколько вы должны были заработать)
+                  Введите сумму, которая у вас сейчас физически есть (наличные, касса, счёт)
                 </label>
                 <Input
                   type="number"
-                  placeholder="например, 50000"
-                  value={expectedInput}
-                  onChange={e => setExpectedInput(e.target.value)}
+                  placeholder="например, 4000"
+                  value={moneyInput}
+                  onChange={e => setMoneyInput(e.target.value)}
                   className="text-lg font-bold"
                 />
               </div>
-              <Button onClick={saveExpectation} disabled={saving} className="bg-indigo-500 hover:bg-indigo-600 text-white gap-2">
+              <Button onClick={saveDeclaration} disabled={saving} className="bg-indigo-500 hover:bg-indigo-600 text-white gap-2">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Сохранить
               </Button>
             </div>
 
-            {expected > 0 && (
+            {inHand > 0 && (
               <div className="mt-4">
                 {gap > 0 ? (
                   <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-4">
@@ -243,16 +257,16 @@ export default function OwnerProfitControl({ business }) {
                       <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-bold text-red-700 dark:text-red-300">
-                          ⚠️ Кто-то не ввёл расходы! Чистая прибыль ниже ожидаемой.
+                          ⚠️ Кто-то потратил деньги из бизнеса, но не ввёл в систему!
                         </p>
                         <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                          Вы ожидали <b>{fmt(expected)} с.</b>, но по системе получилось <b>{fmt(actualNet)} с.</b>
+                          По расчёту у вас должно быть на руках <b>{fmt(calculatedNet)} с.</b>, но вы ввели, что у вас <b>{fmt(inHand)} с.</b>
                         </p>
                         <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                          Разница <b>{fmt(gap)} с.</b> — это деньги, потраченные из бизнеса, но не записанные в расходы.
+                          Разница <b>{fmt(gap)} с.</b> — это деньги, которые забрали из бизнеса и потратили, но не записали в расходы.
                         </p>
                         <p className="text-xs text-red-500 dark:text-red-400 mt-1">
-                          На самом деле чистая прибыль должна быть {fmt(expected)} с., но у вас меньше на {fmt(gap)} с. — кто-то сделал расходы и не ввёл их в систему.
+                          Проверьте сотрудников ниже — кто не вводил расходы в этом периоде, тот под подозрением.
                         </p>
                       </div>
                     </div>
@@ -264,7 +278,7 @@ export default function OwnerProfitControl({ business }) {
                       <div>
                         <p className="font-bold text-emerald-700 dark:text-emerald-300">Всё сходится ✓</p>
                         <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
-                          Фактическая чистая прибыль ({fmt(actualNet)} с.) не ниже ожидаемой ({fmt(expected)} с.). Все расходы, похоже, введены.
+                          То, что у вас на руках ({fmt(inHand)} с.), не меньше того, что насчитала система ({fmt(calculatedNet)} с.). Все расходы, похоже, введены.
                         </p>
                       </div>
                     </div>
@@ -274,7 +288,7 @@ export default function OwnerProfitControl({ business }) {
             )}
           </div>
 
-          {/* Per-employee expense breakdown */}
+          {/* Расходы по сотрудникам */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center gap-2">
               <Users className="w-5 h-5 text-indigo-500" />
