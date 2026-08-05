@@ -35,7 +35,8 @@ import {
   List,
   Clock,
   AlertTriangle,
-  Users
+  Users,
+  Trash2
 } from 'lucide-react';
 import ViewToggle from '@/components/ui/ViewToggle';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
@@ -45,6 +46,7 @@ import { t } from '@/components/i18n/translations';
 import { ru } from 'date-fns/locale';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import PageLoader from '@/components/ui/PageLoader';
+import { useDraft } from '@/hooks/useDraft';
 
 export default function Sales() {
   const { can, isReady } = useEmployeeAccess();
@@ -95,6 +97,35 @@ export default function Sales() {
   const [productSearch, setProductSearch] = useState('');
   const [notifyChannels, setNotifyChannels] = useState(['whatsapp']);
   const [paymentDueDate, setPaymentDueDate] = useState('');
+
+  // === Черновик одиночной продажи ===
+  const singleDraftKey = `single_sale_${business?.id || 'default'}`;
+  const { draft: singleSaleDraft, saveDraft: saveSingleDraft, clearDraft: clearSingleDraft, hasDraft: hasSingleDraft } = useDraft(singleDraftKey);
+
+  const DEFAULT_SALE_FORM = { product_id: '', is_consignment: false, boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_phone: '', customer_address: '', partial_payment: 0 };
+
+  const saveSingleSaleDraft = () => {
+    saveSingleDraft({ formData, productSearch, notifyChannels, paymentDueDate });
+  };
+  const resetSingleSaleDraft = () => {
+    clearSingleDraft();
+    setFormData({ ...DEFAULT_SALE_FORM });
+    setProductSearch('');
+    setPaymentDueDate('');
+    const def = business?.default_notify_channels;
+    setNotifyChannels(Array.isArray(def) && def.length ? def : ['whatsapp']);
+  };
+
+  // Восстановление черновика при открытии диалога
+  useEffect(() => {
+    if (dialogOpen && singleSaleDraft) {
+      setFormData(prev => ({ ...prev, ...(singleSaleDraft.formData || {}) }));
+      if (singleSaleDraft.productSearch) setProductSearch(singleSaleDraft.productSearch);
+      if (Array.isArray(singleSaleDraft.notifyChannels) && singleSaleDraft.notifyChannels.length) setNotifyChannels(singleSaleDraft.notifyChannels);
+      if (singleSaleDraft.paymentDueDate != null) setPaymentDueDate(singleSaleDraft.paymentDueDate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialogOpen]);
 
   useEffect(() => {
     if (window.__barakatAccessReady) {
@@ -317,8 +348,9 @@ export default function Sales() {
         }
 
         await loadData();
+        clearSingleDraft();
         setDialogOpen(false);
-        setFormData({ product_id: '', is_consignment: false, boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_phone: '', customer_address: '', partial_payment: 0 });
+        setFormData({ ...DEFAULT_SALE_FORM });
         setProductSearch('');
       } catch (e) {
         console.error('Error saving consignment sale:', e);
@@ -439,8 +471,9 @@ export default function Sales() {
       }
 
       await loadData();
+      clearSingleDraft();
       setDialogOpen(false);
-      setFormData({ product_id: '', is_consignment: false, boxes_sold: 1, custom_sale_price: '', is_debt: false, customer_id: '', customer_name: '', customer_phone: '', customer_address: '', partial_payment: 0 });
+      setFormData({ ...DEFAULT_SALE_FORM });
       setProductSearch('');
     } catch (error) {
       console.error('Error saving sale:', error);
@@ -1331,12 +1364,37 @@ export default function Sales() {
             </div>
           )}
 
-          <div className="flex justify-end gap-3">
+          {hasSingleDraft && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300">
+              <Clock className="w-4 h-4 flex-shrink-0" />
+              У вас есть незаконченный черновик этой продажи — данные восстановлены.
+            </div>
+          )}
+
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={resetSingleSaleDraft}
+              className="gap-1.5 text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
+              title="Сбросить все данные формы"
+            >
+              <Trash2 className="w-4 h-4" />
+              Сбросить
+            </Button>
+            <Button
+              variant="outline"
+              onClick={saveSingleSaleDraft}
+              className="gap-1.5 text-amber-600 hover:text-amber-700 border-amber-300 hover:bg-amber-50"
+              title="Сохранить введённые данные как черновик"
+            >
+              <Clock className="w-4 h-4" />
+              В черновик
+            </Button>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               {t(lang,'cancel')}
             </Button>
-            <Button 
-              onClick={handleSave} 
+            <Button
+              onClick={handleSave}
               disabled={saving || !formData.product_id || formData.boxes_sold < 1 || isOverStock || (!formData.customer_id && (!(formData.customer_name || '').trim() || !(formData.customer_phone || '').trim()))}
               className="bg-indigo-600 hover:bg-indigo-700"
             >

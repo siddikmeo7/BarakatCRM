@@ -36,7 +36,8 @@ import {
   AlertCircle,
   Info,
   ChevronDown,
-  Search
+  Search,
+  Clock
 } from 'lucide-react';
 import BulkAddProductsDialog from '@/components/products/BulkAddProductsDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
@@ -45,6 +46,7 @@ import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import PageLoader from '@/components/ui/PageLoader';
+import { useDraft } from '@/hooks/useDraft';
 
 const PAGE_SIZE = 20;
 
@@ -111,6 +113,25 @@ export default function Products() {
     warehouse_id: '',
     photo_url: ''
   });
+
+  // === Черновик нового товара ===
+  const productDraftKey = `product_${business?.id || 'default'}`;
+  const { draft: productDraft, saveDraft: saveProductDraft, clearDraft: clearProductDraft, hasDraft: hasProductDraft } = useDraft(productDraftKey);
+
+  const saveProductFormDraft = () => saveProductDraft(formData);
+  const resetProductFormDraft = () => {
+    clearProductDraft();
+    setFormData({
+      brand: '', model: '', is_consignment: false, owner_name: '', owner_email: '',
+      product_type: business?.default_product_type || 'Туфли',
+      color: business?.default_color || 'Чёрный',
+      size_from: business?.default_size_from || 39,
+      size_to: business?.default_size_to || 44,
+      pairs_per_box: business?.default_pairs_per_box || 6,
+      purchase_price: '', sale_price: '', boxes_in_stock: 0,
+      warehouse_id: warehouses[0]?.id || '', photo_url: ''
+    });
+  };
 
   useEffect(() => {
     const doLoad = () => {
@@ -210,22 +231,33 @@ export default function Products() {
       });
     } else {
       setEditingProduct(null);
-      setFormData({
-        brand: '',
-        model: '',
-        is_consignment: false,
-        owner_name: '',
-        owner_email: '',
+      // Восстанавливаем черновик нового товара, если он есть
+      const restored = productDraft;
+      setFormData(restored ? {
+        brand: restored.brand || '',
+        model: restored.model || '',
+        is_consignment: restored.is_consignment || false,
+        owner_name: restored.owner_name || '',
+        owner_email: restored.owner_email || '',
+        product_type: restored.product_type || business?.default_product_type || 'Туфли',
+        color: restored.color || business?.default_color || 'Чёрный',
+        size_from: restored.size_from || business?.default_size_from || 39,
+        size_to: restored.size_to || business?.default_size_to || 44,
+        pairs_per_box: restored.pairs_per_box || business?.default_pairs_per_box || 6,
+        purchase_price: restored.purchase_price || '',
+        sale_price: restored.sale_price || '',
+        boxes_in_stock: restored.boxes_in_stock || 0,
+        warehouse_id: restored.warehouse_id || warehouses[0]?.id || '',
+        photo_url: restored.photo_url || ''
+      } : {
+        brand: '', model: '', is_consignment: false, owner_name: '', owner_email: '',
         product_type: business?.default_product_type || 'Туфли',
         color: business?.default_color || 'Чёрный',
         size_from: business?.default_size_from || 39,
         size_to: business?.default_size_to || 44,
         pairs_per_box: business?.default_pairs_per_box || 6,
-        purchase_price: '',
-        sale_price: '',
-        boxes_in_stock: 0,
-        warehouse_id: warehouses[0]?.id || '',
-        photo_url: ''
+        purchase_price: '', sale_price: '', boxes_in_stock: 0,
+        warehouse_id: warehouses[0]?.id || '', photo_url: ''
       });
     }
     setDialogOpen(true);
@@ -286,6 +318,7 @@ export default function Products() {
             entity_id: created.id, entity_data: consignmentData, user_email: user.email,
             description: `Добавлен товар на реализацию: ${consignmentData.brand} ${consignmentData.model} (${consignmentData.boxes_in_stock} кор., владелец: ${consignmentData.owner_name})`
           });
+          clearProductDraft();
         }
         setDialogOpen(false);
         await loadData();
@@ -330,6 +363,7 @@ export default function Products() {
           user_email: user.email,
           description: `Добавлен товар: ${data.brand} ${data.model} (${data.boxes_in_stock} кор., ${data.sale_price?.toLocaleString()} с.)`
         });
+        clearProductDraft();
       }
       setDialogOpen(false);
       await loadData();
@@ -1424,12 +1458,41 @@ export default function Products() {
             </Collapsible>
           )}
 
-          <div className="flex justify-end gap-3">
+          {!editingProduct && hasProductDraft && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300">
+              <Clock className="w-4 h-4 flex-shrink-0" />
+              У вас есть незаконченный черновик товара — данные восстановлены.
+            </div>
+          )}
+
+          <div className="flex flex-wrap justify-end gap-2">
+            {!editingProduct && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={resetProductFormDraft}
+                  className="gap-1.5 text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
+                  title="Сбросить все данные формы"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Сбросить
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={saveProductFormDraft}
+                  className="gap-1.5 text-amber-600 hover:text-amber-700 border-amber-300 hover:bg-amber-50"
+                  title="Сохранить введённые данные как черновик"
+                >
+                  <Clock className="w-4 h-4" />
+                  В черновик
+                </Button>
+              </>
+            )}
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               {t(lang,'cancel')}
             </Button>
-            <Button 
-              onClick={handleSave} 
+            <Button
+              onClick={handleSave}
               disabled={savingRef.current || !formData.brand || !formData.model || (!!duplicateProduct && !editingProduct) || (formData.is_consignment && !formData.owner_name)}
               className="bg-indigo-600 hover:bg-indigo-700"
             >

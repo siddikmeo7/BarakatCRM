@@ -8,8 +8,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import MandatoryCustomerPicker from '@/components/sales/MandatoryCustomerPicker';
 import SaleNotifyChannels from '@/components/sales/SaleNotifyChannels';
 import { buildSaleMessage, notifyCustomerChannels } from '@/lib/customerNotify';
-import { Plus, Trash2, Package, Search, Loader2, ShoppingCart, AlertTriangle, Users } from 'lucide-react';
+import { Plus, Trash2, Package, Search, Loader2, ShoppingCart, AlertTriangle, Users, Clock } from 'lucide-react';
 import { t } from '@/components/i18n/translations';
+import { useDraft } from '@/hooks/useDraft';
 
 export default function MultiSaleDialog({ open, onClose, products, customers, business, lang, onSaved }) {
   const [items, setItems] = useState([{ id: Date.now(), product_id: '', boxes_sold: 1, custom_sale_price: '', productSearch: '' }]);
@@ -24,12 +25,43 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
   const [activeSearch, setActiveSearch] = useState(null); // item id with open dropdown
   const [notifyChannels, setNotifyChannels] = useState(['whatsapp']);
 
-  // При открытии — каналы по умолчанию из настроек бизнеса
-  // Внимание: зависимость только от open, иначе сброс перетрёт выбор пользователя
+  // === Черновик мульти-продажи ===
+  const draftKey = `multi_sale_${business?.id || 'default'}`;
+  const { draft: multiDraft, saveDraft: saveMultiDraft, clearDraft: clearMultiDraft, hasDraft: hasMultiDraft } = useDraft(draftKey);
+
+  const DEFAULT_ITEMS = () => [{ id: Date.now(), product_id: '', boxes_sold: 1, custom_sale_price: '', productSearch: '' }];
+
+  const resetMultiForm = () => {
+    setItems(DEFAULT_ITEMS());
+    setIsDebt(false);
+    setCustomerId('');
+    setCustomerName('');
+    setCustomerPhone('');
+    setCustomerAddress('');
+    setPartialPayment(0);
+    setPaymentDueDate('');
+    setActiveSearch(null);
+    const def = business?.default_notify_channels;
+    setNotifyChannels(Array.isArray(def) && def.length ? def : ['whatsapp']);
+  };
+
+  // При открытии — каналы по умолчанию или восстановление черновика
   useEffect(() => {
     if (open) {
-      const def = business?.default_notify_channels;
-      setNotifyChannels(Array.isArray(def) && def.length ? def : ['whatsapp']);
+      if (multiDraft) {
+        if (Array.isArray(multiDraft.items) && multiDraft.items.length) setItems(multiDraft.items);
+        if (multiDraft.isDebt != null) setIsDebt(multiDraft.isDebt);
+        if (multiDraft.customerId != null) setCustomerId(multiDraft.customerId);
+        if (multiDraft.customerName != null) setCustomerName(multiDraft.customerName);
+        if (multiDraft.customerPhone != null) setCustomerPhone(multiDraft.customerPhone);
+        if (multiDraft.customerAddress != null) setCustomerAddress(multiDraft.customerAddress);
+        if (multiDraft.partialPayment != null) setPartialPayment(multiDraft.partialPayment);
+        if (multiDraft.paymentDueDate != null) setPaymentDueDate(multiDraft.paymentDueDate);
+        if (Array.isArray(multiDraft.notifyChannels) && multiDraft.notifyChannels.length) setNotifyChannels(multiDraft.notifyChannels);
+      } else {
+        const def = business?.default_notify_channels;
+        setNotifyChannels(Array.isArray(def) && def.length ? def : ['whatsapp']);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -305,6 +337,7 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
         notifyCustomerChannels({ customer: custObj, channels: notifyChannels, message, emailSubject: `Ваша покупка — ${business.name}` });
       }
 
+      clearMultiDraft();
       onSaved();
       handleClose();
     } catch (error) {
@@ -315,7 +348,7 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
   };
 
   const handleClose = () => {
-    setItems([{ id: Date.now(), product_id: '', boxes_sold: 1, custom_sale_price: '', productSearch: '' }]);
+    setItems(DEFAULT_ITEMS());
     setIsDebt(false);
     setCustomerId('');
     setCustomerName('');
@@ -325,6 +358,14 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
     setPaymentDueDate('');
     setActiveSearch(null);
     onClose();
+  };
+
+  const saveMultiSaleDraft = () => {
+    saveMultiDraft({ items, isDebt, customerId, customerName, customerPhone, customerAddress, partialPayment, paymentDueDate, notifyChannels });
+  };
+  const resetMultiSaleDraft = () => {
+    clearMultiDraft();
+    resetMultiForm();
   };
 
   return (
@@ -553,7 +594,32 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
           </div>
         )}
 
-        <div className="flex justify-end gap-3 pt-2">
+        {hasMultiDraft && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300">
+            <Clock className="w-4 h-4 flex-shrink-0" />
+            У вас есть незаконченный черновик — данные восстановлены.
+          </div>
+        )}
+
+        <div className="flex flex-wrap justify-end gap-2 pt-2">
+          <Button
+            variant="outline"
+            onClick={resetMultiSaleDraft}
+            className="gap-1.5 text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
+            title="Сбросить все данные формы"
+          >
+            <Trash2 className="w-4 h-4" />
+            Сбросить
+          </Button>
+          <Button
+            variant="outline"
+            onClick={saveMultiSaleDraft}
+            className="gap-1.5 text-amber-600 hover:text-amber-700 border-amber-300 hover:bg-amber-50"
+            title="Сохранить введённые данные как черновик"
+          >
+            <Clock className="w-4 h-4" />
+            В черновик
+          </Button>
           <Button variant="outline" onClick={handleClose}>{t(lang, 'cancel')}</Button>
           <Button
             onClick={handleSave}
