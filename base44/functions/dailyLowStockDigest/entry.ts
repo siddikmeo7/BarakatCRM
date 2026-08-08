@@ -21,6 +21,24 @@ Deno.serve(async (req) => {
       const limit = business.low_stock_limit ?? 2;
       const businessId = business.id;
 
+      // Respect per-business digest frequency setting
+      const frequency = business.low_stock_digest_frequency || 'monthly';
+      if (frequency === 'never') {
+        results.push({ business: business.name, skipped: true, reason: 'digest disabled (never)' });
+        continue;
+      }
+      const now = Date.now();
+      const lastSent = business.low_stock_digest_last_sent ? new Date(business.low_stock_digest_last_sent).getTime() : 0;
+      const minIntervalMs = {
+        daily: 1 * 24 * 60 * 60 * 1000,
+        weekly: 7 * 24 * 60 * 60 * 1000,
+        monthly: 30 * 24 * 60 * 60 * 1000,
+      }[frequency] ?? 30 * 24 * 60 * 60 * 1000;
+      if (now - lastSent < minIntervalMs) {
+        results.push({ business: business.name, skipped: true, reason: `${frequency}: not due yet` });
+        continue;
+      }
+
       const products = await base44.asServiceRole.entities.Product.filter({ business_id: businessId });
       const lowStockProducts = products.filter(p => (p.boxes_in_stock ?? 0) <= limit);
 
@@ -126,6 +144,15 @@ Deno.serve(async (req) => {
         } catch (e) {
           console.error('WhatsApp broadcast error:', e.message);
         }
+      }
+
+      // Stamp last_sent so frequency gating works on the next run
+      try {
+        await base44.asServiceRole.entities.Business.update(businessId, {
+          low_stock_digest_last_sent: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.error('Failed to update last_sent:', e.message);
       }
 
       results.push({

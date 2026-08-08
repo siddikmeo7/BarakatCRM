@@ -76,6 +76,7 @@ export default function Settings() {
     name: '', phone: '', phone2: '', address: '', language: 'ru',
     default_color: 'Чёрный', default_size_from: 39, default_size_to: 44,
     default_pairs_per_box: 6, default_product_type: 'Туфли', low_stock_limit: 2,
+    low_stock_digest_frequency: 'monthly',
     default_consignment_owner: '', default_consignment_owner_email: ''
   });
 
@@ -145,7 +146,7 @@ export default function Settings() {
           if (biz) {
             setBusiness(biz);
             setLang(biz.language || 'ru');
-            setFormData({ name: biz.name || '', phone: biz.phone || '', phone2: biz.phone2 || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
+            setFormData({ name: biz.name || '', phone: biz.phone || '', phone2: biz.phone2 || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, low_stock_digest_frequency: biz.low_stock_digest_frequency || 'monthly', default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
           }
         }
         setLoading(false);
@@ -158,7 +159,7 @@ export default function Settings() {
         const biz = businesses[0];
         setBusiness(biz);
         setLang(biz.language || 'ru');
-        setFormData({ name: biz.name || '', phone: biz.phone || '', phone2: biz.phone2 || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
+        setFormData({ name: biz.name || '', phone: biz.phone || '', phone2: biz.phone2 || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, low_stock_digest_frequency: biz.low_stock_digest_frequency || 'monthly', default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
 
         let rolesData = await base44.entities.Role.filter({ business_id: biz.id });
         const hasSeller = rolesData.some(r => r.name === 'Продавец');
@@ -195,6 +196,7 @@ export default function Settings() {
         default_pairs_per_box: formData.default_pairs_per_box,
         default_product_type: formData.default_product_type,
         low_stock_limit: formData.low_stock_limit,
+        low_stock_digest_frequency: formData.low_stock_digest_frequency,
         default_consignment_owner: formData.default_consignment_owner || '',
         default_consignment_owner_email: formData.default_consignment_owner_email || ''
       });
@@ -558,6 +560,7 @@ export default function Settings() {
               <div><Label>{t(lang,'settings_size_to')}</Label><Input type="text" pattern="[0-9]*" inputMode="numeric" value={formData.default_size_to} onChange={(e) => { const val = e.target.value.replace(/[^0-9]/g, ''); setFormData({ ...formData, default_size_to: val ? parseInt(val) : '' }); }} className="mt-1.5" /></div>
               <div><Label>{t(lang,'settings_pairs_per_box')}</Label><Select value={String(formData.default_pairs_per_box)} onValueChange={(v) => setFormData({ ...formData, default_pairs_per_box: parseInt(v) })}><SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger><SelectContent>{[4, 6, 8, ...(business?.custom_pairs_per_box || [])].sort((a, b) => a - b).map(v => <SelectItem key={v} value={String(v)}>{v} пар в коробке</SelectItem>)}</SelectContent></Select></div>
               <div><Label className="flex items-center gap-2">🔴 Лимит «Мало на складе» (коробок)</Label><div className="flex items-center gap-3 mt-1.5"><Input type="text" inputMode="numeric" pattern="[0-9]*" value={formData.low_stock_limit} onChange={(e) => { const val = e.target.value.replace(/[^0-9]/g, ''); setFormData({ ...formData, low_stock_limit: val ? parseInt(val) : 0 }); }} className="w-24" /><p className="text-xs text-slate-500">Товары с ≤ <strong>{formData.low_stock_limit}</strong> коробок будут подсвечены красным</p></div></div>
+              <div><Label className="flex items-center gap-2">📅 Частота сводки «мало товаров»</Label><Select value={formData.low_stock_digest_frequency} onValueChange={(v) => setFormData({ ...formData, low_stock_digest_frequency: v })}><SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="daily">Ежедневно</SelectItem><SelectItem value="weekly">Еженедельно</SelectItem><SelectItem value="monthly">Ежемесячно</SelectItem><SelectItem value="never">Никогда (отключить)</SelectItem></SelectContent></Select><p className="text-xs text-slate-500 mt-1">Все товары с малым остатком собираются в одно письмо/сообщение за выбранный период.</p></div>
             </div>
 
             <div className="mt-4 p-4 bg-teal-50 dark:bg-teal-900/20 rounded-xl border border-teal-200 dark:border-teal-800">
