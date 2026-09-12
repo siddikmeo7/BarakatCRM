@@ -51,6 +51,7 @@ const ALL_MENU_ITEMS = [
   { name: 'AIAssistant',       icon: Bot,              labelKey: 'nav_ai',           color: 'text-purple-500',  activeBg: 'bg-purple-500',  activeText: 'text-purple-600', permKey: 'view_ai_assistant' },
   { name: 'EmployeeAnalytics', icon: Users,            labelKey: 'nav_emp_analytics', color: 'text-rose-500',    activeBg: 'bg-rose-500',    activeText: 'text-rose-600', permKey: 'view_employee_analytics', ownerOnly: false },
   { name: 'Settings',            icon: Settings,         labelKey: 'nav_settings',     color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600', permKey: null },
+  { name: 'Salary',              icon: Wallet,           labelKey: 'nav_salary',      color: 'text-emerald-500',  activeBg: 'bg-emerald-500',  activeText: 'text-emerald-600', permKey: null, ownerOnly: true },
 ];
 
 const ADMIN_MENU_ITEMS = [

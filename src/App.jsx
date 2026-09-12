@@ -5,6 +5,7 @@ import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
+import Salary from './pages/Salary';
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -55,6 +56,7 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+      <Route path="/Salary" element={<LayoutWrapper currentPageName="Salary"><Salary /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
