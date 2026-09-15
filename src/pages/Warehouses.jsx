@@ -315,11 +315,11 @@ export default function Warehouses() {
   const [orphanedSaving, setOrphanedSaving] = useState(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
 
-  // Найти группы дубликатов (одинаковый brand+model в рамках бизнеса)
+  // Найти группы дубликатов (одинаковый brand+model в ОДНОМ складе; товары в разных складах — не дубликаты)
   const duplicateGroups = (() => {
     const map = {};
     products.forEach(p => {
-      const key = `${p.brand?.toLowerCase().trim()}__${p.model?.toLowerCase().trim()}`;
+      const key = `${p.brand?.toLowerCase().trim()}__${p.model?.toLowerCase().trim()}__${p.warehouse_id || ''}`;
       if (!map[key]) map[key] = [];
       map[key].push(p);
     });
@@ -424,7 +424,7 @@ export default function Warehouses() {
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-semibold text-red-800">
-              ⚠️ Найдены дубликаты: {duplicateGroups.length} групп товаров с одинаковым брендом и моделью
+              ⚠️ Найдены дубликаты: {duplicateGroups.length} групп товаров с одинаковым брендом и моделью в одном складе
             </p>
             <p className="text-xs text-red-600 mt-0.5">
               В системе есть товары с одинаковым названием. Рекомендуется удалить лишние записи.
