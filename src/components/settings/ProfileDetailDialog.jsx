@@ -11,6 +11,8 @@ import {
   Activity, Smartphone, Mail, Phone, MapPin, Crown, TrendingUp, MessageCircle, Save, Loader2, CheckCircle2
 } from 'lucide-react';
 import { computeStreak, getActivityCalendar, getTotalLoginDays } from '@/lib/loginTracker';
+import AvatarPicker from '@/components/settings/AvatarPicker';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 const PERMISSION_LABELS = [
   { key: 'view_dashboard', label: 'Дашборд', icon: '📊' },
@@ -83,6 +85,7 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
   const [streak, setStreak] = useState(0);
   const [totalDays, setTotalDays] = useState(0);
   const [calendar, setCalendar] = useState([]);
+  const [avatarUrl, setAvatarUrl] = useState(currentEmployee?.avatar_url || user?.data?.avatar_url || null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -187,6 +190,35 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
         </DialogHeader>
 
         <div className="space-y-5">
+          {/* === AVATAR === */}
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+            <div className="flex items-center gap-4 mb-4">
+              <EmployeeAvatar
+                avatarUrl={avatarUrl}
+                name={currentEmployee?.name || user?.full_name || user?.email || '?'}
+                isAdmin={currentEmployee?.is_admin}
+                size="lg"
+              />
+              <div>
+                <h3 className="font-semibold text-slate-900 dark:text-white">Фото профиля</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Загрузите своё фото или выберите из готовых</p>
+              </div>
+            </div>
+            <AvatarPicker
+              key={avatarUrl || 'none'}
+              currentAvatar={avatarUrl}
+              onSave={async (url) => {
+                if (currentEmployee) {
+                  await base44.entities.Employee.update(currentEmployee.id, { avatar_url: url });
+                  if (window.__barakatEmployee) window.__barakatEmployee = { ...window.__barakatEmployee, avatar_url: url };
+                } else {
+                  await base44.auth.updateMe({ avatar_url: url });
+                }
+                setAvatarUrl(url);
+              }}
+            />
+          </div>
+
           {/* === STREAK HERO === */}
           <div className="bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl p-5 text-white relative overflow-hidden">
             <div className="absolute right-0 top-0 opacity-10">

@@ -28,6 +28,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
 import EmployeePersonalInfoPanel from '@/components/employees/EmployeePersonalInfoPanel';
 import EmployeeCard from '@/components/employees/EmployeeCard';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import SwitchAccountDialog from '@/components/settings/SwitchAccountDialog';
 import EmployeeProfilePanel from '@/components/settings/EmployeeProfilePanel';
 import ProfileCard from '@/components/settings/ProfileCard';
@@ -120,7 +121,6 @@ export default function Settings() {
 
   useEffect(() => {
     loadData();
-    if (user?.email) recordLogin(user.email);
     const interval = setInterval(() => {
       if (business?.id) base44.entities.Employee.filter({ business_id: business?.id }).then(setEmployees);
     }, 15 * 60 * 1000);
@@ -131,6 +131,7 @@ export default function Settings() {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+      if (currentUser?.email) recordLogin(currentUser.email);
       const freshEmployee = window.__barakatEmployee || null;
       
       if (isEmployeeMode) {
@@ -768,7 +769,7 @@ export default function Settings() {
                   return (
                     <div key={emp.id}>
                       <div onClick={() => setSelectedEmp(selectedEmp?.id === emp.id ? null : emp)} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${emp.is_frozen ? 'bg-blue-50 border-blue-200 opacity-70' : isOnline ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-100'} ${selectedEmp?.id === emp.id ? 'ring-2 ring-indigo-300' : ''}`}>
-                        <div className="relative flex-shrink-0"><div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">{emp.name?.charAt(0)?.toUpperCase() || '?'}</div><span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300'}`} /></div>
+                        <div className="relative flex-shrink-0"><EmployeeAvatar employee={emp} size="sm" className="!w-9 !h-9" /><span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300'}`} /></div>
                         <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-slate-900 truncate">{emp.name}</p><p className="text-xs text-slate-400 truncate">{isOnline ? <span className="text-emerald-600 font-medium">● В сети сейчас</span> : lastSeenText}</p>{emp.device_info && <p className="text-xs text-slate-400 truncate">{getDeviceLabel(emp.device_info)}</p>}</div>
                         {emp.is_frozen && <span className="text-xs text-blue-600 font-medium flex-shrink-0">🧊 Заморожен</span>}
                         <ChevronDown className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${selectedEmp?.id === emp.id ? 'rotate-180' : ''}`} />

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Camera, Check, Loader2, ChevronDown, Pencil } from 'lucide-react';
 
-const DEFAULT_AVATARS = [
+export const DEFAULT_AVATARS = [
   { id: 'cat', emoji: '🐱', label: 'Кот', bg: 'from-orange-400 to-amber-500' },
   { id: 'dog', emoji: '🐶', label: 'Пёс', bg: 'from-yellow-400 to-orange-400' },
   { id: 'fox', emoji: '🦊', label: 'Лиса', bg: 'from-orange-500 to-red-500' },
@@ -62,7 +62,7 @@ export default function AvatarPicker({ currentAvatar, onSave }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const res = await base44.integrations.Core.UploadFile({ file });
+    const res = await base44.integrations.Core.UploadPublicFile({ file });
     const url = res?.file_url || res?.data?.file_url;
     if (url) {
       setSelected(url);

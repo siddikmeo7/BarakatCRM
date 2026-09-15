@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import CustomerSearchSelect from '@/components/search/CustomerSearchSelect';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { 
   Package, Edit2, Trash2, Clock, AlertTriangle, 
   CheckCircle, XCircle, Loader2, ChevronDown, ChevronUp, CreditCard
@@ -30,14 +31,18 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
     partial_payment: ''
   });
   const [allCustomers, setAllCustomers] = useState([]);
+  const [employees, setEmployees] = useState([]);
 
   useEffect(() => {
     if (sale?.business_id) {
       base44.entities.Customer.filter({ business_id: sale.business_id }).then(setAllCustomers);
+      base44.entities.Employee.filter({ business_id: sale.business_id }).then(setEmployees).catch(() => {});
     }
   }, [sale?.business_id]);
 
   if (!sale) return null;
+
+  const sellerEmp = employees.find(e => e.user_email === sale.seller_email) || employees.find(e => e.name === sale.seller_name);
 
 
   const editCount = sale.edit_count || 0;
@@ -294,9 +299,7 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
           {/* Продавец */}
           {sale.seller_name && (
             <div className="flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-sm">{sale.seller_name.charAt(0).toUpperCase()}</span>
-              </div>
+              <EmployeeAvatar employee={sellerEmp} name={sale.seller_name} isAdmin={sellerEmp?.is_admin} size="sm" />
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Продавец</p>
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{sale.seller_name}</p>

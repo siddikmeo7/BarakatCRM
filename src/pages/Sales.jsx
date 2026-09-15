@@ -39,6 +39,7 @@ import {
   Trash2
 } from 'lucide-react';
 import ViewToggle from '@/components/ui/ViewToggle';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
 
 const SALES_PAGE_SIZE = 25;
@@ -81,6 +82,8 @@ export default function Sales() {
   const [filterEmployee, setFilterEmployee] = useState('all');
   const [filterPaymentType, setFilterPaymentType] = useState('all'); // all, cash, debt
   const [selectedCustomerGroup, setSelectedCustomerGroup] = useState(null);
+
+  const findSeller = (sale) => employees.find(e => e.user_email === sale.seller_email) || employees.find(e => e.name === sale.seller_name) || null;
   
   const [formData, setFormData] = useState({
     product_id: '',
@@ -950,7 +953,10 @@ export default function Sales() {
                       <p className="text-xs text-slate-500 mt-1">👤 {customer?.name || sale.customer_name}</p>
                     )}
                     {(sale.seller_name || sale.seller_email) && (
-                      <p className="text-xs text-slate-400 mt-0.5">🛍️ {sale.seller_name || sale.seller_email}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <EmployeeAvatar employee={findSeller(sale)} name={sale.seller_name || sale.seller_email} size="sm" className="!w-6 !h-6 !rounded-md !text-[10px]" />
+                        <p className="text-xs text-slate-400 truncate">{sale.seller_name || sale.seller_email}</p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1019,7 +1025,10 @@ export default function Sales() {
                     {sale.is_debt ? `${t(lang,'sales_in_debt')}${can('view_sale_customer') && customer?.name ? ` (${customer.name})` : ''}` : t(lang,'sales_cash')}
                   </span>
                   {(sale.seller_name || sale.seller_email) && (
-                    <span className="text-xs text-slate-400 truncate">🛍️ {sale.seller_name || sale.seller_email}</span>
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <EmployeeAvatar employee={findSeller(sale)} name={sale.seller_name || sale.seller_email} size="sm" className="!w-6 !h-6 !rounded-md !text-[10px]" />
+                      <span className="text-xs text-slate-400 truncate">{sale.seller_name || sale.seller_email}</span>
+                    </span>
                   )}
                 </div>
               </div>

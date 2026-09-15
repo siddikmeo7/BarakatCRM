@@ -3,10 +3,11 @@ import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Package, ArrowLeft, Box, Layers, Hash, TrendingUp, Calendar, User } from 'lucide-react';
+import { Package, ArrowLeft, Box, Layers, Hash, TrendingUp, Calendar, User, History, Plus, Edit2, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 export default function ProductDetail() {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ export default function ProductDetail() {
   const [sales, setSales] = useState([]);
   const [warehouse, setWarehouse] = useState(null);
   const [customers, setCustomers] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [activityLogs, setActivityLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,12 +48,15 @@ export default function ProductDetail() {
       setProduct(prod);
       setSales(salesData.sort((a, b) => new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date)));
 
-      // Load customers for this product's sales
       if (prod.business_id) {
-        try {
-          const customersData = await base44.entities.Customer.filter({ business_id: prod.business_id });
-          setCustomers(customersData);
-        } catch (_) {}
+        const [customersData, employeesData, logsData] = await Promise.all([
+          base44.entities.Customer.filter({ business_id: prod.business_id }).catch(() => []),
+          base44.entities.Employee.filter({ business_id: prod.business_id }).catch(() => []),
+          base44.entities.ActivityLog.filter({ entity_id: productId, entity_type: 'Product' }).catch(() => []),
+        ]);
+        setCustomers(customersData);
+        setEmployees(employeesData);
+        setActivityLogs(logsData.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
       }
 
       if (prod.warehouse_id) {
@@ -83,13 +89,33 @@ export default function ProductDetail() {
   }
 
   const totalPairs = (product.boxes_in_stock || 0) * (product.pairs_per_box || 6);
-  const totalItems = totalPairs * 2;
   const totalStockValue = (product.boxes_in_stock || 0) * (product.sale_price || 0);
   const potentialProfit = (product.boxes_in_stock || 0) * ((product.sale_price || 0) - (product.purchase_price || 0));
   
   const totalSold = sales.reduce((sum, s) => sum + (s.boxes_sold || 0), 0);
   const totalRevenue = sales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
   const totalProfit = sales.reduce((sum, s) => sum + (s.profit || 0), 0);
+
+  const getEmployeeByEmail = (email) => employees.find(e => e.user_email === email);
+  const getEmployeeByName = (name) => employees.find(e => e.name === name);
+  const findEmployeeByLog = (log) => {
+    if (!log) return null;
+    if (log.user_email) {
+      const byEmail = getEmployeeByEmail(log.user_email);
+      if (byEmail) return byEmail;
+    }
+    if (log.user_name) {
+      const byName = getEmployeeByName(log.user_name);
+      if (byName) return byName;
+    }
+    return null;
+  };
+
+  // Who added the product — first 'create' log entry
+  const createLog = activityLogs.find(l => l.action_type === 'create');
+  const addedByEmployee = findEmployeeByLog(createLog);
+  const addedByName = createLog?.user_name || (addedByEmployee?.name) || '—';
+  const addedByEmail = createLog?.user_email || (addedByEmployee?.user_email) || '';
 
   const handleBack = () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -101,6 +127,10 @@ export default function ProductDetail() {
     }
   };
 
+  const actionIcon = (type) => type === 'create' ? <Plus className="w-3.5 h-3.5 text-emerald-600" /> : type === 'update' ? <Edit2 className="w-3.5 h-3.5 text-blue-600" /> : <Trash2 className="w-3.5 h-3.5 text-red-600" />;
+  const actionLabel = (type) => type === 'create' ? 'Добавил' : type === 'update' ? 'Изменил' : 'Удалил';
+  const actionColor = (type) => type === 'create' ? 'bg-emerald-100 text-emerald-700' : type === 'update' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700';
+
   return (
     <div className="space-y-6">
       <Button variant="outline" onClick={handleBack} className="gap-2">
@@ -109,10 +139,10 @@ export default function ProductDetail() {
       </Button>
 
       {/* Product Header */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Photo */}
-          <div className="w-full md:w-64 h-64 bg-slate-100 rounded-xl overflow-hidden">
+          <div className="w-full md:w-64 h-64 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden">
             {product.photo_url ? (
               <img src={product.photo_url} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -126,10 +156,10 @@ export default function ProductDetail() {
           <div className="flex-1">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">{product.brand}</h1>
-                <p className="text-lg text-slate-600">{product.model}</p>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{product.brand}</h1>
+                <p className="text-lg text-slate-600 dark:text-slate-300">{product.model}</p>
               </div>
-              <span className="px-3 py-1 bg-slate-100 rounded-lg text-sm text-slate-600">
+              <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm text-slate-600 dark:text-slate-300">
                 {product.product_type}
               </span>
             </div>
@@ -137,33 +167,47 @@ export default function ProductDetail() {
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <p className="text-sm text-slate-500">Цвет</p>
-                <p className="font-medium text-slate-900">{product.color}</p>
+                <p className="font-medium text-slate-900 dark:text-white">{product.color}</p>
               </div>
               <div>
                 <p className="text-sm text-slate-500">Размеры</p>
-                <p className="font-medium text-slate-900">{product.size_from} - {product.size_to}</p>
+                <p className="font-medium text-slate-900 dark:text-white">{product.size_from} - {product.size_to}</p>
               </div>
               <div>
                 <p className="text-sm text-slate-500">Пар в коробке</p>
-                <p className="font-medium text-slate-900">{product.pairs_per_box}</p>
+                <p className="font-medium text-slate-900 dark:text-white">{product.pairs_per_box}</p>
               </div>
               <div>
                 <p className="text-sm text-slate-500">Склад</p>
-                <p className="font-medium text-slate-900">{warehouse?.name || 'Не указан'}</p>
+                <p className="font-medium text-slate-900 dark:text-white">{warehouse?.name || 'Не указан'}</p>
               </div>
               <div>
                 <p className="text-sm text-slate-500">Дата добавления</p>
-                <div className="flex items-center gap-2 font-medium text-slate-900">
+                <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-white">
                   <Calendar className="w-4 h-4 text-slate-400" />
                   {product.created_date ? format(parseISO(product.created_date), 'dd MMM yyyy, HH:mm', { locale: ru }) : '—'}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
+            {/* Who added this product */}
+            <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800/30 flex items-center gap-3 mb-4">
+              <EmployeeAvatar
+                employee={addedByEmployee}
+                name={addedByName}
+                size="sm"
+              />
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Кто добавил товар</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{addedByName}</p>
+                {addedByEmail && <p className="text-xs text-slate-400 truncate">{addedByEmail}</p>}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
               <div>
                 <p className="text-sm text-slate-500">Цена закупки</p>
-                <p className="text-xl font-bold text-slate-900">{can('view_products_cost') ? `${product.purchase_price?.toLocaleString()} с.` : '•••••'}</p>
+                <p className="text-xl font-bold text-slate-900 dark:text-white">{can('view_products_cost') ? `${product.purchase_price?.toLocaleString()} с.` : '•••••'}</p>
               </div>
               <div>
                 <p className="text-sm text-slate-500">Цена продажи</p>
@@ -176,22 +220,22 @@ export default function ProductDetail() {
 
       {/* Stock Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
           <Box className="w-5 h-5 text-indigo-600 mb-2" />
           <p className="text-sm text-slate-500">На складе</p>
           <p className="text-2xl font-bold text-indigo-600">{can('view_warehouse_quantities') ? `${product.boxes_in_stock || 0} коробок` : '•••••'}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
           <Layers className="w-5 h-5 text-purple-600 mb-2" />
           <p className="text-sm text-slate-500">Пар</p>
-          <p className="text-2xl font-bold text-slate-900">{can('view_warehouse_quantities') ? totalPairs : '•••••'}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">{can('view_warehouse_quantities') ? totalPairs : '•••••'}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
           <Package className="w-5 h-5 text-cyan-600 mb-2" />
           <p className="text-sm text-slate-500">Стоимость склада</p>
-          <p className="text-2xl font-bold text-slate-900">{can('view_warehouse_value') ? `${totalStockValue.toLocaleString()} с.` : '•••••'}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">{can('view_warehouse_value') ? `${totalStockValue.toLocaleString()} с.` : '•••••'}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
           <TrendingUp className="w-5 h-5 text-emerald-600 mb-2" />
           <p className="text-sm text-slate-500">Потенциальная прибыль</p>
           <p className="text-2xl font-bold text-emerald-600">{can('view_warehouse_cost') ? `${potentialProfit.toLocaleString()} с.` : '•••••'}</p>
@@ -200,42 +244,44 @@ export default function ProductDetail() {
 
       {/* Sales Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
           <p className="text-sm text-slate-500">Всего продаж</p>
-          <p className="text-2xl font-bold text-slate-900">{sales.length}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">{sales.length}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
           <p className="text-sm text-slate-500">Продано коробок</p>
           <p className="text-2xl font-bold text-blue-600">{totalSold}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
           <p className="text-sm text-slate-500">Прибыль</p>
           <p className="text-2xl font-bold text-emerald-600">{can('view_warehouse_cost') ? `${totalProfit.toLocaleString()} с.` : '•••••'}</p>
         </div>
       </div>
 
       {/* Sales History */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100">
-          <h3 className="font-semibold text-slate-900">История продаж</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="font-semibold text-slate-900 dark:text-white">История продаж</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-slate-50 dark:bg-slate-800/50">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Дата</th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Коробок</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Сумма</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Прибыль</th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Тип</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Клиент</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Продавец</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600 dark:text-slate-300">Дата</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600 dark:text-slate-300">Коробок</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600 dark:text-slate-300">Сумма</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600 dark:text-slate-300">Прибыль</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600 dark:text-slate-300">Тип</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600 dark:text-slate-300">Клиент</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600 dark:text-slate-300">Продавец</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {sales.map(sale => (
-                <tr key={sale.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 text-sm text-slate-600">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {sales.map(sale => {
+                const sellerEmp = getEmployeeByEmail(sale.seller_email) || getEmployeeByName(sale.seller_name);
+                return (
+                <tr key={sale.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-slate-400" />
                       {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
@@ -244,7 +290,7 @@ export default function ProductDetail() {
                   <td className="px-4 py-3 text-center font-semibold text-indigo-600">
                     {sale.boxes_sold}
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                  <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">
                     {sale.total_amount?.toLocaleString()} с.
                   </td>
                   <td className="px-4 py-3 text-right font-semibold text-emerald-600">
@@ -261,14 +307,23 @@ export default function ProductDetail() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
                     {sale.customer_id ? (customers.find(c => c.id === sale.customer_id)?.name || sale.customer_name || '—') : (sale.customer_name && sale.customer_name !== 'Неизвестный' ? sale.customer_name : '—')}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
-                    {sale.seller_name || sale.seller_email || '—'}
+                  <td className="px-4 py-3 text-sm whitespace-nowrap">
+                    {(sale.seller_name || sale.seller_email) && (
+                      <div className="flex items-center gap-2">
+                        <EmployeeAvatar employee={sellerEmp} name={sale.seller_name || sale.seller_email} size="sm" className="!w-7 !h-7 !rounded-lg !text-xs" />
+                        <div className="min-w-0">
+                          <p className="text-slate-900 dark:text-white truncate">{sale.seller_name || sale.seller_email}</p>
+                          {sellerEmp?.is_admin && <span className="text-[10px] font-bold text-indigo-600">Админ</span>}
+                        </div>
+                      </div>
+                    )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -278,6 +333,41 @@ export default function ProductDetail() {
           </div>
         )}
       </div>
+
+      {/* Recent actions on this product */}
+      {activityLogs.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <History className="w-4 h-4 text-indigo-500" />
+              Недавние действия с товаром
+            </h3>
+          </div>
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {activityLogs.slice(0, 15).map(log => {
+              const logEmp = findEmployeeByLog(log);
+              return (
+                <div key={log.id} className="p-4 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                  <EmployeeAvatar employee={logEmp} name={log.user_name || log.user_email} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium ${actionColor(log.action_type)}`}>
+                        {actionIcon(log.action_type)}
+                        {actionLabel(log.action_type)}
+                      </span>
+                      <span className="text-sm font-medium text-slate-900 dark:text-white truncate">{log.user_name || log.user_email}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{log.description || '—'}</p>
+                  </div>
+                  <span className="text-xs text-slate-400 flex-shrink-0 whitespace-nowrap">
+                    {format(parseISO(log.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

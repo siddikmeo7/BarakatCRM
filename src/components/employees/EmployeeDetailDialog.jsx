@@ -49,7 +49,7 @@ export default function EmployeeDetailDialog({ employee, open, onOpenChange, onU
     if (!file) return;
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
       await base44.entities.Employee.update(employee.id, { avatar_url: file_url });
       setMessage('✅ Аватар загружен');
       setTimeout(() => setMessage(''), 3000);

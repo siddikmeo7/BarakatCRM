@@ -9,7 +9,7 @@ export default function ProfileCard({ user, currentEmployee, business, lang, onO
   const [streak] = useState(() => computeStreak(user?.email));
   const [totalDays] = useState(() => getTotalLoginDays(user?.email));
 
-  const avatarUrl = currentEmployee?.avatar_url || user?.avatar_url;
+  const avatarUrl = currentEmployee?.avatar_url || user?.avatar_url || user?.data?.avatar_url;
   const displayName = currentEmployee?.name || user?.full_name || 'Пользователь';
 
   const roleBadge = !currentEmployee
