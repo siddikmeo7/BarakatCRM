@@ -194,15 +194,25 @@ export default function Products() {
     }
   };
 
-  // Проверка дубликата по бренду+модели
-  const checkDuplicate = (brand, model) => {
+  // Проверка дубликата по бренду + модели + складу.
+  // Один и тот же бренд+модель может лежать на РАЗНЫХ складах — это не дубликат.
+  // Дубликат — только если бренд+модель+склад полностью совпадают.
+  const checkDuplicate = (brand, model, warehouseId) => {
     if (!brand.trim() || !model.trim()) {
       setDuplicateProduct(null);
       return;
     }
+    const wh = warehouseId || formData.warehouse_id;
+    if (!wh) {
+      // Склад не выбран — не можем гарантировать уникальность, не блокируем
+      setDuplicateProduct(null);
+      return;
+    }
+    const whId = String(wh);
     const found = products.find(p =>
       p.brand?.toLowerCase().trim() === brand.toLowerCase().trim() &&
       p.model?.toLowerCase().trim() === model.toLowerCase().trim() &&
+      String(p.warehouse_id || '') === whId &&
       (!editingProduct || p.id !== editingProduct.id)
     );
     setDuplicateProduct(found || null);
@@ -265,6 +275,20 @@ export default function Products() {
 
   const handleSave = async () => {
     if (savingRef.current) return; // Жёсткая защита от двойного нажатия
+    // Финальная проверка дубликата по бренд+модель+склад прямо перед сохранением
+    const _whId = String(formData.warehouse_id || '');
+    const _dup = products.find(p =>
+      p.brand?.toLowerCase().trim() === String(formData.brand || '').toLowerCase().trim() &&
+      p.model?.toLowerCase().trim() === String(formData.model || '').toLowerCase().trim() &&
+      String(p.warehouse_id || '') === _whId &&
+      (!editingProduct || p.id !== editingProduct.id)
+    );
+    if (_dup) {
+      setDuplicateProduct(_dup);
+      savingRef.current = false;
+      setSaving(false);
+      return;
+    }
     savingRef.current = true;
     setSaving(true);
     // НЕ закрываем диалог сразу — это вызывало белый экран у сотрудников
@@ -1210,7 +1234,7 @@ export default function Products() {
                     Дубликат! Такой товар уже существует
                   </p>
                   <p className="text-xs text-red-600 mt-0.5">
-                    Бренд и модель «<span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span>» уже есть в системе. Измените модель, чтобы сохранить.
+                    «<span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span>» уже есть на этом складе. Выберите другой склад или измените модель.
                   </p>
                   <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                     <div className="bg-white rounded-lg p-2 border border-red-200">
@@ -1373,6 +1397,7 @@ export default function Products() {
                 onChange={(name) => {
                   const wh = warehouses.find(w => w.name === name);
                   setFormData({ ...formData, warehouse_id: wh?.id || '' });
+                  checkDuplicate(formData.brand, formData.model, wh?.id || '');
                 }}
                 placeholder={t(lang,'prod_search_wh')}
               />
