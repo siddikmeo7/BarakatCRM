@@ -15,6 +15,7 @@ import {
   BarChart2, X, ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { format, parseISO, startOfMonth, endOfMonth, startOfDay, endOfDay, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -204,6 +205,9 @@ export default function ActivityLog() {
     return email;
   };
 
+  // Helper: get employee record by email (for avatar lookup)
+  const getEmpByEmail = (email) => (email ? employees.find(e => e.user_email === email) || null : null);
+
   // Derived data
   const uniqueUsers = useMemo(() => [...new Set(logs.map(l => l.user_email).filter(Boolean))], [logs]);
 
@@ -334,9 +338,7 @@ export default function ActivityLog() {
               return (
                 <div key={u.email} className={`bg-white rounded-2xl border shadow-sm p-4 space-y-3 ${noActions ? 'border-slate-100 opacity-70' : 'border-slate-100'}`}>
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${noActions ? 'bg-slate-200' : 'bg-gradient-to-br from-indigo-400 to-purple-500'}`}>
-                      <span className={`font-bold text-sm ${noActions ? 'text-slate-500' : 'text-white'}`}>{u.email.charAt(0).toUpperCase()}</span>
-                    </div>
+                    <EmployeeAvatar employee={getEmpByEmail(u.email)} name={empName || u.email} sizeClass="w-10 h-10 rounded-2xl text-sm" className={noActions ? 'opacity-60' : ''} />
                     <div className="flex-1 min-w-0">
                       {empName && <p className="font-semibold text-slate-900 text-sm truncate">{empName}</p>}
                       <p className="text-xs text-slate-500 truncate">{u.email}</p>
@@ -524,7 +526,10 @@ export default function ActivityLog() {
                           )}
                           <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 flex-wrap">
                             <span className="flex items-center gap-1">
-                              <User className="w-3 h-3" />{getUserLabel(log.user_email, log.user_name)}
+                              {(() => { const em = getEmpByEmail(log.user_email); return em
+                                ? <EmployeeAvatar employee={em} sizeClass="w-4 h-4 rounded-full text-[9px]" />
+                                : <User className="w-3 h-3" />; })()}
+                              {getUserLabel(log.user_email, log.user_name)}
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
@@ -761,7 +766,9 @@ export default function ActivityLog() {
                           <button
                             onClick={(e) => { e.stopPropagation(); setFilterUser(log.user_email); }}
                             className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
-                            <User className="w-3 h-3" />
+                            {(() => { const em = getEmpByEmail(log.user_email); return em
+                              ? <EmployeeAvatar employee={em} sizeClass="w-4 h-4 rounded-full text-[9px]" />
+                              : <User className="w-3 h-3" />; })()}
                             {getUserLabel(log.user_email, log.user_name)}
                           </button>
                           <span className="flex items-center gap-1">
@@ -819,7 +826,9 @@ export default function ActivityLog() {
             <div className="space-y-4 py-2">
               <div className="p-3 bg-slate-50 rounded-xl space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-slate-400" />
+                  {(() => { const em = getEmpByEmail(detailLog.user_email); return em
+                    ? <EmployeeAvatar employee={em} sizeClass="w-6 h-6 rounded-full text-[10px]" />
+                    : <User className="w-4 h-4 text-slate-400" />; })()}
                   <span className="text-slate-500">Кто:</span>
                   <span className="font-semibold text-slate-800">{getUserLabel(detailLog.user_email, detailLog.user_name)}</span>
                   <button onClick={() => { setFilterUser(detailLog.user_email); setDetailLog(null); }}

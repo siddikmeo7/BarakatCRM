@@ -387,9 +387,11 @@ export default function Expenses() {
                 onClick={() => setFilterSpentBy(prev => prev === item.name ? 'all' : item.name)}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-indigo-600" />
-                  </div>
+                  {(() => { const em = getEmpByName(item.name); return em
+                    ? <EmployeeAvatar employee={em} sizeClass="w-8 h-8 rounded-2xl text-xs" />
+                    : <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-indigo-600" />
+                      </div>; })()}
                   <span className="text-sm font-medium text-slate-700 truncate">{item.name}</span>
                 </div>
                 <span className="text-sm font-bold text-red-600 flex-shrink-0">−{item.total.toLocaleString()} с.</span>
@@ -435,8 +437,11 @@ export default function Expenses() {
                         <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{expense.recipient}</span>
                       )}
                       {expense.created_by_name && (
-                        <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <User className="w-3 h-3" /> {expense.created_by_name}
+                        <span className="text-xs bg-indigo-50 text-indigo-600 pl-1 pr-2 py-0.5 rounded-full flex items-center gap-1">
+                          {(() => { const em = getEmpByName(expense.created_by_name); return em
+                            ? <EmployeeAvatar employee={em} sizeClass="w-4 h-4 rounded-full text-[9px]" />
+                            : <User className="w-3 h-3" />; })()}
+                          {expense.created_by_name}
                         </span>
                       )}
                       {expense.spent_by_name && (
@@ -602,7 +607,9 @@ export default function Expenses() {
                 <div className="col-span-2">
                   <p className="text-xs text-slate-400">Автор расхода</p>
                   <p className="font-medium text-slate-800 flex items-center gap-1.5">
-                    <User className="w-4 h-4 text-indigo-500" />
+                    {(() => { const em = getEmpByName(viewingExpense.created_by_name); return em
+                      ? <EmployeeAvatar employee={em} sizeClass="w-5 h-5 rounded-full text-[10px]" />
+                      : <User className="w-4 h-4 text-indigo-500" />; })()}
                     {viewingExpense.created_by_name || '—'}
                     {viewingExpense.created_by_role && (
                       <span className="text-xs text-slate-400">
