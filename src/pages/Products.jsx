@@ -51,6 +51,7 @@ import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import PageLoader from '@/components/ui/PageLoader';
 import { useDraft } from '@/hooks/useDraft';
 import { findDuplicateProduct, duplicateKey } from '@/lib/productDuplicate';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 const PAGE_SIZE = 20;
 
@@ -62,6 +63,8 @@ export default function Products() {
   const [business, setBusiness] = useState(null);
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [creatorMap, setCreatorMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('ru');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -164,15 +167,27 @@ export default function Products() {
       if (!cachedBiz) return;
 
       // Загружаем свежие данные бизнеса из БД, чтобы custom_pairs_per_box и другие поля были актуальны
-      const [bizList, productsData, warehousesData] = await Promise.all([
+      const [bizList, productsData, warehousesData, employeesData, createLogs] = await Promise.all([
         base44.entities.Business.filter({ id: cachedBiz.id }),
         base44.entities.Product.filter({ business_id: cachedBiz.id }),
-        base44.entities.Warehouse.filter({ business_id: cachedBiz.id })
+        base44.entities.Warehouse.filter({ business_id: cachedBiz.id }),
+        base44.entities.Employee.filter({ business_id: cachedBiz.id }).catch(() => []),
+        base44.entities.ActivityLog.filter({ business_id: cachedBiz.id, action_type: 'create' }).catch(() => [])
       ]);
 
       const biz = bizList[0] || cachedBiz;
       setBusiness(biz);
       setLang(biz.language || 'ru');
+      setEmployees(employeesData);
+
+      // Карта создателей товаров: productId → { user_email, user_name }
+      const cMap = {};
+      (createLogs || []).forEach(log => {
+        if (log.entity_type === 'Product' || log.entity_type === 'ConsignmentProduct') {
+          cMap[log.entity_id] = { user_email: log.user_email, user_name: log.user_name };
+        }
+      });
+      setCreatorMap(cMap);
 
       // Загружаем товары на реализации отдельно — не должна ломать основной список
       let consignmentData = [];
@@ -625,6 +640,17 @@ export default function Products() {
   const warehouseIds = new Set(warehouses.map(w => w.id));
   const orphanedProducts = products.filter(p => p.warehouse_id && !warehouseIds.has(p.warehouse_id));
 
+  // Кто добавил товар — поиск сотрудника по activity log / email / имени
+  const getCreatorInfo = (product) => {
+    const c = creatorMap[product.id];
+    const email = c?.user_email || '';
+    const name = c?.user_name || '';
+    const emp = (email && employees.find(e => e.user_email === email))
+      || (name && employees.find(e => e.name === name))
+      || null;
+    return { emp, name: name || emp?.name || '', email: email || emp?.user_email || '' };
+  };
+
   if (!isReady) return <PageLoader message="Загрузка..." />;
   if (!can('view_products')) {
     return (
@@ -998,6 +1024,19 @@ export default function Products() {
                   </div>
                   {isExpanded && (
                     <div className="bg-slate-50 px-4 py-3 space-y-3 border-t border-slate-100">
+                      {(() => {
+                        const creator = getCreatorInfo(product);
+                        return creator.name ? (
+                          <div className="flex items-center gap-2.5 p-2 bg-white rounded-xl border border-slate-100">
+                            <EmployeeAvatar employee={creator.emp} name={creator.name} sizeClass="w-9 h-9 rounded-xl text-sm" />
+                            <div className="min-w-0">
+                              <p className="text-[10px] text-slate-400">Кто добавил товар</p>
+                              <p className="text-xs font-semibold text-slate-900 truncate">{creator.name}</p>
+                              {creator.email && <p className="text-[10px] text-slate-400 truncate">{creator.email}</p>}
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
                       <div className="grid grid-cols-3 gap-2 text-center text-xs">
                         <div className="bg-white rounded-xl p-2 border border-slate-100">
                           <p className="text-slate-400">Коробок</p>
@@ -1110,24 +1149,39 @@ export default function Products() {
 
           <div className="grid gap-4 py-4">
             {/* Product Info & Timestamps */}
-            {editingProduct && (
-              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-lg text-xs">
-                <div>
-                  <p className="text-slate-500">Дата добавления</p>
-                  <p className="font-semibold text-slate-900 flex items-center gap-1 mt-1">
-                    <Calendar className="w-3 h-3" />
-                    {editingProduct.created_date ? format(parseISO(editingProduct.created_date), 'dd MMM yyyy, HH:mm:ss', { locale: ru }) : '—'}
-                  </p>
+            {editingProduct && (() => {
+              const creator = getCreatorInfo(editingProduct);
+              return (
+              <div className="p-3 bg-slate-50 rounded-lg text-xs space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-slate-500">Дата добавления</p>
+                    <p className="font-semibold text-slate-900 flex items-center gap-1 mt-1">
+                      <Calendar className="w-3 h-3" />
+                      {editingProduct.created_date ? format(parseISO(editingProduct.created_date), 'dd MMM yyyy, HH:mm:ss', { locale: ru }) : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Последнее обновление</p>
+                    <p className="font-semibold text-slate-900 flex items-center gap-1 mt-1">
+                      <History className="w-3 h-3" />
+                      {editingProduct.updated_date ? format(parseISO(editingProduct.updated_date), 'dd MMM yyyy, HH:mm:ss', { locale: ru }) : '—'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-slate-500">Последнее обновление</p>
-                  <p className="font-semibold text-slate-900 flex items-center gap-1 mt-1">
-                    <History className="w-3 h-3" />
-                    {editingProduct.updated_date ? format(parseISO(editingProduct.updated_date), 'dd MMM yyyy, HH:mm:ss', { locale: ru }) : '—'}
-                  </p>
-                </div>
+                {creator.name && (
+                  <div className="flex items-center gap-2.5 pt-2 border-t border-slate-200">
+                    <EmployeeAvatar employee={creator.emp} name={creator.name} sizeClass="w-9 h-9 rounded-xl text-sm" />
+                    <div className="min-w-0">
+                      <p className="text-slate-500">Кто добавил товар в систему</p>
+                      <p className="font-semibold text-slate-900 truncate">{creator.name}</p>
+                      {creator.email && <p className="text-slate-400 truncate">{creator.email}</p>}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+              );
+            })()}
 
             {/* Consignment toggle */}
             <div

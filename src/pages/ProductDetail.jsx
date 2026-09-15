@@ -19,6 +19,8 @@ export default function ProductDetail() {
   const [customers, setCustomers] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
+  const [addedByEmployeeFallback, setAddedByEmployeeFallback] = useState(null);
+  const [addedByFallback, setAddedByFallback] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,6 +60,20 @@ export default function ProductDetail() {
         setCustomers(customersData);
         setEmployees(employeesData);
         setActivityLogs(logsData.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+
+        // Если нет лога создания — ищем сотрудника по created_by_id (через User email)
+        const hasCreateLog = logsData.some(l => l.action_type === 'create');
+        if (!hasCreateLog && prod.created_by_id) {
+          try {
+            const userData = await base44.entities.User.filter({ id: prod.created_by_id }).catch(() => []);
+            const userEmail = userData?.[0]?.email || '';
+            if (userEmail) {
+              const emp = employeesData.find(e => e.user_email === userEmail);
+              if (emp) setAddedByEmployeeFallback(emp);
+              else setAddedByFallback({ name: userData?.[0]?.full_name || userEmail, email: userEmail });
+            }
+          } catch (_) {}
+        }
       }
 
       if (prod.warehouse_id) {
@@ -112,11 +128,11 @@ export default function ProductDetail() {
     return null;
   };
 
-  // Who added the product — first 'create' log entry
+  // Who added the product — first 'create' log entry, or fallback via created_by_id
   const createLog = activityLogs.find(l => l.action_type === 'create');
-  const addedByEmployee = findEmployeeByLog(createLog);
-  const addedByName = createLog?.user_name || (addedByEmployee?.name) || '—';
-  const addedByEmail = createLog?.user_email || (addedByEmployee?.user_email) || '';
+  const addedByEmployee = findEmployeeByLog(createLog) || addedByEmployeeFallback || null;
+  const addedByName = createLog?.user_name || addedByFallback?.name || (addedByEmployee?.name) || '—';
+  const addedByEmail = createLog?.user_email || addedByFallback?.email || (addedByEmployee?.user_email) || '';
 
   const handleBack = () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -191,16 +207,17 @@ export default function ProductDetail() {
             </div>
 
             {/* Who added this product */}
-            <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800/30 flex items-center gap-3 mb-4">
+            <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800/30 flex items-center gap-4 mb-4">
               <EmployeeAvatar
                 employee={addedByEmployee}
                 name={addedByName}
-                size="sm"
+                sizeClass="w-14 h-14 rounded-2xl text-lg"
               />
               <div className="min-w-0">
-                <p className="text-xs text-slate-500 dark:text-slate-400">Кто добавил товар</p>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{addedByName}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Кто добавил товар в систему</p>
+                <p className="text-base font-semibold text-slate-900 dark:text-white truncate">{addedByName}</p>
                 {addedByEmail && <p className="text-xs text-slate-400 truncate">{addedByEmail}</p>}
+                {addedByEmployee?.is_admin && <span className="text-[10px] font-bold text-indigo-600">Админ</span>}
               </div>
             </div>
 
