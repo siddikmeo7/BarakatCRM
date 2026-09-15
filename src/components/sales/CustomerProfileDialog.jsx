@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { User, Phone, MapPin, Mail, ShoppingBag, UserPlus, X, MessageCircle, Send } from 'lucide-react';
+import { User, Phone, MapPin, Mail, ShoppingBag, UserPlus, X, MessageCircle, Send, Package } from 'lucide-react';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -62,6 +62,22 @@ export default function CustomerProfileDialog({ customer, sales, employees, prod
     }
     const p = products?.find(p => p.id === sale.product_id);
     return p ? `${p.brand} ${p.model}` : 'Товар';
+  };
+
+  const prodPhoto = (sale) => {
+    const p = sale._isConsignment
+      ? consignmentProducts?.find(p => p.id === sale.product_id)
+      : products?.find(p => p.id === sale.product_id);
+    return p?.photo_url || null;
+  };
+
+  const prodMeta = (sale) => {
+    const p = sale._isConsignment
+      ? consignmentProducts?.find(p => p.id === sale.product_id)
+      : products?.find(p => p.id === sale.product_id);
+    if (!p) return '';
+    return [p.color, p.product_type, p.size_from && p.size_to ? `${p.size_from}–${p.size_to}` : null]
+      .filter(Boolean).join(' · ');
   };
 
   if (!customer) return null;
@@ -167,20 +183,37 @@ export default function CustomerProfileDialog({ customer, sales, employees, prod
             <p className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1.5">
               <ShoppingBag className="w-3.5 h-3.5" /> История покупок ({customerSales.length})
             </p>
-            <div className="space-y-1.5 max-h-60 overflow-y-auto custom-scroll pr-1">
-              {customerSales.map(s => (
-                <div key={s.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{prodName(s)}</p>
-                    <p className="text-xs text-slate-400">
-                      {format(parseISO(s.sale_date || s.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })} · {s.boxes_sold} кор.
-                    </p>
+            <div className="space-y-1.5 max-h-72 overflow-y-auto custom-scroll pr-1">
+              {customerSales.map(s => {
+                const photo = prodPhoto(s);
+                const meta = prodMeta(s);
+                return (
+                  <div key={s.id} className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
+                    {photo ? (
+                      <img src={photo} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                        <Package className="w-4 h-4 text-slate-400" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{prodName(s)}</p>
+                      {meta && <p className="text-[11px] text-slate-400 truncate">{meta}</p>}
+                      <p className="text-xs text-slate-400">
+                        {format(parseISO(s.sale_date || s.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })} · {s.boxes_sold || 0} кор. · {s.pairs_sold || 0} пар
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <span className={`text-sm font-semibold block ${s.is_debt ? 'text-orange-600' : 'text-emerald-600'}`}>
+                        {s.total_amount?.toLocaleString()} с.
+                      </span>
+                      <span className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${s.is_debt ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300' : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'}`}>
+                        {s.is_debt ? 'В долг' : 'Наличные'}
+                      </span>
+                    </div>
                   </div>
-                  <span className={`text-sm font-semibold ${s.is_debt ? 'text-orange-600' : 'text-emerald-600'}`}>
-                    {s.total_amount?.toLocaleString()} с.
-                  </span>
-                </div>
-              ))}
+                );
+              })}
               {customerSales.length === 0 && <p className="text-xs text-slate-400 text-center py-3">Покупок нет</p>}
             </div>
             <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 flex justify-between text-sm">

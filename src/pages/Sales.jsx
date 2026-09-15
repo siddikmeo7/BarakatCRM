@@ -813,14 +813,23 @@ export default function Sales() {
       {/* Sales List/Grid */}
       {view === 'customers' ? (
         <CustomerGroupedView
-          sales={activeSales}
+          sales={unifiedSales.filter(s => !s.is_cancelled)}
           customers={customers}
           products={products}
           consignmentProducts={consignmentProducts}
           lang={lang}
           can={can}
           displayUnit={displayUnit}
-          onSelectCustomer={setSelectedCustomerGroup}
+          onSelectCustomer={(g) => {
+            // Открываем профиль клиента; всю историю покупок видно внутри
+            const cust = g.customer || {
+              id: g.customer_id,
+              name: g.customer_name || 'Без клиента',
+              phone: '',
+              address: '',
+            };
+            setProfileCustomer(cust);
+          }}
         />
       ) : view === 'list' ? (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 max-h-[70vh] overflow-auto custom-scroll">

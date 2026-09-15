@@ -84,8 +84,13 @@ export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    // По умолчанию — светлый режим (только если пользователь ранее не выбрал тёмный)
+    const savedTheme = localStorage.getItem('barakatcrm_theme');
+    if (savedTheme === 'dark') {
       document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('barakatcrm_theme', 'light');
     }
   }, []);
 
