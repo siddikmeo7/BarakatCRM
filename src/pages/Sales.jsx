@@ -16,6 +16,7 @@ import SaleDetailDialog from '@/components/sales/SaleDetailDialog';
 import MultiSaleDialog from '@/components/sales/MultiSaleDialog';
 import CustomerGroupedView from '@/components/sales/CustomerGroupedView';
 import CustomerPurchasesDialog from '@/components/sales/CustomerPurchasesDialog';
+import CustomerProfileDialog from '@/components/sales/CustomerProfileDialog';
 import SaleNotifyChannels from '@/components/sales/SaleNotifyChannels';
 import { buildSaleMessage, notifyCustomerChannels } from '@/lib/customerNotify';
 import { 
@@ -82,6 +83,7 @@ export default function Sales() {
   const [filterEmployee, setFilterEmployee] = useState('all');
   const [filterPaymentType, setFilterPaymentType] = useState('all'); // all, cash, debt
   const [selectedCustomerGroup, setSelectedCustomerGroup] = useState(null);
+  const [profileCustomer, setProfileCustomer] = useState(null);
 
   const findSeller = (sale) => employees.find(e => e.user_email === sale.seller_email) || employees.find(e => e.name === sale.seller_name) || null;
   
@@ -836,6 +838,7 @@ export default function Sales() {
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'sales_amount')}</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">{t(lang,'sales_profit')}</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">{t(lang,'sales_type')}</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Клиент</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Продавец</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -887,10 +890,28 @@ export default function Sales() {
                     <td className="px-4 py-3 text-center">
                       <div className="flex flex-col items-center gap-1">
                         <span className={`px-2 py-1 rounded-lg text-xs font-medium ${sale.is_debt ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {sale.is_debt ? `${t(lang,'sales_in_debt')}${can('view_sale_customer') && customer?.name ? ` (${customer.name})` : ''}` : t(lang,'sales_cash')}
+                          {sale.is_debt ? t(lang,'sales_in_debt') : t(lang,'sales_cash')}
                         </span>
                         {sale._isConsignment && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-700">РЕАЛИЗ.</span>}
                       </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {can('view_sale_customer') && (customer?.name || sale.customer_name) && sale.customer_name !== 'Неизвестный' ? (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setProfileCustomer(customer || { id: sale.customer_id, name: sale.customer_name, phone: sale.customer_phone, address: sale.customer_address }); }}
+                          className="text-left group/c"
+                        >
+                          <p className="text-sm font-medium text-indigo-600 group-hover/c:underline truncate max-w-[140px]">👤 {customer?.name || sale.customer_name}</p>
+                          <p className="text-xs text-slate-400 truncate max-w-[140px]">
+                            {customer?.phone && <span>📞 {customer.phone}</span>}
+                            {customer?.phone && customer?.address && <br />}
+                            {customer?.address && <span>📍 {customer.address}</span>}
+                            {!customer?.phone && !customer?.address && <span>—</span>}
+                          </p>
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -950,7 +971,18 @@ export default function Sales() {
                       <ChevronRight className="w-4 h-4 text-slate-300" />
                     </div>
                     {can('view_sale_customer') && (customer?.name || sale.customer_name) && sale.customer_name !== 'Неизвестный' && (
-                      <p className="text-xs text-slate-500 mt-1">👤 {customer?.name || sale.customer_name}</p>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setProfileCustomer(customer || { id: sale.customer_id, name: sale.customer_name, phone: sale.customer_phone || customer?.phone, address: customer?.address || sale.customer_address }); }}
+                        className="text-xs text-left mt-1 flex items-start gap-1 text-indigo-600 hover:underline"
+                      >
+                        <span className="font-medium">👤 {customer?.name || sale.customer_name}</span>
+                      </button>
+                    )}
+                    {can('view_sale_customer') && customer && (customer.phone || customer.address) && (
+                      <p className="text-xs text-slate-400 mt-0.5 flex flex-wrap gap-x-2">
+                        {customer.phone && <span>📞 {customer.phone}</span>}
+                        {customer.address && <span className="truncate">📍 {customer.address}</span>}
+                      </p>
                     )}
                     {(sale.seller_name || sale.seller_email) && (
                       <div className="flex items-center gap-1.5 mt-1">
@@ -1081,6 +1113,18 @@ export default function Sales() {
           customer={customers.find(c => c.id === selectedSale.customer_id)}
           onClose={() => setSelectedSale(null)}
           onUpdated={() => { loadData(); setSelectedSale(null); }}
+        />
+      )}
+
+      {/* Customer profile — who added / who sold, with avatars */}
+      {profileCustomer && (
+        <CustomerProfileDialog
+          customer={profileCustomer}
+          sales={unifiedSales}
+          employees={employees}
+          products={products}
+          consignmentProducts={consignmentProducts}
+          onClose={() => setProfileCustomer(null)}
         />
       )}
 

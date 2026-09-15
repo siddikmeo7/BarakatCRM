@@ -78,6 +78,7 @@ export default function Warehouses() {
   
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
+  const [hideSoldOut, setHideSoldOut] = useState(true);
   const [globalSearch, setGlobalSearch] = useState('');
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState([]);
@@ -324,27 +325,29 @@ export default function Warehouses() {
     return Object.values(map).filter(g => g.length > 1);
   })();
 
-  // Товары выбранного склада (с фильтрацией по модели)
-  const warehouseProducts = selectedWarehouse 
-    ? products.filter(p => {
-        if (!productSearch) return p.warehouse_id === selectedWarehouse.id;
-        const q = productSearch.toLowerCase();
-        return p.warehouse_id === selectedWarehouse.id && (
-          p.model?.toLowerCase().includes(q) ||
-          p.brand?.toLowerCase().includes(q) ||
-          p.product_type?.toLowerCase().includes(q)
-        );
+  // Товары выбранного склада (с фильтрацией по модели); распроданные скрываются по умолчанию
+  const warehouseProducts = selectedWarehouse
+     ? products.filter(p => {
+         if (hideSoldOut && (p.boxes_in_stock || 0) === 0) return false;
+         if (!productSearch) return p.warehouse_id === selectedWarehouse.id;
+         const q = productSearch.toLowerCase();
+         return p.warehouse_id === selectedWarehouse.id && (
+           p.model?.toLowerCase().includes(q) ||
+           p.brand?.toLowerCase().includes(q) ||
+           p.product_type?.toLowerCase().includes(q)
+         );
       })
-    : [];
+     : [];
 
   // Глобальный поиск: найти товар по всем складам
   const globalSearchResults = globalSearch.trim().length > 0
     ? (() => {
         const q = globalSearch.toLowerCase();
         const matched = products.filter(p =>
-          p.model?.toLowerCase().includes(q) ||
-          p.brand?.toLowerCase().includes(q) ||
-          p.product_type?.toLowerCase().includes(q)
+          (hideSoldOut ? (p.boxes_in_stock || 0) > 0 : true) &&
+          (p.model?.toLowerCase().includes(q) ||
+           p.brand?.toLowerCase().includes(q) ||
+           p.product_type?.toLowerCase().includes(q))
         );
         // Группируем по складу
         const byWarehouse = {};
@@ -889,19 +892,28 @@ export default function Warehouses() {
                   )}
                 </div>
               </div>
-              <div className="relative max-w-xs w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  value={productSearch}
-                  onChange={e => setProductSearch(e.target.value)}
-                  placeholder="Фильтр по модели..."
-                  className="w-full pl-9 pr-8 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-400"
-                />
-                {productSearch && (
-                  <button onClick={() => setProductSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <XIcon className="w-4 h-4 text-slate-400 hover:text-slate-600" />
-                  </button>
-                )}
+              <div className="flex items-center gap-2">
+                <div className="relative max-w-xs w-full">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    value={productSearch}
+                    onChange={e => setProductSearch(e.target.value)}
+                    placeholder="Фильтр по модели..."
+                    className="w-full pl-9 pr-8 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-400"
+                  />
+                  {productSearch && (
+                    <button onClick={() => setProductSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2">
+                      <XIcon className="w-4 h-4 text-slate-400 hover:text-slate-600" />
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={() => setHideSoldOut(v => !v)}
+                  className={`px-3 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${hideSoldOut ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
+                  title="Скрывать товары с 0 коробок на складе"
+                >
+                  {hideSoldOut ? '✓ Скрыть распроданные' : 'Показать распроданные'}
+                </button>
               </div>
             </div>
             <div className="overflow-x-auto overflow-y-auto max-h-96">
