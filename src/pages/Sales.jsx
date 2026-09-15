@@ -41,6 +41,7 @@ import {
   Users,
   Trash2
 } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import ViewToggle from '@/components/ui/ViewToggle';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth, startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
@@ -864,13 +865,12 @@ export default function Sales() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        {product?.photo_url ? (
-                          <img src={product.photo_url} alt="" className="w-9 h-9 rounded-lg object-cover" />
-                        ) : (
-                          <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
-                            <Package className="w-4 h-4 text-slate-400" />
-                          </div>
-                        )}
+                        <ProductPhoto
+                          photoUrl={product?.photo_url}
+                          productType={product?.product_type}
+                          className="w-9 h-9 rounded-lg"
+                          textClassName="text-[8px]"
+                        />
                         <div>
                           <p className="font-medium text-slate-900 text-sm">{product?.brand || t(lang,'sales_deleted')} {product?.model}</p>
                           {product && (
@@ -937,13 +937,12 @@ export default function Sales() {
                 className={`p-4 active:bg-slate-50 cursor-pointer ${sale.is_cancelled ? 'opacity-50' : ''}`}
               >
                 <div className="flex items-center gap-3">
-                  {product?.photo_url ? (
-                    <img src={product.photo_url} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-                      <Package className="w-6 h-6 text-slate-400" />
-                    </div>
-                  )}
+                  <ProductPhoto
+                    photoUrl={product?.photo_url}
+                    productType={product?.product_type}
+                    className="w-12 h-12 rounded-xl flex-shrink-0"
+                    textClassName="text-[10px]"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -1020,13 +1019,12 @@ export default function Sales() {
               className={`p-4 bg-white rounded-xl border border-slate-100 hover:shadow-md transition cursor-pointer ${sale.is_cancelled ? 'opacity-50' : ''}`}
             >
               <div className="flex items-center gap-3 mb-3">
-                {product?.photo_url ? (
-                  <img src={product.photo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
-                ) : (
-                  <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center">
-                    <Package className="w-6 h-6 text-slate-400" />
-                  </div>
-                )}
+                <ProductPhoto
+                  photoUrl={product?.photo_url}
+                  productType={product?.product_type}
+                  className="w-12 h-12 rounded-lg"
+                  textClassName="text-[10px]"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-slate-900 text-sm truncate">{product?.brand} {product?.model}</p>
                   {product && (
@@ -1187,13 +1185,12 @@ export default function Sales() {
                       }}
                       className={`p-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 ${formData.product_id === product.id ? (product._isConsignment ? 'bg-teal-50' : 'bg-indigo-50') : ''}`}
                     >
-                      {product.photo_url ? (
-                        <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                          <Package className="w-5 h-5 text-slate-400" />
-                        </div>
-                      )}
+                      <ProductPhoto
+                        photoUrl={product.photo_url}
+                        productType={product.product_type}
+                        className="w-10 h-10 rounded-lg"
+                        textClassName="text-[8px]"
+                      />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-slate-900">{product.brand} {product.model}</p>
@@ -1225,13 +1222,13 @@ export default function Sales() {
             {selectedProduct && (
               <div className={`p-4 rounded-xl ${formData.is_consignment ? 'bg-teal-50' : 'bg-indigo-50'}`}>
                 <div className="flex items-center gap-3 mb-3">
-                  {selectedProduct.photo_url ? (
-                    <img src={selectedProduct.photo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center">
-                      <Package className="w-6 h-6 text-slate-400" />
-                    </div>
-                  )}
+                  <ProductPhoto
+                    photoUrl={selectedProduct.photo_url}
+                    productType={selectedProduct.product_type}
+                    className="w-12 h-12 rounded-lg"
+                    placeholderClassName="bg-white dark:bg-slate-800"
+                    textClassName="text-[10px]"
+                  />
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-slate-900">{selectedProduct.brand} {selectedProduct.model}</p>

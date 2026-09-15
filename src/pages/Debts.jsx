@@ -13,6 +13,7 @@ import {
   Phone, MapPin, Loader2, History, ChevronRight, PlusCircle, Plus,
   CheckCircle, ArrowLeft, X, List
 } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import { format, parseISO, isToday, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
@@ -578,13 +579,12 @@ export default function Debts() {
                   {/* Карточка товара */}
                   <div className="p-4">
                     <div className="flex items-start gap-3">
-                      {prod?.photo_url ? (
-                        <img src={prod.photo_url} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-                          <Package className="w-6 h-6 text-slate-400" />
-                        </div>
-                      )}
+                      <ProductPhoto
+                        photoUrl={prod?.photo_url}
+                        productType={prod?.product_type}
+                        className="w-12 h-12 rounded-xl flex-shrink-0"
+                        textClassName="text-[10px]"
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-semibold text-slate-900 text-sm">

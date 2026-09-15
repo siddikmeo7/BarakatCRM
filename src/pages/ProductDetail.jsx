@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Package, ArrowLeft, Box, Layers, Hash, TrendingUp, Calendar, User, History, Plus, Edit2, Trash2 } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
@@ -143,13 +144,12 @@ export default function ProductDetail() {
         <div className="flex flex-col md:flex-row gap-6">
           {/* Photo */}
           <div className="w-full md:w-64 h-64 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden">
-            {product.photo_url ? (
-              <img src={product.photo_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Package className="w-24 h-24 text-slate-300" />
-              </div>
-            )}
+            <ProductPhoto
+              photoUrl={product.photo_url}
+              productType={product.product_type}
+              className="w-full h-full"
+              textClassName="text-2xl"
+            />
           </div>
 
           {/* Info */}

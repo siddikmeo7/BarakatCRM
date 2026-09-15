@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Package, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 
 export default function MoveProductsDialog({ products, warehouses, currentWarehouse, onClose, onMoved }) {
   const [selections, setSelections] = useState({}); // { productId: { boxes: 0, toWarehouseId: '' } }
@@ -101,13 +102,12 @@ export default function MoveProductsDialog({ products, warehouses, currentWareho
                 return (
                   <div key={product.id} className={`p-3 rounded-xl border transition-all ${isSelected ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'}`}>
                     <div className="flex items-center gap-3 mb-2">
-                      {product.photo_url ? (
-                        <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                          <Package className="w-5 h-5 text-slate-400" />
-                        </div>
-                      )}
+                      <ProductPhoto
+                        photoUrl={product.photo_url}
+                        productType={product.product_type}
+                        className="w-10 h-10 rounded-lg flex-shrink-0"
+                        textClassName="text-[8px]"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-slate-900 text-sm truncate">{product.brand} {product.model}</p>
                         <p className="text-xs text-slate-500">На складе: <span className="font-semibold text-indigo-600">{maxBoxes}</span> коробок</p>

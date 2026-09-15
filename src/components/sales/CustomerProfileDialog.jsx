@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { User, Phone, MapPin, Mail, ShoppingBag, UserPlus, X, MessageCircle, Send, Package } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -69,6 +70,13 @@ export default function CustomerProfileDialog({ customer, sales, employees, prod
       ? consignmentProducts?.find(p => p.id === sale.product_id)
       : products?.find(p => p.id === sale.product_id);
     return p?.photo_url || null;
+  };
+
+  const prodType = (sale) => {
+    const p = sale._isConsignment
+      ? consignmentProducts?.find(p => p.id === sale.product_id)
+      : products?.find(p => p.id === sale.product_id);
+    return p?.product_type || '';
   };
 
   const prodMeta = (sale) => {
@@ -189,13 +197,13 @@ export default function CustomerProfileDialog({ customer, sales, employees, prod
                 const meta = prodMeta(s);
                 return (
                   <div key={s.id} className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
-                    {photo ? (
-                      <img src={photo} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-9 h-9 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-                        <Package className="w-4 h-4 text-slate-400" />
-                      </div>
-                    )}
+                    <ProductPhoto
+                      photoUrl={photo}
+                      productType={prodType(s)}
+                      className="w-9 h-9 rounded-lg flex-shrink-0"
+                      placeholderClassName="bg-slate-200 dark:bg-slate-700"
+                      textClassName="text-[8px]"
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{prodName(s)}</p>
                       {meta && <p className="text-[11px] text-slate-400 truncate">{meta}</p>}

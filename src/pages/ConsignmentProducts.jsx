@@ -9,6 +9,7 @@ import {
   Plus, PackageOpen, TrendingUp, Box, Trash2,
   Loader2, ShoppingCart, Search, Wallet, Edit
 } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 
 export default function ConsignmentProducts() {
   const [business, setBusiness] = useState(null);
@@ -268,13 +269,12 @@ export default function ConsignmentProducts() {
             return (
               <div key={product.id} className={`bg-white dark:bg-slate-900 rounded-xl border ${isLowStock ? 'border-red-200 dark:border-red-800 opacity-60' : 'border-slate-100 dark:border-slate-800'} p-4 shadow-sm`}>
                 <div className="flex items-start gap-3 mb-3">
-                  {product.photo_url ? (
-                    <img src={product.photo_url} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-14 h-14 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                      <PackageOpen className="w-7 h-7 text-slate-400" />
-                    </div>
-                  )}
+                  <ProductPhoto
+                    photoUrl={product.photo_url}
+                    productType={product.product_type}
+                    className="w-14 h-14 rounded-lg flex-shrink-0"
+                    textClassName="text-[10px]"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">{product.brand} {product.model}</p>
                     <p className="text-xs text-slate-400 truncate">

@@ -5,6 +5,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import DateFilter from '@/components/filters/DateFilter';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Box, TrendingUp, Calendar, Package } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -145,13 +146,12 @@ export default function WarehouseSalesHistory() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        {product?.photo_url ? (
-                          <img src={product.photo_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                            <Package className="w-4 h-4 text-slate-400" />
-                          </div>
-                        )}
+                        <ProductPhoto
+                          photoUrl={product?.photo_url}
+                          productType={product?.product_type}
+                          className="w-8 h-8 rounded-lg"
+                          textClassName="text-[7px]"
+                        />
                         <div>
                           <p className="text-sm font-medium text-slate-900">{product?.brand}</p>
                           <p className="text-xs text-slate-500">{product?.model}</p>

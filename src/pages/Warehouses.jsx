@@ -43,6 +43,7 @@ import {
   ShoppingCart,
   Eye
 } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import { format, parseISO } from 'date-fns';
 import ViewToggle from '@/components/ui/ViewToggle';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
@@ -969,13 +970,13 @@ export default function Warehouses() {
                        )}
                        <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            {product.photo_url ? (
-                              <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                            ) : (
-                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${noStock ? 'bg-red-100' : lowStock ? 'bg-orange-100' : 'bg-slate-100'}`}>
-                                <Package className={`w-5 h-5 ${noStock ? 'text-red-400' : lowStock ? 'text-orange-400' : 'text-slate-400'}`} />
-                              </div>
-                            )}
+                            <ProductPhoto
+                              photoUrl={product.photo_url}
+                              productType={product.product_type}
+                              className="w-10 h-10 rounded-lg"
+                              placeholderClassName={noStock ? 'bg-red-100' : lowStock ? 'bg-orange-100' : 'bg-slate-100 dark:bg-slate-800'}
+                              textClassName={noStock ? 'text-red-500 text-[8px]' : lowStock ? 'text-orange-500 text-[8px]' : 'text-slate-500 text-[8px]'}
+                            />
                             <div>
                               <p className="font-medium text-slate-900">{product.brand}</p>
                               <p className="text-sm text-slate-500">{product.model}</p>

@@ -39,6 +39,7 @@ import {
   Search,
   Clock
 } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import BulkAddProductsDialog from '@/components/products/BulkAddProductsDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
 import ConsignmentOwnerPicker from '@/components/products/ConsignmentOwnerPicker';
@@ -883,13 +884,12 @@ export default function Products() {
                 onClick={() => selectMode ? toggleSelect(product.id) : handleOpenDialog(product)}
                 className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer ${isLowStock ? 'border-red-400 animate-pulse-border' : 'border-slate-100'} ${selectMode && selectedIds.has(product.id) ? 'ring-2 ring-indigo-500' : ''}`}>
                 <div className="aspect-square bg-slate-100 relative">
-                  {product.photo_url ? (
-                    <img src={product.photo_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package className="w-10 h-10 text-slate-300" />
-                    </div>
-                  )}
+                  <ProductPhoto
+                    photoUrl={product.photo_url}
+                    productType={product.product_type}
+                    className="w-full h-full"
+                    textClassName="text-sm"
+                  />
                   {isLowStock && (
                     <div className="absolute top-1 left-1 bg-red-500 text-white text-[9px] font-bold px-1 py-0.5 rounded-full">⚠️</div>
                   )}
@@ -938,13 +938,12 @@ export default function Products() {
                         {selectedIds.has(product.id) && <span className="text-white text-[10px] font-bold">✓</span>}
                       </div>
                     )}
-                    {product.photo_url ? (
-                      <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                        <Package className="w-5 h-5 text-slate-300" />
-                      </div>
-                    )}
+                    <ProductPhoto
+                      photoUrl={product.photo_url}
+                      productType={product.product_type}
+                      className="w-10 h-10 rounded-lg flex-shrink-0"
+                      textClassName="text-[8px]"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
                         <p className={`text-sm font-semibold truncate ${isLowStock ? 'text-red-700' : 'text-slate-900'}`}>{product.brand} {product.model}</p>
@@ -1127,13 +1126,12 @@ export default function Products() {
             <div>
               <Label>{t(lang,'prod_photo')}</Label>
               <div className="mt-2 flex items-center gap-4">
-                {formData.photo_url ? (
-                  <img src={formData.photo_url} alt="" className="w-24 h-24 rounded-xl object-cover" />
-                ) : (
-                  <div className="w-24 h-24 rounded-xl bg-slate-100 flex items-center justify-center">
-                    <Package className="w-8 h-8 text-slate-400" />
-                  </div>
-                )}
+                <ProductPhoto
+                  photoUrl={formData.photo_url}
+                  productType={formData.product_type}
+                  className="w-24 h-24 rounded-xl"
+                  textClassName="text-sm"
+                />
                 <label className="cursor-pointer">
                   <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
                   <div className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2">

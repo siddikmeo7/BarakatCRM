@@ -30,6 +30,7 @@ import {
   Calendar,
   ChevronRight
 } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -712,10 +713,13 @@ export default function Analytics() {
                     return (
                       <div key={pid} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-indigo-50 transition-colors">
                         <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
-                        {product.photo_url
-                          ? <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                          : <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0"><Package className="w-5 h-5 text-slate-400" /></div>
-                        }
+                        <ProductPhoto
+                          photoUrl={product.photo_url}
+                          productType={product.product_type}
+                          className="w-10 h-10 rounded-lg flex-shrink-0"
+                          placeholderClassName="bg-slate-200 dark:bg-slate-700"
+                          textClassName="text-[8px]"
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-slate-900 text-sm truncate">{product.brand} {product.model}</p>
                           <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500 mt-0.5">
@@ -800,13 +804,13 @@ export default function Analytics() {
                   <div className="w-5 md:w-8 h-5 md:h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-xs md:text-sm flex-shrink-0">
                     {index + 1}
                   </div>
-                  {product.photo_url ? (
-                    <img src={product.photo_url} alt="" className="w-7 md:w-12 h-7 md:h-12 rounded-lg object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-7 md:w-12 h-7 md:h-12 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0">
-                      <Package className="w-3 md:w-6 h-3 md:h-6 text-slate-400" />
-                    </div>
-                  )}
+                  <ProductPhoto
+                    photoUrl={product.photo_url}
+                    productType={product.product_type}
+                    className="w-7 md:w-12 h-7 md:h-12 rounded-lg flex-shrink-0"
+                    placeholderClassName="bg-slate-200 dark:bg-slate-700"
+                    textClassName="text-[7px] md:text-[10px]"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-slate-900 text-xs md:text-sm truncate">{product.brand} {product.model}</p>
                     <p className="text-xs text-slate-500">{stats.boxes} кор.</p>
@@ -852,13 +856,12 @@ export default function Analytics() {
                   const lossPerBox = sale.boxes_sold ? Math.round((sale.profit || 0) / sale.boxes_sold) : 0;
                   return (
                     <div key={sale.id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-red-50 transition-colors">
-                      {product?.photo_url ? (
-                        <img src={product.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                          <Package className="w-5 h-5 text-slate-300" />
-                        </div>
-                      )}
+                      <ProductPhoto
+                        photoUrl={product?.photo_url}
+                        productType={product?.product_type}
+                        className="w-10 h-10 rounded-lg flex-shrink-0"
+                        textClassName="text-[8px]"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-slate-800 text-sm truncate">
                           {product ? `${product.brand} ${product.model}` : 'Неизвестный товар'}

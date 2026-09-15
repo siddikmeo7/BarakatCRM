@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Warehouse, Package, Loader2, CheckCheck, AlertCircle, Trash2, CheckSquare, Square, ChevronDown } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 
 export default function OrphanedProductsDialog({ open, onClose, orphanedProducts, warehouses, onSaved }) {
   const [selected, setSelected] = useState(() => new Set(orphanedProducts.map(p => p.id)));
@@ -135,13 +136,12 @@ export default function OrphanedProductsDialog({ open, onClose, orphanedProducts
                   </div>
 
                   {/* Photo */}
-                  {p.photo_url ? (
-                    <img src={p.photo_url} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                      <Package className="w-4 h-4 text-slate-300" />
-                    </div>
-                  )}
+                  <ProductPhoto
+                    photoUrl={p.photo_url}
+                    productType={p.product_type}
+                    className="w-9 h-9 rounded-lg flex-shrink-0"
+                    textClassName="text-[8px]"
+                  />
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">

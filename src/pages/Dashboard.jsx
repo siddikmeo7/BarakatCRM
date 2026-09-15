@@ -23,6 +23,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { t } from '@/components/i18n/translations';
 import { useNavigate } from 'react-router-dom';
@@ -248,13 +249,13 @@ export default function Dashboard() {
                 <div className="w-6 h-6 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs flex-shrink-0">
                   {index + 1}
                 </div>
-                {item.product.photo_url ? (
-                  <img src={item.product.photo_url} alt="" className="w-8 h-8 rounded-md object-cover flex-shrink-0" />
-                ) : (
-                  <div className="w-8 h-8 rounded-md bg-slate-200 flex items-center justify-center flex-shrink-0">
-                    <Package className="w-4 h-4 text-slate-400" />
-                  </div>
-                )}
+                <ProductPhoto
+                  photoUrl={item.product.photo_url}
+                  productType={item.product.product_type}
+                  className="w-8 h-8 rounded-md flex-shrink-0"
+                  placeholderClassName="bg-slate-200 dark:bg-slate-700"
+                  textClassName="text-[7px]"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-slate-900 truncate">{item.product.brand} {item.product.model}</p>
                   <p className="text-xs text-slate-400">{item.boxes} {t(lang,'dash_boxes')}</p>

@@ -9,6 +9,7 @@ import MandatoryCustomerPicker from '@/components/sales/MandatoryCustomerPicker'
 import SaleNotifyChannels from '@/components/sales/SaleNotifyChannels';
 import { buildSaleMessage, notifyCustomerChannels } from '@/lib/customerNotify';
 import { Plus, Trash2, Package, Search, Loader2, ShoppingCart, AlertTriangle, Users, Clock } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import { t } from '@/components/i18n/translations';
 import { useDraft } from '@/hooks/useDraft';
 
@@ -425,13 +426,12 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
                             }}
                             className="p-2.5 hover:bg-slate-50 cursor-pointer flex items-center gap-2"
                           >
-                            {p.photo_url ? (
-                              <img src={p.photo_url} alt="" className="w-8 h-8 rounded object-cover" />
-                            ) : (
-                              <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center">
-                                <Package className="w-4 h-4 text-slate-400" />
-                              </div>
-                            )}
+                            <ProductPhoto
+                              photoUrl={p.photo_url}
+                              productType={p.product_type}
+                              className="w-8 h-8 rounded"
+                              textClassName="text-[7px]"
+                            />
                             <div>
                               <p className="text-sm font-medium text-slate-900">{p.brand} {p.model}</p>
                               <p className="text-xs text-slate-400">

@@ -11,6 +11,7 @@ import {
   Package, Edit2, Trash2, Clock, AlertTriangle, 
   CheckCircle, XCircle, Loader2, ChevronDown, ChevronUp, CreditCard
 } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -280,13 +281,13 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
         <div className="space-y-4">
           {/* Товар */}
           <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-            {product?.photo_url ? (
-              <img src={product.photo_url} alt="" className="w-14 h-14 rounded-xl object-cover" />
-            ) : (
-              <div className="w-14 h-14 rounded-xl bg-slate-200 flex items-center justify-center">
-                <Package className="w-7 h-7 text-slate-400" />
-              </div>
-            )}
+            <ProductPhoto
+              photoUrl={product?.photo_url}
+              productType={product?.product_type}
+              className="w-14 h-14 rounded-xl"
+              placeholderClassName="bg-slate-200 dark:bg-slate-700"
+              textClassName="text-[10px]"
+            />
             <div>
               <p className="font-semibold text-slate-900">{product?.brand} {product?.model}</p>
               <p className="text-sm text-slate-500">{product?.color} • {product?.product_type}</p>

@@ -14,6 +14,7 @@ import {
   XCircle, Edit3, PlusCircle, Search, Square, CheckSquare, ChevronDown,
   BarChart2, X, ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import { format, parseISO, startOfMonth, endOfMonth, startOfDay, endOfDay, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -859,9 +860,12 @@ export default function ActivityLog() {
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
                     {detailLog.action_type === 'delete' ? 'Данные удалённой записи:' : 'Данные записи:'}
                   </p>
-                  {detailLog.entity_data.photo_url && (
-                    <img src={detailLog.entity_data.photo_url} alt="" className="w-full h-40 object-cover rounded-xl mb-3" />
-                  )}
+                  <ProductPhoto
+                    photoUrl={detailLog.entity_data.photo_url}
+                    productType={detailLog.entity_data.product_type}
+                    className="w-full h-40 rounded-xl mb-3"
+                    textClassName="text-xl"
+                  />
                   <div className="space-y-1 bg-slate-50 rounded-xl p-3">
                     {Object.entries(detailLog.entity_data)
                       .filter(([k]) => !['id', 'created_date', 'updated_date', 'business_id', 'photo_url', 'changes', 'edit_history'].includes(k))

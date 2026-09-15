@@ -2,6 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Package, ChevronRight, X } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -39,6 +40,13 @@ export default function CustomerPurchasesDialog({
       ? consignmentProducts.find(p => p.id === sale.product_id)
       : products.find(p => p.id === sale.product_id);
     return p?.photo_url || null;
+  };
+
+  const productTypeOf = (sale) => {
+    const p = sale._isConsignment
+      ? consignmentProducts.find(p => p.id === sale.product_id)
+      : products.find(p => p.id === sale.product_id);
+    return p?.product_type || '';
   };
   const productMeta = (sale) => {
     const p = sale._isConsignment
@@ -103,13 +111,12 @@ export default function CustomerPurchasesDialog({
                 onClick={() => onSelectSale && onSelectSale(sale)}
                 className={`flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer ${sale.is_cancelled ? 'opacity-50' : ''}`}
               >
-                {photo ? (
-                  <img src={photo} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                    <Package className="w-5 h-5 text-slate-400" />
-                  </div>
-                )}
+                <ProductPhoto
+                  photoUrl={photo}
+                  productType={productTypeOf(sale)}
+                  className="w-10 h-10 rounded-lg flex-shrink-0"
+                  textClassName="text-[8px]"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-900 dark:text-white text-sm truncate">{productName(sale)}</p>
                   <p className="text-xs text-slate-400 truncate">{productMeta(sale)}</p>

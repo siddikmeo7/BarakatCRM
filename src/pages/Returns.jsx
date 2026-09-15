@@ -19,6 +19,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
+import ProductPhoto from '@/components/products/ProductPhoto';
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -485,9 +486,12 @@ export default function Returns() {
                             setReturnWarning('');
                           }}
                           className={`p-2 rounded-lg cursor-pointer text-sm flex items-center gap-3 transition-colors ${isSelected ? 'bg-indigo-100 border border-indigo-300' : 'hover:bg-slate-50 border border-transparent'}`}>
-                          {p?.photo_url
-                            ? <img src={p.photo_url} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
-                            : <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0"><Package className="w-4 h-4 text-slate-400"/></div>}
+                          <ProductPhoto
+                            photoUrl={p?.photo_url}
+                            productType={p?.product_type}
+                            className="w-9 h-9 rounded-lg flex-shrink-0"
+                            textClassName="text-[8px]"
+                          />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-slate-900 truncate">{p?.brand} {p?.model}</p>
                             <p className="text-xs text-slate-400">
