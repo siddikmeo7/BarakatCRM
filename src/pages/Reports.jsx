@@ -24,6 +24,7 @@ import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
@@ -1327,9 +1328,12 @@ export default function Reports() {
                   return (
                     <div key={stat.email} className="border border-slate-100 rounded-xl p-4">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 ${
-                          i === 0 ? 'bg-amber-400' : i === 1 ? 'bg-slate-400' : 'bg-indigo-400'
-                        }`}>{i + 1}</div>
+                        <div className="relative flex-shrink-0">
+                          <EmployeeAvatar employee={stat.employee} sizeClass="w-10 h-10 rounded-2xl text-sm" />
+                          <span className={`absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold ${
+                            i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : 'bg-indigo-500'
+                          }`}>{i + 1}</span>
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-slate-900 truncate">{name}</p>
                           <p className="text-xs text-slate-400">{stat.email}</p>

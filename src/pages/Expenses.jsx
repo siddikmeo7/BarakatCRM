@@ -17,6 +17,7 @@ import SearchInput from '@/components/filters/SearchInput';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import BackButton from '@/components/ui/BackButton';
 import OwnerProfitControl from '@/components/expenses/OwnerProfitControl';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 const CATEGORIES = [
   { value: 'Аренда', label: 'Аренда', icon: Home, color: 'bg-blue-100 text-blue-600' },
@@ -52,6 +53,7 @@ export default function Expenses() {
   const [deleting, setDeleting] = useState(null);
   const [business, setBusiness] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [employees, setEmployees] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [viewingExpense, setViewingExpense] = useState(null);
@@ -88,6 +90,10 @@ export default function Expenses() {
       setBusiness(biz);
       const data = await base44.entities.Expense.filter({ business_id: biz.id });
       setExpenses(data.sort((a, b) => new Date(b.expense_date) - new Date(a.expense_date)));
+      try {
+        const emps = await base44.entities.Employee.filter({ business_id: biz.id });
+        setEmployees(emps);
+      } catch {}
     } finally {
       setLoading(false);
     }
@@ -277,6 +283,7 @@ export default function Expenses() {
   const isOwnExpense = (e) => e.created_by_id === currentUser?.id;
   const canEdit = (e) => canManageAny || (isOwnExpense(e) && hasAccess);
   const canDelete = (e) => canManageAny || isOwnExpense(e);
+  const getEmpByName = (nm) => employees.find(e => e.name === nm) || null;
 
   return (
     <div className="space-y-5">

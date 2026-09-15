@@ -11,12 +11,14 @@ export default function EmployeeAvatar({
   name,
   isAdmin,
   size = 'md',
+  sizeClass: sizeClassOverride,
   className = '',
 }) {
   const url = avatarUrl || employee?.avatar_url || null;
   const displayName = name || employee?.name || '?';
   const admin = isAdmin ?? employee?.is_admin ?? false;
-  const sizeClass = size === 'sm' ? 'w-9 h-9 rounded-xl text-sm' : size === 'lg' ? 'w-16 h-16 rounded-2xl text-2xl' : 'w-12 h-12 rounded-2xl text-lg';
+  const sizeClass = sizeClassOverride || (size === 'xs' ? 'w-8 h-8 rounded-lg text-xs' : size === 'sm' ? 'w-9 h-9 rounded-xl text-sm' : size === 'lg' ? 'w-16 h-16 rounded-2xl text-2xl' : 'w-12 h-12 rounded-2xl text-lg');
+  const emojiFont = size === 'xs' ? '0.9rem' : size === 'sm' ? '1.1rem' : size === 'lg' ? '1.75rem' : '1.5rem';
   const grad = admin ? 'from-indigo-500 to-purple-500' : 'from-slate-400 to-slate-500';
 
   // Emoji avatar
@@ -26,7 +28,7 @@ export default function EmployeeAvatar({
     if (av) {
       return (
         <div className={`${sizeClass} bg-gradient-to-br ${av.bg} flex items-center justify-center flex-shrink-0 shadow-md ${className}`}>
-          <span style={{ fontSize: size === 'sm' ? '1.1rem' : size === 'lg' ? '1.75rem' : '1.5rem' }}>{av.emoji}</span>
+          <span style={{ fontSize: emojiFont }}>{av.emoji}</span>
         </div>
       );
     }

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
 import {
   startOfDay, endOfDay, isWithinInterval, parseISO, format, subDays,
   isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
@@ -9,6 +10,7 @@ import { Users, TrendingUp, ShoppingCart, Calendar, Package } from 'lucide-react
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatCompact } from '@/lib/formatCompact';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 const PERIODS = [
   { key: 'today', label: 'Сегодня' },
@@ -41,6 +43,17 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [useCustom, setUseCustom] = useState(false);
+  const [employees, setEmployees] = useState([]);
+
+  useEffect(() => {
+    const biz = window.__barakatBusiness;
+    if (!biz) return;
+    base44.entities.Employee.filter({ business_id: biz.id })
+      .then(setEmployees)
+      .catch(() => {});
+  }, []);
+
+  const getEmpByEmail = (email) => employees.find(e => e.user_email === email) || null;
 
   const masked = '•••••';
 
@@ -187,11 +200,12 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
             const share = totalRevenue ? ((emp.revenue / totalRevenue) * 100).toFixed(1) : 0;
             return (
               <div key={emp.email || emp.name + i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-rose-50 transition-colors">
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0",
-                  i === 0 ? "bg-amber-100 text-amber-700" : i === 1 ? "bg-slate-200 text-slate-700" : i === 2 ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500"
-                )}>
-                  {i + 1}
+                <div className="relative flex-shrink-0">
+                  <EmployeeAvatar employee={getEmpByEmail(emp.email)} name={emp.name} sizeClass="w-9 h-9 rounded-2xl text-sm" />
+                  <span className={cn(
+                    "absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold",
+                    i === 0 ? "bg-amber-500" : i === 1 ? "bg-slate-500" : i === 2 ? "bg-orange-500" : "bg-slate-400"
+                  )}>{i + 1}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-slate-900 text-sm truncate">{emp.name}</p>

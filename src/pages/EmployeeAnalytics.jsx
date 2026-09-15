@@ -21,6 +21,7 @@ import {
   eachWeekOfInterval, differenceInDays, subMonths, subWeeks
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 // ─── Constants ───────────────────────────────────────────────
 const COLORS = [
@@ -86,6 +87,7 @@ function buildStats(employees, salesList, allTimeSalesMap, consignmentList = [])
     map[emp.user_email] = {
       id: emp.id, name: emp.name || emp.user_email.split('@')[0],
       email: emp.user_email, avatar: (emp.name || emp.user_email).charAt(0).toUpperCase(),
+      avatar_url: emp.avatar_url, is_admin: emp.is_admin,
       count: 0, revenue: 0, profit: 0, boxes: 0, debtCount: 0, debtAmount: 0, cancelCount: 0,
       consignmentCount: 0, consignmentProfit: 0, consignmentBoxes: 0, consignmentOwnerAmount: 0,
       allTime: allTimeSalesMap[emp.user_email] || { count: 0, revenue: 0, profit: 0, debtCount: 0 }
@@ -496,9 +498,9 @@ export default function EmployeeAnalytics() {
                     onClick={() => { setSelectedEmp(emp.email); setTab('details'); }}
                     className={`p-4 cursor-pointer transition-all ${isTop ? 'bg-amber-50/40' : noSales ? 'opacity-50' : 'hover:bg-indigo-50/30'}`}>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 text-white shadow-sm"
-                        style={{ backgroundColor: COLORS[idx % COLORS.length] }}>
-                        {isTop ? '🥇' : emp.avatar}
+                      <div className="relative flex-shrink-0">
+                        <EmployeeAvatar avatarUrl={emp.avatar_url} name={emp.name} isAdmin={emp.is_admin} sizeClass="w-10 h-10 rounded-xl text-sm" />
+                        {isTop && <span className="absolute -top-1 -right-1 text-base">🥇</span>}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -574,10 +576,7 @@ export default function EmployeeAnalytics() {
                       {medals[idx] || `#${idx+1}`}
                     </div>
                     {/* Avatar */}
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-lg font-bold flex-shrink-0 shadow"
-                      style={{ backgroundColor: color }}>
-                      {emp.avatar}
-                    </div>
+                    <EmployeeAvatar avatarUrl={emp.avatar_url} name={emp.name} isAdmin={emp.is_admin} sizeClass="w-12 h-12 rounded-2xl text-lg" />
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -632,10 +631,7 @@ export default function EmployeeAnalytics() {
                   selectedEmp === emp.email ? 'text-white shadow-md border-transparent' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
                 }`}
                 style={selectedEmp === emp.email ? { backgroundColor: COLORS[idx % COLORS.length] } : {}}>
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{ backgroundColor: selectedEmp === emp.email ? 'rgba(255,255,255,0.25)' : COLORS[idx % COLORS.length], color: 'white' }}>
-                  {emp.avatar}
-                </span>
+                <EmployeeAvatar avatarUrl={emp.avatar_url} name={emp.name} isAdmin={emp.is_admin} sizeClass="w-5 h-5 rounded-full text-[10px]" />
                 {emp.name}
               </button>
             ))}
@@ -693,8 +689,7 @@ export default function EmployeeAnalytics() {
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="h-2" style={{ backgroundColor: color }} />
                   <div className="p-5 flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg flex-shrink-0"
-                      style={{ backgroundColor: color }}>{emp.avatar}</div>
+                    <EmployeeAvatar avatarUrl={emp.avatar_url} name={emp.name} isAdmin={emp.is_admin} sizeClass="w-16 h-16 rounded-2xl text-2xl" className="shadow-lg" />
                     <div className="flex-1">
                       <h2 className="text-xl font-bold text-slate-900">{emp.name}</h2>
                       <p className="text-sm text-slate-400">{emp.email}</p>
@@ -910,10 +905,7 @@ export default function EmployeeAnalytics() {
                         side.value === emp.email ? 'text-white border-transparent shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                       }`}
                       style={side.value === emp.email ? { backgroundColor: side.color } : {}}>
-                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                        style={{ backgroundColor: COLORS[idx % COLORS.length] }}>
-                        {emp.avatar}
-                      </span>
+                      <EmployeeAvatar avatarUrl={emp.avatar_url} name={emp.name} isAdmin={emp.is_admin} sizeClass="w-6 h-6 rounded-full text-[10px]" />
                       <span className="flex-1 truncate">{emp.name}</span>
                       {side.value === emp.email && <CheckCircle className="w-3 h-3" />}
                     </button>
@@ -970,13 +962,17 @@ export default function EmployeeAnalytics() {
                 {/* VS Header */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-4">
                   <div className="flex-1 text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-indigo-500 flex items-center justify-center text-white text-xl font-bold mx-auto mb-2">{empA.avatar}</div>
+                    <div className="mx-auto mb-2">
+                      <EmployeeAvatar avatarUrl={empA.avatar_url} name={empA.name} isAdmin={empA.is_admin} sizeClass="w-14 h-14 rounded-2xl text-xl" />
+                    </div>
                     <p className="font-bold text-slate-900">{empA.name}</p>
                     {prevA && <GrowthBadge current={empA.revenue} previous={prevA.revenue} />}
                   </div>
                   <div className="text-2xl font-black text-slate-200">VS</div>
                   <div className="flex-1 text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center text-white text-xl font-bold mx-auto mb-2">{empB.avatar}</div>
+                    <div className="mx-auto mb-2">
+                      <EmployeeAvatar avatarUrl={empB.avatar_url} name={empB.name} isAdmin={empB.is_admin} sizeClass="w-14 h-14 rounded-2xl text-xl" />
+                    </div>
                     <p className="font-bold text-slate-900">{empB.name}</p>
                     {prevB && <GrowthBadge current={empB.revenue} previous={prevB.revenue} />}
                   </div>
@@ -1106,9 +1102,7 @@ export default function EmployeeAnalytics() {
                   onClick={() => { setSelectedEmp(emp.email); setTab('details'); }}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ backgroundColor: color }}>
-                        {emp.avatar}
-                      </div>
+                      <EmployeeAvatar avatarUrl={emp.avatar_url} name={emp.name} isAdmin={emp.is_admin} sizeClass="w-8 h-8 rounded-xl text-sm" />
                       <div>
                         <p className="font-semibold text-slate-900 text-sm">{emp.name}</p>
                         <p className="text-[10px] text-slate-400">{activeDays} дн. активности</p>
