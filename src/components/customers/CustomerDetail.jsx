@@ -10,6 +10,7 @@ import {
   CreditCard, Wallet, ShoppingBag, UserCheck, Clock, FileText, Save, X, AlertCircle,
   DollarSign
 } from 'lucide-react';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 export default function CustomerDetail({ customer, onBack, onEdit, onDelete, business }) {
   const { can } = useEmployeeAccess();
@@ -21,6 +22,7 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
+  const [addedByEmployee, setAddedByEmployee] = useState(null);
 
   useEffect(() => {
     setNotesValue(customer.notes || '');
@@ -40,6 +42,14 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
       setSales(salesData);
       setPayments(paymentsData);
       setProducts(productsData);
+
+      // Загружаем профиль сотрудника, который добавил клиента
+      if (customer.added_by_employee_id) {
+        try {
+          const emp = await base44.entities.Employee.get(customer.added_by_employee_id);
+          if (emp) setAddedByEmployee(emp);
+        } catch (_) { /* доступ может быть ограничен */ }
+      }
     } catch (e) {
       console.error('Error loading customer activity:', e);
     } finally {
@@ -158,22 +168,17 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
           <UserCheck className="w-3.5 h-3.5" /> Кто добавил клиента
         </p>
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-            c.added_by_role === 'owner'
-              ? 'bg-gradient-to-br from-indigo-500 to-purple-600'
-              : c.added_by_role === 'admin'
-              ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
-              : 'bg-gradient-to-br from-slate-400 to-slate-500'
-          }`}>
-            <span className="text-white font-bold text-sm">
-              {(c.added_by_employee_name || c.added_by_email || '?').charAt(0).toUpperCase()}
-            </span>
-          </div>
+          <EmployeeAvatar
+            employee={addedByEmployee}
+            name={c.added_by_employee_name || c.added_by_email || '?'}
+            isAdmin={c.added_by_role === 'admin' || c.added_by_role === 'owner'}
+            sizeClass="w-12 h-12 rounded-2xl text-lg"
+          />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
               {c.added_by_employee_name || c.added_by_email || 'Неизвестно'}
             </p>
-            <div className="flex items-center gap-1.5 mt-0.5">
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
               {c.added_by_role === 'owner' && (
                 <span className="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full text-[10px] font-semibold">👑 Владелец</span>
               )}

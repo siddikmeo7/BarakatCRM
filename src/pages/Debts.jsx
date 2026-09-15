@@ -21,6 +21,7 @@ import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import { createPageUrl } from '@/utils';
 import SaleNotifyChannels from '@/components/sales/SaleNotifyChannels';
 import { buildPaymentMessage, notifyCustomerChannels } from '@/lib/customerNotify';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 // Проверяет, есть ли у клиента продажа с просроченным или сегодняшним сроком оплаты
 const getDueDateStatus = (salesList) => {
@@ -42,6 +43,7 @@ export default function Debts() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -104,15 +106,17 @@ export default function Debts() {
       if (biz) {
         setBusiness(biz);
         setLang(biz.language || 'ru');
-        const [salesData, productsData, customersData, paymentsData] = await Promise.all([
+        const [salesData, productsData, customersData, employeesData, paymentsData] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id, is_debt: true }),
           base44.entities.Product.filter({ business_id: biz.id }),
           base44.entities.Customer.filter({ business_id: biz.id }),
+          base44.entities.Employee.filter({ business_id: biz.id }),
           base44.entities.DebtPayment.filter({ business_id: biz.id })
         ]);
         setSales(salesData.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
         setProducts(productsData);
         setCustomers(customersData);
+        setEmployees(employeesData);
         setPayments(paymentsData);
 
         // Если пришли из раздела клиентов с выбранным customerId — открываем его
@@ -438,6 +442,19 @@ export default function Debts() {
     const dm = customerDebtMap[c.id] || { totalAmount: 0, totalPaid: 0, sales: [] };
     const totalRemaining = dm.totalAmount - dm.totalPaid;
 
+    // Определяем ответственного сотрудника — того, у кого клиент чаще всего покупал в долг
+    const sellerCounts = {};
+    customerSales.forEach(s => {
+      if (!s.is_cancelled && s.seller_email) {
+        sellerCounts[s.seller_email] = (sellerCounts[s.seller_email] || 0) + 1;
+      }
+    });
+    const topSellerEmail = Object.entries(sellerCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+    const responsibleEmp = topSellerEmail ? employees.find(e => e.user_email === topSellerEmail) : null;
+    const responsibleName = topSellerEmail
+      ? (responsibleEmp?.name || customerSales.find(s => s.seller_email === topSellerEmail)?.seller_name || topSellerEmail)
+      : (c.added_by_employee_name || c.added_by_email || null);
+
     const toggleSaleHistory = (saleId) => {
       setExpandedSaleHistory(prev => ({ ...prev, [saleId]: !prev[saleId] }));
     };
@@ -542,6 +559,33 @@ export default function Debts() {
             </div>
           )}
         </div>
+
+        {/* Ответственный сотрудник */}
+        {responsibleName && (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5" /> Ответственный сотрудник
+            </p>
+            <div className="flex items-center gap-3">
+              <EmployeeAvatar
+                employee={responsibleEmp}
+                name={responsibleName}
+                isAdmin={responsibleEmp?.is_admin}
+                sizeClass="w-12 h-12 rounded-2xl text-lg"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-900 truncate">{responsibleName}</p>
+                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                  {topSellerEmail && <span className="text-[10px] text-slate-400 truncate">{topSellerEmail}</span>}
+                  {!topSellerEmail && c.added_by_role === 'owner' && (
+                    <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-[10px] font-semibold">👑 Владелец</span>
+                  )}
+                  <span className="text-[10px] text-slate-400">· клиент купил товары у этого сотрудника</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Список покупок с инлайн-историей */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
