@@ -867,7 +867,7 @@ export default function Sales() {
                       <div className="flex items-center gap-3">
                         <ProductPhoto
                           photoUrl={product?.photo_url}
-                          productType={product?.product_type}
+                          brand={product?.brand}
                           className="w-9 h-9 rounded-lg"
                           textClassName="text-[8px]"
                         />
@@ -939,7 +939,7 @@ export default function Sales() {
                 <div className="flex items-center gap-3">
                   <ProductPhoto
                     photoUrl={product?.photo_url}
-                    productType={product?.product_type}
+                    brand={product?.brand}
                     className="w-12 h-12 rounded-xl flex-shrink-0"
                     textClassName="text-[10px]"
                   />
@@ -1021,7 +1021,7 @@ export default function Sales() {
               <div className="flex items-center gap-3 mb-3">
                 <ProductPhoto
                   photoUrl={product?.photo_url}
-                  productType={product?.product_type}
+                  brand={product?.brand}
                   className="w-12 h-12 rounded-lg"
                   textClassName="text-[10px]"
                 />
@@ -1187,7 +1187,7 @@ export default function Sales() {
                     >
                       <ProductPhoto
                         photoUrl={product.photo_url}
-                        productType={product.product_type}
+                        brand={product.brand}
                         className="w-10 h-10 rounded-lg"
                         textClassName="text-[8px]"
                       />
@@ -1224,7 +1224,7 @@ export default function Sales() {
                 <div className="flex items-center gap-3 mb-3">
                   <ProductPhoto
                     photoUrl={selectedProduct.photo_url}
-                    productType={selectedProduct.product_type}
+                    brand={selectedProduct.brand}
                     className="w-12 h-12 rounded-lg"
                     placeholderClassName="bg-white dark:bg-slate-800"
                     textClassName="text-[10px]"

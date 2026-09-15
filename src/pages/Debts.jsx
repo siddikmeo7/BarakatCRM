@@ -581,7 +581,7 @@ export default function Debts() {
                     <div className="flex items-start gap-3">
                       <ProductPhoto
                         photoUrl={prod?.photo_url}
-                        productType={prod?.product_type}
+                        brand={prod?.brand}
                         className="w-12 h-12 rounded-xl flex-shrink-0"
                         textClassName="text-[10px]"
                       />

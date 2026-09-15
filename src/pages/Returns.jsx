@@ -488,7 +488,7 @@ export default function Returns() {
                           className={`p-2 rounded-lg cursor-pointer text-sm flex items-center gap-3 transition-colors ${isSelected ? 'bg-indigo-100 border border-indigo-300' : 'hover:bg-slate-50 border border-transparent'}`}>
                           <ProductPhoto
                             photoUrl={p?.photo_url}
-                            productType={p?.product_type}
+                            brand={p?.brand}
                             className="w-9 h-9 rounded-lg flex-shrink-0"
                             textClassName="text-[8px]"
                           />

@@ -104,7 +104,7 @@ export default function MoveProductsDialog({ products, warehouses, currentWareho
                     <div className="flex items-center gap-3 mb-2">
                       <ProductPhoto
                         photoUrl={product.photo_url}
-                        productType={product.product_type}
+                        brand={product.brand}
                         className="w-10 h-10 rounded-lg flex-shrink-0"
                         textClassName="text-[8px]"
                       />

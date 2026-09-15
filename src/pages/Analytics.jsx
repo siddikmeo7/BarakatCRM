@@ -715,7 +715,7 @@ export default function Analytics() {
                         <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
                         <ProductPhoto
                           photoUrl={product.photo_url}
-                          productType={product.product_type}
+                          brand={product.brand}
                           className="w-10 h-10 rounded-lg flex-shrink-0"
                           placeholderClassName="bg-slate-200 dark:bg-slate-700"
                           textClassName="text-[8px]"
@@ -806,7 +806,7 @@ export default function Analytics() {
                   </div>
                   <ProductPhoto
                     photoUrl={product.photo_url}
-                    productType={product.product_type}
+                    brand={product.brand}
                     className="w-7 md:w-12 h-7 md:h-12 rounded-lg flex-shrink-0"
                     placeholderClassName="bg-slate-200 dark:bg-slate-700"
                     textClassName="text-[7px] md:text-[10px]"
@@ -858,7 +858,7 @@ export default function Analytics() {
                     <div key={sale.id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-red-50 transition-colors">
                       <ProductPhoto
                         photoUrl={product?.photo_url}
-                        productType={product?.product_type}
+                        brand={product?.brand}
                         className="w-10 h-10 rounded-lg flex-shrink-0"
                         textClassName="text-[8px]"
                       />

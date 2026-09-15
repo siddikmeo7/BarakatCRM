@@ -72,11 +72,11 @@ export default function CustomerProfileDialog({ customer, sales, employees, prod
     return p?.photo_url || null;
   };
 
-  const prodType = (sale) => {
+  const brandOfSale = (sale) => {
     const p = sale._isConsignment
       ? consignmentProducts?.find(p => p.id === sale.product_id)
       : products?.find(p => p.id === sale.product_id);
-    return p?.product_type || '';
+    return p?.brand || '';
   };
 
   const prodMeta = (sale) => {
@@ -199,7 +199,7 @@ export default function CustomerProfileDialog({ customer, sales, employees, prod
                   <div key={s.id} className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
                     <ProductPhoto
                       photoUrl={photo}
-                      productType={prodType(s)}
+                      brand={brandOfSale(s)}
                       className="w-9 h-9 rounded-lg flex-shrink-0"
                       placeholderClassName="bg-slate-200 dark:bg-slate-700"
                       textClassName="text-[8px]"

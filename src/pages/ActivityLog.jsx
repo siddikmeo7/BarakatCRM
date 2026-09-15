@@ -862,7 +862,7 @@ export default function ActivityLog() {
                   </p>
                   <ProductPhoto
                     photoUrl={detailLog.entity_data.photo_url}
-                    productType={detailLog.entity_data.product_type}
+                    brand={detailLog.entity_data.brand}
                     className="w-full h-40 rounded-xl mb-3"
                     textClassName="text-xl"
                   />

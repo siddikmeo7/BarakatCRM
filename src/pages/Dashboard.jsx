@@ -251,7 +251,7 @@ export default function Dashboard() {
                 </div>
                 <ProductPhoto
                   photoUrl={item.product.photo_url}
-                  productType={item.product.product_type}
+                  brand={item.product.brand}
                   className="w-8 h-8 rounded-md flex-shrink-0"
                   placeholderClassName="bg-slate-200 dark:bg-slate-700"
                   textClassName="text-[7px]"

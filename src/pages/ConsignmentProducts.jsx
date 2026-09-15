@@ -271,7 +271,7 @@ export default function ConsignmentProducts() {
                 <div className="flex items-start gap-3 mb-3">
                   <ProductPhoto
                     photoUrl={product.photo_url}
-                    productType={product.product_type}
+                    brand={product.brand}
                     className="w-14 h-14 rounded-lg flex-shrink-0"
                     textClassName="text-[10px]"
                   />

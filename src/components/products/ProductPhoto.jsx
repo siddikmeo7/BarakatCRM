@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
  * placeholderClassName — доп. классы для фона плейсхолдера (перекрывают стандартный bg-slate-100).
  * textClassName — размер/цвет текста типа товара.
  */
-export default function ProductPhoto({ photoUrl, productType, className, placeholderClassName, textClassName }) {
+export default function ProductPhoto({ photoUrl, brand, productType, className, placeholderClassName, textClassName }) {
   if (photoUrl) {
     return <img src={photoUrl} alt="" className={cn('object-cover', className)} />;
   }
@@ -27,7 +27,7 @@ export default function ProductPhoto({ photoUrl, productType, className, placeho
           textClassName
         )}
       >
-        {productType || '—'}
+        {brand || productType || '—'}
       </span>
     </div>
   );

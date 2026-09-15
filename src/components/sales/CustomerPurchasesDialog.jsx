@@ -42,11 +42,11 @@ export default function CustomerPurchasesDialog({
     return p?.photo_url || null;
   };
 
-  const productTypeOf = (sale) => {
+  const brandOf = (sale) => {
     const p = sale._isConsignment
       ? consignmentProducts.find(p => p.id === sale.product_id)
       : products.find(p => p.id === sale.product_id);
-    return p?.product_type || '';
+    return p?.brand || '';
   };
   const productMeta = (sale) => {
     const p = sale._isConsignment
@@ -113,7 +113,7 @@ export default function CustomerPurchasesDialog({
               >
                 <ProductPhoto
                   photoUrl={photo}
-                  productType={productTypeOf(sale)}
+                  brand={brandOf(sale)}
                   className="w-10 h-10 rounded-lg flex-shrink-0"
                   textClassName="text-[8px]"
                 />

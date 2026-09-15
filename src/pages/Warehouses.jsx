@@ -972,7 +972,7 @@ export default function Warehouses() {
                           <div className="flex items-center gap-3">
                             <ProductPhoto
                               photoUrl={product.photo_url}
-                              productType={product.product_type}
+                              brand={product.brand}
                               className="w-10 h-10 rounded-lg"
                               placeholderClassName={noStock ? 'bg-red-100' : lowStock ? 'bg-orange-100' : 'bg-slate-100 dark:bg-slate-800'}
                               textClassName={noStock ? 'text-red-500 text-[8px]' : lowStock ? 'text-orange-500 text-[8px]' : 'text-slate-500 text-[8px]'}

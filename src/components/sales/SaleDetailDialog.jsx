@@ -283,7 +283,7 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
           <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
             <ProductPhoto
               photoUrl={product?.photo_url}
-              productType={product?.product_type}
+              brand={product?.brand}
               className="w-14 h-14 rounded-xl"
               placeholderClassName="bg-slate-200 dark:bg-slate-700"
               textClassName="text-[10px]"

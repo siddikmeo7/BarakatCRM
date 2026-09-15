@@ -138,7 +138,7 @@ export default function OrphanedProductsDialog({ open, onClose, orphanedProducts
                   {/* Photo */}
                   <ProductPhoto
                     photoUrl={p.photo_url}
-                    productType={p.product_type}
+                    brand={p.brand}
                     className="w-9 h-9 rounded-lg flex-shrink-0"
                     textClassName="text-[8px]"
                   />

@@ -42,6 +42,7 @@ import {
 import ProductPhoto from '@/components/products/ProductPhoto';
 import BulkAddProductsDialog from '@/components/products/BulkAddProductsDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
+import DuplicateProductsDialog from '@/components/products/DuplicateProductsDialog';
 import ConsignmentOwnerPicker from '@/components/products/ConsignmentOwnerPicker';
 import { format, parseISO, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -99,6 +100,10 @@ export default function Products() {
   const [orphanedDialogOpen, setOrphanedDialogOpen] = useState(false);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const [modelPickerSearch, setModelPickerSearch] = useState('');
+  const [modelSuggestOpen, setModelSuggestOpen] = useState(false);
+  const [modelSuggestSearch, setModelSuggestSearch] = useState('');
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicateGroups, setDuplicateGroups] = useState([]);
 
   const [formData, setFormData] = useState({
     brand: '',
@@ -355,7 +360,8 @@ export default function Products() {
         const fieldLabels = {
           brand: 'Бренд', model: 'Модель', product_type: 'Тип', color: 'Цвет',
           size_from: 'Размер от', size_to: 'Размер до', pairs_per_box: 'Пар в коробке',
-          purchase_price: 'Цена закупки', sale_price: 'Цена продажи', boxes_in_stock: 'Коробок на складе'
+          purchase_price: 'Цена закупки', sale_price: 'Цена продажи', boxes_in_stock: 'Коробок на складе',
+          photo_url: 'Фото профиля'
         };
         Object.keys(fieldLabels).forEach(key => {
           if (String(editingProduct[key]) !== String(data[key])) {
@@ -527,6 +533,19 @@ export default function Products() {
     if (!modelPickerSearch.trim()) return brands;
     return brands.filter(b => b.toLowerCase().includes(modelPickerSearch.toLowerCase().trim()));
   }, [products, modelPickerSearch]);
+
+  // Существующие модели для выбранного бренда (для подсказок в поле "Модель")
+  const existingModels = useMemo(() => {
+    const b = (formData.brand || '').trim().toLowerCase();
+    let models = products
+      .filter(p => p.brand && p.brand.trim().toLowerCase() === b)
+      .map(p => p.model)
+      .filter(Boolean);
+    models = [...new Set(models)].sort();
+    const q = (modelSuggestSearch || '').trim().toLowerCase();
+    if (!q) return models;
+    return models.filter(m => m.toLowerCase().includes(q));
+  }, [products, formData.brand, modelSuggestSearch]);
 
   // Фильтрация (скрываем товары с нулевым остатком по умолчанию, если не выбран фильтр "empty")
   let filteredProducts = products.filter(product => {
@@ -741,6 +760,29 @@ export default function Products() {
             <CheckSquare className="w-3 h-3" />
             <span>Выбрать</span>
           </button>
+          {can('delete_products') && (
+            <button
+              onClick={() => {
+                const norm = s => String(s ?? '').trim().toLowerCase();
+                const nn = n => { const v = parseInt(n, 10); return Number.isFinite(v) ? String(v) : ''; };
+                const groups = {};
+                products.forEach(p => {
+                  const key = [norm(p.brand), norm(p.model), norm(p.color), norm(p.product_type), nn(p.size_from), nn(p.size_to), p._isConsignment ? 'c' : 'o', p._isConsignment ? '' : String(p.warehouse_id || '')].join('|');
+                  if (!key.replace(/\|/g, '')) return;
+                  (groups[key] = groups[key] || []).push(p);
+                });
+                const dupGroups = Object.values(groups).filter(g => g.length > 1);
+                if (dupGroups.length === 0) { alert('Дубликатов не найдено ✅'); return; }
+                setDuplicateGroups(dupGroups);
+                setDuplicateDialogOpen(true);
+              }}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all bg-white text-amber-600 border-amber-200 hover:border-amber-400 dark:bg-slate-800 dark:text-amber-400 dark:border-amber-700"
+              title="Найти и удалить дубликаты товаров"
+            >
+              <AlertCircle className="w-3 h-3" />
+              <span>Дубликаты</span>
+            </button>
+          )}
           </div>
         </div>
         {/* Дополнительные фильтры */}
@@ -886,7 +928,7 @@ export default function Products() {
                 <div className="aspect-square bg-slate-100 relative">
                   <ProductPhoto
                     photoUrl={product.photo_url}
-                    productType={product.product_type}
+                    brand={product.brand}
                     className="w-full h-full"
                     textClassName="text-sm"
                   />
@@ -940,7 +982,7 @@ export default function Products() {
                     )}
                     <ProductPhoto
                       photoUrl={product.photo_url}
-                      productType={product.product_type}
+                      brand={product.brand}
                       className="w-10 h-10 rounded-lg flex-shrink-0"
                       textClassName="text-[8px]"
                     />
@@ -1128,7 +1170,7 @@ export default function Products() {
               <div className="mt-2 flex items-center gap-4">
                 <ProductPhoto
                   photoUrl={formData.photo_url}
-                  productType={formData.product_type}
+                  brand={formData.brand}
                   className="w-24 h-24 rounded-xl"
                   textClassName="text-sm"
                 />
@@ -1213,18 +1255,77 @@ export default function Products() {
                   </div>
                 )}
               </div>
-              <div>
+              <div className="relative">
                 <Label>{t(lang,'prod_model')} *</Label>
-                <Input
-                  value={formData.model}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFormData({ ...formData, model: val });
-                    checkDuplicate(formData.brand, val);
-                  }}
-                  placeholder="Air Max, Ultra Boost..."
-                  className={`mt-1.5 ${duplicateProduct ? 'border-red-500 focus-visible:ring-red-500 animate-pulse-border' : ''}`}
-                />
+                <div className="flex gap-1.5 mt-1.5">
+                  <Input
+                    value={formData.model}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData({ ...formData, model: val });
+                      checkDuplicate(formData.brand, val);
+                      setModelSuggestOpen(true);
+                      setModelSuggestSearch(val);
+                    }}
+                    onFocus={() => { setModelSuggestOpen(true); setModelSuggestSearch(formData.model); }}
+                    onBlur={() => setTimeout(() => setModelSuggestOpen(false), 150)}
+                    placeholder="Air Max, Ultra Boost..."
+                    className={`flex-1 ${duplicateProduct ? 'border-red-500 focus-visible:ring-red-500 animate-pulse-border' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onMouseDown={e => e.preventDefault()}
+                    onClick={() => { setModelSuggestOpen(v => !v); setModelSuggestSearch(''); }}
+                    className="flex items-center gap-1 px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-xs text-slate-600 hover:text-indigo-700 transition-colors flex-shrink-0"
+                    title="Выбрать из существующих моделей этого бренда"
+                  >
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {modelSuggestOpen && (
+                  <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
+                    <div className="p-2 border-b border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                        <Search className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                        <input
+                          value={modelSuggestSearch}
+                          onChange={e => setModelSuggestSearch(e.target.value)}
+                          placeholder={formData.brand ? `Модели бренда ${formData.brand}...` : 'Сначала выберите бренд...'}
+                          className="flex-1 bg-transparent text-xs outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400"
+                        />
+                        {modelSuggestSearch && (
+                          <button onMouseDown={e => e.preventDefault()} onClick={() => setModelSuggestSearch('')} className="text-slate-400 hover:text-slate-600">
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {existingModels.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-4">
+                          {formData.brand ? 'Нет существующих моделей для этого бренда — введите новую' : 'Выберите бренд, чтобы увидеть существующие модели'}
+                        </p>
+                      ) : (
+                        existingModels.map(model => (
+                          <button
+                            key={model}
+                            type="button"
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, model }));
+                              checkDuplicate(formData.brand, model);
+                              setModelSuggestOpen(false);
+                              setModelSuggestSearch('');
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                          >
+                            {model}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1543,6 +1644,14 @@ export default function Products() {
         onClose={() => setOrphanedDialogOpen(false)}
         orphanedProducts={orphanedProducts}
         warehouses={warehouses}
+        onSaved={loadData}
+      />
+
+      {/* Duplicate Products Dialog */}
+      <DuplicateProductsDialog
+        open={duplicateDialogOpen}
+        onClose={() => setDuplicateDialogOpen(false)}
+        duplicateGroups={duplicateGroups}
         onSaved={loadData}
       />
 

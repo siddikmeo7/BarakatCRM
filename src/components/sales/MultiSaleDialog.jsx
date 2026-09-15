@@ -428,7 +428,7 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
                           >
                             <ProductPhoto
                               photoUrl={p.photo_url}
-                              productType={p.product_type}
+                              brand={p.brand}
                               className="w-8 h-8 rounded"
                               textClassName="text-[7px]"
                             />

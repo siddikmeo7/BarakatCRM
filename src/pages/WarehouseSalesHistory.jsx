@@ -148,7 +148,7 @@ export default function WarehouseSalesHistory() {
                       <div className="flex items-center gap-2">
                         <ProductPhoto
                           photoUrl={product?.photo_url}
-                          productType={product?.product_type}
+                          brand={product?.brand}
                           className="w-8 h-8 rounded-lg"
                           textClassName="text-[7px]"
                         />

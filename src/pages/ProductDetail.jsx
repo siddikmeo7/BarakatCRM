@@ -146,7 +146,7 @@ export default function ProductDetail() {
           <div className="w-full md:w-64 h-64 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden">
             <ProductPhoto
               photoUrl={product.photo_url}
-              productType={product.product_type}
+              brand={product.brand}
               className="w-full h-full"
               textClassName="text-2xl"
             />
@@ -334,20 +334,22 @@ export default function ProductDetail() {
         )}
       </div>
 
-      {/* Recent actions on this product */}
+      {/* История изменений */}
       {activityLogs.length > 0 && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
           <div className="p-6 border-b border-slate-100 dark:border-slate-800">
             <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
               <History className="w-4 h-4 text-indigo-500" />
-              Недавние действия с товаром
+              История изменений
             </h3>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {activityLogs.slice(0, 15).map(log => {
+            {activityLogs.map(log => {
               const logEmp = findEmployeeByLog(log);
+              const changes = log.entity_data?.changes;
+              const hasChanges = log.action_type === 'update' && changes && Object.keys(changes).length > 0;
               return (
-                <div key={log.id} className="p-4 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                <div key={log.id} className="p-4 flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
                   <EmployeeAvatar employee={logEmp} name={log.user_name || log.user_email} size="sm" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -357,7 +359,26 @@ export default function ProductDetail() {
                       </span>
                       <span className="text-sm font-medium text-slate-900 dark:text-white truncate">{log.user_name || log.user_email}</span>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{log.description || '—'}</p>
+                    {hasChanges ? (
+                      <div className="mt-2 space-y-1">
+                        {Object.entries(changes).map(([field, c]) => (
+                          <div key={field} className="text-xs flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-slate-600 dark:text-slate-300">{c.label}:</span>
+                            {field === 'photo_url' ? (
+                              <span className="text-indigo-600 dark:text-indigo-400 font-medium">Фото профиля обновлено</span>
+                            ) : (
+                              <>
+                                <span className="text-slate-400 line-through truncate max-w-[8rem]">{String(c.from ?? '—')}</span>
+                                <span className="text-slate-400">→</span>
+                                <span className="text-indigo-600 dark:text-indigo-400 font-medium truncate max-w-[8rem]">{String(c.to ?? '—')}</span>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{log.description || '—'}</p>
+                    )}
                   </div>
                   <span className="text-xs text-slate-400 flex-shrink-0 whitespace-nowrap">
                     {format(parseISO(log.created_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
