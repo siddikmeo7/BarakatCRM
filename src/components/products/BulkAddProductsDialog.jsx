@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Loader2, Package, CheckCheck, Copy, Box, TrendingUp, DollarSign, AlertCircle, RotateCcw, Star } from 'lucide-react';
+import { Plus, Trash2, Loader2, Package, CheckCheck, Copy, Box, TrendingUp, DollarSign, AlertCircle, RotateCcw, Star, PackageOpen, CheckCheck as CheckIcon } from 'lucide-react';
 import { findDuplicateProduct, findDuplicateInRows } from '@/lib/productDuplicate';
+import ConsignmentOwnerPicker from '@/components/products/ConsignmentOwnerPicker';
 
 const BASE_PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
 const BASE_COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый', 'Другой'];
@@ -71,6 +72,10 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
   // ID строки, цены которой применяются ко всем остальным без цен
   const [priceSourceId, setPriceSourceId] = useState(null);
   const savingRef = useRef(false);
+  // Реализация — общий режим для всех строк
+  const [isConsignment, setIsConsignment] = useState(false);
+  const [ownerName, setOwnerName] = useState('');
+  const [ownerEmail, setOwnerEmail] = useState('');
 
   // При открытии — подгружаем черновик если есть
   useEffect(() => {
@@ -174,6 +179,9 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
     setPriceSourceId(null);
     setHasDraft(false);
     setProgress(null);
+    setIsConsignment(false);
+    setOwnerName('');
+    setOwnerEmail('');
   };
 
   const handleSave = async () => {
@@ -198,30 +206,62 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
           const purchasePrice = parseFloat(row.purchase_price) || (src ? parseFloat(src.purchase_price) : 0) || 0;
           const salePrice = parseFloat(row.sale_price) || (src ? parseFloat(src.sale_price) : 0) || 0;
 
-          const data = {
-            business_id: business.id,
-            brand: row.brand.trim(),
-            model: row.model.trim(),
-            product_type: row.product_type,
-            color: row.color,
-            size_from: parseInt(row.size_from) || 39,
-            size_to: parseInt(row.size_to) || 44,
-            pairs_per_box: parseInt(row.pairs_per_box) || 6,
-            purchase_price: purchasePrice,
-            sale_price: salePrice,
-            boxes_in_stock: parseInt(row.boxes_in_stock) || 0,
-            warehouse_id: row.warehouse_id || '',
-          };
-          const created = await base44.entities.Product.create(data);
-          await base44.entities.ActivityLog.create({
-            business_id: business.id,
-            action_type: 'create',
-            entity_type: 'Product',
-            entity_id: created.id,
-            entity_data: data,
-            user_email: user.email,
-            description: `Добавлен товар: ${data.brand} ${data.model} (${data.boxes_in_stock} кор., ${data.sale_price?.toLocaleString()} с.)`,
-          });
+          if (isConsignment) {
+            // Товар на реализации — создаём ConsignmentProduct
+            const data = {
+              business_id: business.id,
+              owner_name: ownerName.trim(),
+              owner_email: ownerEmail.trim(),
+              seller_email: user.email,
+              seller_name: user.full_name || user.email,
+              brand: row.brand.trim(),
+              model: row.model.trim(),
+              product_type: row.product_type,
+              color: row.color,
+              size_from: parseInt(row.size_from) || 39,
+              size_to: parseInt(row.size_to) || 44,
+              pairs_per_box: parseInt(row.pairs_per_box) || 6,
+              photo_url: '',
+              owner_price: purchasePrice,
+              sale_price: salePrice,
+              boxes_in_stock: parseInt(row.boxes_in_stock) || 0,
+            };
+            const created = await base44.entities.ConsignmentProduct.create(data);
+            await base44.entities.ActivityLog.create({
+              business_id: business.id,
+              action_type: 'create',
+              entity_type: 'ConsignmentProduct',
+              entity_id: created.id,
+              entity_data: data,
+              user_email: user.email,
+              description: `Добавлен товар на реализацию: ${data.brand} ${data.model} (${data.boxes_in_stock} кор., владелец: ${data.owner_name})`,
+            });
+          } else {
+            const data = {
+              business_id: business.id,
+              brand: row.brand.trim(),
+              model: row.model.trim(),
+              product_type: row.product_type,
+              color: row.color,
+              size_from: parseInt(row.size_from) || 39,
+              size_to: parseInt(row.size_to) || 44,
+              pairs_per_box: parseInt(row.pairs_per_box) || 6,
+              purchase_price: purchasePrice,
+              sale_price: salePrice,
+              boxes_in_stock: parseInt(row.boxes_in_stock) || 0,
+              warehouse_id: row.warehouse_id || '',
+            };
+            const created = await base44.entities.Product.create(data);
+            await base44.entities.ActivityLog.create({
+              business_id: business.id,
+              action_type: 'create',
+              entity_type: 'Product',
+              entity_id: created.id,
+              entity_data: data,
+              user_email: user.email,
+              description: `Добавлен товар: ${data.brand} ${data.model} (${data.boxes_in_stock} кор., ${data.sale_price?.toLocaleString()} с.)`,
+            });
+          }
           done++;
         } catch (err) {
           console.error('Ошибка при добавлении строки:', err);
@@ -237,6 +277,9 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
         setRows([emptyRow(defaultsFromBiz), emptyRow(defaultsFromBiz)]);
         setProgress(null);
         setPriceSourceId(null);
+        setIsConsignment(false);
+        setOwnerName('');
+        setOwnerEmail('');
         onClose();
       }, 1200);
     } catch (e) {
@@ -270,9 +313,9 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
   const totalProfit = totalSaleValue - totalPurchaseValue;
 
   // === Проверка дубликатов ===
-  // 1) строка совпадает с уже существующим товаром (бренд+модель+склад)
+  // 1) строка совпадает с уже существующим товаром (бренд+модель+склад / бренд+модель для реализации)
   const getRowDuplicate = (row) => findDuplicateProduct(existingProducts, {
-    brand: row.brand, model: row.model, warehouseId: row.warehouse_id, isConsignment: false
+    brand: row.brand, model: row.model, warehouseId: row.warehouse_id, isConsignment
   });
   // 2) дубликат ВНУТРИ списка строк (две строки с одинаковыми бренд+модель+склад)
   const intraDup = findDuplicateInRows(validRows);
@@ -282,6 +325,8 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
   })();
   const duplicateRowCount = validRows.filter(r => getRowDuplicate(r)).length;
   const hasAnyDuplicate = duplicateRowCount > 0 || intraDupIds.size > 0;
+  // Реализация: владелец обязателен
+  const consignmentMissingOwner = isConsignment && !ownerName.trim();
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -314,6 +359,39 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 text-sm text-indigo-700">
             💡 Нажмите ⭐ на любой строке чтобы сделать её эталоном цен — остальные строки без цены автоматически получат те же цены.
           </div>
+
+          {/* Реализация toggle — общий для всех строк */}
+          <div
+            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer border-2 transition-all ${isConsignment ? 'bg-teal-50 border-teal-300' : 'bg-slate-50 border-transparent hover:border-slate-200'}`}
+            onClick={() => setIsConsignment(v => !v)}
+          >
+            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${isConsignment ? 'bg-teal-500 border-teal-500' : 'border-slate-300'}`}>
+              {isConsignment && <CheckIcon className="w-3 h-3 text-white" />}
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-slate-900 text-sm flex items-center gap-1.5">
+                <PackageOpen className="w-4 h-4 text-teal-500" />
+                Не мой товар (реализация)
+              </p>
+              <p className="text-xs text-slate-500">Все добавляемые товары принадлежат одному владельцу</p>
+            </div>
+          </div>
+
+          {/* Владелец для реализации — общий для всех строк */}
+          {isConsignment && (
+            <div className="bg-teal-50 border border-teal-200 rounded-xl p-3">
+              <Label className="text-xs font-semibold text-slate-600">Владелец товаров *</Label>
+              <ConsignmentOwnerPicker
+                businessId={business?.id}
+                ownerName={ownerName}
+                ownerEmail={ownerEmail}
+                onChange={(name, email) => { setOwnerName(name); setOwnerEmail(email); }}
+              />
+              <p className="text-xs text-slate-500 mt-2">
+                Выберите из списка или добавьте нового — это исключит опечатки в имени владельца.
+              </p>
+            </div>
+          )}
 
           {/* Common brand */}
           <div className="bg-white border border-slate-200 rounded-xl p-3">
@@ -557,7 +635,7 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
             <Button variant="outline" onClick={handleClose} disabled={saving}>Закрыть</Button>
             <Button
               onClick={handleSave}
-              disabled={saving || validCount === 0 || hasAnyDuplicate}
+              disabled={saving || validCount === 0 || hasAnyDuplicate || consignmentMissingOwner}
               className={`gap-2 ${progress?.done === progress?.total && progress?.done > 0 ? 'bg-emerald-600 hover:bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> :

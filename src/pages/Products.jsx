@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import BulkAddProductsDialog from '@/components/products/BulkAddProductsDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
+import ConsignmentOwnerPicker from '@/components/products/ConsignmentOwnerPicker';
 import { format, parseISO, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
@@ -1108,24 +1109,18 @@ export default function Products() {
 
             {/* Owner fields when consignment */}
             {formData.is_consignment && (
-              <div className="grid grid-cols-2 gap-4 p-4 bg-teal-50 rounded-xl">
+              <div className="p-4 bg-teal-50 rounded-xl space-y-3">
                 <div>
-                  <Label>Имя владельца *</Label>
-                  <Input
-                    value={formData.owner_name}
-                    onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })}
-                    placeholder="Имя владельца товара"
-                    className="mt-1.5"
+                  <Label>Владелец товара *</Label>
+                  <ConsignmentOwnerPicker
+                    businessId={business?.id}
+                    ownerName={formData.owner_name}
+                    ownerEmail={formData.owner_email}
+                    onChange={(name, email) => setFormData(prev => ({ ...prev, owner_name: name, owner_email: email }))}
                   />
-                </div>
-                <div>
-                  <Label>Email владельца</Label>
-                  <Input
-                    value={formData.owner_email}
-                    onChange={(e) => setFormData({ ...formData, owner_email: e.target.value })}
-                    placeholder="email@example.com"
-                    className="mt-1.5"
-                  />
+                  <p className="text-xs text-slate-500 mt-2">
+                    Выберите из списка владельцев, у которых вы уже берёте товары на реализацию. Это исключает опечатки и дубли имён.
+                  </p>
                 </div>
               </div>
             )}
