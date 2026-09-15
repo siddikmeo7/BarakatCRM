@@ -13,6 +13,7 @@ import MoveProductsDialog from '@/components/warehouses/MoveProductsDialog';
 import DeleteWarehouseDialog from '@/components/warehouses/DeleteWarehouseDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
 import DuplicateProductsDialog from '@/components/products/DuplicateProductsDialog';
+import { duplicateKey } from '@/lib/productDuplicate';
 import { 
   Plus, 
   Warehouse as WarehouseIcon, 
@@ -315,13 +316,13 @@ export default function Warehouses() {
   const [orphanedSaving, setOrphanedSaving] = useState(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
 
-  // Найти группы дубликатов (одинаковый brand+model в ОДНОМ складе; товары в разных складах — не дубликаты)
+  // Найти группы дубликатов (бренд+модель+тип+цвет в ОДНОМ складе; товары в разных складах — не дубликаты)
   const duplicateGroups = (() => {
     const map = {};
     products.forEach(p => {
-      const key = `${p.brand?.toLowerCase().trim()}__${p.model?.toLowerCase().trim()}__${p.warehouse_id || ''}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(p);
+      const key = duplicateKey(p);
+      if (!key.replace(/\|/g, '')) return;
+      (map[key] = map[key] || []).push(p);
     });
     return Object.values(map).filter(g => g.length > 1);
   })();
@@ -424,7 +425,7 @@ export default function Warehouses() {
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-semibold text-red-800">
-              ⚠️ Найдены дубликаты: {duplicateGroups.length} групп товаров с одинаковым брендом и моделью в одном складе
+              ⚠️ Найдены дубликаты: {duplicateGroups.length} групп товаров с одинаковым брендом, моделью, типом и цветом в одном складе
             </p>
             <p className="text-xs text-red-600 mt-0.5">
               В системе есть товары с одинаковым названием. Рекомендуется удалить лишние записи.

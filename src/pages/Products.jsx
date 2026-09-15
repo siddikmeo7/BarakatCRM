@@ -50,7 +50,7 @@ import { t } from '@/components/i18n/translations';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import PageLoader from '@/components/ui/PageLoader';
 import { useDraft } from '@/hooks/useDraft';
-import { findDuplicateProduct } from '@/lib/productDuplicate';
+import { findDuplicateProduct, duplicateKey } from '@/lib/productDuplicate';
 
 const PAGE_SIZE = 20;
 
@@ -763,11 +763,9 @@ export default function Products() {
           {can('delete_products') && (
             <button
               onClick={() => {
-                const norm = s => String(s ?? '').trim().toLowerCase();
-                const nn = n => { const v = parseInt(n, 10); return Number.isFinite(v) ? String(v) : ''; };
                 const groups = {};
                 products.forEach(p => {
-                  const key = [norm(p.brand), norm(p.model), norm(p.color), norm(p.product_type), nn(p.size_from), nn(p.size_to), p._isConsignment ? 'c' : 'o', p._isConsignment ? '' : String(p.warehouse_id || '')].join('|');
+                  const key = duplicateKey(p);
                   if (!key.replace(/\|/g, '')) return;
                   (groups[key] = groups[key] || []).push(p);
                 });
