@@ -1131,7 +1131,7 @@ export default function Products() {
                     onFocus={() => { setModelPickerOpen(true); setModelPickerSearch(formData.brand); }}
                     onBlur={() => setTimeout(() => setModelPickerOpen(false), 150)}
                     placeholder="Nike, Adidas..."
-                    className="flex-1"
+                    className={`flex-1 ${duplicateProduct ? 'border-red-500 focus-visible:ring-red-500 animate-pulse-border' : ''}`}
                   />
                   <button
                     type="button"
@@ -1188,7 +1188,7 @@ export default function Products() {
               </div>
               <div>
                 <Label>{t(lang,'prod_model')} *</Label>
-                <Input 
+                <Input
                   value={formData.model}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -1196,35 +1196,35 @@ export default function Products() {
                     checkDuplicate(formData.brand, val);
                   }}
                   placeholder="Air Max, Ultra Boost..."
-                  className={`mt-1.5 ${duplicateProduct && !editingProduct ? 'border-amber-400 focus-visible:ring-amber-400' : ''}`}
+                  className={`mt-1.5 ${duplicateProduct ? 'border-red-500 focus-visible:ring-red-500 animate-pulse-border' : ''}`}
                 />
               </div>
             </div>
 
             {/* Предупреждение о дубликате */}
-            {duplicateProduct && !editingProduct && (
-              <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-300 rounded-xl animate-in fade-in duration-200">
-                <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            {duplicateProduct && (
+              <div className="flex items-start gap-3 p-3 bg-red-50 border-2 border-red-500 rounded-xl animate-in fade-in duration-200">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5 animate-pulse" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-amber-800">
-                    Такой товар уже существует!
+                  <p className="text-sm font-semibold text-red-700">
+                    Дубликат! Такой товар уже существует
                   </p>
-                  <p className="text-xs text-amber-700 mt-0.5">
-                    <span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span> уже добавлен в систему
+                  <p className="text-xs text-red-600 mt-0.5">
+                    Бренд и модель «<span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span>» уже есть в системе. Измените модель, чтобы сохранить.
                   </p>
                   <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                    <div className="bg-white rounded-lg p-2 border border-amber-200">
-                      <p className="text-amber-500">Добавлен</p>
+                    <div className="bg-white rounded-lg p-2 border border-red-200">
+                      <p className="text-red-500">Добавлен</p>
                       <p className="font-semibold text-slate-800">
                         {duplicateProduct.created_date ? format(parseISO(duplicateProduct.created_date), 'dd.MM.yyyy HH:mm', { locale: ru }) : '—'}
                       </p>
                     </div>
-                    <div className="bg-white rounded-lg p-2 border border-amber-200">
-                      <p className="text-amber-500">Коробок</p>
+                    <div className="bg-white rounded-lg p-2 border border-red-200">
+                      <p className="text-red-500">Коробок</p>
                       <p className="font-semibold text-slate-800">{duplicateProduct.boxes_in_stock || 0}</p>
                     </div>
-                    <div className="bg-white rounded-lg p-2 border border-amber-200">
-                      <p className="text-amber-500">Цена</p>
+                    <div className="bg-white rounded-lg p-2 border border-red-200">
+                      <p className="text-red-500">Цена</p>
                       <p className="font-semibold text-slate-800">{duplicateProduct.sale_price?.toLocaleString()} с.</p>
                     </div>
                   </div>
@@ -1232,16 +1232,9 @@ export default function Products() {
                     <button
                       type="button"
                       onClick={() => { setDialogOpen(false); setDuplicateProduct(null); setTimeout(() => handleOpenDialog(duplicateProduct), 100); }}
-                      className="text-xs px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors"
+                      className="text-xs px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
                     >
                       Открыть существующий
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDuplicateProduct(null)}
-                      className="text-xs px-3 py-1.5 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium hover:bg-amber-50 transition-colors"
-                    >
-                      Всё равно добавить
                     </button>
                   </div>
                 </div>
@@ -1491,13 +1484,15 @@ export default function Products() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               {t(lang,'cancel')}
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={savingRef.current || !formData.brand || !formData.model || (!!duplicateProduct && !editingProduct) || (formData.is_consignment && !formData.owner_name)}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingProduct ? t(lang,'prod_save') : t(lang,'prod_add')}
-            </Button>
+            {!duplicateProduct && (
+              <Button
+                onClick={handleSave}
+                disabled={savingRef.current || !formData.brand || !formData.model || (formData.is_consignment && !formData.owner_name)}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingProduct ? t(lang,'prod_save') : t(lang,'prod_add')}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
