@@ -197,26 +197,30 @@ export default function Products() {
     }
   };
 
-  // Проверка дубликата по бренду + модели (+ склад для обычных товаров).
-  // Реализация (чужой товар): дубликат = тот же бренд+модель (без склада).
-  // Обычный товар: дубликат = тот же бренд+модель+склад. Разные склады — не дубликат.
-  // Если склад не выбран — любой совпадающий по бренд+модель считается дубликатом.
+  // Проверка дубликата: совпадение ВСЕХ атрибутов (бренд+модель+цвет+тип+размеры+склад).
+  // Если хотя бы одно поле отличается — это НЕ дубликат.
+  // Разные склады — не дубликат.
+  const computeDuplicate = (over = {}) => findDuplicateProduct(products, {
+    brand: over.brand ?? formData.brand,
+    model: over.model ?? formData.model,
+    warehouseId: over.warehouseId ?? formData.warehouse_id,
+    isConsignment: formData.is_consignment,
+    color: formData.color,
+    productType: formData.product_type,
+    sizeFrom: formData.size_from,
+    sizeTo: formData.size_to,
+    excludeId: editingProduct?.id
+  });
   const checkDuplicate = (brand, model, warehouseId) => {
-    const found = findDuplicateProduct(products, {
-      brand,
-      model,
-      warehouseId: warehouseId || formData.warehouse_id,
-      isConsignment: formData.is_consignment,
-      excludeId: editingProduct?.id
-    });
-    setDuplicateProduct(found || null);
+    setDuplicateProduct(computeDuplicate({ brand, model, warehouseId }) || null);
   };
 
-  // Перепроверка дубликата при переключении режима реализации / склада
+  // Перепроверка дубликата при изменении любого влияющего поля
   useEffect(() => {
-    checkDuplicate(formData.brand, formData.model);
+    setDuplicateProduct(computeDuplicate() || null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.is_consignment, formData.warehouse_id]);
+  }, [formData.brand, formData.model, formData.warehouse_id, formData.is_consignment,
+      formData.color, formData.product_type, formData.size_from, formData.size_to, products]);
 
   const handleOpenDialog = (product = null) => {
     setDuplicateProduct(null);
@@ -276,13 +280,7 @@ export default function Products() {
   const handleSave = async () => {
     if (savingRef.current) return; // Жёсткая защита от двойного нажатия
     // Финальная проверка дубликата прямо перед сохранением
-    const _dup = findDuplicateProduct(products, {
-      brand: formData.brand,
-      model: formData.model,
-      warehouseId: formData.warehouse_id,
-      isConsignment: formData.is_consignment,
-      excludeId: editingProduct?.id
-    });
+    const _dup = computeDuplicate();
     if (_dup) {
       setDuplicateProduct(_dup);
       savingRef.current = false;
@@ -1238,12 +1236,12 @@ export default function Products() {
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5 animate-pulse" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-red-700">
-                    Дубликат! Такой товар уже существует
+                    Дубликат! Товар с такими данными уже существует
                   </p>
                   <p className="text-xs text-red-600 mt-0.5">
                     {duplicateProduct._isConsignment
-                      ? <>«<span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span>» уже есть на реализации. Откройте существующий и добавьте коробки.</>
-                      : <>«<span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span>» уже есть {duplicateProduct.warehouse_id ? 'на этом складе' : 'в системе'}. Откройте существующий и добавьте коробки, либо выберите другой склад.</>}
+                      ? <>«<span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span>» ({duplicateProduct.color || '—'}, {duplicateProduct.product_type || '—'}, разм. {duplicateProduct.size_from || '?'}–{duplicateProduct.size_to || '?'}) уже есть на реализации. Измените цвет/тип/размер, либо откройте существующий и добавьте коробки.</>
+                      : <>«<span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span>» ({duplicateProduct.color || '—'}, {duplicateProduct.product_type || '—'}, разм. {duplicateProduct.size_from || '?'}–{duplicateProduct.size_to || '?'}) уже есть {duplicateProduct.warehouse_id ? 'на этом складе' : 'в системе'}. Измените цвет/тип/размер или выберите другой склад, либо откройте существующий и добавьте коробки.</>}
                   </p>
                   <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                     <div className="bg-white rounded-lg p-2 border border-red-200">

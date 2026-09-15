@@ -313,9 +313,11 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
   const totalProfit = totalSaleValue - totalPurchaseValue;
 
   // === Проверка дубликатов ===
-  // 1) строка совпадает с уже существующим товаром (бренд+модель+склад / бренд+модель для реализации)
+  // 1) строка совпадает с уже существующим товаром (бренд+модель+цвет+тип+размеры+склад)
   const getRowDuplicate = (row) => findDuplicateProduct(existingProducts, {
-    brand: row.brand, model: row.model, warehouseId: row.warehouse_id, isConsignment
+    brand: row.brand, model: row.model, warehouseId: row.warehouse_id, isConsignment,
+    color: row.color, productType: row.product_type,
+    sizeFrom: row.size_from, sizeTo: row.size_to
   });
   // 2) дубликат ВНУТРИ списка строк (две строки с одинаковыми бренд+модель+склад)
   const intraDup = findDuplicateInRows(validRows);
@@ -558,7 +560,7 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold">Найдены дубликаты ({duplicateRowCount + intraDupIds.size})</p>
-                <p className="text-red-600 mt-0.5">Такие товары уже есть в системе или повторяются в списке. Удалите строки-дубликаты или добавьте коробки к существующим товарам в разделе «Товары».</p>
+                <p className="text-red-600 mt-0.5">Товар считается дубликатом, если совпадают бренд + модель + цвет + тип + размеры + склад. Измените хотя бы одно поле (например цвет), выберите другой склад или удалите строку-дубликат.</p>
               </div>
             </div>
           )}
