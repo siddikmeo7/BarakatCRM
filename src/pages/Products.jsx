@@ -47,6 +47,7 @@ import { t } from '@/components/i18n/translations';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import PageLoader from '@/components/ui/PageLoader';
 import { useDraft } from '@/hooks/useDraft';
+import { findDuplicateProduct } from '@/lib/productDuplicate';
 
 const PAGE_SIZE = 20;
 
@@ -83,6 +84,7 @@ export default function Products() {
   const [filterPriceMin, setFilterPriceMin] = useState('');
   const [filterPriceMax, setFilterPriceMax] = useState('');
   const [filterStock, setFilterStock] = useState('all');
+  const [filterConsignment, setFilterConsignment] = useState('all'); // all | consignment | own
 
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -194,29 +196,26 @@ export default function Products() {
     }
   };
 
-  // Проверка дубликата по бренду + модели + складу.
-  // Один и тот же бренд+модель может лежать на РАЗНЫХ складах — это не дубликат.
-  // Дубликат — только если бренд+модель+склад полностью совпадают.
+  // Проверка дубликата по бренду + модели (+ склад для обычных товаров).
+  // Реализация (чужой товар): дубликат = тот же бренд+модель (без склада).
+  // Обычный товар: дубликат = тот же бренд+модель+склад. Разные склады — не дубликат.
+  // Если склад не выбран — любой совпадающий по бренд+модель считается дубликатом.
   const checkDuplicate = (brand, model, warehouseId) => {
-    if (!brand.trim() || !model.trim()) {
-      setDuplicateProduct(null);
-      return;
-    }
-    const wh = warehouseId || formData.warehouse_id;
-    if (!wh) {
-      // Склад не выбран — не можем гарантировать уникальность, не блокируем
-      setDuplicateProduct(null);
-      return;
-    }
-    const whId = String(wh);
-    const found = products.find(p =>
-      p.brand?.toLowerCase().trim() === brand.toLowerCase().trim() &&
-      p.model?.toLowerCase().trim() === model.toLowerCase().trim() &&
-      String(p.warehouse_id || '') === whId &&
-      (!editingProduct || p.id !== editingProduct.id)
-    );
+    const found = findDuplicateProduct(products, {
+      brand,
+      model,
+      warehouseId: warehouseId || formData.warehouse_id,
+      isConsignment: formData.is_consignment,
+      excludeId: editingProduct?.id
+    });
     setDuplicateProduct(found || null);
   };
+
+  // Перепроверка дубликата при переключении режима реализации / склада
+  useEffect(() => {
+    checkDuplicate(formData.brand, formData.model);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.is_consignment, formData.warehouse_id]);
 
   const handleOpenDialog = (product = null) => {
     setDuplicateProduct(null);
@@ -275,14 +274,14 @@ export default function Products() {
 
   const handleSave = async () => {
     if (savingRef.current) return; // Жёсткая защита от двойного нажатия
-    // Финальная проверка дубликата по бренд+модель+склад прямо перед сохранением
-    const _whId = String(formData.warehouse_id || '');
-    const _dup = products.find(p =>
-      p.brand?.toLowerCase().trim() === String(formData.brand || '').toLowerCase().trim() &&
-      p.model?.toLowerCase().trim() === String(formData.model || '').toLowerCase().trim() &&
-      String(p.warehouse_id || '') === _whId &&
-      (!editingProduct || p.id !== editingProduct.id)
-    );
+    // Финальная проверка дубликата прямо перед сохранением
+    const _dup = findDuplicateProduct(products, {
+      brand: formData.brand,
+      model: formData.model,
+      warehouseId: formData.warehouse_id,
+      isConsignment: formData.is_consignment,
+      excludeId: editingProduct?.id
+    });
     if (_dup) {
       setDuplicateProduct(_dup);
       savingRef.current = false;
@@ -551,7 +550,10 @@ export default function Products() {
       (filterStock === 'low' && (product.boxes_in_stock || 0) <= lowStockLimit) ||
       (filterStock === 'instock' && (product.boxes_in_stock || 0) > 0) ||
       (filterStock === 'empty' && (product.boxes_in_stock || 0) === 0);
-    return matchesSearch && matchesType && matchesWarehouse && matchesColor && matchesPriceMin && matchesPriceMax && matchesStock;
+    const matchesConsignment = filterConsignment === 'all' ||
+      (filterConsignment === 'consignment' && !!product._isConsignment) ||
+      (filterConsignment === 'own' && !product._isConsignment);
+    return matchesSearch && matchesType && matchesWarehouse && matchesColor && matchesPriceMin && matchesPriceMax && matchesStock && matchesConsignment;
   });
 
   // Сортировка
@@ -761,6 +763,16 @@ export default function Products() {
               <SelectItem value="instock">В наличии</SelectItem>
               <SelectItem value="low">⚠️ Мало</SelectItem>
               <SelectItem value="empty">Нет в наличии</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterConsignment} onValueChange={v => { setFilterConsignment(v); setPage(1); }}>
+            <SelectTrigger className="w-36 h-8 text-xs">
+              <SelectValue placeholder="Принадлежность" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все товары</SelectItem>
+              <SelectItem value="own">📦 Мои товары</SelectItem>
+              <SelectItem value="consignment">🏷️ Реализация (чужие)</SelectItem>
             </SelectContent>
           </Select>
           <div className="flex items-center gap-1">
@@ -1234,7 +1246,9 @@ export default function Products() {
                     Дубликат! Такой товар уже существует
                   </p>
                   <p className="text-xs text-red-600 mt-0.5">
-                    «<span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span>» уже есть на этом складе. Выберите другой склад или измените модель.
+                    {duplicateProduct._isConsignment
+                      ? <>«<span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span>» уже есть на реализации. Откройте существующий и добавьте коробки.</>
+                      : <>«<span className="font-medium">{duplicateProduct.brand} {duplicateProduct.model}</span>» уже есть {duplicateProduct.warehouse_id ? 'на этом складе' : 'в системе'}. Откройте существующий и добавьте коробки, либо выберите другой склад.</>}
                   </p>
                   <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                     <div className="bg-white rounded-lg p-2 border border-red-200">
@@ -1528,6 +1542,7 @@ export default function Products() {
         onClose={() => setBulkAddOpen(false)}
         business={business}
         warehouses={warehouses}
+        existingProducts={products}
         onSaved={loadData}
       />
 

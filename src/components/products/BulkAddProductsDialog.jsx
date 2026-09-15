@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Loader2, Package, CheckCheck, Copy, Box, TrendingUp, DollarSign, AlertCircle, RotateCcw, Star } from 'lucide-react';
+import { findDuplicateProduct, findDuplicateInRows } from '@/lib/productDuplicate';
 
 const BASE_PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
 const BASE_COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый', 'Другой'];
@@ -48,7 +49,7 @@ function clearDraft() {
   localStorage.removeItem(DRAFT_KEY);
 }
 
-export default function BulkAddProductsDialog({ open, onClose, business, warehouses, onSaved }) {
+export default function BulkAddProductsDialog({ open, onClose, business, warehouses, existingProducts = [], onSaved }) {
   const allProductTypes = [...BASE_PRODUCT_TYPES, ...(business?.custom_product_types || [])];
   const allColors = [...BASE_COLORS, ...(business?.custom_colors || [])];
 
@@ -268,6 +269,20 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
   }, 0);
   const totalProfit = totalSaleValue - totalPurchaseValue;
 
+  // === Проверка дубликатов ===
+  // 1) строка совпадает с уже существующим товаром (бренд+модель+склад)
+  const getRowDuplicate = (row) => findDuplicateProduct(existingProducts, {
+    brand: row.brand, model: row.model, warehouseId: row.warehouse_id, isConsignment: false
+  });
+  // 2) дубликат ВНУТРИ списка строк (две строки с одинаковыми бренд+модель+склад)
+  const intraDup = findDuplicateInRows(validRows);
+  const intraDupIds = (() => {
+    if (!intraDup) return new Set();
+    return new Set([validRows[intraDup.rowIndex]._id, validRows[intraDup.dupIndex]._id]);
+  })();
+  const duplicateRowCount = validRows.filter(r => getRowDuplicate(r)).length;
+  const hasAnyDuplicate = duplicateRowCount > 0 || intraDupIds.size > 0;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -324,9 +339,11 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
               const effectivePurchasePrice = parseFloat(row.purchase_price) || (src && !isSource ? parseFloat(src.purchase_price) : 0) || 0;
               const rowTotal = (parseInt(row.boxes_in_stock) || 0) * effectiveSalePrice;
               const rowProfit = (parseInt(row.boxes_in_stock) || 0) * (effectiveSalePrice - effectivePurchasePrice);
+              const existingDup = row.brand.trim() && row.model.trim() ? getRowDuplicate(row) : null;
+              const isDuplicate = !!existingDup || intraDupIds.has(row._id);
 
               return (
-                <div key={row._id} className={`bg-white border rounded-xl p-3 transition-all ${isSource ? 'border-amber-400 ring-1 ring-amber-200' : 'border-slate-200'}`}>
+                <div key={row._id} className={`bg-white border rounded-xl p-3 transition-all ${isSource ? 'border-amber-400 ring-1 ring-amber-200' : isDuplicate ? 'border-red-400 ring-1 ring-red-200 bg-red-50' : 'border-slate-200'}`}>
                   <div className="flex items-center gap-2 mb-2">
                     {/* Номер + эталон */}
                     <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
@@ -435,6 +452,17 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
                       Эталон цен — остальные строки без цены используют эту
                     </div>
                   )}
+
+                  {isDuplicate && (
+                    <div className="mt-2 flex items-start gap-1.5 text-xs text-red-600 font-medium">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                      <span>
+                        {existingDup
+                          ? <>Уже есть в системе: «{existingDup.brand} {existingDup.model}»{existingDup.warehouse_id ? '' : ' (реализация)'} — добавьте коробки к существующему.</>
+                          : 'Дубликат внутри списка — две строки с одинаковыми бренд+модель+склад.'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -445,6 +473,17 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
             className="w-full py-2.5 border-2 border-dashed border-indigo-200 rounded-xl text-indigo-500 text-sm font-medium hover:border-indigo-400 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
             <Plus className="w-4 h-4" /> Добавить строку
           </button>
+
+          {/* Предупреждение о дубликатах */}
+          {hasAnyDuplicate && (
+            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Найдены дубликаты ({duplicateRowCount + intraDupIds.size})</p>
+                <p className="text-red-600 mt-0.5">Такие товары уже есть в системе или повторяются в списке. Удалите строки-дубликаты или добавьте коробки к существующим товарам в разделе «Товары».</p>
+              </div>
+            </div>
+          )}
 
           {/* Итоговая сводка */}
           {validCount > 0 && (
@@ -518,7 +557,7 @@ export default function BulkAddProductsDialog({ open, onClose, business, warehou
             <Button variant="outline" onClick={handleClose} disabled={saving}>Закрыть</Button>
             <Button
               onClick={handleSave}
-              disabled={saving || validCount === 0}
+              disabled={saving || validCount === 0 || hasAnyDuplicate}
               className={`gap-2 ${progress?.done === progress?.total && progress?.done > 0 ? 'bg-emerald-600 hover:bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> :

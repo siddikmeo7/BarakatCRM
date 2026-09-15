@@ -27,7 +27,8 @@ import {
   Megaphone,
   MoreHorizontal,
   X,
-  Calendar
+  Calendar,
+  ChevronRight
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
@@ -483,19 +484,25 @@ export default function Analytics() {
               <p className="text-xs text-slate-400">после расходов</p>
             </div>
           </div>
-          {/* Прибыль с реализации чужих товаров */}
-          <div className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 ${consignmentProfit > 0 ? 'bg-teal-50 border-teal-200' : 'bg-white border-slate-100'}`}>
+          {/* Прибыль с реализации чужих товаров — кликабельно, ведёт к управлению выплатами владельцам */}
+          <Link
+            to={createPageUrl('OwnerPayments')}
+            className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 transition-all hover:shadow-md ${consignmentProfit > 0 ? 'bg-teal-50 border-teal-200 hover:border-teal-400' : 'bg-white border-slate-100 hover:border-teal-300'}`}
+          >
             <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center flex-shrink-0">
               <PackageOpen className="w-6 h-6 text-teal-600" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-slate-500 font-medium">Прибыль с реализации</p>
               <p className={`text-2xl font-bold ${consignmentProfit > 0 ? 'text-teal-600' : 'text-slate-400'}`}>
                 {hideData ? masked : `${formatCompact(consignmentProfit, lang)} с.`}
               </p>
               <p className="text-xs text-slate-400">{consignmentBoxes} кор. · владельцам: {hideData ? masked : `${formatCompact(consignmentOwnerAmount, lang)} с.`}</p>
             </div>
-          </div>
+            <span className="text-xs text-teal-600 font-medium flex-shrink-0 flex items-center gap-1">
+              Управление <ChevronRight className="w-3.5 h-3.5" />
+            </span>
+          </Link>
         </div>
       )}
 
