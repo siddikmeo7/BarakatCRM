@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import PageHeader from '@/components/ui/PageHeader';
 import SearchInput from '@/components/filters/SearchInput';
 import DateFilter from '@/components/filters/DateFilter';
@@ -52,6 +54,7 @@ import { useDraft } from '@/hooks/useDraft';
 
 export default function Sales() {
   const { can, isReady } = useEmployeeAccess();
+  const navigate = useNavigate();
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -488,16 +491,6 @@ export default function Sales() {
     }
   };
 
-  // Быстрые переключатели периода для продаж
-  const setSalesQuickPeriod = (period) => {
-    const now = new Date();
-    if (period === 'today') setDateRange({ from: startOfDay(now), to: endOfDay(now) });
-    else if (period === 'week') setDateRange({ from: startOfWeek(now, { weekStartsOn: 1 }), to: endOfWeek(now, { weekStartsOn: 1 }) });
-    else if (period === 'month') setDateRange({ from: startOfMonth(now), to: endOfMonth(now) });
-    else if (period === 'all') setDateRange(null);
-    setSalesPage(1);
-  };
-
   // Если у сотрудника view_own_sales_only — показываем только его продажи
   const currentUserEmail = window.__barakatEmployee?.user_email || null;
 
@@ -683,9 +676,12 @@ export default function Sales() {
         </div>
       </div>
 
-      {/* Consignment stats */}
+      {/* Consignment stats — кликабельно, ведёт в раздел выплат владельцам */}
       {consignmentStats.count > 0 && can('view_sale_profit') && (
-        <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3 border border-teal-200 dark:border-teal-800 flex flex-wrap items-center gap-4 text-sm">
+        <button
+          onClick={() => navigate(createPageUrl('OwnerPayments'))}
+          className="w-full text-left bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3 border border-teal-200 dark:border-teal-800 hover:border-teal-400 hover:shadow-md transition-all flex flex-wrap items-center gap-4 text-sm cursor-pointer"
+        >
           <div className="flex items-center gap-2">
             <PackageOpen className="w-4 h-4 text-teal-600" />
             <span className="font-medium text-teal-700 dark:text-teal-300">Реализация: {consignmentStats.count} продаж</span>
@@ -698,23 +694,16 @@ export default function Sales() {
             <span className="text-slate-500">Владельцам товаров:</span>
             <span className="font-bold text-amber-600">{consignmentStats.ownerAmount.toLocaleString()} с.</span>
           </div>
-        </div>
+          <span className="ml-auto text-xs text-teal-600 dark:text-teal-400 font-medium flex items-center gap-1">
+            Подробности и выплаты <ChevronRight className="w-3.5 h-3.5" />
+          </span>
+        </button>
       )}
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 space-y-2">
-        {/* Quick period buttons */}
+        {/* Период + переключатель вида */}
         <div className="flex flex-wrap gap-1.5 items-center">
-          {[
-            { key: 'today', label: 'Сегодня' },
-            { key: 'week', label: 'Неделя' },
-            { key: 'month', label: 'Месяц' },
-          ].map(f => (
-            <button key={f.key} onClick={() => setSalesQuickPeriod(f.key)}
-              className="px-2.5 py-1 rounded-lg text-xs font-medium border bg-white text-slate-600 border-slate-200 hover:border-indigo-400 transition-all">
-              {f.label}
-            </button>
-          ))}
           <DateFilter dateRange={dateRange} onDateRangeChange={r => { setDateRange(r); setSalesPage(1); }} />
           <ViewToggle view={view} onChange={setView} enableCustomersView />
           <span className="ml-auto text-xs text-slate-400">{filteredSales.length}</span>
@@ -821,14 +810,18 @@ export default function Sales() {
           can={can}
           displayUnit={displayUnit}
           onSelectCustomer={(g) => {
-            // Открываем профиль клиента; всю историю покупок видно внутри
-            const cust = g.customer || {
-              id: g.customer_id,
-              name: g.customer_name || 'Без клиента',
-              phone: '',
-              address: '',
-            };
-            setProfileCustomer(cust);
+            // Переходим в раздел «Клиенты» с открытием детального профиля.
+            // Если у клиента нет ID (только имя) — открываем профиль-диалог как запасной вариант.
+            if (g.customer_id) {
+              navigate(`${createPageUrl('Customers')}?customerId=${encodeURIComponent(g.customer_id)}`);
+            } else {
+              setProfileCustomer({
+                id: g.customer_id,
+                name: g.customer_name || 'Без клиента',
+                phone: g.customer?.phone || '',
+                address: g.customer?.address || '',
+              });
+            }
           }}
         />
       ) : view === 'list' ? (
