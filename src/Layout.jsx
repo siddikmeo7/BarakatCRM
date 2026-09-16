@@ -176,6 +176,8 @@ export default function Layout({ children, currentPageName }) {
             const empBizData = empBizRes.data || {};
             const businesses = empBizData.ownedBusinesses || [];
             const employeeRecords = empBizData.employees || [];
+            // Карта сотрудник→бизнес (используется как fallback, если loadEmployeeContext подведёт)
+            const empBusinessMap = empBizData.businesses || {};
 
             // Функция регистрации сессии устройства
             const registerDeviceSession = async (bizId, userEmail, userName, role, empId = null) => {
@@ -211,60 +213,79 @@ export default function Layout({ children, currentPageName }) {
 
             if (savedMode && savedMode.startsWith('employee_')) {
               const empId = savedMode.replace('employee_', '');
+              let emp = null, biz = null, rolePerms = null, ctxError = null;
+              // 1) Загружаем контекст через backend (роль + бизнес + сотрудник)
               try {
                 const ctxRes = await base44.functions.invoke('loadEmployeeContext', { employee_id: empId });
                 const ctx = ctxRes.data;
-                if (ctx.error) {
-                  console.error('loadEmployeeContext error:', ctx.error);
-                  localStorage.removeItem('barakatcrm_mode');
-                  localStorage.removeItem(`barakat_emp_token_${empId}`);
-                } else {
-                  const emp = ctx.employee;
-                  const biz = ctx.business;
-                  setBusiness(biz);
-                  setLang(biz?.language || 'ru');
-                  let mergedPerms = null;
-                  if (emp.is_admin) {
-                    setEmployeePermissions(null);
-                  } else {
-                    const rolePerms = ctx.role_permissions || {};
-                    mergedPerms = mergePermissions(rolePerms, emp.permissions || {});
-                    setEmployeePermissions(mergedPerms);
-                  }
-                  setCurrentEmployee(emp);
-                  window.__barakatEmployee = emp;
-                  window.__barakatBusiness = biz;
-                  window.__barakatMergedPermissions = mergedPerms;
-                  window.__barakatAccessReady = true;
-                  window.dispatchEvent(new Event('barakatAccessReady'));
-                  // КРИТИЧНО для RLS: привязываем бизнес к аккаунту сотрудника,
-                  // иначе все запросы (Product/Sale/Customer/...) возвращают пусто
-                  if (currentUser.data?.business_id !== biz.id) {
-                    try { await base44.auth.updateMe({ business_id: biz.id }); } catch (_) {}
-                  }
-                  await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
-                  localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
-                  if (emp.login_session_token) {
-                    localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
-                  }
-                  saveBusinessToHistory(biz.id, biz.name, emp.id, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee');
-                  const welcomeKey = `welcomed_${emp.id}`;
-                  try {
-                    await base44.entities.Employee.update(emp.id, {
-                      last_login_at: new Date().toISOString(),
-                      device_info: navigator.userAgent
-                    });
-                  } catch (_) {}
-                  if (!sessionStorage.getItem(welcomeKey)) {
-                    setShowWelcome(true);
-                  }
-                  setLoading(false);
-                  return;
-                }
+                if (ctx?.error) { ctxError = ctx.error; }
+                else { emp = ctx.employee; biz = ctx.business; rolePerms = ctx.role_permissions || null; }
               } catch (ctxErr) {
-                console.error('loadEmployeeContext error:', ctxErr);
-                localStorage.removeItem('barakatcrm_mode');
+                ctxError = ctxErr?.message || String(ctxErr);
               }
+              // 2) Fallback: если loadEmployeeContext подвёл — берём сотрудника и бизнес
+              //    из уже загруженных данных getEmployeeBusinesses (join уже подтвердил сотрудника).
+              //    Это не даёт провалиться в режим владельца собственного бизнеса.
+              if ((!emp || !biz) && employeeRecords.length > 0) {
+                const fbEmp = employeeRecords.find(e => e.id === empId);
+                if (fbEmp) {
+                  emp = fbEmp;
+                  biz = empBusinessMap[empId] || biz;
+                  rolePerms = null;
+                  ctxError = null; // восстановились — не считаем ошибкой
+                }
+              }
+              // 3) Если сотрудника нет вообще (запись удалена/деактивирована) —
+              //    чистим режим и отправляем на BusinessAccess, а НЕ в собственный бизнес.
+              if (!emp || !biz) {
+                console.error('Employee context unavailable:', ctxError);
+                localStorage.removeItem('barakatcrm_mode');
+                localStorage.removeItem(`barakat_emp_token_${empId}`);
+                if (currentPageName !== 'BusinessAccess') {
+                  navigate(createPageUrl('BusinessAccess'));
+                }
+                setLoading(false);
+                return;
+              }
+              // 4) Применяем контекст сотрудника
+              setBusiness(biz);
+              setLang(biz?.language || 'ru');
+              let mergedPerms = null;
+              if (emp.is_admin) {
+                setEmployeePermissions(null);
+              } else {
+                mergedPerms = mergePermissions(rolePerms || {}, emp.permissions || {});
+                setEmployeePermissions(mergedPerms);
+              }
+              setCurrentEmployee(emp);
+              window.__barakatEmployee = emp;
+              window.__barakatBusiness = biz;
+              window.__barakatMergedPermissions = mergedPerms;
+              window.__barakatAccessReady = true;
+              window.dispatchEvent(new Event('barakatAccessReady'));
+              // КРИТИЧНО для RLS: привязываем бизнес к аккаунту сотрудника,
+              // иначе все запросы (Product/Sale/Customer/...) возвращают пусто
+              if (currentUser.data?.business_id !== biz.id) {
+                try { await base44.auth.updateMe({ business_id: biz.id }); } catch (_) {}
+              }
+              await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
+              localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
+              if (emp.login_session_token) {
+                localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
+              }
+              saveBusinessToHistory(biz.id, biz.name, emp.id, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee');
+              const welcomeKey = `welcomed_${emp.id}`;
+              try {
+                await base44.entities.Employee.update(emp.id, {
+                  last_login_at: new Date().toISOString(),
+                  device_info: navigator.userAgent
+                });
+              } catch (_) {}
+              if (!sessionStorage.getItem(welcomeKey)) {
+                setShowWelcome(true);
+              }
+              setLoading(false);
+              return;
             }
 
             // По умолчанию: если есть свой бизнес — владелец
