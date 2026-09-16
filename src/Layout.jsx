@@ -167,8 +167,11 @@ export default function Layout({ children, currentPageName }) {
       }
 
       if (currentUser.email !== ADMIN_EMAIL) {
-            // Проверяем: есть ли выбранный режим (сотрудник или владелец) в localStorage
-            const savedMode = localStorage.getItem('barakatcrm_mode'); // 'owner' | 'employee_<empId>'
+            // Проверяем: есть ли выбранный режим (сотрудник или владелец).
+            // Читаем из sessionStorage ИЛИ localStorage — Settings пишет в оба,
+            // sessionStorage переживает перезагрузку в той же вкладке и страхует,
+            // если localStorage был очищен (например, прошлым выходом).
+            const savedMode = sessionStorage.getItem('barakatcrm_mode') || localStorage.getItem('barakatcrm_mode'); // 'owner' | 'employee_<empId>'
 
             // Грузим бизнесы и записи сотрудника через backend функцию
             // (case-insensitive email matching, bypass RLS)
