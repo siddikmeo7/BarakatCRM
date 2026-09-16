@@ -22,7 +22,7 @@ import {
   Settings as SettingsIcon, Building2, Palette, Users, Plus, Trash2, Loader2, Save,
   CheckCircle, MessageCircle, Mail, Bell, Edit2, LogOut, History, Download, Shield,
   RotateCcw, AlertCircle, RefreshCw, ChevronDown, Lock, Database, Zap, Package,
-  ShoppingCart, Eye, Search, Check, Copy, ArrowLeftRight, Moon, Sun, PackageOpen, Globe, Phone, MapPin, CheckCircle2
+  ShoppingCart, Eye, Search, Check, Copy, ArrowLeftRight, Moon, Sun, PackageOpen, Globe, Phone, MapPin, CheckCircle2, XCircle
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
@@ -663,17 +663,25 @@ export default function Settings() {
               <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg"><p className="text-sm text-yellow-800">🔒 Введите коды, полученные от владельца бизнеса.</p></div>
               <div><Label>Код бизнеса</Label><Input value={empLoginCode} onChange={(e) => { setEmpLoginCode(e.target.value.toUpperCase()); if (empLoginError) setEmpLoginError(''); if (empLoginSuccess) setEmpLoginSuccess(null); }} placeholder="XXXXXXXXXXXX" className="mt-1.5 font-mono" /></div>
               <div><Label>Код доступа</Label><Input value={empAccessCode} onChange={(e) => { setEmpAccessCode(e.target.value.toUpperCase()); if (empLoginError) setEmpLoginError(''); if (empLoginSuccess) setEmpLoginSuccess(null); }} placeholder="XXXXXXXX" className="mt-1.5 font-mono" /></div>
-              {empLoginError && <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">{empLoginError}</div>}
-              {empLoginSuccess && (
-                <div className="bg-emerald-100 text-emerald-700 p-4 rounded-lg text-sm flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                  <div className="font-semibold">🎉 Поздравляем! Вы успешно вошли в бизнес «{empLoginSuccess}»!<br/>Всё готово. Перенаправляем...</div>
+              {empLoginError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm flex items-start gap-2">
+                  <XCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>{empLoginError}</span>
                 </div>
               )}
-              {empLoginLoading && (
+              {empLoginSuccess && (
+                <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg flex items-start gap-3">
+                  <Loader2 className="w-5 h-5 animate-spin text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <div className="font-semibold text-emerald-700">✅ Всё верно! Вы зарегистрированы в бизнесе «{empLoginSuccess.business_name}».</div>
+                    <div className="text-emerald-600 mt-0.5">Подождите, загружаем данные — вы сейчас войдёте в этот бизнес...</div>
+                  </div>
+                </div>
+              )}
+              {empLoginLoading && !empLoginSuccess && (
                 <div className="bg-purple-50 border border-purple-200 p-4 rounded-lg flex items-center gap-3">
                   <Loader2 className="w-5 h-5 animate-spin text-purple-600 flex-shrink-0" />
-                  <span className="text-purple-700 text-sm font-medium">Идёт загрузка, проверяем данные...</span>
+                  <span className="text-purple-700 text-sm font-medium">Проверяем данные…</span>
                 </div>
               )}
               <Button onClick={async () => {
@@ -684,16 +692,21 @@ export default function Settings() {
                     accessCode: empAccessCode.trim()
                   });
                   if (!res.data?.success) {
-                    const rawErr = res.data?.error || 'Неверные коды доступа';
+                    const rawErr = (res.data?.error || 'Неверные коды доступа').toString();
                     if (rawErr.startsWith('NOT_REGISTERED')) {
-                      setEmpLoginError('❌ К сожалению, вы не зарегистрированы как сотрудник этого бизнеса. Обратитесь к владельцу, чтобы вас добавили в список сотрудников.');
+                      setEmpLoginError('Вы не зарегистрированы как сотрудник в этом бизнесе. Попросите владельца добавить вас в список сотрудников.');
                     } else if (rawErr.startsWith('FROZEN')) {
-                      setEmpLoginError('❌ Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.');
+                      setEmpLoginError('Ваш аккаунт сотрудника заморожен. Обратитесь к владельцу бизнеса.');
                     } else if (rawErr.startsWith('DEACTIVATED')) {
-                      setEmpLoginError('❌ Ваш аккаунт сотрудника деактивирован. Обратитесь к владельцу бизнеса.');
+                      setEmpLoginError('Ваш аккаунт сотрудника деактивирован. Обратитесь к владельцу бизнеса.');
+                    } else if (rawErr.includes('не найден') || rawErr.includes('бизнес')) {
+                      setEmpLoginError('Бизнес с таким кодом не найден. Проверьте код бизнеса.');
+                    } else if (rawErr.includes('код доступа') || rawErr.includes('Неверный')) {
+                      setEmpLoginError('Неверный код доступа. Проверьте код доступа.');
                     } else {
-                      setEmpLoginError('❌ ' + rawErr);
+                      setEmpLoginError(rawErr);
                     }
+                    setEmpLoginLoading(false);
                     return;
                   }
                   const empId = res.data.employee_id;
@@ -701,17 +714,18 @@ export default function Settings() {
                   const bizName = res.data.business_name;
                   const empName = res.data.employee_name;
                   const isAdmin = res.data.is_admin;
-                  // КРИТИЧНО: обновляем business_id в токене на фронте ДО перезагрузки,
-                  // иначе RLS будет использовать устаревший токен и данные не загрузятся.
+                  // Обновляем business_id в токене ДО перезагрузки, чтобы RLS сразу видела новый бизнес.
                   try { await base44.auth.updateMe({ business_id: bizId }); } catch (_) {}
                   localStorage.setItem('barakatcrm_mode', `employee_${empId}`);
                   sessionStorage.setItem('barakatcrm_mode', `employee_${empId}`);
                   saveBusinessToHistory(bizId, bizName, empId, empName, isAdmin ? 'admin' : 'employee');
-                  setEmpLoginSuccess(bizName);
-                  setTimeout(() => { window.location.href = '/'; }, 2000);
+                  // Этап «загружаем данные»: спиннер остаётся, кнопка заблокирована до перезагрузки.
+                  setEmpLoginSuccess({ business_name: bizName });
+                  setTimeout(() => { window.location.href = '/'; }, 1800);
                 } catch (e) {
-                  setEmpLoginError('❌ Ошибка: ' + (e?.message || 'неизвестная ошибка'));
-                } finally { setEmpLoginLoading(false); }
+                  setEmpLoginError('Ошибка: ' + (e?.message || 'неизвестная ошибка'));
+                  setEmpLoginLoading(false);
+                }
               }} disabled={empLoginLoading || !empLoginCode || !empAccessCode} className="w-full bg-purple-600 hover:bg-purple-700 gap-2">
                 {empLoginLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}Войти как сотрудник
               </Button>
