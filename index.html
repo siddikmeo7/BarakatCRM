@@ -8,6 +8,16 @@
     <title>Base44 APP</title>
   </head>
   <body>
+    <script>
+      // По умолчанию — светлый режим. Тёмный — только если пользователь явно выбрал его ранее.
+      (function () {
+        try {
+          var t = localStorage.getItem('barakatcrm_theme');
+          if (t === 'dark') document.documentElement.classList.add('dark');
+          else { document.documentElement.classList.remove('dark'); localStorage.setItem('barakatcrm_theme', 'light'); }
+        } catch (e) { document.documentElement.classList.remove('dark'); }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -13,6 +13,7 @@ import {
   RotateCcw, ChevronDown, ChevronUp, Send, UserCheck, Copy, LayoutDashboard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MANAGER_PERMISSIONS } from '@/lib/defaultRoles';
 import EmployeeDetailDialog from '../employees/EmployeeDetailDialog';
 
 const ALL_PERMISSIONS = [
@@ -74,16 +75,7 @@ const PRESETS = {
   },
   manager: {
     label: '👔 Менеджер',
-    permissions: {
-      view_dashboard: true, view_analytics: true, view_profit: false, view_stock_value: false, view_purchase_price: false,
-      view_products: true, add_products: true, edit_products: true, delete_products: false, move_products: true,
-      view_sales: true, add_sales: true, edit_sales: true, cancel_sales: false, manage_discounts: true,
-      view_warehouses: true, manage_warehouses: false,
-      view_customers: true, manage_customers: true,
-      view_debts: true, manage_debts: true,
-      manage_returns: true, view_activity_log: false, export_reports: false,
-      manage_employees: false, manage_roles: false, manage_settings: false, view_settings_language: true,
-    }
+    permissions: { ...MANAGER_PERMISSIONS },
   },
   admin: {
     label: '👑 Администратор',

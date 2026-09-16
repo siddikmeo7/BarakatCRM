@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { ArrowLeft, Building2, Users, Copy, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { ensureManagerRole } from '@/lib/defaultRoles';
 
 export default function BusinessAccess() {
   const [step, setStep] = useState('main'); // main, manage, join, employee
@@ -74,6 +75,8 @@ export default function BusinessAccess() {
       });
 
       setBusiness(newBiz);
+      // Создаём роль «Менеджер» по умолчанию для нового бизнеса
+      await ensureManagerRole(newBiz.id);
       alert(`✅ Бизнес создан!\n\nКод бизнеса: ${bCode}\nКод доступа: ${aCode}`);
       setBusinessName('');
       setStep('main');

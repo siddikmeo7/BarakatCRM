@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
+import { MANAGER_PERMISSIONS } from '@/lib/defaultRoles';
 import { Save, Mail, CheckCheck, Zap, CheckSquare, Square } from 'lucide-react';
 
 const PERMISSION_GROUPS = [
@@ -207,7 +208,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
       setPermissions({ ...none, view_dashboard: true, view_products: true, view_sales: true, view_own_sales_only: true, add_sales: true, view_warehouses: true, view_customers: true, view_customer_contacts: true, view_sale_customer: true, view_settings_language: true });
     } else if (preset === 'manager') {
       setIsAdmin(false);
-      setPermissions({ ...none, view_dashboard: true, view_analytics: true, view_revenue: true, view_products: true, add_products: true, edit_products: true, move_products: true, edit_product_sale_price: true, view_sales: true, add_sales: true, edit_sales: true, cancel_sales: true, manage_discounts: true, edit_sale_price: true, view_sale_customer: true, view_warehouses: true, view_warehouse_revenue: true, view_customers: true, manage_customers: true, view_customer_debt: true, view_customer_contacts: true, view_debts: true, manage_debts: true, add_debt_manual: true, send_debt_reminders: true, view_returns: true, manage_returns: true, view_reports: true, send_notifications: true, view_settings_language: true });
+      setPermissions({ ...none, ...MANAGER_PERMISSIONS });
     } else if (preset === 'analyst') {
       setIsAdmin(false);
       const all = {};

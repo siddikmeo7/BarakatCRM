@@ -10,6 +10,7 @@ import BrandedLoader from '@/components/ui/BrandedLoader';
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
 import { saveBusinessToHistory } from '@/components/settings/RecentBusinessesPanel';
 import { recordLogin } from '@/lib/loginTracker';
+import { ensureManagerRole } from '@/lib/defaultRoles';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -274,6 +275,8 @@ export default function Layout({ children, currentPageName }) {
               window.__barakatBusiness = businesses[0];
               window.__barakatAccessReady = true;
               window.dispatchEvent(new Event('barakatAccessReady'));
+              // Гарантируем наличие роли «Менеджер» (идемпотентно)
+              ensureManagerRole(businesses[0].id);
               // Регистрируем сессию владельца
               await registerDeviceSession(businesses[0].id, currentUser.email, currentUser.full_name || currentUser.email, 'owner');
               // Track last login (once per day) for owner profile
