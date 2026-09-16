@@ -263,11 +263,11 @@ export default function Layout({ children, currentPageName }) {
               window.__barakatMergedPermissions = mergedPerms;
               window.__barakatAccessReady = true;
               window.dispatchEvent(new Event('barakatAccessReady'));
-              // КРИТИЧНО для RLS: привязываем бизнес к аккаунту сотрудника,
-              // иначе все запросы (Product/Sale/Customer/...) возвращают пусто
-              if (currentUser.data?.business_id !== biz.id) {
-                try { await base44.auth.updateMe({ business_id: biz.id }); } catch (_) {}
-              }
+              // КРИТИЧНО для RLS: всегда обновляем business_id в токене на фронте.
+              // auth.me() возвращает свежие данные из БД (business_id уже мог измениться
+              // бэкендом joinBusinessByCodes), поэтому сравнение «!==» пропустит updateMe —
+              // токен останется устаревшим и RLS вернёт пусто. Обновляем безусловно.
+              try { await base44.auth.updateMe({ business_id: biz.id }); } catch (_) {}
               await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
               localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
               if (emp.login_session_token) {
@@ -337,10 +337,8 @@ export default function Layout({ children, currentPageName }) {
                     window.__barakatMergedPermissions = mergedPerms2;
                     window.__barakatAccessReady = true;
                     window.dispatchEvent(new Event('barakatAccessReady'));
-                    // КРИТИЧНО для RLS: привязываем бизнес к аккаунту сотрудника
-                    if (currentUser.data?.business_id !== biz.id) {
-                      try { await base44.auth.updateMe({ business_id: biz.id }); } catch (_) {}
-                    }
+                    // КРИТИЧНО для RLS: всегда обновляем business_id в токене на фронте (см. выше)
+                    try { await base44.auth.updateMe({ business_id: biz.id }); } catch (_) {}
                     await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
                     localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
                     saveBusinessToHistory(biz.id, biz.name, emp.id, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee');

@@ -701,6 +701,9 @@ export default function Settings() {
                   const bizName = res.data.business_name;
                   const empName = res.data.employee_name;
                   const isAdmin = res.data.is_admin;
+                  // КРИТИЧНО: обновляем business_id в токене на фронте ДО перезагрузки,
+                  // иначе RLS будет использовать устаревший токен и данные не загрузятся.
+                  try { await base44.auth.updateMe({ business_id: bizId }); } catch (_) {}
                   localStorage.setItem('barakatcrm_mode', `employee_${empId}`);
                   sessionStorage.setItem('barakatcrm_mode', `employee_${empId}`);
                   saveBusinessToHistory(bizId, bizName, empId, empName, isAdmin ? 'admin' : 'employee');

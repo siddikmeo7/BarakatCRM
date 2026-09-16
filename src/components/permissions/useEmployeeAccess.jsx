@@ -22,6 +22,8 @@ export function useEmployeeAccess() {
     window.addEventListener('barakatAccessReady', handler);
 
     // Safety: если ready не пришло за 10с — форсируем готовность
+    // и диспатчим событие, чтобы страницы (Products и др.), слушающие его,
+    // начали загрузку данных, а не ждали вечно.
     let safety;
     if (!window.__barakatAccessReady) {
       safety = setTimeout(() => {
@@ -29,6 +31,7 @@ export function useEmployeeAccess() {
           window.__barakatAccessReady = true;
           setTimedOut(true);
           setTick(n => n + 1);
+          window.dispatchEvent(new Event('barakatAccessReady'));
         }
       }, READY_TIMEOUT_MS);
     }

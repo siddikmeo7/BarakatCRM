@@ -17,8 +17,8 @@ export default function BrandedLoader({ message = 'Загрузка...', fullScr
     return () => clearInterval(id);
   }, []);
 
-  const slow = elapsed >= 6 && elapsed < 10;
-  const stuck = elapsed >= 10;
+  const slow = elapsed >= 12 && elapsed < 15;
+  const stuck = elapsed >= 15;
 
   return (
     <div className={`flex flex-col items-center justify-center gap-6 ${fullScreen ? 'min-h-screen' : 'min-h-[60vh]'} bg-slate-50 dark:bg-slate-950 px-4`}>
