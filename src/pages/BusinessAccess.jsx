@@ -77,9 +77,9 @@ export default function BusinessAccess() {
       setBusiness(newBiz);
       // Создаём роль «Менеджер» по умолчанию для нового бизнеса
       await ensureManagerRole(newBiz.id);
-      alert(`✅ Бизнес создан!\n\nКод бизнеса: ${bCode}\nКод доступа: ${aCode}`);
-      setBusinessName('');
-      setStep('main');
+      alert(`✅ Бизнес создан!\n\nКод бизнеса: ${bCode}\nКод доступа: ${aCode}\n\nСейчас мы перезагрузим приложение, чтобы загрузить ваш новый бизнес.`);
+      // Перезагружаем, чтобы Layout подхватил новый бизнес и инициализировал доступ
+      window.location.href = '/';
     } catch (err) {
       setError('Ошибка: ' + err.message);
     } finally {
