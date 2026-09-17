@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatCompact } from '@/lib/formatCompact';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
+import { motion } from 'framer-motion';
 
 const PERIODS = [
   { key: 'today', label: 'Сегодня' },
@@ -199,30 +200,72 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
       {employeeStats.length === 0 ? (
         <div className="text-center py-8 text-slate-400">
           <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">Нет продаж за выбранный период</p>
+          <p className="text-sm">Нет сотрудников и продаж за выбранный период</p>
         </div>
       ) : (
-        <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+        <motion.div
+          className="space-y-2 max-h-[600px] overflow-y-auto pr-1"
+          initial="hidden"
+          animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+        >
           {employeeStats.map((emp, i) => {
             const share = totalRevenue ? ((emp.revenue / totalRevenue) * 100).toFixed(1) : 0;
+            const empRec = getEmpByEmail(emp.email);
+            // Статус сотрудника
+            const isFrozen = empRec?.is_frozen;
+            const isInactive = empRec?.is_active === false;
+            const isAdmin = empRec?.is_admin;
+            const stChip = isAdmin
+              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
+              : isFrozen
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                : isInactive
+                  ? 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
+                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300';
+            const stLabel = isAdmin ? 'Админ' : isFrozen ? 'Заморожен' : isInactive ? 'Неактивен' : 'Активен';
+            const float = !isFrozen && !isInactive;
             return (
-              <div key={emp.email || emp.name + i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-rose-50 transition-colors">
-                <div className="relative flex-shrink-0">
-                  <EmployeeAvatar employee={getEmpByEmail(emp.email)} name={emp.name} sizeClass="w-9 h-9 rounded-2xl text-sm" />
+              <motion.div
+                key={emp.email || emp.name + i}
+                variants={{
+                  hidden: { opacity: 0, x: -16 },
+                  show: { opacity: 1, x: 0, transition: { type: 'spring', stiffness: 260, damping: 22 } },
+                }}
+                whileHover={{ scale: 1.01, transition: { type: 'spring', stiffness: 300, damping: 18 } }}
+                className={cn(
+                  "flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-rose-50 transition-colors",
+                  (isFrozen || isInactive) && "opacity-70"
+                )}
+              >
+                <motion.div
+                  className="relative flex-shrink-0"
+                  animate={float ? { y: [0, -2, 0] } : { y: 0 }}
+                  transition={float ? { duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: (i % 5) * 0.2 } : {}}
+                >
+                  <EmployeeAvatar employee={empRec} name={emp.name} sizeClass="w-9 h-9 rounded-2xl text-sm" />
                   <span className={cn(
                     "absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold",
                     i === 0 ? "bg-amber-500" : i === 1 ? "bg-slate-500" : i === 2 ? "bg-orange-500" : "bg-slate-400"
                   )}>{i + 1}</span>
-                </div>
+                </motion.div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-900 text-sm truncate">{emp.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-semibold text-slate-900 text-sm truncate">{emp.name}</p>
+                    <span className={cn("inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0", stChip)}>{stLabel}</span>
+                  </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500 mt-0.5">
                     <span>📦 {emp.boxes} кор.</span>
                     <span>🛒 {emp.count} продаж</span>
                     <span className="text-slate-400">{share}%</span>
                   </div>
                   <div className="mt-1.5 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-rose-400 rounded-full" style={{ width: `${share}%` }} />
+                    <motion.div
+                      className="h-full bg-rose-400 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${share}%` }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                    />
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -233,10 +276,10 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
                     </p>
                   )}
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   );
