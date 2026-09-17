@@ -78,10 +78,17 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
 
   const employeeStats = useMemo(() => {
     const map = {};
+    // Сначала сеем ВСЕХ сотрудников бизнеса — чтобы показывались и те, кто не продавал
+    employees.forEach(e => {
+      const key = e.user_email || e.name || e.id;
+      if (!map[key]) {
+        map[key] = { name: e.name || e.user_email || 'Сотрудник', email: e.user_email || '', revenue: 0, profit: 0, boxes: 0, count: 0, inactive: !e.is_active || e.is_frozen };
+      }
+    });
     periodSales.forEach(s => {
       const key = s.seller_email || s.seller_name || 'Неизвестно';
       if (!map[key]) {
-        map[key] = { name: s.seller_name || s.seller_email || 'Неизвестно', email: s.seller_email || '', revenue: 0, profit: 0, boxes: 0, count: 0 };
+        map[key] = { name: s.seller_name || s.seller_email || 'Неизвестно', email: s.seller_email || '', revenue: 0, profit: 0, boxes: 0, count: 0, inactive: false };
       }
       map[key].revenue += s.total_amount || 0;
       map[key].profit += s.profit || 0;
@@ -89,7 +96,7 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
       map[key].count += 1;
     });
     return Object.values(map).sort((a, b) => b.revenue - a.revenue);
-  }, [periodSales]);
+  }, [periodSales, employees]);
 
   const totalRevenue = employeeStats.reduce((s, e) => s + e.revenue, 0);
   const totalProfit = employeeStats.reduce((s, e) => s + e.profit, 0);

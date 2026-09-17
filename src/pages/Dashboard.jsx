@@ -24,6 +24,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
+import TeamProfiles from '@/components/dashboard/TeamProfiles';
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { t } from '@/components/i18n/translations';
 import { useNavigate } from 'react-router-dom';
@@ -289,7 +290,11 @@ export default function Dashboard() {
         </div>
       </div>
       )}
+
+      {/* Команда — все сотрудники с профилями */}
+      <TeamProfiles />
+
       </div>
-    </div>
-  );
-}
+      </div>
+      );
+      }
