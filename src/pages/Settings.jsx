@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '../utils';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +30,8 @@ import EmployeePermissionsDialog from '@/components/employees/EmployeePermission
 import EmployeePersonalInfoPanel from '@/components/employees/EmployeePersonalInfoPanel';
 import EmployeeCard from '@/components/employees/EmployeeCard';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
+import ProfilePhotoZoom from '@/components/settings/ProfilePhotoZoom';
+import ProfileStylePicker from '@/components/settings/ProfileStylePicker';
 import SwitchAccountDialog from '@/components/settings/SwitchAccountDialog';
 import EmployeeProfilePanel from '@/components/settings/EmployeeProfilePanel';
 import ProfileCard from '@/components/settings/ProfileCard';
@@ -62,6 +65,7 @@ export default function Settings() {
   const savedMode = sessionStorage.getItem('barakatcrm_mode') || localStorage.getItem('barakatcrm_mode');
   const isEmployeeMode = savedMode && savedMode.startsWith('employee_');
   const [currentEmployee, setCurrentEmployee] = useState(() => window.__barakatEmployee || null);
+  const [profileZoomOpen, setProfileZoomOpen] = useState(false);
   const [business, setBusiness] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [user, setUser] = useState(null);
@@ -340,6 +344,26 @@ export default function Settings() {
 
   if (loading) return <div className="flex items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
 
+  // Полноэкранный блокирующий оверлей после успешного входа по кодам —
+  // чтобы сотрудник не нажал меню и не увидел старый (владельческий) контекст до перезагрузки.
+  // Рендерим через portal в body, чтобы оверлей перекрыл шапку с меню (поверх framer-motion).
+  if (empLoginSuccess) {
+    return createPortal(
+      <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mb-5 ring-4 ring-emerald-200 dark:ring-emerald-800">
+          <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Всё верно! Вы зарегистрированы</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-xs">Бизнес «{empLoginSuccess.business_name}». Подождите — загружаем данные, и вы войдёте в систему.</p>
+        <div className="mt-6 flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="text-sm font-medium">Загрузка данных…</span>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
   const canPerm = (key) => {
     if (!currentEmployee) return true;
     if (currentEmployee.is_admin) {
@@ -368,10 +392,9 @@ export default function Settings() {
         <PageHeader title="Настройки" subtitle="Ваш профиль и аккаунт" />
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
           <div className="flex items-center gap-3">
-            {currentEmployee?.avatar_url
-              ? <AvatarDisplay avatarUrl={currentEmployee.avatar_url} name={currentEmployee.name} size="md" />
-              : <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md flex-shrink-0"><span className="text-white font-bold text-lg">{currentEmployee.name?.charAt(0) || '?'}</span></div>
-            }
+            <div onDoubleClick={() => setProfileZoomOpen(true)} title="Двойной клик — увеличить" className="cursor-zoom-in">
+              <EmployeeAvatar employee={currentEmployee} size="md" />
+            </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-slate-900 truncate">{currentEmployee.name}</p>
               <p className="text-xs text-slate-500 truncate">{user?.email}</p>
@@ -402,7 +425,13 @@ export default function Settings() {
           <div className="border-t border-slate-100 pt-3">
             <p className="text-xs font-medium text-slate-500 mb-2">Фото профиля</p>
             <AvatarPicker key={currentEmployee?.avatar_url || 'no-avatar'} currentAvatar={currentEmployee?.avatar_url || null} onSave={async (url) => { await base44.entities.Employee.update(currentEmployee.id, { avatar_url: url }); window.__barakatEmployee = { ...currentEmployee, avatar_url: url }; await loadData(); }} />
+            <p className="text-[11px] text-slate-400 mt-2">Двойной клик по аватару — увеличить фото.</p>
           </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+            <p className="text-xs font-medium text-slate-500 mb-3">Рамка и стикер профиля</p>
+            <ProfileStylePicker currentEmployee={currentEmployee} user={user} onSaved={loadData} />
+          </div>
+          <ProfilePhotoZoom open={profileZoomOpen} onClose={() => setProfileZoomOpen(false)} avatarUrl={currentEmployee?.avatar_url} name={currentEmployee?.name} isAdmin={currentEmployee?.is_admin} profileSticker={currentEmployee?.profile_sticker} profileFrame={currentEmployee?.profile_frame} />
           <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
             <Button variant="outline" className="gap-1.5 text-indigo-600 hover:bg-indigo-50 border-indigo-200 text-sm" onClick={() => setSwitchAccountOpen(true)}><ArrowLeftRight className="w-4 h-4" /> Сменить аккаунт</Button>
             <Button variant="outline" className="gap-1.5 text-red-600 hover:bg-red-50 border-red-200 text-sm" onClick={() => { if (confirm('Выйти из аккаунта?')) { const mode = localStorage.getItem('barakatcrm_mode'); if (mode?.startsWith('employee_')) { const empId = mode.replace('employee_', ''); localStorage.removeItem(`barakat_emp_token_${empId}`); localStorage.removeItem('barakatcrm_mode'); } base44.auth.logout(); } }}><LogOut className="w-4 h-4" /> Выйти</Button>

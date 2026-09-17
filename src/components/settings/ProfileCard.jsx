@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { AvatarDisplay } from '@/components/settings/AvatarPicker';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
+import ProfilePhotoZoom from '@/components/settings/ProfilePhotoZoom';
 import { format } from 'date-fns';
 import { Flame, Calendar, User as UserIcon, ArrowLeftRight, LogOut, ChevronRight, Clock } from 'lucide-react';
 import { computeStreak, getTotalLoginDays } from '@/lib/loginTracker';
@@ -8,6 +10,7 @@ import { computeStreak, getTotalLoginDays } from '@/lib/loginTracker';
 export default function ProfileCard({ user, currentEmployee, business, lang, onOpenProfile, onSwitchAccount, onLogout, onAvatarSave, loadData }) {
   const [streak] = useState(() => computeStreak(user?.email));
   const [totalDays] = useState(() => getTotalLoginDays(user?.email));
+  const [zoomOpen, setZoomOpen] = useState(false);
 
   const avatarUrl = currentEmployee?.avatar_url || user?.avatar_url || user?.data?.avatar_url;
   const displayName = currentEmployee?.name || user?.full_name || 'Пользователь';
@@ -29,19 +32,17 @@ export default function ProfileCard({ user, currentEmployee, business, lang, onO
       <div className="bg-white dark:bg-slate-900 px-5 pb-5 -mt-12 relative">
         {/* Avatar + Name */}
         <div className="flex items-end gap-4 mb-4">
-          {avatarUrl ? (
-            <div className="ring-4 ring-white dark:ring-slate-900 rounded-2xl overflow-hidden shadow-xl flex-shrink-0 w-20 h-20">
-              {avatarUrl.startsWith('emoji:') ? (
-                <AvatarDisplay avatarUrl={avatarUrl} name={displayName} />
-              ) : (
-                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
-              )}
-            </div>
-          ) : (
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl flex-shrink-0 ring-4 ring-white dark:ring-slate-900">
-              <span className="text-white font-bold text-2xl">{displayName?.charAt(0)?.toUpperCase()}</span>
-            </div>
-          )}
+          <div onDoubleClick={() => setZoomOpen(true)} title="Двойной клик — увеличить" className="cursor-zoom-in flex-shrink-0">
+            <EmployeeAvatar
+              employee={currentEmployee}
+              avatarUrl={avatarUrl}
+              name={displayName}
+              isAdmin={currentEmployee?.is_admin}
+              profileSticker={currentEmployee?.profile_sticker || user?.data?.profile_sticker}
+              profileFrame={currentEmployee?.profile_frame || user?.data?.profile_frame}
+              sizeClass="w-20 h-20 rounded-2xl text-2xl"
+            />
+          </div>
           <div className="flex-1 min-w-0 pb-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="font-bold text-slate-900 dark:text-white text-lg truncate">{displayName}</h2>
@@ -112,6 +113,7 @@ export default function ProfileCard({ user, currentEmployee, business, lang, onO
           </Button>
         </div>
       </div>
+      <ProfilePhotoZoom open={zoomOpen} onClose={() => setZoomOpen(false)} avatarUrl={avatarUrl} name={displayName} isAdmin={currentEmployee?.is_admin} profileSticker={currentEmployee?.profile_sticker || user?.data?.profile_sticker} profileFrame={currentEmployee?.profile_frame || user?.data?.profile_frame} />
     </div>
   );
 }

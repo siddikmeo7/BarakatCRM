@@ -22,7 +22,7 @@ export default function ProfileStylePicker({ currentEmployee, user, onSaved }) {
       } else {
         await base44.auth.updateMe({ [field]: value });
       }
-      await onSaved?.();
+      await onSaved?.(field, value);
     } catch (e) {
       alert('Ошибка сохранения: ' + (e?.message || e));
     } finally {

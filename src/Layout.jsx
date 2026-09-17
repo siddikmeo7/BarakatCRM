@@ -8,6 +8,7 @@ import { mergePermissions } from '@/components/permissions/permissionsHelper';
 
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { saveBusinessToHistory } from '@/components/settings/RecentBusinessesPanel';
 import { recordLogin } from '@/lib/loginTracker';
 import { ensureManagerRole } from '@/lib/defaultRoles';
@@ -82,6 +83,8 @@ export default function Layout({ children, currentPageName }) {
   const [employeePermissions, setEmployeePermissions] = useState(null); // null = owner (full access)
   const [currentEmployee, setCurrentEmployee] = useState(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [roleName, setRoleName] = useState('');
+  const [frozenBlocked, setFrozenBlocked] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -108,6 +111,14 @@ export default function Layout({ children, currentPageName }) {
     });
     return unsubscribe;
   }, [business?.id]);
+
+  // Загружаем название роли сотрудника для отображения статуса в меню (Админ/Менеджер/Сотрудник)
+  useEffect(() => {
+    if (!currentEmployee?.role_id || currentEmployee.is_admin) { setRoleName(''); return; }
+    base44.entities.Role.filter({ id: currentEmployee.role_id })
+      .then(r => setRoleName(r[0]?.name || ''))
+      .catch(() => setRoleName(''));
+  }, [currentEmployee?.role_id, currentEmployee?.is_admin]);
 
   // Heartbeat: обновляем last_login_at каждые 5 минут для сотрудника
   useEffect(() => {
@@ -254,6 +265,14 @@ export default function Layout({ children, currentPageName }) {
                 setLoading(false);
                 return;
               }
+              // Замороженный сотрудник не может войти — показываем блокирующий экран
+              if (emp.is_frozen) {
+                localStorage.removeItem('barakatcrm_mode');
+                sessionStorage.removeItem('barakatcrm_mode');
+                setFrozenBlocked(true);
+                setLoading(false);
+                return;
+              }
               // 4) Применяем контекст сотрудника
               setBusiness(biz);
               setLang(biz?.language || 'ru');
@@ -381,6 +400,19 @@ export default function Layout({ children, currentPageName }) {
     return <BrandedLoader fullScreen message="Загрузка BarakatCRM..." />;
   }
 
+  if (frozenBlocked) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-slate-50 dark:bg-slate-950">
+        <div className="w-20 h-20 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mb-5 ring-4 ring-blue-200 dark:ring-blue-800">
+          <span className="text-4xl">🧊</span>
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Аккаунт заморожен</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-sm">Ваш аккаунт сотрудника был заморожен владельцем бизнеса. Обратитесь к владельцу, чтобы снова получить доступ.</p>
+        <button onClick={() => base44.auth.logout()} className="mt-6 px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium">Выйти</button>
+      </div>
+    );
+  }
+
   const isAdmin = user?.email === ADMIN_EMAIL;
   const isAdminPage = currentPageName?.startsWith('Admin');
   const isOwner = employeePermissions === null;
@@ -464,17 +496,12 @@ export default function Layout({ children, currentPageName }) {
         {/* Current user status card */}
         {currentEmployee ? (
           <div className={`rounded-xl px-3 py-2.5 flex items-center gap-3 ${currentEmployee.is_admin ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border border-indigo-200 dark:border-indigo-700' : 'bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700'}`}>
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${currentEmployee.is_admin ? 'bg-gradient-to-br from-indigo-500 to-purple-500' : 'bg-gradient-to-br from-slate-400 to-slate-500'}`}>
-              {currentEmployee.avatar_url
-                ? <img src={currentEmployee.avatar_url} alt={currentEmployee.name} className="w-full h-full object-cover" />
-                : <span className="text-white font-bold text-sm">{currentEmployee.name?.charAt(0)?.toUpperCase()}</span>
-              }
-            </div>
+            <EmployeeAvatar employee={currentEmployee} size="sm" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{currentEmployee.name}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${currentEmployee.is_admin ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
-                  {currentEmployee.is_admin ? '👑 Админ' : '🛍️ Сотрудник'}
+                  {currentEmployee.is_admin ? '👑 Админ' : (roleName || '🛍️ Сотрудник')}
                 </span>
                 <span className="text-[10px] text-slate-400 truncate">{business?.name}</span>
               </div>

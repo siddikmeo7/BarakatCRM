@@ -13,6 +13,8 @@ import {
 import { computeStreak, getActivityCalendar, getTotalLoginDays } from '@/lib/loginTracker';
 import AvatarPicker from '@/components/settings/AvatarPicker';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
+import ProfilePhotoZoom from '@/components/settings/ProfilePhotoZoom';
+import ProfileStylePicker from '@/components/settings/ProfileStylePicker';
 
 const PERMISSION_LABELS = [
   { key: 'view_dashboard', label: 'Дашборд', icon: '📊' },
@@ -86,6 +88,9 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
   const [totalDays, setTotalDays] = useState(0);
   const [calendar, setCalendar] = useState([]);
   const [avatarUrl, setAvatarUrl] = useState(currentEmployee?.avatar_url || user?.data?.avatar_url || null);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [profileFrame, setProfileFrame] = useState(currentEmployee?.profile_frame || user?.data?.profile_frame || 'none');
+  const [profileSticker, setProfileSticker] = useState(currentEmployee?.profile_sticker || user?.data?.profile_sticker || 'none');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -193,12 +198,16 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
           {/* === AVATAR === */}
           <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
             <div className="flex items-center gap-4 mb-4">
-              <EmployeeAvatar
-                avatarUrl={avatarUrl}
-                name={currentEmployee?.name || user?.full_name || user?.email || '?'}
-                isAdmin={currentEmployee?.is_admin}
-                size="lg"
-              />
+              <div onDoubleClick={() => setZoomOpen(true)} title="Двойной клик — увеличить" className="cursor-zoom-in">
+                <EmployeeAvatar
+                  avatarUrl={avatarUrl}
+                  name={currentEmployee?.name || user?.full_name || user?.email || '?'}
+                  isAdmin={currentEmployee?.is_admin}
+                  profileSticker={profileSticker}
+                  profileFrame={profileFrame}
+                  size="lg"
+                />
+              </div>
               <div>
                 <h3 className="font-semibold text-slate-900 dark:text-white">Фото профиля</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Загрузите своё фото или выберите из готовых</p>
@@ -217,7 +226,24 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
                 setAvatarUrl(url);
               }}
             />
+            <p className="text-[11px] text-slate-400 mt-3">Двойной клик по аватару — увеличить фото.</p>
           </div>
+
+          {/* === РАМКА И СТИКЕР ПРОФИЛЯ === */}
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-1">Рамка и стикер профиля</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Выберите рамку (4 варианта) и стикер — они отображаются во всех разделах, где виден ваш профиль.</p>
+            <ProfileStylePicker
+              currentEmployee={currentEmployee}
+              user={user}
+              onSaved={(field, value) => {
+                if (field === 'profile_frame') setProfileFrame(value);
+                if (field === 'profile_sticker') setProfileSticker(value);
+              }}
+            />
+          </div>
+
+          <ProfilePhotoZoom open={zoomOpen} onClose={() => setZoomOpen(false)} avatarUrl={avatarUrl} name={currentEmployee?.name || user?.full_name || user?.email || '?'} isAdmin={currentEmployee?.is_admin} profileSticker={profileSticker} profileFrame={profileFrame} />
 
           {/* === STREAK HERO === */}
           <div className="bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl p-5 text-white relative overflow-hidden">
