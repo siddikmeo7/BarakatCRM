@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Package, ShoppingCart, Boxes, Warehouse as WarehouseIcon, Layers } from 'lucide-react';
+import { Package, ShoppingCart, Boxes, Warehouse as WarehouseIcon, Layers, DollarSign, Layers3 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
 import { createPageUrl } from '@/utils';
 
@@ -44,6 +44,27 @@ export default function ProductSearchSummary({ query, products, sales, warehouse
   const totalStock = matched.reduce((s, p) => s + (p.boxes_in_stock || 0), 0);
   const totalSold = matchedSales.reduce((s, sale) => s + (sale.boxes_sold || 0), 0);
   const totalEver = totalStock + totalSold;
+  // Общая сумма закупки остатков
+  const totalPurchaseValue = matched.reduce((s, p) => s + ((p.boxes_in_stock || 0) * (p.purchase_price || 0)), 0);
+
+  // По моделям: бренд+модель → остаток, продано, закупка остатков
+  const byModel = useMemo(() => {
+    const map = {};
+    matched.forEach(p => {
+      const key = `${p.brand || ''}|${p.model || ''}`;
+      if (!map[key]) map[key] = { brand: p.brand, model: p.model, product_type: p.product_type, color: p.color, photo_url: p.photo_url, stock: 0, sold: 0, purchase: 0 };
+      map[key].stock += (p.boxes_in_stock || 0);
+      map[key].purchase += ((p.boxes_in_stock || 0) * (p.purchase_price || 0));
+    });
+    matchedSales.forEach(s => {
+      const p = matched.find(mp => mp.id === s.product_id);
+      if (!p) return;
+      const key = `${p.brand || ''}|${p.model || ''}`;
+      if (!map[key]) return;
+      map[key].sold += (s.boxes_sold || 0);
+    });
+    return Object.values(map);
+  }, [matched, matchedSales]);
 
   if (!q) return null;
 
@@ -84,6 +105,49 @@ export default function ProductSearchSummary({ query, products, sales, warehouse
             </div>
             <p className="text-xl font-bold text-purple-600">{byWarehouse.length}</p>
           </div>
+          <div className="bg-orange-50 rounded-lg p-2 text-center">
+            <div className="flex items-center justify-center gap-1 mb-0.5">
+              <DollarSign className="w-3.5 h-3.5 text-orange-500" />
+              <p className="text-[11px] text-slate-500 font-medium">Закупка (остаток)</p>
+            </div>
+            <p className="text-base font-bold text-orange-600">
+              {can('view_warehouse_cost') ? `${totalPurchaseValue.toLocaleString()} с.` : '•••••'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* === По моделям: остаток, продано, закупка === */}
+      <div>
+        <h4 className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-1.5 px-1">
+          <Layers3 className="w-4 h-4 text-indigo-500" /> По моделям
+        </h4>
+        <div className="space-y-2">
+          {byModel.map((g, i) => (
+            <div key={i} className="bg-white border border-slate-100 rounded-xl px-3 py-2.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <ProductPhoto
+                  photoUrl={g.photo_url}
+                  brand={g.brand}
+                  className="w-9 h-9 rounded-lg flex-shrink-0"
+                  placeholderClassName="bg-slate-100"
+                  textClassName="text-slate-500 text-[8px]"
+                />
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900 text-sm truncate">{g.brand} {g.model}</p>
+                  <p className="text-xs text-slate-400">{g.color} • {g.product_type}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs flex-shrink-0">
+                <span className="px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-semibold">Всего: {(g.stock + g.sold)}</span>
+                <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-semibold">Прод: {g.sold}</span>
+                <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold">Ост: {g.stock}</span>
+                <span className="px-2 py-1 rounded-full bg-orange-100 text-orange-700 font-bold">
+                  {can('view_warehouse_cost') ? `${g.purchase.toLocaleString()} с.` : '•••••'}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
