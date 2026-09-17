@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Shield, Trash2, Phone, Mail, Clock, LogIn, ChevronDown, ChevronUp, Copy, Send, History } from 'lucide-react';
 import EmployeeHistoryDialog from './EmployeeHistoryDialog';
 import { AvatarDisplay } from '@/components/settings/AvatarPicker';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 const PERM_LABELS = {
   view_dashboard: 'Дашборд', view_analytics: 'Аналитика', view_profit: 'Прибыль',
@@ -92,15 +93,7 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
         <div className="flex items-start gap-3">
           {/* Avatar with online dot */}
           <div className="relative flex-shrink-0">
-            {employee.avatar_url ? (
-              <AvatarDisplay avatarUrl={employee.avatar_url} name={employee.name} size="md" />
-            ) : (
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-lg">
-                  {employee.name?.charAt(0)?.toUpperCase()}
-                </span>
-              </div>
-            )}
+            <EmployeeAvatar employee={employee} size="md" />
             <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${status.color} ${status.pulse ? 'animate-pulse' : ''}`} />
           </div>
 

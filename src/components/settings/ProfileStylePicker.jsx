@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Check, Loader2, Sticker, Frame } from 'lucide-react';
-import { PROFILE_STICKERS, PROFILE_FRAMES } from '@/lib/profileStyle';
+import { PROFILE_STICKERS, PROFILE_FRAMES, getFrameWrapper } from '@/lib/profileStyle';
 
 /**
  * Выбор стикера и рамки профиля.
@@ -73,24 +73,31 @@ export default function ProfileStylePicker({ currentEmployee, user, onSaved }) {
           <Frame className="w-4 h-4 text-indigo-500" />
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Рамка аватара</p>
         </div>
-        <div className="grid grid-cols-5 gap-1.5">
-          {PROFILE_FRAMES.map(f => (
-            <button
-              key={f.id}
-              onClick={() => selectFrame(f.id)}
-              className={`relative aspect-square rounded-xl flex items-center justify-center border transition-all ${frame === f.id ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-              title={f.label}
-            >
-              <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 ${f.ring} ${f.glow}`} />
-              {frame === f.id && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-600 rounded-full flex items-center justify-center">
-                  <Check className="w-2.5 h-2.5 text-white" />
-                </span>
-              )}
-            </button>
-          ))}
+        <div className="grid grid-cols-6 gap-1.5">
+          {PROFILE_FRAMES.map(f => {
+            const { wrapperCls, wrapperStyle } = getFrameWrapper(f.id);
+            return (
+              <button
+                key={f.id}
+                onClick={() => selectFrame(f.id)}
+                className={`relative aspect-square rounded-xl flex items-center justify-center border transition-all ${frame === f.id ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                title={f.label}
+              >
+                <div className={wrapperCls} style={wrapperStyle}>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center">
+                    <span className="text-[9px]">👤</span>
+                  </div>
+                </div>
+                {frame === f.id && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-600 rounded-full flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 text-white" />
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
-        <p className="text-[11px] text-slate-400 mt-1.5">Текущая: <span className="font-medium text-slate-600 dark:text-slate-300">{PROFILE_FRAMES.find(f=>f.id===frame)?.label || 'Без рамки'}</span></p>
+        <p className="text-[11px] text-slate-400 mt-1.5">Текущая: <span className="font-medium text-slate-600 dark:text-slate-300">{PROFILE_FRAMES.find(f=>f.id===frame)?.label || 'Без рамки'}</span> · однотонные и узоры</p>
       </div>
     </div>
   );

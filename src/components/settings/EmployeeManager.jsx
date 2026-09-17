@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { MANAGER_PERMISSIONS } from '@/lib/defaultRoles';
 import EmployeeDetailDialog from '../employees/EmployeeDetailDialog';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 const ALL_PERMISSIONS = [
   { key: 'view_dashboard',       label: 'Видеть главную',              icon: LayoutDashboard, group: 'main' },
@@ -139,9 +140,8 @@ function EmployeeCard({ employee, business, onDelete, onUpdate }) {
     <div className={cn('border rounded-xl overflow-hidden', employee.is_active ? 'border-slate-200' : 'border-slate-200 opacity-60')}>
       {/* Header */}
       <div className="flex items-center gap-3 p-4 bg-white">
-        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0',
-          employee.is_active ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400')}>
-          {employee.name?.charAt(0)?.toUpperCase()}
+        <div className="flex-shrink-0">
+          <EmployeeAvatar employee={employee} sizeClass="w-10 h-10 text-base" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

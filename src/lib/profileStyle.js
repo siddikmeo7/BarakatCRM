@@ -19,13 +19,44 @@ export const PROFILE_STICKERS = [
   { id: 'sun',   emoji: '☀️',  label: 'Солнце' },
 ];
 
-// Рамки — до 5 вариантов. frame.style = inline CSS для ring/border
+// Рамки — однотонные + узоры (patterns).
+//  · ring/glow — Tailwind-классы для однотонной рамки (кольцо + свечение)
+//  · style — inline-CSS фон-узор для декоративной рамки (показывается как круглая обводка вокруг аватара)
 export const PROFILE_FRAMES = [
-  { id: 'none',   label: 'Без рамки',   ring: '',                                                          glow: '' },
-  { id: 'gold',   label: 'Золотая',      ring: 'ring-2 ring-amber-400',                                     glow: 'shadow-[0_0_0_3px_rgba(251,191,36,0.35)]' },
-  { id: 'neon',   label: 'Неон',         ring: 'ring-2 ring-fuchsia-500',                                   glow: 'shadow-[0_0_10px_2px_rgba(217,70,239,0.55)]' },
-  { id: 'emerald',label: 'Изумруд',      ring: 'ring-2 ring-emerald-500',                                  glow: 'shadow-[0_0_0_3px_rgba(16,185,129,0.35)]' },
-  { id: 'royal',  label: 'Королевская',  ring: 'ring-4 ring-indigo-500/80',                                glow: 'shadow-[0_0_12px_3px_rgba(99,102,241,0.5)]' },
+  { id: 'none',    label: 'Без рамки',  ring: '',  glow: '', style: '' },
+  // Однотонные
+  { id: 'gold',    label: 'Золото',      ring: 'ring-2 ring-amber-400',  glow: '',  style: '' },
+  { id: 'neon',    label: 'Неон',        ring: 'ring-2 ring-fuchsia-500', glow: 'shadow-[0_0_10px_2px_rgba(217,70,239,0.55)]', style: '' },
+  { id: 'emerald', label: 'Изумруд',     ring: 'ring-2 ring-emerald-500', glow: '',  style: '' },
+  { id: 'royal',   label: 'Королевская',  ring: 'ring-4 ring-indigo-500/80', glow: '', style: '' },
+  // Узоры (patterns)
+  { id: 'rainbow', label: 'Радуга',
+    ring: '', glow: '',
+    style: 'background: conic-gradient(from 0deg, #f43f5e, #f59e0b, #facc15, #10b981, #06b6d4, #6366f1, #8b5cf6, #ec4899, #f43f5e);' },
+  { id: 'sunset',  label: 'Закат',
+    ring: '', glow: '',
+    style: 'background: linear-gradient(135deg, #f97316, #ec4899, #8b5cf6);' },
+  { id: 'ocean',   label: 'Океан',
+    ring: '', glow: '',
+    style: 'background: linear-gradient(135deg, #06b6d4, #3b82f6, #6366f1);' },
+  { id: 'forest',  label: 'Лес',
+    ring: '', glow: '',
+    style: 'background: linear-gradient(135deg, #10b981, #059669, #047857);' },
+  { id: 'dotted',  label: 'Точки',
+    ring: '', glow: '',
+    style: 'background-color: #c7d2fe; background-image: radial-gradient(circle, #4f46e5 28%, transparent 29%); background-size: 7px 7px;' },
+  { id: 'stripes', label: 'Полоски',
+    ring: '', glow: '',
+    style: 'background: repeating-linear-gradient(45deg, #f59e0b 0 4px, #fbbf24 4px 8px);' },
+  { id: 'stars',   label: 'Звёзды',
+    ring: '', glow: '',
+    style: 'background-color: #1e293b; background-image: radial-gradient(circle, #fde047 22%, transparent 23%); background-size: 11px 11px;' },
+  { id: 'hearts',  label: 'Сердца',
+    ring: '', glow: '',
+    style: 'background-color: #ffe4e6; background-image: radial-gradient(circle at 50% 50%, #f43f5e 20%, transparent 21%); background-size: 10px 10px;' },
+  { id: 'grid',    label: 'Сетка',
+    ring: '', glow: '',
+    style: 'background-color: #e0f2fe; background-image: linear-gradient(#0ea5e9 1px, transparent 1px), linear-gradient(90deg, #0ea5e9 1px, transparent 1px); background-size: 8px 8px;' },
 ];
 
 export function getSticker(id) {
@@ -44,4 +75,15 @@ export function getFrame(id) {
 export function getFrameClasses(id) {
   const f = getFrame(id);
   return { ring: f.ring || '', glow: f.glow || '' };
+}
+
+// Возвращает готовые классы и инлайн-стиль для обёртки-рамки аватара.
+// Узоры (style) рисуются как круглая обводка (padding) вокруг круглого аватара.
+export function getFrameWrapper(id) {
+  const f = getFrame(id);
+  if (f.style) {
+    return { wrapperCls: 'rounded-full p-[3px]', wrapperStyle: f.style, ring: '', glow: '' };
+  }
+  const cls = `rounded-full ${f.ring || ''} ${f.glow || ''}`.replace(/\s+/g, ' ').trim();
+  return { wrapperCls: cls || 'rounded-full', wrapperStyle: null, ring: f.ring || '', glow: f.glow || '' };
 }

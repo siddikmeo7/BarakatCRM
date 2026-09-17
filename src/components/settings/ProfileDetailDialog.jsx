@@ -332,6 +332,15 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
                 <InfoRow icon={Clock} label="Последний вход" value={lastLogin ? format(new Date(lastLogin), 'dd MMM yyyy, HH:mm') : '—'} />
               </div>
             )}
+            {editing && (
+              <div className="mt-4 flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+                <Button variant="outline" className="flex-1 h-10" onClick={() => setEditing(false)} disabled={saving}>Отмена</Button>
+                <Button className="flex-1 h-10 gap-2" onClick={handleSavePersonalInfo} disabled={saving}>
+                  {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Сохранение...</> : saved ? <><CheckCircle2 className="w-4 h-4" />Сохранено!</> : <><Save className="w-4 h-4" />Сохранить</>}
+                </Button>
+              </div>
+            )}
+
             {deviceInfo && (
               <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
                 <div className="flex items-start gap-2">

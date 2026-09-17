@@ -29,7 +29,7 @@ export function getAvatarDisplay(avatarUrl, name) {
 
 export function AvatarDisplay({ avatarUrl, name, size = 'md' }) {
   const sizeClass = size === 'sm' ? 'w-10 h-10 text-xl' : size === 'lg' ? 'w-16 h-16 text-3xl' : 'w-12 h-12 text-2xl';
-  const rounded = size === 'sm' ? 'rounded-xl' : 'rounded-2xl';
+  const rounded = 'rounded-full';
 
   if (avatarUrl?.startsWith('emoji:')) {
     const id = avatarUrl.replace('emoji:', '');
@@ -103,13 +103,13 @@ export default function AvatarPicker({ currentAvatar, onSave }) {
           {/* Current preview */}
           <div className="flex items-center gap-3">
             {currentAv ? (
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${currentAv.bg} flex items-center justify-center shadow-sm flex-shrink-0`}>
+              <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${currentAv.bg} flex items-center justify-center shadow-sm flex-shrink-0`}>
                 <span className="text-lg">{currentAv.emoji}</span>
               </div>
             ) : currentUrl && !isEmoji ? (
-              <img src={currentUrl} alt="avatar" className="w-10 h-10 rounded-xl object-cover shadow-sm flex-shrink-0" />
+              <img src={currentUrl} alt="avatar" className="w-10 h-10 rounded-full object-cover shadow-sm flex-shrink-0" />
             ) : (
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center shadow-sm flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center shadow-sm flex-shrink-0">
                 <span className="text-lg">👤</span>
               </div>
             )}
