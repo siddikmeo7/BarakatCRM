@@ -610,6 +610,9 @@ export default function Debts() {
               <p className="text-center text-slate-500 py-8">Нет покупок</p>
             ) : customerSales.map(sale => {
               const prod = products.find(p => p.id === sale.product_id);
+              const saleSellerEmp = employees.find(e => e.user_email === sale.seller_email) || employees.find(e => e.name === sale.seller_name);
+              const saleSellerName = sale.seller_name || saleSellerEmp?.name || '';
+              const isResponsible = !!topSellerEmail && sale.seller_email === topSellerEmail;
               const paid = getSalePaidAmount(sale.id);
               const remaining = (sale.total_amount || 0) - paid;
               const isPaid = remaining <= 0;
@@ -644,6 +647,18 @@ export default function Debts() {
                         <p className="text-xs text-slate-400 mt-0.5">
                           {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy', { locale: ru })}
                         </p>
+                        {/* Продавец / ответственный за этот долг */}
+                        {saleSellerName && (
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <EmployeeAvatar employee={saleSellerEmp} name={saleSellerName} isAdmin={saleSellerEmp?.is_admin} size="xs" />
+                            <span className="text-xs text-slate-500 truncate">{saleSellerName}</span>
+                            {isResponsible && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full font-semibold flex items-center gap-1 flex-shrink-0">
+                                <User className="w-2.5 h-2.5" /> Ответственный
+                              </span>
+                            )}
+                          </div>
+                        )}
                         {/* Срок оплаты + редактирование */}
                         {editingDueDate[sale.id] !== undefined ? (
                           <div className="mt-1.5 flex items-center gap-2">

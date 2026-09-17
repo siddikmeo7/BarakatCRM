@@ -70,11 +70,18 @@ export function getFrameClasses(id) {
 
 // Возвращает готовые классы и инлайн-стиль для обёртки-рамки аватара.
 // Узоры (style) рисуются как круглая обводка (padding) вокруг круглого аватара.
+// Однотонные рамки тоже получают padding, чтобы кольцо (ring) было видно вокруг аватара,
+// а не перекрывалось им.
 export function getFrameWrapper(id) {
   const f = getFrame(id);
-  if (f.style) {
-    return { wrapperCls: 'rounded-full p-[3px]', wrapperStyle: f.style, ring: '', glow: '' };
+  if (f.id === 'none') {
+    return { wrapperCls: 'rounded-full', wrapperStyle: null, ring: '', glow: '' };
   }
-  const cls = `rounded-full ${f.ring || ''} ${f.glow || ''}`.replace(/\s+/g, ' ').trim();
-  return { wrapperCls: cls || 'rounded-full', wrapperStyle: null, ring: f.ring || '', glow: f.glow || '' };
+  if (f.style) {
+    // Декоративный узор: рисуется как видимая обводка (4px) вокруг аватара
+    return { wrapperCls: 'rounded-full p-[4px]', wrapperStyle: f.style, ring: '', glow: '' };
+  }
+  // Однотонная рамка: padding 2px + ring/свечение на обёртке
+  const cls = `rounded-full p-[2px] ${f.ring || ''} ${f.glow || ''}`.replace(/\s+/g, ' ').trim();
+  return { wrapperCls: cls, wrapperStyle: null, ring: f.ring || '', glow: f.glow || '' };
 }

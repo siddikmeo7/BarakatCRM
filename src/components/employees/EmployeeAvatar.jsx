@@ -37,7 +37,17 @@ export default function EmployeeAvatar({
   const grad = admin ? 'from-indigo-500 to-purple-500' : 'from-slate-400 to-slate-500';
   const { wrapperCls, wrapperStyle } = getFrameWrapper(frame);
   const stickerEmoji = getStickerEmoji(sticker);
-  const stickerBadgeSize = size === 'xs' || size === 'sm' ? 'w-4 h-4 text-[10px]' : 'w-5 h-5 text-xs';
+
+  // Размер стикера зависит от реального размера аватара, а не от пропса size —
+  // чтобы на маленьких аватарах (w-4/w-5/w-8) стикер не закрывал всё фото.
+  // w-<n> в Tailwind = n×4px. Парсим ширину из base.
+  const widthMatch = base.match(/\bw-(\d+)\b/);
+  const avatarPx = widthMatch ? parseInt(widthMatch[1], 10) * 4 : 48;
+  let stickerBadge = null;
+  if (avatarPx >= 44) stickerBadge = { cls: 'w-5 h-5 text-xs', pos: '-bottom-1 -right-1' };
+  else if (avatarPx >= 36) stickerBadge = { cls: 'w-3.5 h-3.5 text-[9px]', pos: '-bottom-0.5 -right-0.5' };
+  else if (avatarPx >= 28) stickerBadge = { cls: 'w-3 h-3 text-[8px]', pos: '-bottom-0.5 -right-0.5' };
+  // avatarPx < 28 (w-4/w-5/w-6) — стикер не показываем, слишком мелко
 
   const renderInner = () => {
     // Emoji avatar
@@ -69,9 +79,9 @@ export default function EmployeeAvatar({
       <div className={wrapperCls} style={wrapperStyle}>
         {renderInner()}
       </div>
-      {stickerEmoji && (
+      {stickerEmoji && stickerBadge && (
         <span
-          className={`absolute -bottom-1 -right-1 ${stickerBadgeSize} flex items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-md border border-slate-200 dark:border-slate-700 leading-none`}
+          className={`absolute ${stickerBadge.pos} ${stickerBadge.cls} flex items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-md border border-slate-200 dark:border-slate-700 leading-none`}
           style={{ padding: 0 }}
         >
           {stickerEmoji}
