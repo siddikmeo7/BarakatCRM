@@ -166,7 +166,11 @@ export default function Layout({ children, currentPageName }) {
         window.__redirectToProducts = true;
       }
 
-      if (currentUser.email !== ADMIN_EMAIL) {
+      // Платформенный админ (siddikme2007@gmail.com) тоже может войти в бизнес как сотрудник
+      // по кодам — в этом случае у него есть savedMode, и ветка ниже должна отработать.
+      // Без savedMode админ остаётся в режиме AdminDashboard (бизнес не грузится).
+      const hasSavedMode = !!(sessionStorage.getItem('barakatcrm_mode') || localStorage.getItem('barakatcrm_mode'));
+      if (currentUser.email !== ADMIN_EMAIL || hasSavedMode) {
             // Проверяем: есть ли выбранный режим (сотрудник или владелец).
             // Читаем из sessionStorage ИЛИ localStorage — Settings пишет в оба,
             // sessionStorage переживает перезагрузку в той же вкладке и страхует,
