@@ -14,6 +14,7 @@ export default function EmployeeAvatar({
   isAdmin,
   profileSticker,
   profileFrame,
+  deleted,
   size = 'md',
   sizeClass: sizeClassOverride,
   className = '',
@@ -21,6 +22,7 @@ export default function EmployeeAvatar({
   const url = avatarUrl || employee?.avatar_url || null;
   const displayName = name || employee?.name || '?';
   const admin = isAdmin ?? employee?.is_admin ?? false;
+  const isDeleted = deleted ?? !!employee?.deleted_at ?? false;
   const sticker = profileSticker ?? employee?.profile_sticker ?? '';
   const frame = profileFrame ?? employee?.profile_frame ?? 'none';
 
@@ -79,13 +81,25 @@ export default function EmployeeAvatar({
       <div className={wrapperCls} style={wrapperStyle}>
         {renderInner()}
       </div>
-      {stickerEmoji && stickerBadge && (
+      {stickerEmoji && stickerBadge && !isDeleted && (
         <span
           className={`absolute ${stickerBadge.pos} ${stickerBadge.cls} flex items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-md border border-slate-200 dark:border-slate-700 leading-none`}
           style={{ padding: 0 }}
         >
           {stickerEmoji}
         </span>
+      )}
+      {isDeleted && (
+        <span
+          className="absolute -bottom-1 -right-1 w-4 h-4 flex items-center justify-center rounded-full bg-red-500 text-white shadow-md border border-white dark:border-slate-900 leading-none"
+          title="Сотрудник удалён"
+          style={{ padding: 0 }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-2.5 h-2.5"><path d="M4 4l16 16M20 4L4 20" strokeLinecap="round"/></svg>
+        </span>
+      )}
+      {isDeleted && (
+        <span className="absolute inset-0 rounded-full ring-2 ring-red-500/70 pointer-events-none" />
       )}
     </div>
   );

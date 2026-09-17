@@ -238,7 +238,18 @@ export default function Settings() {
   };
 
   const handleDeleteEmployee = async (employeeId) => {
-    if (confirm(t(lang, 'confirm_delete'))) { await base44.entities.Employee.delete(employeeId); await loadData(); }
+    if (confirm(t(lang, 'confirm_delete') + ' Данные и история сотрудника сохранятся и будут видны с пометкой «удалён».')) {
+      const emp = employees.find(e => e.id === employeeId);
+      const history = emp?.change_history || [];
+      await base44.entities.Employee.update(employeeId, {
+        is_active: false,
+        is_frozen: true,
+        deleted_at: new Date().toISOString(),
+        login_session_token: crypto.randomUUID(),
+        change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email || business?.owner_email || '', changes: [{ field: 'deleted_at', oldValue: '', newValue: 'удалён' }] }],
+      });
+      await loadData();
+    }
   };
 
   const handleBackup = async () => {
@@ -805,8 +816,8 @@ export default function Settings() {
                 </button>
               </div>
               <div className="p-3 space-y-2">
-                {employees.length === 0 && <div className="text-center py-5"><Users className="w-8 h-8 text-slate-200 mx-auto mb-2" /><p className="text-sm text-slate-400">Нет сотрудников</p></div>}
-                {employees.map(emp => {
+                {employees.filter(e => !e.deleted_at).length === 0 && <div className="text-center py-5"><Users className="w-8 h-8 text-slate-200 mx-auto mb-2" /><p className="text-sm text-slate-400">Нет сотрудников</p></div>}
+                {employees.filter(e => !e.deleted_at).map(emp => {
                   const lastLogin = emp.last_login_at ? new Date(emp.last_login_at) : null;
                   const diffMs = lastLogin ? Date.now() - lastLogin.getTime() : null;
                   const isOnline = diffMs !== null && diffMs < 10 * 60 * 1000;

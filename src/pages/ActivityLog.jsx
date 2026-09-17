@@ -199,14 +199,18 @@ export default function ActivityLog() {
   // Helper: get display name for a user email
   const getUserLabel = (email, name) => {
     if (!email) return 'Система';
-    if (name) return `${name} (${email})`;
-    const emp = employees.find(e => e.user_email === email);
-    if (emp) return `${emp.name} (${email})`;
-    return email;
+    const emp = email ? employees.find(e => e.user_email === email) || null : null;
+    const deleted = !!emp?.deleted_at || (!emp && !!name);
+    const dispName = emp?.name || name || email;
+    return deleted ? `${dispName} (удалён)` : `${dispName} (${email})`;
   };
 
   // Helper: get employee record by email (for avatar lookup)
   const getEmpByEmail = (email) => (email ? employees.find(e => e.user_email === email) || null : null);
+  const isEmpDeleted = (email, hasName) => {
+    const emp = email ? employees.find(e => e.user_email === email) || null : null;
+    return !!emp?.deleted_at || (!emp && !!hasName);
+  };
 
   // Derived data
   const uniqueUsers = useMemo(() => [...new Set(logs.map(l => l.user_email).filter(Boolean))], [logs]);

@@ -367,8 +367,17 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
   };
 
   const handleDelete = async (id) => {
-    if (confirm('Удалить этого сотрудника?')) {
-      await base44.entities.Employee.delete(id);
+    if (confirm('Удалить этого сотрудника из команды? Его данные и история сохранятся и будут видны с пометкой «удалён».')) {
+      // Soft-delete: сохраняем запись для исторических отображений, помечаем удалённым
+      const emp = employees.find(e => e.id === id);
+      const history = emp?.change_history || [];
+      await base44.entities.Employee.update(id, {
+        is_active: false,
+        is_frozen: true,
+        deleted_at: new Date().toISOString(),
+        login_session_token: crypto.randomUUID(),
+        change_history: [...history, { timestamp: new Date().toISOString(), by_email: business?.owner_email || '', changes: [{ field: 'deleted_at', oldValue: '', newValue: 'удалён' }] }],
+      });
       onUpdate();
     }
   };
@@ -377,7 +386,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-600">{employees.length} сотрудник(ов)</p>
+        <p className="text-sm text-slate-600">{employees.filter(e => !e.deleted_at).length} сотрудник(ов)</p>
         <Button onClick={() => { setAddDialog(true); resetForm(); }} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
           <Plus className="w-4 h-4" /> Добавить сотрудника
         </Button>
@@ -385,12 +394,12 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
 
       {/* List */}
       <div className="space-y-3">
-        {employees.map(emp => (
+        {employees.filter(e => !e.deleted_at).map(emp => (
           <div key={emp.id} onClick={() => { setSelectedEmployee(emp); setDetailDialog(true); }} className="cursor-pointer">
             <EmployeeCard employee={emp} business={business} onDelete={handleDelete} onUpdate={onUpdate} />
           </div>
         ))}
-        {employees.length === 0 && (
+        {employees.filter(e => !e.deleted_at).length === 0 && (
           <div className="text-center py-10 text-slate-400">
             <UserCheck className="w-10 h-10 mx-auto mb-2 opacity-40" />
             <p className="text-sm">Сотрудники пока не добавлены</p>
