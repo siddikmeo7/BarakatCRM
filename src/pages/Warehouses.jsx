@@ -45,6 +45,7 @@ import {
   Eye
 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
+import ProductSearchSummary from '@/components/warehouses/ProductSearchSummary';
 import { format, parseISO } from 'date-fns';
 import ViewToggle from '@/components/ui/ViewToggle';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
@@ -527,50 +528,15 @@ export default function Warehouses() {
             globalSearchResults.length === 0 ? (
               <p className="text-slate-500 text-sm text-center py-4">Товары не найдены</p>
             ) : (
-              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-                {/* Итого по всем складам */}
-                <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-                  <span className="font-bold text-indigo-800 text-sm">📦 Итого по всем складам</span>
-                  <span className="font-bold text-indigo-700 text-xl">
-                    {globalSearchResults.reduce((total, { products: whProds }) =>
-                      total + whProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0), 0)} кор.
-                  </span>
-                </div>
-
-                {globalSearchResults.map(({ warehouse, products: whProds }) => (
-                  <div key={warehouse?.id || 'unknown'} className="border border-slate-100 rounded-xl overflow-hidden">
-                    <div className="bg-slate-50 px-4 py-2 flex items-center gap-2">
-                      <WarehouseIconComp iconKey={warehouse?.icon} className="w-4 h-4 text-purple-600" />
-                      <span className="font-semibold text-slate-700 text-sm">{warehouse?.name || 'Неизвестный склад'}</span>
-                      <span className="ml-auto text-xs font-semibold text-purple-600">{whProds.reduce((s, p) => s + (p.boxes_in_stock || 0), 0)} кор.</span>
-                    </div>
-                    <div className="divide-y divide-slate-50">
-                      {whProds.map((p, i) => (
-                        <div
-                          key={p.id}
-                          className={`px-4 py-2.5 flex items-center justify-between transition-colors ${
-                            i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'
-                          } hover:bg-indigo-50 cursor-pointer group`}
-                          onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id}
-                        >
-                          <div>
-                            <span className="font-semibold text-slate-900 text-sm group-hover:text-indigo-700">{p.brand} {p.model}</span>
-                            <span className="ml-2 text-xs text-slate-400">{p.color} • {p.product_type}</span>
-                          </div>
-                          <span className={`font-bold text-sm px-3 py-1 rounded-full ${
-                            (p.boxes_in_stock || 0) === 0
-                              ? 'bg-red-100 text-red-600'
-                              : (p.boxes_in_stock || 0) <= 3
-                              ? 'bg-orange-100 text-orange-600'
-                              : 'bg-emerald-100 text-emerald-700'
-                          }`}>
-                            {p.boxes_in_stock || 0} кор.
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+                {/* Расширенная сводка: всего было, продано, осталось + по складам + по моделям */}
+                <ProductSearchSummary
+                  query={globalSearch}
+                  products={products}
+                  sales={sales}
+                  warehouses={warehouses}
+                  can={can}
+                />
               </div>
             )
           )}
