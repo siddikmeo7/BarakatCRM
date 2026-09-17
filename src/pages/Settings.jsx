@@ -23,7 +23,7 @@ import {
   Settings as SettingsIcon, Building2, Palette, Users, Plus, Trash2, Loader2, Save,
   CheckCircle, MessageCircle, Mail, Bell, Edit2, LogOut, History, Download, Shield,
   RotateCcw, AlertCircle, RefreshCw, ChevronDown, Lock, Database, Zap, Package,
-  ShoppingCart, Eye, Search, Check, Copy, ArrowLeftRight, Moon, Sun, PackageOpen, Globe, Phone, MapPin, CheckCircle2, XCircle
+  ShoppingCart, Eye, Search, Check, Copy, ArrowLeftRight, Moon, Sun, PackageOpen, Globe, Phone, MapPin, CheckCircle2, XCircle, Eraser
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
@@ -306,6 +306,23 @@ export default function Settings() {
       alert('Все данные удалены.');
       window.location.reload();
     } catch (e) { console.error(e); alert('Ошибка при удалении данных: ' + (e?.message || '')); }
+  };
+
+  // Очистка всех данных бизнеса, но сотрудники (и их роли) остаются
+  const handleClearDataKeepEmployees = async () => {
+    if (!confirm('Очистить ВСЕ данные бизнеса, сохранив сотрудников и их роли?\nБудут удалены: товары, продажи, клиенты, долги, расходы, возвраты, склады, история действий и чаты.\nЭто действие необратимо!')) return;
+    if (!confirm('Вы уверены? Все данные бизнеса будут удалены, останутся только сотрудники.')) return;
+    try {
+      const KEEP = new Set(['Employee', 'Role', 'DeviceSession']);
+      const toDelete = ALL_BUSINESS_ENTITIES.filter((e) => !KEEP.has(e));
+      await Promise.all(
+        toDelete.map((entityName) =>
+          base44.entities[entityName].deleteMany({ business_id: business.id }).catch(() => {})
+        )
+      );
+      alert('✅ Данные бизнеса очищены. Сотрудники и роли сохранены.');
+      window.location.reload();
+    } catch (e) { console.error(e); alert('Ошибка при очистке данных: ' + (e?.message || '')); }
   };
 
   const handleDeleteAccount = async () => {
@@ -871,6 +888,7 @@ export default function Settings() {
               <div className="px-4 py-3 bg-red-50 border-b border-red-100 flex items-center gap-2"><AlertCircle className="w-4 h-4 text-red-500" /><span className="text-sm font-semibold text-red-700">Опасная зона</span></div>
               <div className="p-4 space-y-4">
                 <div className="flex items-start justify-between gap-4"><div><p className="text-sm font-medium text-slate-800">{t(lang,'settings_sec_delete')}</p><p className="text-xs text-slate-400 mt-0.5">{t(lang,'settings_sec_delete_desc')}</p></div><Button variant="outline" size="sm" className="flex-shrink-0 text-red-600 border-red-200 hover:bg-red-50 gap-1.5" onClick={handleDeleteAllData}><Trash2 className="w-3.5 h-3.5" />Удалить данные</Button></div>
+                <div className="flex items-start justify-between gap-4 pt-3 border-t border-red-50"><div><p className="text-sm font-medium text-slate-800">Очистить данные (сотрудники остаются)</p><p className="text-xs text-slate-400 mt-0.5">Удаляются товары, продажи, клиенты, долги, расходы — сотрудники и роли сохраняются</p></div><Button variant="outline" size="sm" className="flex-shrink-0 text-orange-600 border-orange-300 hover:bg-orange-50 gap-1.5" onClick={handleClearDataKeepEmployees}><Eraser className="w-3.5 h-3.5" />Очистить</Button></div>
                 <div className="flex items-start justify-between gap-4 pt-3 border-t border-red-50"><div><p className="text-sm font-medium text-slate-800">Удалить аккаунт</p><p className="text-xs text-slate-400 mt-0.5">Необратимое удаление аккаунта</p></div><Button variant="outline" size="sm" className="flex-shrink-0 text-red-700 border-red-300 hover:bg-red-100 gap-1.5" onClick={() => setDeleteAccountDialog(true)}><Zap className="w-3.5 h-3.5" />Удалить аккаунт</Button></div>
               </div>
             </div>}

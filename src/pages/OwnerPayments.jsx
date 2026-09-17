@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Wallet, TrendingUp, Users, Loader2, Plus, CheckCircle, Clock, ArrowDownCircle } from 'lucide-react';
+import { Wallet, TrendingUp, Users, Loader2, Plus, CheckCircle, Clock, ArrowDownCircle, DollarSign } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import BackButton from '@/components/ui/BackButton';
 
 export default function OwnerPayments() {
   const [business, setBusiness] = useState(null);
@@ -53,14 +54,16 @@ export default function OwnerPayments() {
   const ownerMap = {};
   sales.forEach(s => {
     const key = s.owner_name || 'Неизвестный владелец';
-    if (!ownerMap[key]) ownerMap[key] = { name: key, email: s.owner_email || '', boxes: 0, owed: 0, paid: 0, salesCount: 0 };
+    if (!ownerMap[key]) ownerMap[key] = { name: key, email: s.owner_email || '', boxes: 0, owed: 0, paid: 0, salesCount: 0, profit: 0, revenue: 0 };
     ownerMap[key].boxes += s.boxes_sold || 0;
     ownerMap[key].owed += s.owner_amount || 0;
+    ownerMap[key].profit += s.seller_profit || 0;
+    ownerMap[key].revenue += s.total_amount || 0;
     ownerMap[key].salesCount += 1;
   });
   payouts.forEach(p => {
     const key = p.owner_name || 'Неизвестный владелец';
-    if (!ownerMap[key]) ownerMap[key] = { name: key, email: p.owner_email || '', boxes: 0, owed: 0, paid: 0, salesCount: 0 };
+    if (!ownerMap[key]) ownerMap[key] = { name: key, email: p.owner_email || '', boxes: 0, owed: 0, paid: 0, salesCount: 0, profit: 0, revenue: 0 };
     ownerMap[key].paid += p.amount || 0;
   });
   const owners = Object.values(ownerMap);
@@ -68,6 +71,8 @@ export default function OwnerPayments() {
   const totalOwed = owners.reduce((sum, o) => sum + o.owed, 0);
   const totalPaid = owners.reduce((sum, o) => sum + o.paid, 0);
   const totalRemaining = totalOwed - totalPaid;
+  const totalProfit = owners.reduce((sum, o) => sum + o.profit, 0);
+  const totalRevenue = owners.reduce((sum, o) => sum + o.revenue, 0);
 
   const ownerHistory = selectedOwner ? [
     ...sales.filter(s => (s.owner_name || '') === selectedOwner).map(s => ({ ...s, type: 'sale' })),
@@ -117,6 +122,9 @@ export default function OwnerPayments() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-2 mb-1">
+        <BackButton />
+      </div>
       <PageHeader
         title="Средства владельцев товаров"
         subtitle="Деньги к выплате поставщикам за реализованные товары"
@@ -128,7 +136,7 @@ export default function OwnerPayments() {
         }
       />
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div className="bg-white dark:bg-slate-900 rounded-xl p-3 shadow-sm border border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-1.5 mb-1">
             <Wallet className="w-4 h-4 text-amber-600" />
@@ -149,6 +157,14 @@ export default function OwnerPayments() {
             <span className="text-xs text-slate-500 truncate">Остаток</span>
           </div>
           <p className="text-xl font-bold text-red-600">{totalRemaining.toLocaleString()} с.</p>
+        </div>
+        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-3 shadow-sm border border-emerald-200 dark:border-emerald-800/50">
+          <div className="flex items-center gap-1.5 mb-1">
+            <DollarSign className="w-4 h-4 text-white" />
+            <span className="text-xs text-emerald-50 truncate">Прибыль от реализации</span>
+          </div>
+          <p className="text-xl font-bold text-white">{totalProfit.toLocaleString()} с.</p>
+          <p className="text-[10px] text-emerald-100 mt-0.5">Выручка: {totalRevenue.toLocaleString()} с.</p>
         </div>
       </div>
 
@@ -180,7 +196,7 @@ export default function OwnerPayments() {
                       <p className={`font-bold ${remaining > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{remaining.toLocaleString()} с.</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div className="grid grid-cols-4 gap-2 text-sm">
                     <div className="text-center p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                       <p className="text-xs text-slate-500">К выплате</p>
                       <p className="font-semibold text-amber-700 dark:text-amber-400">{owner.owed.toLocaleString()}</p>
@@ -192,6 +208,10 @@ export default function OwnerPayments() {
                     <div className="text-center p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
                       <p className="text-xs text-slate-500">Продано кор.</p>
                       <p className="font-semibold text-slate-700 dark:text-slate-300">{owner.boxes}</p>
+                    </div>
+                    <div className="text-center p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg">
+                      <p className="text-xs text-slate-500">Прибыль</p>
+                      <p className="font-semibold text-emerald-700 dark:text-emerald-300">{owner.profit.toLocaleString()}</p>
                     </div>
                   </div>
                   {remaining > 0 && (
