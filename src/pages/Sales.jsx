@@ -987,7 +987,7 @@ export default function Sales() {
                     )}
                     {(sale.seller_name || sale.seller_email) && (
                       <div className="flex items-center gap-1.5 mt-1">
-                        <EmployeeAvatar employee={findSeller(sale)} name={sale.seller_name || sale.seller_email} size="sm" className="!w-6 !h-6 !rounded-md !text-[10px]" />
+                        <EmployeeAvatar employee={findSeller(sale)} name={sale.seller_name || sale.seller_email} sizeClass="!w-6 !h-6 !text-[10px]" />
                         <p className="text-xs text-slate-400 truncate">{sale.seller_name || sale.seller_email}</p>
                       </div>
                     )}
