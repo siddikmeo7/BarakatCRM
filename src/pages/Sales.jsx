@@ -1058,7 +1058,7 @@ export default function Sales() {
                   </span>
                   {(sale.seller_name || sale.seller_email) && (
                     <span className="flex items-center gap-1.5 min-w-0">
-                      <EmployeeAvatar employee={findSeller(sale)} name={sale.seller_name || sale.seller_email} size="sm" className="!w-6 !h-6 !rounded-md !text-[10px]" />
+                      <EmployeeAvatar employee={findSeller(sale)} name={sale.seller_name || sale.seller_email} sizeClass="!w-6 !h-6 !text-[10px]" />
                       <span className="text-xs text-slate-400 truncate">{sale.seller_name || sale.seller_email}</span>
                     </span>
                   )}
