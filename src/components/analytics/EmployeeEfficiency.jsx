@@ -6,12 +6,18 @@ import {
   startOfYear, endOfYear, subWeeks, subMonths
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Users, TrendingUp, ShoppingCart, Calendar, Package } from 'lucide-react';
+import { Users, TrendingUp, ShoppingCart, Calendar, Package, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatCompact } from '@/lib/formatCompact';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { motion } from 'framer-motion';
+
+function nameFromEmail(email) {
+  if (!email) return '';
+  const part = email.split('@')[0];
+  return part.replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
 
 const PERIODS = [
   { key: 'today', label: 'Сегодня' },
@@ -45,16 +51,35 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
   const [customTo, setCustomTo] = useState('');
   const [useCustom, setUseCustom] = useState(false);
   const [employees, setEmployees] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [owner, setOwner] = useState(null);
 
   useEffect(() => {
     const biz = window.__barakatBusiness;
     if (!biz) return;
-    base44.entities.Employee.filter({ business_id: biz.id })
-      .then(setEmployees)
-      .catch(() => {});
+    Promise.all([
+      base44.entities.Employee.filter({ business_id: biz.id }),
+      base44.entities.Role.filter({ business_id: biz.id }),
+      base44.auth.me().catch(() => null),
+    ]).then(([emps, rls, me]) => {
+      setEmployees(emps);
+      setRoles(rls);
+      const ownerName = (me?.email === biz.owner_email ? me?.full_name : '') || nameFromEmail(biz.owner_email) || 'Владелец';
+      setOwner({ __isOwner: true, name: ownerName, user_email: biz.owner_email, is_active: true });
+    }).catch(() => {});
   }, []);
 
   const getEmpByEmail = (email) => employees.find(e => e.user_email === email) || null;
+
+  const roleLabelOf = (empRec, fallbackName) => {
+    if (empRec?.__isOwner) return 'Владелец';
+    if (empRec?.is_admin) return 'Админ';
+    if (empRec) {
+      const r = roles.find(x => x.id === empRec.role_id);
+      return r?.name || 'Сотрудник';
+    }
+    return fallbackName ? 'Сотрудник' : '';
+  };
 
   const masked = '•••••';
 
@@ -79,6 +104,10 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
 
   const employeeStats = useMemo(() => {
     const map = {};
+    // Владелец — всегда в списке
+    if (owner) {
+      map[owner.user_email] = { name: owner.name, email: owner.user_email, revenue: 0, profit: 0, boxes: 0, count: 0, inactive: false };
+    }
     // Сначала сеем ВСЕХ сотрудников бизнеса — чтобы показывались и те, кто не продавал
     employees.forEach(e => {
       const key = e.user_email || e.name || e.id;
@@ -97,7 +126,7 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
       map[key].count += 1;
     });
     return Object.values(map).sort((a, b) => b.revenue - a.revenue);
-  }, [periodSales, employees]);
+  }, [periodSales, employees, owner]);
 
   const totalRevenue = employeeStats.reduce((s, e) => s + e.revenue, 0);
   const totalProfit = employeeStats.reduce((s, e) => s + e.profit, 0);
@@ -212,18 +241,23 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
           {employeeStats.map((emp, i) => {
             const share = totalRevenue ? ((emp.revenue / totalRevenue) * 100).toFixed(1) : 0;
             const empRec = getEmpByEmail(emp.email);
+            // Владелец?
+            const isOwner = owner && owner.user_email === emp.email;
             // Статус сотрудника
             const isFrozen = empRec?.is_frozen;
             const isInactive = empRec?.is_active === false;
             const isAdmin = empRec?.is_admin;
-            const stChip = isAdmin
-              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-              : isFrozen
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
-                : isInactive
-                  ? 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
-                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300';
-            const stLabel = isAdmin ? 'Админ' : isFrozen ? 'Заморожен' : isInactive ? 'Неактивен' : 'Активен';
+            const stChip = isOwner
+              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
+              : isAdmin
+                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
+                : isFrozen
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                  : isInactive
+                    ? 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
+                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300';
+            const stLabel = isOwner ? 'Владелец' : isAdmin ? 'Админ' : isFrozen ? 'Заморожен' : isInactive ? 'Неактивен' : 'Активен';
+            const roleLabel = roleLabelOf(isOwner ? owner : empRec, emp.name);
             const float = !isFrozen && !isInactive;
             return (
               <motion.div
@@ -240,10 +274,19 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
               >
                 <motion.div
                   className="relative flex-shrink-0"
-                  animate={float ? { y: [0, -2, 0] } : { y: 0 }}
-                  transition={float ? { duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: (i % 5) * 0.2 } : {}}
+                  animate={float ? { y: [0, -3, 0], rotate: [0, 2, 0, -2, 0] } : { y: 0, rotate: 0 }}
+                  transition={float ? { duration: 2.8, repeat: Infinity, ease: 'easeInOut', delay: (i % 5) * 0.2 } : {}}
                 >
-                  <EmployeeAvatar employee={empRec} name={emp.name} sizeClass="w-9 h-9 rounded-2xl text-sm" />
+                  {isOwner ? (
+                    <div className="relative">
+                      <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                        {emp.name?.charAt(0) || 'В'}
+                      </div>
+                      <Crown className="absolute -top-1 -right-1 w-3.5 h-3.5 text-amber-500 fill-amber-300" />
+                    </div>
+                  ) : (
+                    <EmployeeAvatar employee={empRec} name={emp.name} sizeClass="w-9 h-9 rounded-2xl text-sm" />
+                  )}
                   <span className={cn(
                     "absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold",
                     i === 0 ? "bg-amber-500" : i === 1 ? "bg-slate-500" : i === 2 ? "bg-orange-500" : "bg-slate-400"
@@ -252,6 +295,7 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <p className="font-semibold text-slate-900 text-sm truncate">{emp.name}</p>
+                    {roleLabel && <span className="text-[10px] text-slate-400 truncate hidden sm:inline">· {roleLabel}</span>}
                     <span className={cn("inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0", stChip)}>{stLabel}</span>
                   </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500 mt-0.5">
