@@ -102,7 +102,32 @@ export default function Customers() {
     const data = { ...formData, business_id: business.id };
 
     if (editingCustomer) {
+      const fieldLabels = {
+        name: 'Имя', phone: 'Телефон', whatsapp: 'WhatsApp', telegram: 'Telegram',
+        email: 'Email', address: 'Адрес', use_phone_for_all: 'Мессенджеры',
+        debt_limit: 'Лимит долга', notes: 'Примечание'
+      };
+      const changedFields = {};
+      Object.keys(fieldLabels).forEach(key => {
+        if (String(editingCustomer[key] ?? '') !== String(data[key] ?? '')) {
+          changedFields[key] = { from: editingCustomer[key], to: data[key], label: fieldLabels[key] };
+        }
+      });
       await base44.entities.Customer.update(editingCustomer.id, data);
+      if (Object.keys(changedFields).length > 0) {
+        try {
+          await base44.entities.ActivityLog.create({
+            business_id: business.id,
+            action_type: 'update',
+            entity_type: 'Customer',
+            entity_id: editingCustomer.id,
+            entity_data: { old: editingCustomer, new: data, changes: changedFields },
+            user_email: userContext.added_by_email || user?.email,
+            user_name: userContext.added_by_employee_name || user?.full_name,
+            description: `Обновлён клиент: ${data.name} (${Object.values(changedFields).map(c => c.label).join(', ')})`
+          });
+        } catch (e) { console.error('ActivityLog error:', e); }
+      }
       setCustomers(prev => prev.map(c => c.id === editingCustomer.id ? { ...c, ...data } : c));
       if (selectedCustomer?.id === editingCustomer.id) {
         setSelectedCustomer(prev => ({ ...prev, ...data }));
@@ -141,6 +166,8 @@ export default function Customers() {
 
   const handleDelete = async (customerId) => {
     if (!confirm('Удалить этого клиента? Все его долги и платежи тоже будут удалены.')) return;
+    const customer = customers.find(c => c.id === customerId);
+    const userContext = getCurrentUserContext();
     const debtSales = await base44.entities.Sale.filter({ customer_id: customerId, is_debt: true });
     for (const sale of debtSales) {
       await base44.entities.Sale.delete(sale.id);
@@ -150,6 +177,18 @@ export default function Customers() {
       await base44.entities.DebtPayment.delete(payment.id);
     }
     await base44.entities.Customer.delete(customerId);
+    try {
+      await base44.entities.ActivityLog.create({
+        business_id: business.id,
+        action_type: 'delete',
+        entity_type: 'Customer',
+        entity_id: customerId,
+        entity_data: customer,
+        user_email: userContext.added_by_email || user?.email,
+        user_name: userContext.added_by_employee_name || user?.full_name,
+        description: `Удалён клиент: ${customer?.name || ''}`
+      });
+    } catch (e) { console.error('ActivityLog error:', e); }
     await loadData();
   };
 

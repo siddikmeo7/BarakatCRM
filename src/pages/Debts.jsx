@@ -11,9 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { 
   CreditCard, DollarSign, User, Users, Package, Clock, MessageCircle, Send,
   Phone, MapPin, Loader2, History, ChevronRight, PlusCircle, Plus,
-  CheckCircle, ArrowLeft, X, List
+  CheckCircle, ArrowLeft, X, List, Edit2, Trash2
 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
+import CustomerForm from '@/components/customers/CustomerForm';
 import { format, parseISO, isToday, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { t } from '@/components/i18n/translations';
@@ -52,6 +53,9 @@ export default function Debts() {
 
   // Детальный вид клиента
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [user, setUser] = useState(null);
+  const [editCustomerOpen, setEditCustomerOpen] = useState(false);
+  const [editingCustomerObj, setEditingCustomerObj] = useState(null);
   const [expandedSaleHistory, setExpandedSaleHistory] = useState({}); // { saleId: true/false }
   const [editingDueDate, setEditingDueDate] = useState({}); // { saleId: 'YYYY-MM-DD' }
   const [savingDueDate, setSavingDueDate] = useState(null);
@@ -81,6 +85,80 @@ export default function Debts() {
     setAddDebtOpen(true);
   };
 
+  // Контекст текущего сотрудника для журнала действий
+  const getActor = () => {
+    const emp = window.__barakatEmployee;
+    if (emp) {
+      return { email: emp.user_email, name: emp.name, role: emp.is_admin ? 'admin' : 'employee' };
+    }
+    return { email: user?.email || '', name: user?.full_name || user?.email || 'Владелец', role: 'owner' };
+  };
+
+  const handleSaveCustomer = async (formData) => {
+    if (!editingCustomerObj) return;
+    const data = { ...formData, business_id: business.id };
+    const fieldLabels = {
+      name: 'Имя', phone: 'Телефон', whatsapp: 'WhatsApp', telegram: 'Telegram',
+      email: 'Email', address: 'Адрес', use_phone_for_all: 'Мессенджеры',
+      debt_limit: 'Лимит долга', notes: 'Примечание'
+    };
+    const changedFields = {};
+    Object.keys(fieldLabels).forEach(key => {
+      if (String(editingCustomerObj[key] ?? '') !== String(data[key] ?? '')) {
+        changedFields[key] = { from: editingCustomerObj[key], to: data[key], label: fieldLabels[key] };
+      }
+    });
+    await base44.entities.Customer.update(editingCustomerObj.id, data);
+    if (Object.keys(changedFields).length > 0) {
+      const actor = getActor();
+      try {
+        await base44.entities.ActivityLog.create({
+          business_id: business.id,
+          action_type: 'update',
+          entity_type: 'Customer',
+          entity_id: editingCustomerObj.id,
+          entity_data: { old: editingCustomerObj, new: data, changes: changedFields },
+          user_email: actor.email,
+          user_name: actor.name,
+          description: `Обновлён клиент (из долгов): ${data.name} (${Object.values(changedFields).map(c => c.label).join(', ')})`
+        });
+      } catch (e) { console.error('ActivityLog error:', e); }
+    }
+    setEditingCustomerObj(null);
+    setEditCustomerOpen(false);
+    await loadData();
+  };
+
+  const handleDeleteCustomer = async (customerId) => {
+    if (!confirm('Удалить этого клиента? Все его долги и платежи тоже будут удалены.')) return;
+    const customer = customers.find(c => c.id === customerId);
+    const actor = getActor();
+    const debtSales = await base44.entities.Sale.filter({ customer_id: customerId, is_debt: true });
+    for (const sale of debtSales) {
+      await base44.entities.Sale.delete(sale.id);
+    }
+    const custPayments = await base44.entities.DebtPayment.filter({ customer_id: customerId });
+    for (const payment of custPayments) {
+      await base44.entities.DebtPayment.delete(payment.id);
+    }
+    await base44.entities.Customer.delete(customerId);
+    try {
+      await base44.entities.ActivityLog.create({
+        business_id: business.id,
+        action_type: 'delete',
+        entity_type: 'Customer',
+        entity_id: customerId,
+        entity_data: customer,
+        user_email: actor.email,
+        user_name: actor.name,
+        description: `Удалён клиент (из долгов): ${customer?.name || ''}`
+      });
+    } catch (e) { console.error('ActivityLog error:', e); }
+    setSelectedCustomer(null);
+    setExpandedSaleHistory({});
+    await loadData();
+  };
+
   const [sendingMsg, setSendingMsg] = useState(null);
   const [sortDebtors, setSortDebtors] = useState('remaining_desc');
   const [filterOverdue, setFilterOverdue] = useState('all'); // all | overdue | today | active
@@ -101,6 +179,7 @@ export default function Debts() {
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
+      setUser(user);
       const biz = window.__barakatBusiness;
       if (!biz) { setLoading(false); return; }
       if (biz) {
@@ -498,6 +577,16 @@ export default function Debts() {
             <Button variant="outline" size="sm" onClick={() => { setSelectedCustomer(null); setExpandedSaleHistory({}); setFromCustomers(false); navigate(createPageUrl('Debts')); }} className="gap-1.5 flex-shrink-0 text-xs">
               <List className="w-4 h-4" /> Все долги
             </Button>
+            {can('manage_customers') && (
+              <Button variant="outline" size="sm" onClick={() => { setEditingCustomerObj(c); setEditCustomerOpen(true); }} className="gap-1.5 flex-shrink-0 text-xs">
+                <Edit2 className="w-3.5 h-3.5" /> Изменить
+              </Button>
+            )}
+            {can('delete_customers') && (
+              <Button variant="outline" size="sm" onClick={() => handleDeleteCustomer(c.id)} className="gap-1.5 flex-shrink-0 text-xs text-red-600 hover:bg-red-50 border-red-200">
+                <Trash2 className="w-3.5 h-3.5" /> Удалить
+              </Button>
+            )}
           </div>
           <div className="flex gap-2 flex-wrap">
             {can('add_debt_manual') && (
@@ -892,6 +981,15 @@ export default function Debts() {
             })()}
           </DialogContent>
         </Dialog>
+
+        {/* Диалог редактирования клиента */}
+        <CustomerForm
+          open={editCustomerOpen}
+          onClose={() => { setEditCustomerOpen(false); setEditingCustomerObj(null); }}
+          onSave={handleSaveCustomer}
+          editingCustomer={editingCustomerObj}
+          business={business}
+        />
       </div>
     );
   }
