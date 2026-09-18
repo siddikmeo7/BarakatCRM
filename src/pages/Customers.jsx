@@ -7,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Users, ChevronLeft, ChevronRight,
-  UserCheck, CreditCard, Wallet, ShoppingCart, TrendingUp
+  UserCheck, CreditCard, Wallet, ShoppingCart, TrendingUp, ContactRound
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import CustomerForm from '@/components/customers/CustomerForm';
 import CustomerDetail from '@/components/customers/CustomerDetail';
+import ImportContactsDialog from '@/components/customers/ImportContactsDialog';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 const PAGE_SIZE = 20;
@@ -32,6 +33,8 @@ export default function Customers() {
   const [sortBy, setSortBy] = useState('date_desc'); // name, date_desc, date_asc, debt_desc, debt_asc
   const [page, setPage] = useState(1);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const contactsSupported = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window;
 
   useEffect(() => {
     if (window.__barakatAccessReady) {
@@ -115,6 +118,25 @@ export default function Customers() {
       await loadData();
     }
     setEditingCustomer(null);
+  };
+
+  const handleImportContacts = async (selected) => {
+    const userContext = getCurrentUserContext();
+    for (const c of selected) {
+      await base44.entities.Customer.create({
+        business_id: business.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email || '',
+        address: c.address || '',
+        use_phone_for_all: true,
+        ...userContext,
+        total_debt: 0,
+        total_paid: 0,
+        purchase_count: 0
+      });
+    }
+    await loadData();
   };
 
   const handleDelete = async (customerId) => {
@@ -270,6 +292,11 @@ export default function Customers() {
             <Button onClick={() => navigate(createPageUrl('Debts'))} variant="outline" size="sm" className="gap-1.5 text-xs">
               <CreditCard className="w-3.5 h-3.5" /> Все долги
             </Button>
+            {can('manage_customers') && contactsSupported && (
+              <Button onClick={() => setImportOpen(true)} variant="outline" size="sm" className="gap-1.5 text-xs">
+                <ContactRound className="w-3.5 h-3.5" /> Из контактов
+              </Button>
+            )}
             {can('manage_customers') && (
               <Button onClick={() => { setEditingCustomer(null); setFormOpen(true); }} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
                 <Plus className="w-3.5 h-3.5" /> Добавить
@@ -449,6 +476,14 @@ export default function Customers() {
           onSave={handleSave}
           editingCustomer={editingCustomer}
           business={business}
+        />
+
+        {/* Import from phone contacts */}
+        <ImportContactsDialog
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          onImport={handleImportContacts}
+          existingPhones={customers.map(c => c.phone).filter(Boolean)}
         />
       </div>
     </PullToRefresh>
