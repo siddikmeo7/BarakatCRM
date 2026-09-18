@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { 
   CreditCard, DollarSign, User, Users, Package, Clock, MessageCircle, Send,
   Phone, MapPin, Loader2, History, ChevronRight, PlusCircle, Plus,
-  CheckCircle, ArrowLeft, X, List, Edit2, Trash2, UserCheck
+  CheckCircle, ArrowLeft, X, List, Edit2, Trash2, UserCheck, PackageX
 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
 import CustomerForm from '@/components/customers/CustomerForm';
@@ -793,10 +793,19 @@ export default function Debts() {
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-slate-900 text-sm">
-                            {prod ? `${prod.brand} ${prod.model}` : 'Товар не указан'}
-                            {sale.boxes_sold > 0 && <span className="text-slate-400 font-normal ml-1">· {sale.boxes_sold} кор.</span>}
-                          </p>
+                          {sale.product_id === 'manual' ? (
+                            <p className="font-semibold text-slate-900 text-sm flex items-center gap-1.5">
+                              <span className="inline-flex items-center px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-semibold">
+                                <PackageX className="w-3 h-3" /> Товары не указаны
+                              </span>
+                              {sale.boxes_sold > 0 && <span className="text-slate-400 font-normal ml-1">· {sale.boxes_sold} кор.</span>}
+                            </p>
+                          ) : (
+                            <p className="font-semibold text-slate-900 text-sm">
+                              {prod ? `${prod.brand} ${prod.model}` : 'Товар удалён'}
+                              {sale.boxes_sold > 0 && <span className="text-slate-400 font-normal ml-1">· {sale.boxes_sold} кор.</span>}
+                            </p>
+                          )}
                           {isPaid && (
                             <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium flex items-center gap-1">
                               <CheckCircle className="w-3 h-3" /> Долг погашен
@@ -805,6 +814,9 @@ export default function Debts() {
                         </div>
                         <p className="text-xs text-slate-400 mt-0.5">
                           {format(parseISO(sale.sale_date || sale.created_date), 'dd MMM yyyy', { locale: ru })}
+                          {sale.product_id === 'manual' && (
+                            <span className="ml-1 text-amber-600 font-medium">· товары не были указаны при добавлении должника</span>
+                          )}
                         </p>
                         {/* Продавец / ответственный за этот долг */}
                         {saleSellerName && (

@@ -294,10 +294,12 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sale.is_cancelled ? 'bg-red-400' : 'bg-green-400'}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                    {product ? `${product.brand} ${product.model}` : 'Товар удалён'}
+                    {product ? `${product.brand} ${product.model}` : (sale.product_id === 'manual' ? 'Товары не указаны' : 'Товар удалён')}
                   </p>
                   <p className="text-[10px] text-slate-400">
-                    {sale.boxes_sold || 0} кор. × {(sale.sale_price || 0).toLocaleString()} с. · {formatDate(sale.sale_date)}
+                    {sale.product_id === 'manual' ? 'долг без товара · ' : `${sale.boxes_sold || 0} кор. × ${(sale.sale_price || 0).toLocaleString()} с. · `}
+                    {formatDate(sale.sale_date)}
+                    {sale.product_id === 'manual' && ' · товары не были указаны при добавлении должника'}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
