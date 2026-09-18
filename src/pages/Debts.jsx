@@ -21,7 +21,7 @@ import { t } from '@/components/i18n/translations';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import { createPageUrl } from '@/utils';
 import SaleNotifyChannels from '@/components/sales/SaleNotifyChannels';
-import { buildPaymentMessage, notifyCustomerChannels } from '@/lib/customerNotify';
+import { buildPaymentMessage, notifyCustomerChannels, buildCustomerDebtReminder, sendWhatsApp } from '@/lib/customerNotify';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 // Проверяет, есть ли у клиента продажа с просроченным или сегодняшним сроком оплаты
@@ -390,17 +390,16 @@ export default function Debts() {
     setNotifyingAll(true);
     try {
       const toNotify = debtorList.filter(d => d.remaining > 0);
-      for (const { customer: c, remaining } of toNotify) {
+      for (const { customer: c } of toNotify) {
         if (notifyChannel === 'whatsapp' && c.phone) {
-          const phone = c.phone.replace(/[^0-9]/g, '');
-          const msg = `👋 Здравствуйте, ${c.name}!\n\n📌 Напоминание о задолженности\n\n💼 ${business?.name}\n💳 Задолженность: ${remaining.toLocaleString()} сомони\n\nПожалуйста, погасите долг в ближайшее время. Спасибо!`;
-          window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+          const msg = buildCustomerDebtReminder({ customer: c, sales, products, payments, businessName: business?.name });
+          sendWhatsApp(c.phone, msg);
           await new Promise(r => setTimeout(r, 800));
         } else if (notifyChannel === 'telegram' && c.telegram) {
           try {
             await base44.functions.invoke('sendTelegramMessage', {
               telegram_id: c.telegram, customer_name: c.name,
-              remaining_debt: remaining, business_name: business?.name, type: 'reminder'
+              remaining_debt: c.total_debt || 0, business_name: business?.name, type: 'reminder'
             });
           } catch {}
         }
@@ -414,11 +413,8 @@ export default function Debts() {
     if (!customer?.phone) return alert(t(lang, 'debts_no_phone'));
     setSendingMsg(customer.id);
     try {
-      const res = await base44.functions.invoke('sendWhatsAppDebtMessage', {
-        phone: customer.phone, customer_name: customer.name,
-        remaining_debt: customer.total_debt, business_name: business?.name, type: 'reminder'
-      });
-      if (res.data?.wa_url) window.open(res.data.wa_url, '_blank');
+      const msg = buildCustomerDebtReminder({ customer, sales, products, payments, businessName: business?.name });
+      sendWhatsApp(customer.phone, msg);
     } finally { setSendingMsg(null); }
   };
 

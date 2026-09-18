@@ -87,6 +87,89 @@ export function buildPaymentMessage({
   return msg;
 }
 
+// Форматирование даты/времени без зависимостей
+function fmtDateTime(d = new Date()) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function fmtDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return String(dateStr);
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// Полное сообщение-напоминание о долге со всеми данными
+export function buildDebtReminderMessage({
+  customerName,
+  businessName,
+  items,          // [{name, boxes, total, dueDate}]
+  totalAmount,
+  paidAmount,
+  remainingDebt,
+  debtLimit,
+  nearestDueDate,
+  now
+}) {
+  let msg = `Здравствуйте, ${customerName}!\n\n`;
+  msg += `📌 Напоминание о задолженности\n`;
+  msg += `🕐 ${fmtDateTime(now || new Date())}\n`;
+  msg += `💼 ${businessName || 'наш магазин'}\n`;
+  if (items && items.length) {
+    msg += `\n🛍️ Приобретённые товары:\n`;
+    items.forEach((p, i) => {
+      msg += `${i + 1}. ${p.name}`;
+      if (p.boxes) msg += ` — ${p.boxes} кор.`;
+      msg += ` — ${Number(p.total || 0).toLocaleString('ru-RU')} с.\n`;
+    });
+  }
+  msg += `\n💳 Общая сумма: ${Number(totalAmount || 0).toLocaleString('ru-RU')} с.\n`;
+  msg += `✅ Оплачено: ${Number(paidAmount || 0).toLocaleString('ru-RU')} с.\n`;
+  msg += `🔴 Остаток долга: ${Number(remainingDebt || 0).toLocaleString('ru-RU')} с.\n`;
+  if (debtLimit != null && Number(debtLimit) > 0) {
+    msg += `📊 Лимит долга: ${Number(debtLimit).toLocaleString('ru-RU')} с.\n`;
+  }
+  if (nearestDueDate) {
+    msg += `📅 Срок оплаты: ${nearestDueDate}\n`;
+  }
+  msg += `\nПожалуйста, погасите долг в ближайшее время. Спасибо!`;
+  return msg;
+}
+
+// Собирает все данные по клиенту (продажи + оплаты + товары) и формирует полное сообщение
+export function buildCustomerDebtReminder({ customer, sales, products, payments, businessName }) {
+  const customerSales = (sales || []).filter(s => s.customer_id === customer.id && !s.is_cancelled);
+  const items = customerSales.map(s => {
+    const prod = (products || []).find(p => p.id === s.product_id);
+    const name = s.product_id === 'manual'
+      ? 'Товары не указаны (долг без товара)'
+      : (prod ? `${prod.brand} ${prod.model}` : 'Товар удалён');
+    return { name, boxes: s.boxes_sold || 0, total: s.total_amount || 0, dueDate: s.payment_due_date };
+  });
+  const totalAmount = customerSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+  const paidAmount = customerSales.reduce((sum, s) => {
+    const paid = (payments || []).filter(p => p.sale_id === s.id).reduce((a, p) => a + (p.amount || 0), 0);
+    return sum + paid;
+  }, 0);
+  const remainingDebt = Math.max(0, totalAmount - paidAmount);
+  // Ближайшая (самая ранняя непросроченная или вообще ближайшая) дата оплаты
+  const dueDates = customerSales
+    .map(s => s.payment_due_date)
+    .filter(Boolean)
+    .sort((a, b) => new Date(a) - new Date(b));
+  const nearestDueDate = dueDates[0] ? fmtDate(dueDates[0]) : '';
+  return buildDebtReminderMessage({
+    customerName: customer.name,
+    businessName,
+    items,
+    totalAmount,
+    paidAmount,
+    remainingDebt,
+    debtLimit: customer.debt_limit,
+    nearestDueDate
+  });
+}
+
 export async function notifyCustomerChannels({ customer, channels, message, emailSubject, businessName }) {
   const results = { whatsapp: false, telegram: false, email: false };
   if (!customer || !channels || !channels.length) return results;

@@ -11,6 +11,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
+import { buildCustomerDebtReminder, sendWhatsApp } from '@/lib/customerNotify';
 
 export default function CustomerDetail({ customer, onBack, onEdit, onDelete, business }) {
   const { can } = useEmployeeAccess();
@@ -115,6 +116,20 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
         >
           <DollarSign className="w-4 h-4" />
           Погасить долг клиента — {(c.total_debt || 0).toLocaleString()} с.
+        </Button>
+      )}
+
+      {/* WhatsApp Debt Reminder — auto-calculates all data */}
+      {can('view_customer_debt') && (c.total_debt || 0) > 0 && whatsappNum && (
+        <Button
+          onClick={() => {
+            const msg = buildCustomerDebtReminder({ customer: c, sales, products, payments, businessName: business?.name });
+            sendWhatsApp(whatsappNum, msg);
+          }}
+          className="w-full bg-green-600 hover:bg-green-700 gap-2 h-11"
+        >
+          <MessageCircle className="w-4 h-4" />
+          Напомнить о долге в WhatsApp
         </Button>
       )}
 
