@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { 
   CreditCard, DollarSign, User, Users, Package, Clock, MessageCircle, Send,
   Phone, MapPin, Loader2, History, ChevronRight, PlusCircle, Plus,
-  CheckCircle, ArrowLeft, X, List, Edit2, Trash2
+  CheckCircle, ArrowLeft, X, List, Edit2, Trash2, UserCheck
 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
 import CustomerForm from '@/components/customers/CustomerForm';
@@ -422,17 +422,45 @@ export default function Debts() {
     } finally { setSendingMsg(null); }
   };
 
+  // Контекст текущего пользователя — кто создаёт клиента/долг
+  const getCurrentUserContext = () => {
+    const emp = window.__barakatEmployee;
+    if (emp) {
+      return {
+        added_by_employee_id: emp.id,
+        added_by_employee_name: emp.name,
+        added_by_email: emp.user_email,
+        added_by_role: emp.is_admin ? 'admin' : 'employee',
+        seller_email: emp.user_email,
+        seller_name: emp.name,
+      };
+    }
+    return {
+      added_by_employee_id: '',
+      added_by_employee_name: user?.full_name || user?.email || 'Владелец',
+      added_by_email: user?.email || '',
+      added_by_role: 'owner',
+      seller_email: user?.email || '',
+      seller_name: user?.full_name || user?.email || 'Владелец',
+    };
+  };
+
   const handleAddDebt = async () => {
     if (!addDebtData.amount || parseFloat(addDebtData.amount) <= 0) return;
     setSaving(true);
     try {
+      const userCtx = getCurrentUserContext();
       let customerId = addDebtData.customer_id;
       let customerName = '';
       if (addDebtData.is_new_customer) {
         const newCust = await base44.entities.Customer.create({
           business_id: business.id, name: addDebtData.new_customer_name,
           phone: addDebtData.new_customer_phone || '', total_debt: parseFloat(addDebtData.amount),
-          total_paid: 0, use_phone_for_all: true
+          total_paid: 0, use_phone_for_all: true,
+          added_by_employee_id: userCtx.added_by_employee_id,
+          added_by_employee_name: userCtx.added_by_employee_name,
+          added_by_email: userCtx.added_by_email,
+          added_by_role: userCtx.added_by_role,
         });
         customerId = newCust.id;
         customerName = newCust.name;
@@ -447,6 +475,7 @@ export default function Debts() {
         business_id: business.id, product_id: 'manual', customer_id: customerId,
         boxes_sold: 0, total_amount: parseFloat(addDebtData.amount), profit: 0,
         sale_date: new Date().toISOString(), is_debt: true, customer_name: customerName,
+        seller_email: userCtx.seller_email, seller_name: userCtx.seller_name,
         edit_history: [], edit_count: 0
       });
       await loadData();
@@ -675,6 +704,47 @@ export default function Debts() {
             </div>
           </div>
         )}
+
+        {/* Кто добавил клиента */}
+        {(() => {
+          const addedEmp = c.added_by_employee_id
+            ? employees.find(e => e.id === c.added_by_employee_id)
+            : employees.find(e => e.user_email === c.added_by_email);
+          const addedName = c.added_by_employee_name || c.added_by_email;
+          if (!addedName && !addedEmp) return null;
+          return (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                <UserCheck className="w-3.5 h-3.5" /> Кто добавил клиента
+              </p>
+              <div className="flex items-center gap-3">
+                <EmployeeAvatar
+                  employee={addedEmp}
+                  name={addedName || '?'}
+                  isAdmin={c.added_by_role === 'admin' || c.added_by_role === 'owner'}
+                  sizeClass="w-12 h-12 rounded-2xl text-lg"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 truncate">{addedName || 'Неизвестно'}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                    {c.added_by_role === 'owner' && (
+                      <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-[10px] font-semibold">👑 Владелец</span>
+                    )}
+                    {c.added_by_role === 'admin' && (
+                      <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-semibold">🛡️ Админ</span>
+                    )}
+                    {c.added_by_role === 'employee' && (
+                      <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-semibold">👤 Сотрудник</span>
+                    )}
+                    {c.added_by_email && (
+                      <span className="text-[10px] text-slate-400 truncate">{c.added_by_email}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Список покупок с инлайн-историей */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
