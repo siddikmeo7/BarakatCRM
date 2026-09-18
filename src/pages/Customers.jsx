@@ -4,22 +4,23 @@ import SearchInput from '@/components/filters/SearchInput';
 import PullToRefresh from '@/components/ui/PullToRefresh';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useNavigate } from 'react-router-dom';
 import {
   Plus, Users, ChevronLeft, ChevronRight,
-  UserCheck, CreditCard, Wallet, ShoppingCart, TrendingUp, ContactRound
+  UserCheck, CreditCard, Wallet, ShoppingCart, ContactRound,
+  Send, Loader2, MessageCircle
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import CustomerForm from '@/components/customers/CustomerForm';
 import CustomerDetail from '@/components/customers/CustomerDetail';
 import ImportContactsDialog from '@/components/customers/ImportContactsDialog';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import { buildCustomerDebtReminder, sendWhatsApp } from '@/lib/customerNotify';
+import { startOfDay, isToday } from 'date-fns';
 
 const PAGE_SIZE = 20;
 
 export default function Customers() {
   const { can, isReady } = useEmployeeAccess();
-  const navigate = useNavigate();
   const [business, setBusiness] = useState(null);
   const [user, setUser] = useState(null);
   const [customers, setCustomers] = useState([]);
@@ -28,12 +29,16 @@ export default function Customers() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [search, setSearch] = useState('');
-  const [filterDebt, setFilterDebt] = useState('all'); // all, with_debt, no_debt
+  const [filterDebt, setFilterDebt] = useState('all'); // all, with_debt, no_debt, overdue, today, active
   const [filterEmployee, setFilterEmployee] = useState('all'); // all, or employee email/id
   const [sortBy, setSortBy] = useState('date_desc'); // name, date_desc, date_asc, debt_desc, debt_asc
   const [page, setPage] = useState(1);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [minDebt, setMinDebt] = useState('');
+  const [notifyingAll, setNotifyingAll] = useState(false);
+  const [sales, setSales] = useState([]);
+  const [products, setProducts] = useState([]);
   const contactsSupported = typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window;
 
   useEffect(() => {
@@ -55,12 +60,16 @@ export default function Customers() {
 
       if (biz) {
         setBusiness(biz);
-        const [customersData, empData] = await Promise.all([
+        const [customersData, empData, salesData, productsData] = await Promise.all([
           base44.entities.Customer.filter({ business_id: biz.id }),
-          base44.entities.Employee.filter({ business_id: biz.id, is_active: true })
+          base44.entities.Employee.filter({ business_id: biz.id, is_active: true }),
+          base44.entities.Sale.filter({ business_id: biz.id, is_debt: true }),
+          base44.entities.Product.filter({ business_id: biz.id })
         ]);
         setCustomers(customersData);
         setEmployees(empData);
+        setSales(salesData);
+        setProducts(productsData);
 
         // Если пришли с выбранным customerId — открываем его
         const urlParams = new URLSearchParams(window.location.search);
@@ -164,6 +173,31 @@ export default function Customers() {
     await loadData();
   };
 
+  // Проверка просрочки/срока сегодня по долгам клиента
+  const getDueDateStatus = (customerId) => {
+    const today = startOfDay(new Date());
+    let isOverdue = false, isDueToday = false;
+    for (const s of sales) {
+      if (s.customer_id !== customerId || !s.payment_due_date || s.is_cancelled) continue;
+      const due = startOfDay(new Date(s.payment_due_date));
+      if (due < today) isOverdue = true;
+      else if (due.getTime() === today.getTime()) isDueToday = true;
+    }
+    return isOverdue ? 'overdue' : isDueToday ? 'today' : null;
+  };
+
+  const notifyAllDebtors = async () => {
+    setNotifyingAll(true);
+    try {
+      const debtors = customers.filter(c => (c.total_debt || 0) > 0 && c.phone);
+      for (const c of debtors) {
+        const msg = buildCustomerDebtReminder({ customer: c, sales, products, payments: [], businessName: business?.name });
+        sendWhatsApp(c.phone, msg);
+        await new Promise(r => setTimeout(r, 800));
+      }
+    } finally { setNotifyingAll(false); }
+  };
+
   const handleDelete = async (customerId) => {
     if (!confirm('Удалить этого клиента? Все его долги и платежи тоже будут удалены.')) return;
     const customer = customers.find(c => c.id === customerId);
@@ -213,14 +247,19 @@ export default function Customers() {
       const matchesDebt =
         filterDebt === 'all' ||
         (filterDebt === 'with_debt' && (customer.total_debt || 0) > 0) ||
-        (filterDebt === 'no_debt' && (customer.total_debt || 0) === 0);
+        (filterDebt === 'no_debt' && (customer.total_debt || 0) === 0) ||
+        (filterDebt === 'overdue' && getDueDateStatus(customer.id) === 'overdue') ||
+        (filterDebt === 'today' && getDueDateStatus(customer.id) === 'today') ||
+        (filterDebt === 'active' && (customer.total_debt || 0) > 0);
+
+      const matchesMinDebt = !minDebt || parseFloat(minDebt) <= 0 || (customer.total_debt || 0) >= parseFloat(minDebt);
 
       const matchesEmployee =
         filterEmployee === 'all' ||
         customer.added_by_email === filterEmployee ||
         customer.added_by_employee_id === filterEmployee;
 
-      return matchesSearch && matchesDebt && matchesEmployee;
+      return matchesSearch && matchesDebt && matchesMinDebt && matchesEmployee;
     });
 
     result = [...result].sort((a, b) => {
@@ -234,7 +273,7 @@ export default function Customers() {
     });
 
     return result;
-  }, [customers, search, filterDebt, filterEmployee, sortBy]);
+  }, [customers, search, filterDebt, filterEmployee, sortBy, minDebt, sales]);
 
   const totalPages = Math.ceil(filteredCustomers.length / PAGE_SIZE);
   const paginatedCustomers = filteredCustomers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -303,6 +342,10 @@ export default function Customers() {
           onBack={() => setSelectedCustomer(null)}
           onEdit={(c) => { setEditingCustomer(c); setFormOpen(true); }}
           onDelete={handleDelete}
+          onCustomerUpdated={(updated) => {
+            setSelectedCustomer(updated);
+            setCustomers(prev => prev.map(c => c.id === updated.id ? updated : c));
+          }}
         />
         <CustomerForm
           open={formOpen}
@@ -328,9 +371,12 @@ export default function Customers() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 justify-end">
-            <Button onClick={() => navigate(createPageUrl('Debts'))} variant="outline" size="sm" className="gap-1.5 text-xs h-8">
-              <CreditCard className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Все долги</span>
-            </Button>
+            {can('send_debt_reminders') && stats.withDebt > 0 && (
+              <Button onClick={notifyAllDebtors} disabled={notifyingAll} variant="outline" size="sm" className="gap-1.5 text-xs h-8 border-green-300 text-green-700 hover:bg-green-50">
+                {notifyingAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">Уведомить всех</span>
+              </Button>
+            )}
             {can('manage_customers') && (
               <Button onClick={() => setImportOpen(true)} variant="outline" size="sm" className="gap-1.5 text-xs h-8">
                 <ContactRound className="w-3.5 h-3.5" /> Из контактов
@@ -398,8 +444,19 @@ export default function Customers() {
               <SelectItem value="all">Все</SelectItem>
               <SelectItem value="with_debt">С долгом</SelectItem>
               <SelectItem value="no_debt">Без долга</SelectItem>
+              <SelectItem value="overdue">🔴 Просрочен</SelectItem>
+              <SelectItem value="today">🟡 Сегодня</SelectItem>
+              <SelectItem value="active">Активные</SelectItem>
             </SelectContent>
           </Select>
+
+          <input
+            type="text" inputMode="numeric" pattern="[0-9]*"
+            value={minDebt}
+            onChange={e => { setMinDebt(e.target.value.replace(/[^0-9]/g, '')); setPage(1); }}
+            placeholder="Мин. долг"
+            className="h-8 px-3 text-xs border border-slate-200 dark:border-slate-700 rounded-lg w-24 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+          />
 
           <Select value={filterEmployee} onValueChange={(v) => { setFilterEmployee(v); setPage(1); }}>
             <SelectTrigger className="w-36 h-8 text-xs"><SelectValue /></SelectTrigger>

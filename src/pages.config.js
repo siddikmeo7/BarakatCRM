@@ -59,7 +59,6 @@ import ChartSettings from './pages/ChartSettings';
 import Customers from './pages/Customers';
 import CustomizeDashboard from './pages/CustomizeDashboard';
 import Dashboard from './pages/Dashboard';
-import Debts from './pages/Debts';
 import ProductDetail from './pages/ProductDetail';
 import Products from './pages/Products';
 import Reports from './pages/Reports';
@@ -88,7 +87,6 @@ export const PAGES = {
     "Customers": Customers,
     "CustomizeDashboard": CustomizeDashboard,
     "Dashboard": Dashboard,
-    "Debts": Debts,
     "ProductDetail": ProductDetail,
     "Products": Products,
     "Reports": Reports,

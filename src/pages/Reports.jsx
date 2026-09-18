@@ -1431,7 +1431,7 @@ export default function Reports() {
                     <Users className="w-3.5 h-3.5" /> Все клиенты
                   </Button>
                 </Link>
-                <Link to={createPageUrl('Debts')}>
+                <Link to={createPageUrl('Customers') + '?filter=with_debt'}>
                   <Button variant="outline" size="sm" className="gap-1.5 text-xs">
                     <CreditCard className="w-3.5 h-3.5" /> Все должники
                   </Button>
@@ -1441,7 +1441,7 @@ export default function Reports() {
             <div className="custom-scroll max-h-[50vh] overflow-y-auto space-y-2">
                {debtors.map((c, i) => (
                   <Link key={c.id}
-                    to={`${createPageUrl('Debts')}?customerId=${c.id}`}
+                    to={`${createPageUrl('Customers')}?customerId=${c.id}`}
                     className="flex items-center gap-3 p-3 rounded-xl border border-red-100 bg-red-50 hover:bg-red-100 cursor-pointer group transition-colors">
                     <div className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{i + 1}</div>
                     <div className="flex-1 min-w-0">
