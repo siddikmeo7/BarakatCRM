@@ -292,7 +292,7 @@ export default function Customers() {
             <Button onClick={() => navigate(createPageUrl('Debts'))} variant="outline" size="sm" className="gap-1.5 text-xs">
               <CreditCard className="w-3.5 h-3.5" /> Все долги
             </Button>
-            {can('manage_customers') && contactsSupported && (
+            {can('manage_customers') && (
               <Button onClick={() => setImportOpen(true)} variant="outline" size="sm" className="gap-1.5 text-xs">
                 <ContactRound className="w-3.5 h-3.5" /> Из контактов
               </Button>

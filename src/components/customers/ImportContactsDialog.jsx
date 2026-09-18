@@ -1,19 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ContactRound, Loader2, Phone, Plus, CheckCircle2, Info } from 'lucide-react';
+import { ContactRound, Loader2, Phone, Plus, CheckCircle2, Info, Upload, FileText } from 'lucide-react';
 
 // Диалог импорта клиентов из телефонной книги устройства.
-// Использует Contacts Picker API (navigator.contacts) — поддерживается на Android Chrome.
+// На Android Chrome использует Contacts Picker API (navigator.contacts).
+// На десктопе/других браузерах — загрузка файла контактов (vCard .vcf или CSV).
 export default function ImportContactsDialog({ open, onClose, onImport, existingPhones = [] }) {
-  const [contacts, setContacts] = useState([]);       // выбранные из телефонной книги
+  const [contacts, setContacts] = useState([]);       // выбранные из телефонной книги / файла
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [supported, setSupported] = useState(
     typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window
   );
   const [error, setError] = useState('');
+  const [parseInfo, setParseInfo] = useState('');
+  const fileRef = useRef(null);
 
   const existingSet = new Set(existingPhones.map(p => normalizePhone(p)));
 
@@ -26,7 +29,6 @@ export default function ImportContactsDialog({ open, onClose, onImport, existing
         setLoading(false);
         return;
       }
-      // Разворачиваем: у одного контакта может быть несколько номеров
       const flat = [];
       props.forEach((c, idx) => {
         const name = (Array.isArray(c.name) ? c.name[0] : c.name) || `Контакт ${idx + 1}`;
@@ -54,6 +56,47 @@ export default function ImportContactsDialog({ open, onClose, onImport, existing
       setError('Не удалось получить доступ к контактам: ' + (e?.message || 'ошибка'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFile = async (e) => {
+    setError('');
+    setParseInfo('');
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const text = await file.text();
+      const isVcf = file.name.toLowerCase().endsWith('.vcf');
+      const parsed = isVcf ? parseVCard(text) : parseCsv(text);
+      const flat = [];
+      parsed.forEach((c, idx) => {
+        const name = c.name || `Контакт ${idx + 1}`;
+        const tels = Array.isArray(c.tel) ? c.tel : (c.tel ? [c.tel] : []);
+        if (tels.length === 0) {
+          flat.push({ id: `f_${idx}_0`, name, phone: '', email: c.email || '', address: c.address || '', include: true, already: false });
+        } else {
+          tels.forEach((tel, j) => {
+            const norm = normalizePhone(tel);
+            flat.push({
+              id: `f_${idx}_${j}`,
+              name,
+              phone: tel,
+              email: j === 0 ? (c.email || '') : '',
+              address: j === 0 ? (c.address || '') : '',
+              include: true,
+              already: existingSet.has(norm)
+            });
+          });
+        }
+      });
+      setContacts(prev => [...prev, ...flat]);
+      setParseInfo(`Импортировано ${flat.length} контактов из файла «${file.name}».`);
+    } catch (err) {
+      setError('Не удалось прочитать файл: ' + (err?.message || 'ошибка'));
+    } finally {
+      setLoading(false);
+      if (fileRef.current) fileRef.current.value = '';
     }
   };
 
@@ -90,87 +133,112 @@ export default function ImportContactsDialog({ open, onClose, onImport, existing
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg font-bold">
             <ContactRound className="w-5 h-5 text-indigo-600" />
-            Импорт из контактов телефона
+            Импорт клиентов из контактов
           </DialogTitle>
         </DialogHeader>
 
         {!supported && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2 items-start text-sm">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex gap-2 items-start text-sm">
             <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-            <p className="text-amber-700">
-              Ваш браузер не поддерживает доступ к контактам устройства. Эта функция работает на Android в браузере Chrome.
+            <p className="text-amber-700 dark:text-amber-300">
+              Прямой доступ к контактам телефона доступен только в Chrome на Android.
+              На компьютере экспортируйте контакты из телефона в файл <b>.vcf</b> или <b>.csv</b> и загрузите его ниже.
             </p>
           </div>
         )}
 
         {supported && (
-          <>
-            <Button
-              onClick={pickContacts}
-              disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-4 h-4" />}
-              {loading ? 'Открытие контактов...' : 'Выбрать контакты из телефона'}
-            </Button>
-
-            {error && <p className="text-xs text-red-600">{error}</p>}
-
-            {contacts.length > 0 && (
-              <div className="space-y-2 mt-1">
-                <div className="flex items-center justify-between text-xs text-slate-500 px-1">
-                  <span>Выбрано: {contacts.length}</span>
-                  <span>К добавлению: {selectedCount}</span>
-                </div>
-                <div className="space-y-2 max-h-[45vh] overflow-y-auto custom-scroll pr-1">
-                  {contacts.map(c => (
-                    <div
-                      key={c.id}
-                      className={`rounded-xl border p-2.5 ${c.already ? 'border-emerald-200 bg-emerald-50' : c.include ? 'border-indigo-200 bg-white' : 'border-slate-200 bg-slate-50 opacity-60'}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => toggleInclude(c.id)}
-                          disabled={c.already}
-                          className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${c.already ? 'bg-emerald-500' : c.include ? 'bg-indigo-600' : 'border border-slate-300 bg-white'}`}
-                        >
-                          {(c.include || c.already) && <CheckCircle2 className="w-4 h-4 text-white" />}
-                        </button>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-900 truncate">{c.name}</p>
-                          <p className="text-xs text-slate-500 truncate">{c.phone || 'нет номера'}</p>
-                        </div>
-                        {c.already ? (
-                          <span className="text-[10px] font-semibold text-emerald-600">уже в системе</span>
-                        ) : (
-                          <button onClick={() => removeRow(c.id)} className="text-xs text-slate-400 hover:text-red-500">убрать</button>
-                        )}
-                      </div>
-                      {c.include && !c.already && (
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          <Input
-                            value={c.address}
-                            onChange={e => updateField(c.id, 'address', e.target.value)}
-                            placeholder="Адрес"
-                            className="h-8 text-xs"
-                          />
-                          <Input
-                            value={c.email}
-                            onChange={e => updateField(c.id, 'email', e.target.value)}
-                            placeholder="Email"
-                            className="h-8 text-xs"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+          <Button
+            onClick={pickContacts}
+            disabled={loading}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-4 h-4" />}
+            {loading ? 'Открытие контактов...' : 'Выбрать контакты из телефона'}
+          </Button>
         )}
 
-        <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+        {/* Загрузка файла — всегда доступна */}
+        <div className="space-y-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            disabled={loading}
+            className="w-full gap-2"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            Загрузить файл контактов (.vcf / .csv)
+          </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".vcf,.csv,text/vcard,text/csv"
+            onChange={handleFile}
+            className="hidden"
+          />
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1 px-1">
+            <FileText className="w-3 h-3" />
+            Экспортируйте контакты из телефона (Google Контакты, iCloud, Telegram) в .vcf или .csv и выберите файл здесь.
+          </p>
+        </div>
+
+        {error && <p className="text-xs text-red-600">{error}</p>}
+        {parseInfo && <p className="text-xs text-emerald-600 dark:text-emerald-400">{parseInfo}</p>}
+
+        {contacts.length > 0 && (
+          <div className="space-y-2 mt-1">
+            <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+              <span>Выбрано: {contacts.length}</span>
+              <span>К добавлению: {selectedCount}</span>
+            </div>
+            <div className="space-y-2 max-h-[45vh] overflow-y-auto custom-scroll pr-1">
+              {contacts.map(c => (
+                <div
+                  key={c.id}
+                  className={`rounded-xl border p-2.5 ${c.already ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20' : c.include ? 'border-indigo-200 bg-white dark:bg-slate-900' : 'border-slate-200 bg-slate-50 dark:bg-slate-800 opacity-60'}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => toggleInclude(c.id)}
+                      disabled={c.already}
+                      className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${c.already ? 'bg-emerald-500' : c.include ? 'bg-indigo-600' : 'border border-slate-300 bg-white dark:bg-slate-700'}`}
+                    >
+                      {(c.include || c.already) && <CheckCircle2 className="w-4 h-4 text-white" />}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{c.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{c.phone || 'нет номера'}</p>
+                    </div>
+                    {c.already ? (
+                      <span className="text-[10px] font-semibold text-emerald-600">уже в системе</span>
+                    ) : (
+                      <button onClick={() => removeRow(c.id)} className="text-xs text-slate-400 hover:text-red-500">убрать</button>
+                    )}
+                  </div>
+                  {c.include && !c.already && (
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <Input
+                        value={c.address}
+                        onChange={e => updateField(c.id, 'address', e.target.value)}
+                        placeholder="Адрес"
+                        className="h-8 text-xs"
+                      />
+                      <Input
+                        value={c.email}
+                        onChange={e => updateField(c.id, 'email', e.target.value)}
+                        placeholder="Email"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
           <Button variant="outline" onClick={onClose}>Отмена</Button>
           <Button
             onClick={handleImport}
@@ -184,6 +252,107 @@ export default function ImportContactsDialog({ open, onClose, onImport, existing
       </DialogContent>
     </Dialog>
   );
+}
+
+// ===== Парсеры файлов контактов =====
+
+function parseVCard(text) {
+  const cards = [];
+  const blocks = text.split(/BEGIN:VCARD/i).slice(1);
+  for (const block of blocks) {
+    const endIdx = block.search(/END:VCARD/i);
+    const body = endIdx >= 0 ? block.slice(0, endIdx) : block;
+    const lines = body.split(/\r?\n/);
+    let name = '';
+    const tels = [];
+    let email = '';
+    let address = '';
+    for (let raw of lines) {
+      if (!raw) continue;
+      // Раскручиваем folded lines (начинаются с пробела/таба)
+      // (для простоты — игнорируем, встречается редко)
+      const line = raw.trim();
+      const colonIdx = line.indexOf(':');
+      if (colonIdx < 0) continue;
+      const keyPart = line.slice(0, colonIdx).toUpperCase();
+      const value = line.slice(colonIdx + 1);
+      if (keyPart.startsWith('FN')) {
+        name = value.trim();
+      } else if (keyPart.startsWith('N') && !name) {
+        // Фамилия;Имя;Отчество;Префикс;Суффикс
+        const parts = value.split(';').map(p => p.trim()).filter(Boolean);
+        if (parts.length) name = parts.join(' ');
+      } else if (keyPart.startsWith('TEL')) {
+        const num = value.replace(/[^\d+]/g, '');
+        if (num) tels.push(num);
+      } else if (keyPart.startsWith('EMAIL') && !email) {
+        email = value.trim();
+      } else if (keyPart.startsWith('ADR') && !address) {
+        const parts = value.split(';').map(p => p.trim()).filter(Boolean);
+        if (parts.length) address = parts.join(', ');
+      }
+    }
+    if (name || tels.length || email) {
+      cards.push({ name: name || 'Контакт', tel: tels, email, address });
+    }
+  }
+  return cards;
+}
+
+function parseCsv(text) {
+  const rows = csvToRows(text);
+  if (rows.length < 2) return [];
+  const header = rows[0].map(h => h.trim().toLowerCase());
+  // Ищем колонки по распространённым названиям
+  const nameIdx = header.findIndex(h => /^name$|^full.?name$|^имя$|^фио$/i.test(h));
+  const telIdx = header.findIndex(h => /^tel$|^phone$|^mobile$|^телефон$|^номер$/i.test(h));
+  const emailIdx = header.findIndex(h => /^email$|^e-mail$|^почта$/i.test(h));
+  const addrIdx = header.findIndex(h => /^address$|^адрес$|^city$|^город$/i.test(h));
+  const cards = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || r.length === 0) continue;
+    const name = nameIdx >= 0 ? (r[nameIdx] || '').trim() : '';
+    const tel = telIdx >= 0 ? (r[telIdx] || '').trim() : '';
+    const email = emailIdx >= 0 ? (r[emailIdx] || '').trim() : '';
+    const address = addrIdx >= 0 ? (r[addrIdx] || '').trim() : '';
+    if (!name && !tel && !email) continue;
+    const tels = tel ? tel.split(/[;,]/).map(t => t.replace(/[^\d+]/g, '').trim()).filter(Boolean) : [];
+    cards.push({ name: name || 'Контакт', tel: tels, email, address });
+  }
+  return cards;
+}
+
+function csvToRows(text) {
+  const rows = [];
+  let cur = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else { inQuotes = false; }
+      } else {
+        field += ch;
+      }
+    } else {
+      if (ch === '"') { inQuotes = true; }
+      else if (ch === ',') { cur.push(field); field = ''; }
+      else if (ch === ';' && field === '' && cur.length === 0) { cur.push(field); field = ''; }
+      else if (ch === '\n' || ch === '\r') {
+        cur.push(field); field = '';
+        if (cur.some(c => c.trim() !== '')) rows.push(cur);
+        cur = [];
+        if (ch === '\r' && text[i + 1] === '\n') i++;
+      } else {
+        field += ch;
+      }
+    }
+  }
+  if (field !== '' || cur.length > 0) { cur.push(field); if (cur.some(c => c.trim() !== '')) rows.push(cur); }
+  return rows;
 }
 
 function normalizePhone(p) {
