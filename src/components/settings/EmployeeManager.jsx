@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { MANAGER_PERMISSIONS } from '@/lib/defaultRoles';
 import EmployeeDetailDialog from '../employees/EmployeeDetailDialog';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
+import { toast } from '@/components/ui/use-toast';
 
 const ALL_PERMISSIONS = [
   { key: 'view_dashboard',       label: 'Видеть главную',              icon: LayoutDashboard, group: 'main' },
@@ -274,6 +275,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
   });
   const [saving, setSaving] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
+  const [emailStatus, setEmailStatus] = useState('sending'); // 'sending' | 'sent' | 'failed'
   const [createdCode, setCreatedCode] = useState('');
   const [detailDialog, setDetailDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -289,6 +291,7 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     setForm({ name: '', user_email: '', phone: '', role: 'Продавец', password: '', loginCode: '', permissions: { ...PRESETS.seller.permissions }, role_id: '' });
     setStep(1);
     setInviteSent(false);
+    setEmailStatus('sending');
     setCreatedCode('');
   };
 
@@ -322,10 +325,13 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     setSaving(true);
     try {
       const finalCode = form.loginCode || generateEmployeeCode();
+      setCreatedCode(finalCode);
+      if (!form.loginCode) setForm(f => ({ ...f, loginCode: finalCode }));
       
       // СНАЧАЛА отправляем письмо с открытым паролем
+      let emailDelivered = false;
       try {
-        await base44.functions.invoke('sendEmployeeInviteEmail', {
+        const res = await base44.functions.invoke('sendEmployeeInviteEmail', {
           email: form.user_email,
           employeeName: form.name,
           businessName: business.name,
@@ -334,8 +340,11 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
           employeePassword: form.password,
           loginCode: finalCode,
         });
+        emailDelivered = !res?.data?.error;
+        setEmailStatus(emailDelivered ? 'sent' : 'failed');
       } catch (e) {
         console.error('Error sending email:', e);
+        setEmailStatus('failed');
       }
 
       // ПОТОМ хешируем пароль и создаём сотрудника
@@ -358,6 +367,13 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
       try { await base44.users.inviteUser(form.user_email, 'user'); } catch (e) {}
 
       setInviteSent(true);
+      toast({
+        title: emailDelivered ? 'Сотрудник зарегистрирован' : 'Сотрудник добавлен (письмо не доставлено)',
+        description: emailDelivered
+          ? `Приглашение отправлено на ${form.user_email}`
+          : `Email не отправлен — передайте данные сотруднику вручную`,
+        variant: emailDelivered ? 'default' : 'destructive',
+      });
       onUpdate();
     } catch (e) {
       console.error(e);
@@ -419,25 +435,58 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
           {inviteSent ? (
             <div className="py-4 space-y-4">
               <div className="text-center space-y-2">
-                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                  <Check className="w-7 h-7 text-green-600" />
+                <div className={cn('w-14 h-14 rounded-full flex items-center justify-center mx-auto',
+                  emailStatus === 'sent' ? 'bg-green-100' : 'bg-amber-100')}>
+                  {emailStatus === 'sent'
+                    ? <Check className="w-7 h-7 text-green-600" />
+                    : <Mail className="w-7 h-7 text-amber-600" />}
                 </div>
                 <p className="font-semibold text-slate-900">Сотрудник добавлен!</p>
               </div>
-              <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 space-y-3">
-                <p className="text-sm font-semibold text-indigo-800">📧 Приглашение отправлено:</p>
+              <div className={cn('rounded-xl p-4 space-y-3 border',
+                emailStatus === 'sent' ? 'bg-indigo-50 border-indigo-200' : 'bg-amber-50 border-amber-200')}>
+                <p className={cn('text-sm font-semibold', emailStatus === 'sent' ? 'text-indigo-800' : 'text-amber-800')}>
+                  {emailStatus === 'sent' ? '📧 Приглашение отправлено:' : '⚠️ Письмо не доставлено:'}
+                </p>
+                {emailStatus !== 'sent' && (
+                  <p className="text-xs text-amber-700">
+                    Сервер не смог отправить email. Передайте данные сотруднику вручную (телефоном/мессенджером).
+                  </p>
+                )}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-indigo-100">
+                  <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-slate-100">
                     <div>
                       <p className="text-xs text-slate-400">Email сотрудника</p>
                       <p className="font-mono font-semibold text-slate-900 text-sm">{form.user_email}</p>
                     </div>
-                    <button onClick={() => { navigator.clipboard.writeText(form.user_email); }} className="p-1.5 hover:bg-indigo-50 rounded">
+                    <button onClick={() => { navigator.clipboard.writeText(form.user_email); }} className="p-1.5 hover:bg-slate-50 rounded">
+                      <Copy className="w-4 h-4 text-indigo-500" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-slate-100">
+                    <div>
+                      <p className="text-xs text-slate-400">Пароль</p>
+                      <p className="font-mono font-semibold text-slate-900 text-sm">{form.password}</p>
+                    </div>
+                    <button onClick={() => { navigator.clipboard.writeText(form.password); }} className="p-1.5 hover:bg-slate-50 rounded">
+                      <Copy className="w-4 h-4 text-indigo-500" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-slate-100">
+                    <div>
+                      <p className="text-xs text-slate-400">Код входа</p>
+                      <p className="font-mono font-semibold text-slate-900 text-sm tracking-widest">{form.loginCode || createdCode || 'авто'}</p>
+                    </div>
+                    <button onClick={() => { navigator.clipboard.writeText(form.loginCode || createdCode || ''); }} className="p-1.5 hover:bg-slate-50 rounded">
                       <Copy className="w-4 h-4 text-indigo-500" />
                     </button>
                   </div>
                 </div>
-                <p className="text-xs text-slate-500">✅ Сотрудник должен войти с этой почтой и своим паролем</p>
+                <p className="text-xs text-slate-500">
+                  {emailStatus === 'sent'
+                    ? '✅ Сотрудник должен войти с этой почтой и своим паролем'
+                    : 'Передайте сотруднику: почту, пароль и код входа'}
+                </p>
               </div>
               <Button className="w-full" variant="outline" onClick={() => { setAddDialog(false); resetForm(); }}>Готово</Button>
             </div>
