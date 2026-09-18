@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,18 +7,25 @@ import { ContactRound, Loader2, Phone, Plus, CheckCircle2, Info, Upload, FileTex
 // Диалог импорта клиентов из телефонной книги устройства.
 // На Android Chrome использует Contacts Picker API (navigator.contacts).
 // На десктопе/других браузерах — загрузка файла контактов (vCard .vcf или CSV).
-export default function ImportContactsDialog({ open, onClose, onImport, existingPhones = [] }) {
+export default function ImportContactsDialog({ open, onClose, onImport, existingPhones = [], autoPick = false }) {
   const [contacts, setContacts] = useState([]);       // выбранные из телефонной книги / файла
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [supported, setSupported] = useState(
+  const [supported] = useState(
     typeof navigator !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window
   );
   const [error, setError] = useState('');
   const [parseInfo, setParseInfo] = useState('');
   const fileRef = useRef(null);
-
   const existingSet = new Set(existingPhones.map(p => normalizePhone(p)));
+
+  // Автоматически запрашиваем доступ к контактам телефона при открытии (если поддерживается)
+  useEffect(() => {
+    if (open && autoPick && supported && contacts.length === 0) {
+      pickContacts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, autoPick]);
 
   const pickContacts = async () => {
     setError('');

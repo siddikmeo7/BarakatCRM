@@ -288,17 +288,17 @@ export default function Customers() {
               Всего {stats.total} · долг {stats.totalDebtAmount.toLocaleString()} с.
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={() => navigate(createPageUrl('Debts'))} variant="outline" size="sm" className="gap-1.5 text-xs">
-              <CreditCard className="w-3.5 h-3.5" /> Все долги
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 justify-end">
+            <Button onClick={() => navigate(createPageUrl('Debts'))} variant="outline" size="sm" className="gap-1.5 text-xs h-8">
+              <CreditCard className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Все долги</span>
             </Button>
             {can('manage_customers') && (
-              <Button onClick={() => setImportOpen(true)} variant="outline" size="sm" className="gap-1.5 text-xs">
+              <Button onClick={() => setImportOpen(true)} variant="outline" size="sm" className="gap-1.5 text-xs h-8">
                 <ContactRound className="w-3.5 h-3.5" /> Из контактов
               </Button>
             )}
             {can('manage_customers') && (
-              <Button onClick={() => { setEditingCustomer(null); setFormOpen(true); }} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs">
+              <Button onClick={() => { setEditingCustomer(null); setFormOpen(true); }} size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 text-xs h-8">
                 <Plus className="w-3.5 h-3.5" /> Добавить
               </Button>
             )}
@@ -484,6 +484,7 @@ export default function Customers() {
           onClose={() => setImportOpen(false)}
           onImport={handleImportContacts}
           existingPhones={customers.map(c => c.phone).filter(Boolean)}
+          autoPick
         />
       </div>
     </PullToRefresh>
