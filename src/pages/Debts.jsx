@@ -503,12 +503,11 @@ export default function Debts() {
     customerDebtMap[sale.customer_id].totalPaid += paid;
   });
 
-  // Список клиентов с долгами (с поиском)
+  // Список клиентов (включая тех, у кого нет долга — можно сделать должником)
   const debtorList = customers
-    .filter(c => customerDebtMap[c.id])
     .filter(c => !search || c.name?.toLowerCase().includes(search.toLowerCase()) || c.phone?.includes(search))
     .map(c => {
-      const dm = customerDebtMap[c.id];
+      const dm = customerDebtMap[c.id] || { sales: [], totalAmount: 0, totalPaid: 0 };
       const remaining = dm.totalAmount - dm.totalPaid;
       return { customer: c, ...dm, remaining };
     })
