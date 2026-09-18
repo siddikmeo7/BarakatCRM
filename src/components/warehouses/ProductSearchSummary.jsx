@@ -124,27 +124,44 @@ export default function ProductSearchSummary({ query, products, sales, warehouse
         </h4>
         <div className="space-y-2">
           {byModel.map((g, i) => (
-            <div key={i} className="bg-white border border-slate-100 rounded-xl px-3 py-2.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
+            <div key={i} className="bg-gradient-to-r from-white to-slate-50 border border-slate-200 rounded-2xl p-3 shadow-sm">
+              <div className="flex items-center gap-3 mb-2.5">
+                {/* Порядковый номер */}
+                <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 shadow">
+                  {i + 1}
+                </div>
                 <ProductPhoto
                   photoUrl={g.photo_url}
                   brand={g.brand}
-                  className="w-9 h-9 rounded-lg flex-shrink-0"
+                  className="w-10 h-10 rounded-lg flex-shrink-0"
                   placeholderClassName="bg-slate-100"
                   textClassName="text-slate-500 text-[8px]"
                 />
-                <div className="min-w-0">
-                  <p className="font-semibold text-slate-900 text-sm truncate">{g.brand} {g.model}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-slate-900 text-sm truncate">{g.brand} {g.model}</p>
                   <p className="text-xs text-slate-400">{g.color} • {g.product_type}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-xs flex-shrink-0">
-                <span className="px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-semibold">Всего: {(g.stock + g.sold)}</span>
-                <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-semibold">Прод: {g.sold}</span>
-                <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold">Ост: {g.stock}</span>
-                <span className="px-2 py-1 rounded-full bg-orange-100 text-orange-700 font-bold">
-                  {can('view_warehouse_cost') ? `${g.purchase.toLocaleString()} с.` : '•••••'}
-                </span>
+              {/* Мини-сетка статистики */}
+              <div className="grid grid-cols-4 gap-1.5">
+                <div className="bg-indigo-50 rounded-lg px-1.5 py-1.5 text-center">
+                  <p className="text-[10px] text-slate-500 font-medium leading-tight">Всего</p>
+                  <p className="text-sm font-bold text-indigo-600 leading-tight">{g.stock + g.sold}</p>
+                </div>
+                <div className="bg-blue-50 rounded-lg px-1.5 py-1.5 text-center">
+                  <p className="text-[10px] text-slate-500 font-medium leading-tight">Продано</p>
+                  <p className="text-sm font-bold text-blue-600 leading-tight">{g.sold}</p>
+                </div>
+                <div className="bg-emerald-50 rounded-lg px-1.5 py-1.5 text-center">
+                  <p className="text-[10px] text-slate-500 font-medium leading-tight">Осталось</p>
+                  <p className="text-sm font-bold text-emerald-600 leading-tight">{g.stock}</p>
+                </div>
+                <div className="bg-orange-50 rounded-lg px-1.5 py-1.5 text-center">
+                  <p className="text-[10px] text-slate-500 font-medium leading-tight">Закупка</p>
+                  <p className="text-xs font-bold text-orange-600 leading-tight">
+                    {can('view_warehouse_cost') ? `${g.purchase.toLocaleString()} с.` : '•••••'}
+                  </p>
+                </div>
               </div>
             </div>
           ))}
