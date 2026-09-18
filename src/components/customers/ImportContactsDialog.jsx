@@ -2,7 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ContactRound, Loader2, Phone, Plus, CheckCircle2, Info, Upload, FileText } from 'lucide-react';
+import { ContactRound, Loader2, Phone, Plus, CheckCircle2, Info, Upload, FileText, Apple, Smartphone } from 'lucide-react';
+
+const isIOS = typeof navigator !== 'undefined' &&
+  /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 // Диалог импорта клиентов из телефонной книги устройства.
 // На Android Chrome использует Contacts Picker API (navigator.contacts).
@@ -144,51 +147,82 @@ export default function ImportContactsDialog({ open, onClose, onImport, existing
           </DialogTitle>
         </DialogHeader>
 
-        {!supported && (
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex gap-2 items-start text-sm">
-            <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-            <p className="text-amber-700 dark:text-amber-300">
-              Прямой доступ к контактам телефона доступен только в Chrome на Android.
-              На компьютере экспортируйте контакты из телефона в файл <b>.vcf</b> или <b>.csv</b> и загрузите его ниже.
-            </p>
-          </div>
-        )}
-
         {supported && (
           <Button
             onClick={pickContacts}
             disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2 h-11 text-base"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-4 h-4" />}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Phone className="w-5 h-5" />}
             {loading ? 'Открытие контактов...' : 'Выбрать контакты из телефона'}
           </Button>
         )}
 
-        {/* Загрузка файла — всегда доступна */}
-        <div className="space-y-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileRef.current?.click()}
-            disabled={loading}
-            className="w-full gap-2"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            Загрузить файл контактов (.vcf / .csv)
-          </Button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".vcf,.csv,text/vcard,text/csv"
-            onChange={handleFile}
-            className="hidden"
-          />
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1 px-1">
-            <FileText className="w-3 h-3" />
-            Экспортируйте контакты из телефона (Google Контакты, iCloud, Telegram) в .vcf или .csv и выберите файл здесь.
-          </p>
-        </div>
+        {/* iPhone / не-Android: понятный поток экспорта контактов */}
+        {!supported && (
+          <div className="space-y-3">
+            <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl p-3.5">
+              <div className="flex items-center gap-2 mb-2">
+                {isIOS ? <Apple className="w-4 h-4 text-indigo-600" /> : <Smartphone className="w-4 h-4 text-indigo-600" />}
+                <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                  {isIOS ? 'Экспорт контактов с iPhone' : 'Экспорт контактов с телефона'}
+                </p>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mb-2.5">
+                {isIOS
+                  ? 'Браузер iPhone не даёт сайтам прямой доступ к контактам. Экспортируйте их в файл .vcf один раз — затем выберите файл ниже.'
+                  : 'Прямой доступ к контактам доступен только в Chrome на Android. Экспортируйте контакты в файл .vcf и загрузите его ниже.'}
+              </p>
+              {isIOS && (
+                <ol className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5 list-decimal list-inside">
+                  <li>Откройте приложение <b>«Контакты»</b> → нажмите <b>«Списки»</b> вверху слева.</li>
+                  <li>Долгим нажатием выберите нужный список (или «Все iCloud»).</li>
+                  <li>Нажмите <b>«Экспорт»</b> → <b>«Экспорт vCard»</b> и сохраните файл.</li>
+                  <li>Вернитесь сюда и нажмите «Загрузить файл .vcf» ниже.</li>
+                </ol>
+              )}
+            </div>
+            <Button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2 h-11 text-base"
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+              Загрузить файл контактов (.vcf / .csv)
+            </Button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".vcf,.csv,text/vcard,text/csv"
+              onChange={handleFile}
+              className="hidden"
+            />
+          </div>
+        )}
+
+        {/* На Android — запасная загрузка файла */}
+        {supported && (
+          <div className="space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileRef.current?.click()}
+              disabled={loading}
+              className="w-full gap-2"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              Загрузить файл контактов (.vcf / .csv)
+            </Button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".vcf,.csv,text/vcard,text/csv"
+              onChange={handleFile}
+              className="hidden"
+            />
+          </div>
+        )}
 
         {error && <p className="text-xs text-red-600">{error}</p>}
         {parseInfo && <p className="text-xs text-emerald-600 dark:text-emerald-400">{parseInfo}</p>}
