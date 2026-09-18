@@ -87,6 +87,55 @@ export function buildPaymentMessage({
   return msg;
 }
 
+// Детальное сообщение при погашении долга: сколько заплатил, дата/время, срок,
+// оплаченные товары, оставшиеся товары и остаток долга.
+export function buildDetailedPaymentMessage({
+  customerName,
+  businessName,
+  now,
+  paidAmount,
+  paidItems,        // [{name, boxes, amount}]
+  remainingItems,   // [{name, boxes, remaining, dueDate}]
+  remainingDebt,
+  nearestDueDate
+}) {
+  let msg = `Здравствуйте, ${customerName}!\n\n`;
+  msg += `✅ Поступила оплата по долгу\n`;
+  msg += `🕐 ${fmtDateTime(now || new Date())}\n`;
+  msg += `💼 ${businessName || 'наш магазин'}\n`;
+  msg += `💰 Оплачено: ${Number(paidAmount || 0).toLocaleString('ru-RU')} с.\n`;
+
+  if (paidItems && paidItems.length) {
+    msg += `\n🛍️ Оплаченные товары:\n`;
+    paidItems.forEach((p, i) => {
+      msg += `${i + 1}. ${p.name}`;
+      if (p.boxes) msg += ` — ${p.boxes} кор.`;
+      if (p.amount != null) msg += ` — ${Number(p.amount).toLocaleString('ru-RU')} с.`;
+      msg += `\n`;
+    });
+  }
+
+  if (remainingItems && remainingItems.length) {
+    msg += `\n⏳ Оставшиеся товары (ещё должен):\n`;
+    remainingItems.forEach((p, i) => {
+      msg += `${i + 1}. ${p.name}`;
+      if (p.boxes) msg += ` — ${p.boxes} кор.`;
+      if (p.remaining != null) msg += ` — ${Number(p.remaining).toLocaleString('ru-RU')} с.`;
+      if (p.dueDate) msg += ` (до ${p.dueDate})`;
+      msg += `\n`;
+    });
+  }
+
+  if (remainingDebt > 0) {
+    msg += `\n🔴 Остаток долга: ${Number(remainingDebt).toLocaleString('ru-RU')} с.\n`;
+    if (nearestDueDate) msg += `📅 Срок оплаты оставшегося долга: ${nearestDueDate}\n`;
+  } else {
+    msg += `\n🎉 Долг полностью погашен!\n`;
+  }
+  msg += `\nСпасибо!`;
+  return msg;
+}
+
 // Форматирование даты/времени без зависимостей
 function fmtDateTime(d = new Date()) {
   const pad = n => String(n).padStart(2, '0');

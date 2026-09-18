@@ -14,7 +14,7 @@ import {
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import ProductPhoto from '@/components/products/ProductPhoto';
 import SaleNotifyChannels from '@/components/sales/SaleNotifyChannels';
-import { buildPaymentMessage, notifyCustomerChannels, buildCustomerDebtReminder, sendWhatsApp } from '@/lib/customerNotify';
+import { buildPaymentMessage, buildDetailedPaymentMessage, notifyCustomerChannels, buildCustomerDebtReminder, sendWhatsApp } from '@/lib/customerNotify';
 import { format, parseISO, isToday, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -22,6 +22,13 @@ const getSalePaidAmount = (saleId, payments) => {
   const salePayments = payments.filter(p => p.sale_id === saleId && (p.amount || 0) > 0);
   const fromPayments = salePayments.reduce((sum, p) => sum + (p.amount || 0), 0);
   return fromPayments;
+};
+
+const fmtDue = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return String(dateStr);
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
 export default function CustomerDetail({ customer, onBack, onEdit, onDelete, business, onCustomerUpdated }) {
@@ -189,10 +196,24 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
 
       if (payNotifyChannels.length > 0) {
         const product = products.find(p => p.id === sale.product_id);
-        const message = buildPaymentMessage({
+        const paidName = sale.product_id === 'manual'
+          ? 'Товары не указаны'
+          : (product ? `${product.brand} ${product.model}` : 'Товар удалён');
+        const paidItems = [{ name: paidName, boxes: sale.boxes_sold || 0, amount }];
+        // Оставшиеся непогашенные долги (другие продажи)
+        const remainingItems = debtSales
+          .filter(s => !s.is_cancelled && s.id !== sale.id && ((s.total_amount || 0) - getSalePaid(s.id)) > 0)
+          .map(s => {
+            const p = products.find(pp => pp.id === s.product_id);
+            const name = s.product_id === 'manual' ? 'Товары не указаны' : (p ? `${p.brand} ${p.model}` : 'Товар удалён');
+            return { name, boxes: s.boxes_sold || 0, remaining: (s.total_amount || 0) - getSalePaid(s.id), dueDate: s.payment_due_date ? fmtDue(s.payment_due_date) : '' };
+          });
+        const nearestDueDate = remainingItems.map(r => r.dueDate).filter(Boolean).sort()[0] || '';
+        const message = buildDetailedPaymentMessage({
           customerName: c.name, businessName: business?.name,
-          productName: product ? `${product.brand} ${product.model}` : '',
-          paidAmount: amount, remainingDebt: newDebt, isFullPayment: newDebt <= 0
+          now: new Date(), paidAmount: amount,
+          paidItems, remainingItems,
+          remainingDebt: newDebt, nearestDueDate
         });
         notifyCustomerChannels({ customer: c, channels: payNotifyChannels, message, emailSubject: `Оплата долга — ${business?.name || ''}` });
       }
@@ -236,9 +257,27 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
       if (onCustomerUpdated) onCustomerUpdated(updatedCustomer);
 
       if (bulkNotifyChannels.length > 0) {
-        const message = buildPaymentMessage({
-          customerName: c.name, businessName: business?.name, productName: '',
-          paidAmount: remaining, remainingDebt: updatedCustomer.total_debt, isFullPayment: updatedCustomer.total_debt <= 0
+        // Пересчитываем остатки по всем долгам после распределения оплаты
+        const appliedMap = {};
+        created.forEach(p => { appliedMap[p.sale_id] = (appliedMap[p.sale_id] || 0) + (p.amount || 0); });
+        const paidItems = [];
+        const remainingItems = [];
+        debtSales.filter(s => !s.is_cancelled).forEach(s => {
+          const prod = products.find(p => p.id === s.product_id);
+          const name = s.product_id === 'manual' ? 'Товары не указаны' : (prod ? `${prod.brand} ${prod.model}` : 'Товар удалён');
+          const beforePaid = getSalePaid(s.id);
+          const extra = appliedMap[s.id] || 0;
+          const totalPaidNow = beforePaid + extra;
+          if (extra > 0) paidItems.push({ name, boxes: s.boxes_sold || 0, amount: extra });
+          const rem = Math.max(0, (s.total_amount || 0) - totalPaidNow);
+          if (rem > 0) remainingItems.push({ name, boxes: s.boxes_sold || 0, remaining: rem, dueDate: s.payment_due_date ? fmtDue(s.payment_due_date) : '' });
+        });
+        const nearestDueDate = remainingItems.map(r => r.dueDate).filter(Boolean).sort()[0] || '';
+        const message = buildDetailedPaymentMessage({
+          customerName: c.name, businessName: business?.name,
+          now: new Date(), paidAmount: remaining,
+          paidItems, remainingItems,
+          remainingDebt: updatedCustomer.total_debt, nearestDueDate
         });
         notifyCustomerChannels({ customer: c, channels: bulkNotifyChannels, message, emailSubject: `Оплата долга — ${business?.name || ''}` });
       }

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { User, Phone, MapPin, MessageCircle, Calendar, Save, CheckCircle, Loader2 } from 'lucide-react';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 export default function EmployeePersonalInfoPanel({ employee, onSaved }) {
   const [info, setInfo] = useState({
@@ -60,12 +61,15 @@ export default function EmployeePersonalInfoPanel({ employee, onSaved }) {
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
-      <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
-          <User className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-        </div>
+      <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+        <EmployeeAvatar
+          employee={employee}
+          name={employee?.full_name || employee?.name}
+          isAdmin={employee?.is_admin}
+          sizeClass="w-12 h-12 text-lg"
+        />
         <div>
-          <h3 className="font-semibold text-slate-900 dark:text-white">Личная информация</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white">{employee?.full_name || employee?.name || 'Личная информация'}</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">Ваши контактные данные</p>
         </div>
       </div>

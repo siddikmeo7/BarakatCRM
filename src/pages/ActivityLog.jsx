@@ -730,7 +730,7 @@ export default function ActivityLog() {
                 </button>
               </div>
 
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-slate-100 max-h-[60vh] overflow-y-auto custom-scroll">
                 {filteredLogs.map(log => {
                   const Icon = ENTITY_ICONS[log.entity_type] || AlertCircle;
                   const ActionIcon = ACTION_ICONS[log.action_type] || AlertCircle;

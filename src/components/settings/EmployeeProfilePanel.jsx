@@ -6,6 +6,7 @@ import {
   Shield, CheckCircle, XCircle, Building2, Clock, Smartphone,
   Star, Lock, ChevronDown, ChevronUp
 } from 'lucide-react';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 const ALL_PERM_LABELS = {
   view_dashboard: '📊 Дашборд',
@@ -86,15 +87,20 @@ export default function EmployeeProfilePanel({ employee, business, user, mergedP
 
   return (
     <div className="space-y-3">
-      {/* Карточка бизнеса */}
+      {/* Карточка бизнеса + профиль сотрудника со стикером */}
       <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 text-white shadow-lg">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0 shadow-inner">
-            <span className="text-white font-bold text-xl">{business?.name?.charAt(0)?.toUpperCase()}</span>
+          <div className="flex-shrink-0 rounded-full bg-white/15 p-0.5">
+            <EmployeeAvatar
+              employee={employee}
+              name={employee?.name}
+              isAdmin={employee?.is_admin}
+              sizeClass="w-12 h-12 text-lg"
+            />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-white text-base truncate">{business?.name}</p>
-            <p className="text-indigo-200 text-xs">Вы работаете здесь как сотрудник</p>
+            <p className="font-bold text-white text-base truncate">{employee?.name || business?.name}</p>
+            <p className="text-indigo-200 text-xs truncate">{business?.name} · Вы работаете здесь как сотрудник</p>
           </div>
           <span className="flex items-center gap-1 text-xs text-green-300 font-medium flex-shrink-0 bg-white/10 px-2 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />

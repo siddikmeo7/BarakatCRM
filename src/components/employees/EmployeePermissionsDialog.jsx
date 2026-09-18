@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
 import { MANAGER_PERMISSIONS } from '@/lib/defaultRoles';
@@ -281,25 +280,61 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
           </div>
         </div>
 
-        {/* Status + role + presets bar */}
-        <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 space-y-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Admin toggle */}
-            <div onClick={() => setIsAdmin(a => !a)} className="flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
-              <div className={`w-8 h-4 rounded-full flex items-center px-0.5 transition-colors flex-shrink-0 ${isAdmin ? 'bg-indigo-500' : 'bg-slate-300'}`}>
-                <div className={`w-3 h-3 rounded-full bg-white shadow transition-transform ${isAdmin ? 'translate-x-4' : 'translate-x-0'}`} />
-              </div>
-              <span className={`text-xs font-semibold ${isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}>{isAdmin ? '👑 Админ' : 'Сотрудник'}</span>
-            </div>
-            {/* Frozen toggle */}
+        {/* Role picker — кто этот сотрудник */}
+        <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">Кто этот сотрудник?</p>
+            <span className="text-xs text-slate-400">{enabledCount}/{totalPermissions}</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {/* Админ — отдельная карточка (тогглит is_admin) */}
+            <button
+              onClick={() => setIsAdmin(a => !a)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all ${
+                isAdmin
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-500 border-indigo-500 text-white shadow-md'
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-300'
+              }`}
+            >
+              <span className="text-base">👑</span>
+              <span className="text-xs font-bold">Админ</span>
+            </button>
+            {/* Роли из базы (складшик, менеджер и т.д.) */}
+            {roles.length > 0 ? roles.map(role => {
+              const active = !isAdmin && selectedRoleId === role.id;
+              return (
+                <button
+                  key={role.id}
+                  onClick={() => { if (isAdmin) setIsAdmin(false); handleRoleChange(role.id); }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all ${
+                    active
+                      ? 'bg-emerald-500 border-emerald-500 text-white shadow-md'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-emerald-300'
+                  }`}
+                >
+                  <span className="text-base">🛡️</span>
+                  <span className="text-xs font-bold">{role.name}</span>
+                </button>
+              );
+            }) : (
+              <button
+                onClick={() => {}}
+                disabled
+                className="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 text-xs"
+              >
+                Нет ролей — создайте в «Роли»
+              </button>
+            )}
+          </div>
+
+          {/* Status toggles + presets */}
+          <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-slate-200 dark:border-slate-700">
             <div onClick={() => setIsFrozen(f => !f)} className="flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
               <div className={`w-8 h-4 rounded-full flex items-center px-0.5 transition-colors flex-shrink-0 ${isFrozen ? 'bg-blue-500' : 'bg-slate-300'}`}>
                 <div className={`w-3 h-3 rounded-full bg-white shadow transition-transform ${isFrozen ? 'translate-x-4' : 'translate-x-0'}`} />
               </div>
               <span className={`text-xs font-semibold ${isFrozen ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}>{isFrozen ? '🧊 Заморожен' : 'Активен'}</span>
             </div>
-            {/* Permission count */}
-            <span className="text-xs text-slate-400 ml-auto">{enabledCount}/{totalPermissions}</span>
             <button
               onClick={toggleAllPermissions}
               className={`text-xs font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1 ${
@@ -311,20 +346,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
               {isAllSelected ? <Square className="w-3 h-3" /> : <CheckSquare className="w-3 h-3" />}
               {isAllSelected ? 'Снять все' : 'Выбрать все'}
             </button>
-          </div>
-
-          {/* Role + presets */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {roles.length > 0 && (
-              <Select value={selectedRoleId || 'none'} onValueChange={handleRoleChange}>
-                <SelectTrigger className="h-8 text-xs w-auto min-w-[140px] bg-white dark:bg-slate-900"><SelectValue placeholder="Роль" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Без роли</SelectItem>
-                  {roles.map(role => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            )}
-            <button onClick={giveAllPermissions} className="text-xs px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold hover:opacity-90 transition flex items-center gap-1">
+            <button onClick={giveAllPermissions} className="text-xs px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold hover:opacity-90 transition flex items-center gap-1 ml-auto">
               <Zap className="w-3 h-3" />Все разрешения
             </button>
             <button onClick={() => handlePreset('seller')} className="text-xs px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:opacity-80">🛍️ Продавец</button>
