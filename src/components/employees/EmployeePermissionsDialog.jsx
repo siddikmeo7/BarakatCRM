@@ -8,21 +8,35 @@ import { Save, Mail, CheckCheck, Zap, CheckSquare, Square } from 'lucide-react';
 
 const PERMISSION_GROUPS = [
   {
-    label: '📊 Аналитика и дашборд',
+    label: '📁 Видимость разделов меню',
     permissions: [
-      { key: 'view_dashboard',          label: 'Главная страница' },
-      { key: 'view_analytics',          label: 'Раздел аналитики' },
+      { key: 'view_dashboard',          label: 'Главная (Dashboard)' },
+      { key: 'view_analytics',          label: 'Аналитика' },
+      { key: 'view_products',           label: 'Товары' },
+      { key: 'view_warehouses',         label: 'Склады' },
+      { key: 'view_sales',              label: 'Продажи' },
+      { key: 'view_returns',            label: 'Возвраты' },
+      { key: 'view_customers',          label: 'Клиенты' },
+      { key: 'view_reports',            label: 'Отчёты' },
+      { key: 'view_expenses',           label: 'Расходы' },
+      { key: 'view_ai_assistant',       label: 'AI Ассистент' },
+      { key: 'view_employee_analytics', label: 'Эффективность сотрудников' },
+      { key: 'view_settings',           label: 'Настройки' },
+      { key: 'view_salary',             label: 'Зарплата' },
+    ]
+  },
+  {
+    label: '📊 Аналитика — детальные данные',
+    permissions: [
       { key: 'view_revenue',            label: 'Видеть выручку' },
       { key: 'view_profit',             label: 'Видеть прибыль' },
       { key: 'view_stock_value',        label: 'Стоимость склада' },
       { key: 'view_purchase_price',     label: 'Цены закупки' },
-      { key: 'view_employee_analytics', label: 'Эффективность сотрудников' },
     ]
   },
   {
-    label: '📦 Товары',
+    label: '📦 Товары — действия',
     permissions: [
-      { key: 'view_products',               label: 'Просматривать товары' },
       { key: 'add_products',                label: 'Добавлять товары' },
       { key: 'edit_products',               label: 'Редактировать товары' },
       { key: 'delete_products',             label: 'Удалять товары' },
@@ -33,9 +47,8 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    label: '🛒 Продажи',
+    label: '🛒 Продажи — действия',
     permissions: [
-      { key: 'view_sales',               label: 'Просматривать продажи' },
       { key: 'view_own_sales_only',      label: 'Только свои продажи' },
       { key: 'add_sales',                label: 'Оформлять продажи' },
       { key: 'edit_sales',               label: 'Редактировать продажи' },
@@ -49,9 +62,8 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    label: '🏢 Склады',
+    label: '🏢 Склады — управление',
     permissions: [
-      { key: 'view_warehouses',        label: 'Видеть склады' },
       { key: 'manage_warehouses',      label: 'Управлять складами' },
       { key: 'view_warehouse_value',   label: 'Стоимость товаров на складе' },
       { key: 'view_warehouse_revenue', label: 'Выручка по складам' },
@@ -60,9 +72,8 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    label: '👥 Клиенты',
+    label: '👥 Клиенты — действия',
     permissions: [
-      { key: 'view_customers',         label: 'Видеть клиентов' },
       { key: 'manage_customers',       label: 'Добавлять и редактировать' },
       { key: 'delete_customers',       label: 'Удалять клиентов' },
       { key: 'view_customer_debt',     label: 'Видеть долг клиента' },
@@ -79,9 +90,8 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    label: '💰 Расходы',
+    label: '💰 Расходы — действия',
     permissions: [
-      { key: 'view_expenses',     label: 'Просматривать расходы' },
       { key: 'view_all_expenses', label: 'Видеть все расходы (включая чужие)' },
       { key: 'manage_expenses',   label: 'Управлять всеми расходами' },
       { key: 'record_expenses_on_behalf', label: 'Фиксировать расходы от имени других лиц' },
@@ -90,16 +100,14 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    label: '↩️ Возвраты',
+    label: '↩️ Возвраты — действия',
     permissions: [
-      { key: 'view_returns',   label: 'Видеть возвраты' },
       { key: 'manage_returns', label: 'Оформлять возвраты' },
     ]
   },
   {
     label: '📋 Отчёты и история',
     permissions: [
-      { key: 'view_reports',          label: 'Раздел отчётов' },
       { key: 'view_reports_detailed', label: 'Детальные отчёты' },
       { key: 'view_activity_log',     label: 'История действий' },
       { key: 'export_reports',        label: 'Экспорт отчётов (PDF/MD)' },
@@ -109,9 +117,8 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    label: '🤖 AI и уведомления',
+    label: '🤖 AI и уведомления — действия',
     permissions: [
-      { key: 'view_ai_assistant',  label: 'AI Ассистент' },
       { key: 'manage_telegram',    label: 'Настройки Telegram' },
       { key: 'send_notifications', label: 'Отправлять уведомления' },
     ]
@@ -119,7 +126,6 @@ const PERMISSION_GROUPS = [
   {
     label: '⚙️ Настройки и управление',
     permissions: [
-      { key: 'view_settings',             label: 'Просматривать раздел «Настройки»' },
       { key: 'view_settings_language',    label: 'Язык интерфейса' },
       { key: 'view_settings_defaults',    label: 'Просмотр настроек' },
       { key: 'manage_settings_defaults',  label: 'Изменение настроек' },
@@ -135,9 +141,8 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    label: '💼 Зарплата',
+    label: '💼 Зарплата — управление',
     permissions: [
-      { key: 'view_salary',   label: 'Просматривать раздел «Зарплата»' },
       { key: 'manage_salary', label: 'Управлять методами и ставками зарплаты' },
     ]
   },
