@@ -83,6 +83,8 @@ export const PERMISSIONS = {
   VIEW_ALL_EXPENSES: 'view_all_expenses',
   MANAGE_EXPENSES: 'manage_expenses',
   RECORD_EXPENSES_ON_BEHALF: 'record_expenses_on_behalf',
+  VIEW_EXPENSE_SALES_REVENUE: 'view_expense_sales_revenue',
+  VIEW_EXPENSE_MONEY_IN_HAND: 'view_expense_money_in_hand',
 
   // Возвраты
   VIEW_RETURNS: 'view_returns',
@@ -95,6 +97,7 @@ export const PERMISSIONS = {
   EXPORT_REPORTS: 'export_reports',
   EXPORT_EXCEL: 'export_excel',
   DELETE_ACTIVITY_LOG: 'delete_activity_log',
+  RESTORE_ACTIVITY_LOG: 'restore_activity_log',
 
   // AI
   VIEW_AI_ASSISTANT: 'view_ai_assistant',
@@ -110,4 +113,8 @@ export const PERMISSIONS = {
   VIEW_SETTINGS_CODES: 'view_settings_codes',
   BACKUP_DATA: 'backup_data',
   DELETE_ALL_DATA: 'delete_all_data',
+
+  // Зарплата
+  VIEW_SALARY: 'view_salary',
+  MANAGE_SALARY: 'manage_salary',
 };

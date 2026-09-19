@@ -203,6 +203,14 @@
           "type": "boolean",
           "default": false
         },
+        "view_expense_sales_revenue": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_expense_money_in_hand": {
+          "type": "boolean",
+          "default": false
+        },
         "manage_returns": {
           "type": "boolean",
           "default": false
@@ -232,6 +240,10 @@
           "default": false
         },
         "delete_activity_log": {
+          "type": "boolean",
+          "default": false
+        },
+        "restore_activity_log": {
           "type": "boolean",
           "default": false
         },
@@ -292,6 +304,14 @@
           "default": false
         },
         "delete_all_data": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_salary": {
+          "type": "boolean",
+          "default": true
+        },
+        "manage_salary": {
           "type": "boolean",
           "default": false
         }

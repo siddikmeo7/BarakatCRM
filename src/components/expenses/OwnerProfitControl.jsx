@@ -12,6 +12,7 @@ import {
   subDays, isWithinInterval, parseISO, format
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 const PERIODS = [
   { key: 'today',      label: 'Сегодня' },
@@ -44,6 +45,10 @@ const periodKeyFor = (key, range) =>
   key === 'custom' ? `custom_${range.start.toISOString()}_${range.end.toISOString()}` : key;
 
 export default function OwnerProfitControl({ business }) {
+  const { can } = useEmployeeAccess();
+  const showRevenue = can('view_expense_sales_revenue');
+  const showMoneyInHand = can('view_expense_money_in_hand');
+  const showAllExpenses = can('view_all_expenses');
   const [periodKey, setPeriodKey] = useState('this_month');
   const [customRange, setCustomRange] = useState({ from: null, to: null });
   const [sales, setSales] = useState([]);

@@ -255,6 +255,12 @@
         "record_expenses_on_behalf": {
           "type": "boolean"
         },
+        "view_expense_sales_revenue": {
+          "type": "boolean"
+        },
+        "view_expense_money_in_hand": {
+          "type": "boolean"
+        },
         "manage_returns": {
           "type": "boolean"
         },
@@ -277,6 +283,9 @@
           "type": "boolean"
         },
         "delete_activity_log": {
+          "type": "boolean"
+        },
+        "restore_activity_log": {
           "type": "boolean"
         },
         "view_ai_assistant": {
@@ -322,6 +331,12 @@
           "type": "boolean"
         },
         "delete_all_data": {
+          "type": "boolean"
+        },
+        "view_salary": {
+          "type": "boolean"
+        },
+        "manage_salary": {
           "type": "boolean"
         }
       }

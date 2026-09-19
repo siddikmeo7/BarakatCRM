@@ -85,6 +85,8 @@ const PERMISSION_GROUPS = [
       { key: 'view_all_expenses', label: 'Видеть все расходы (включая чужие)' },
       { key: 'manage_expenses',   label: 'Управлять всеми расходами' },
       { key: 'record_expenses_on_behalf', label: 'Фиксировать расходы от имени других лиц' },
+      { key: 'view_expense_sales_revenue', label: 'Видеть выручку продаж' },
+      { key: 'view_expense_money_in_hand', label: 'Видеть «деньги на руках»' },
     ]
   },
   {
@@ -102,6 +104,7 @@ const PERMISSION_GROUPS = [
       { key: 'view_activity_log',     label: 'История действий' },
       { key: 'export_reports',        label: 'Экспорт отчётов (PDF/MD)' },
       { key: 'export_excel',          label: 'Экспорт в Excel' },
+      { key: 'restore_activity_log',  label: 'Восстанавливать удалённые записи' },
       { key: 'delete_activity_log',   label: 'Удалять историю' },
     ]
   },
@@ -128,6 +131,13 @@ const PERMISSION_GROUPS = [
       { key: 'manage_roles',             label: 'Управление ролями' },
       { key: 'backup_data',              label: 'Резервные копии' },
       { key: 'delete_all_data',          label: '⚠️ Удалить все данные' },
+    ]
+  },
+  {
+    label: '💼 Зарплата',
+    permissions: [
+      { key: 'view_salary',   label: 'Просматривать раздел «Зарплата»' },
+      { key: 'manage_salary', label: 'Управлять методами и ставками зарплаты' },
     ]
   },
 ];
