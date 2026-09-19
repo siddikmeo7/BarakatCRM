@@ -149,12 +149,13 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     if (loading || !user) return;
     if (user.email === ADMIN_EMAIL) return;
-    if (employeePermissions === null) return; // владелец — полный доступ
-    if (currentEmployee?.is_admin) return; // сотрудник-администратор — полный доступ
+    if (!currentEmployee) return; // владелец — полный доступ, без редиректа
     const activeItem = ALL_MENU_ITEMS.find(item => item.name === currentPageName);
     if (!activeItem) return;
-    if (activeItem.permKey && !employeePermissions?.[activeItem.permKey]) {
-      const firstAvailable = ALL_MENU_ITEMS.find(item => !item.permKey || employeePermissions?.[item.permKey]);
+    // Единая проверка: если у сотрудника (админа или обычного) нет доступа к текущему
+    // разделу — перенаправляем на первый доступный раздел.
+    if (!canAccess(activeItem.permKey)) {
+      const firstAvailable = ALL_MENU_ITEMS.find(item => canAccess(item.permKey));
       if (firstAvailable && firstAvailable.name !== currentPageName) {
         navigate(createPageUrl(firstAvailable.name));
       }
@@ -413,26 +414,26 @@ export default function Layout({ children, currentPageName }) {
 
   const isAdmin = user?.email === ADMIN_EMAIL;
   const isAdminPage = currentPageName?.startsWith('Admin');
-  const isOwner = employeePermissions === null;
+  // Владелец = нет записи сотрудника. Админ-сотрудник — это currentEmployee,
+  // он НЕ владелец: его доступ регулируется canAccess (явные отключения учитываются).
+  const isOwner = !currentEmployee;
 
   const canAccess = (permKey) => {
-    if (isOwner) return true;
+    if (isOwner) return true;            // владелец — полный доступ
     if (!permKey) return true;
     if (currentEmployee?.is_admin) {
-      // Admin has access UNLESS explicitly disabled in their personal permissions
+      // Админ имеет доступ ко всему, КРОМЕ явно отключённых разрешений
       const override = currentEmployee.permissions?.[permKey];
       if (override === false) return false;
       return true;
     }
+    // Обычный сотрудник — по merged permissions (роль + переопределения сотрудника)
     return employeePermissions?.[permKey] === true;
   };
 
-  const MENU_ITEMS = ALL_MENU_ITEMS.filter(item => {
-    // Сотрудник-администратор видит всё
-    if (currentEmployee?.is_admin) return true;
-    // Все разделы gated by their view_* permission
-    return canAccess(item.permKey);
-  });
+  // Все разделы меню регулируются единообразно через canAccess:
+  // владелец видит всё, админ — всё кроме явно отключённого, обычный сотрудник — по разрешениям.
+  const MENU_ITEMS = ALL_MENU_ITEMS.filter(item => canAccess(item.permKey));
 
   const currentMenu = isAdmin && isAdminPage ? ADMIN_MENU_ITEMS : MENU_ITEMS;
 
