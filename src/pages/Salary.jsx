@@ -14,6 +14,7 @@ import { parseISO, isWithinInterval, startOfDay, endOfDay, startOfWeek, endOfWee
 import { ru } from 'date-fns/locale';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { SALARY_METHODS, getSalaryMethod, computeSalary } from '@/lib/salary';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 
 export default function Salary() {
   const [business, setBusiness] = useState(null);
@@ -31,6 +32,7 @@ export default function Salary() {
   const [methodForm, setMethodForm] = useState({ method: 'per_box', rate: 0 });
   const [savingMethod, setSavingMethod] = useState(false);
   const [showMethodsInfo, setShowMethodsInfo] = useState(false);
+  const { can } = useEmployeeAccess();
 
   useEffect(() => {
     if (window.__barakatAccessReady) {
@@ -67,6 +69,9 @@ export default function Salary() {
   const emp = window.__barakatEmployee;
   const isOwner = !emp;
   const isAdminEmp = emp?.is_admin === true;
+  const canManage = isOwner || isAdminEmp || can('manage_salary');
+  const canView = isOwner || isAdminEmp || can('view_salary');
+  const isOwnView = !canManage;
 
   // Unified non-cancelled sales
   const unifiedSales = useMemo(() => [

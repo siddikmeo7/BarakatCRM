@@ -38,6 +38,8 @@ const ACTION_LABELS = { create: 'Создание', update: 'Изменение'
 export default function ActivityLog() {
   const navigate = useNavigate();
   const { can, isReady } = useEmployeeAccess();
+  const canRestore = can('restore_activity_log');
+  const canDeleteLog = can('delete_activity_log');
   const [business, setBusiness] = useState(null);
   const [logs, setLogs] = useState([]);
   const [employees, setEmployees] = useState([]); // для имён сотрудников
@@ -475,7 +477,7 @@ export default function ActivityLog() {
                     <SelectItem value="Return">↩️ Возвраты</SelectItem>
                   </SelectContent>
                 </Select>
-                {notRestored.filter(l => l.entity_data).length > 0 && (
+                {canRestore && notRestored.filter(l => l.entity_data).length > 0 && (
                   <Button size="sm" variant="outline"
                     className="gap-1 text-emerald-700 border-emerald-200 hover:bg-emerald-50"
                     onClick={async () => {
@@ -542,17 +544,19 @@ export default function ActivityLog() {
                           </div>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
-                          {!log.is_restored && data && (
+                          {canRestore && !log.is_restored && data && (
                             <button onClick={() => handleRestore(log)} disabled={restoring === log.id}
                               className="px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 flex items-center gap-1 font-medium">
                               <RotateCcw className={`w-3.5 h-3.5 ${restoring === log.id ? 'animate-spin' : ''}`} />
                               Восстановить
                             </button>
                           )}
+                          {canDeleteLog && (
                           <button onClick={() => handleDeleteLog(log.id)} disabled={deleting === log.id}
                             className="p-1.5 hover:bg-red-50 rounded-lg">
                             <Trash2 className={`w-4 h-4 text-red-400 ${deleting === log.id ? 'animate-pulse' : ''}`} />
                           </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -675,12 +679,14 @@ export default function ActivityLog() {
               <SortBtn field="entity" label="Тип" />
               <SortBtn field="user" label="Сотрудник" />
 
+              {(canRestore || canDeleteLog) && (
               <div className="ml-auto flex items-center gap-2">
                 <button onClick={() => { setSelectMode(!selectMode); setSelected(new Set()); }}
                   className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${selectMode ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 text-slate-600 hover:border-indigo-300'}`}>
                   <CheckSquare className="w-3.5 h-3.5" /> {selectMode ? 'Отменить выбор' : 'Выбрать'}
                 </button>
               </div>
+              )}
             </div>
           </div>
 
@@ -688,12 +694,16 @@ export default function ActivityLog() {
           {selectMode && selected.size > 0 && (
             <div className="bg-indigo-600 text-white rounded-2xl p-3 flex items-center gap-3 flex-wrap">
               <span className="text-sm font-semibold">Выбрано: {selected.size}</span>
+              {canRestore && (
               <Button size="sm" variant="secondary" onClick={handleBulkRestoreSelected} disabled={bulkLoading} className="gap-1 bg-white/20 hover:bg-white/30 text-white border-white/30">
                 <RotateCcw className="w-3.5 h-3.5" /> Восстановить выбранные
               </Button>
+              )}
+              {canDeleteLog && (
               <Button size="sm" variant="secondary" onClick={handleBulkDelete} disabled={bulkLoading} className="gap-1 bg-red-500 hover:bg-red-600 text-white border-transparent">
                 <Trash2 className="w-3.5 h-3.5" /> Удалить выбранные
               </Button>
+              )}
               <button onClick={() => setSelected(new Set())} className="ml-auto text-white/70 hover:text-white">
                 <X className="w-4 h-4" />
               </button>
@@ -789,14 +799,16 @@ export default function ActivityLog() {
                               <Eye className="w-4 h-4 text-indigo-500" />
                             </button>
                           )}
-                          {log.action_type === 'delete' && !log.is_restored && log.entity_data && (
+                          {canRestore && log.action_type === 'delete' && !log.is_restored && log.entity_data && (
                             <button onClick={() => handleRestore(log)} disabled={restoring === log.id} className="p-2 hover:bg-emerald-50 rounded-lg" title="Восстановить">
                               <RotateCcw className={`w-4 h-4 text-emerald-600 ${restoring === log.id ? 'animate-spin' : ''}`} />
                             </button>
                           )}
+                          {canDeleteLog && (
                           <button onClick={() => handleDeleteLog(log.id)} disabled={deleting === log.id} className="p-2 hover:bg-red-50 rounded-lg" title="Удалить">
                             <Trash2 className={`w-4 h-4 text-red-400 ${deleting === log.id ? 'animate-pulse' : ''}`} />
                           </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -903,17 +915,19 @@ export default function ActivityLog() {
 
               <div className="flex gap-2 pt-1">
                 <Button variant="outline" className="flex-1" onClick={() => setDetailLog(null)}>Закрыть</Button>
-                {detailLog.action_type === 'delete' && !detailLog.is_restored && detailLog.entity_data && (
+                {canRestore && detailLog.action_type === 'delete' && !detailLog.is_restored && detailLog.entity_data && (
                   <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 gap-2"
                     disabled={restoring === detailLog.id}
                     onClick={() => handleRestore(detailLog)}>
                     <RotateCcw className="w-4 h-4" /> Восстановить
                   </Button>
                 )}
+                {canDeleteLog && (
                 <button onClick={() => { handleDeleteLog(detailLog.id); }}
                   className="p-2 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-200 transition-colors">
                   <Trash2 className="w-4 h-4 text-red-400" />
                 </button>
+                )}
               </div>
             </div>
           )}

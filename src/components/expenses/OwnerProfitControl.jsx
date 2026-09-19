@@ -204,32 +204,39 @@ export default function OwnerProfitControl({ business }) {
         <>
           {/* Метрики периода */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-              <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2">
-                <TrendingUp className="w-4 h-4 text-emerald-500" /> Выручка (продажи)
+            {showRevenue && (
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2">
+                  <TrendingUp className="w-4 h-4 text-emerald-500" /> Выручка (продажи)
+                </div>
+                <p className="text-2xl font-bold text-emerald-600">{fmt(revenue)} с.</p>
+                <p className="text-[11px] text-slate-400 mt-1">Прибыль от продаж: {fmt(salesProfit)} с.</p>
               </div>
-              <p className="text-2xl font-bold text-emerald-600">{fmt(revenue)} с.</p>
-              <p className="text-[11px] text-slate-400 mt-1">Прибыль от продаж: {fmt(salesProfit)} с.</p>
-            </div>
+            )}
 
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-              <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2">
-                <TrendingDown className="w-4 h-4 text-red-500" /> Расходы (введённые)
+            {showAllExpenses && (
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2">
+                  <TrendingDown className="w-4 h-4 text-red-500" /> Расходы (введённые)
+                </div>
+                <p className="text-2xl font-bold text-red-600">−{fmt(totalExpenses)} с.</p>
+                <p className="text-[11px] text-slate-400 mt-1">Записей: {periodExpenses.length}</p>
               </div>
-              <p className="text-2xl font-bold text-red-600">−{fmt(totalExpenses)} с.</p>
-              <p className="text-[11px] text-slate-400 mt-1">Записей: {periodExpenses.length}</p>
-            </div>
+            )}
 
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-              <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2">
-                <Wallet className="w-4 h-4 text-indigo-500" /> Должно быть на руках
+            {showMoneyInHand && (
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2">
+                  <Wallet className="w-4 h-4 text-indigo-500" /> Должно быть на руках
+                </div>
+                <p className={`text-2xl font-bold ${calculatedNet >= 0 ? 'text-indigo-600' : 'text-red-600'}`}>{fmt(calculatedNet)} с.</p>
+                <p className="text-[11px] text-slate-400 mt-1">Выручка − все расходы (по системе)</p>
               </div>
-              <p className={`text-2xl font-bold ${calculatedNet >= 0 ? 'text-indigo-600' : 'text-red-600'}`}>{fmt(calculatedNet)} с.</p>
-              <p className="text-[11px] text-slate-400 mt-1">Выручка − все расходы (по системе)</p>
-            </div>
+            )}
           </div>
 
           {/* Ввод реальной суммы на руках + контроль */}
+          {showMoneyInHand && (
           <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-800">
             <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
               <HandCoins className="w-5 h-5 text-indigo-500" />
@@ -292,8 +299,10 @@ export default function OwnerProfitControl({ business }) {
               </div>
             )}
           </div>
+          )}
 
           {/* Расходы по сотрудникам */}
+          {showAllExpenses && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center gap-2">
               <Users className="w-5 h-5 text-indigo-500" />
@@ -337,6 +346,7 @@ export default function OwnerProfitControl({ business }) {
               )}
             </div>
           </div>
+          )}
         </>
       )}
     </div>

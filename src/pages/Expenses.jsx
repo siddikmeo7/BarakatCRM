@@ -307,7 +307,7 @@ export default function Expenses() {
         )}
       </div>
 
-      {(isOwner || employee?.is_admin || canViewAll) && business && (
+      {hasAccess && business && (canViewAll || can('view_expense_sales_revenue') || can('view_expense_money_in_hand')) && (
         <OwnerProfitControl business={business} />
       )}
 
