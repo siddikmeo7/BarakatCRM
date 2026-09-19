@@ -729,6 +729,7 @@ export default function ActivityLog() {
                   </button>
                 )}
                 <span className="text-xs text-slate-500 font-medium flex-1">{filteredLogs.length} записей</span>
+                {canDeleteLog && (
                 <button onClick={async () => {
                   if (!confirm(`Очистить ${filteredLogs.length} записей?`)) return;
                   setBulkLoading(true);
@@ -738,6 +739,7 @@ export default function ActivityLog() {
                 }} className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1">
                   <Trash2 className="w-3 h-3" /> Очистить всё
                 </button>
+                )}
               </div>
 
               <div className="divide-y divide-slate-100 max-h-[60vh] overflow-y-auto custom-scroll">
