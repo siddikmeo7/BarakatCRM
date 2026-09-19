@@ -42,7 +42,6 @@ import {
 import ProductPhoto from '@/components/products/ProductPhoto';
 import BulkAddProductsDialog from '@/components/products/BulkAddProductsDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
-import DuplicateProductsDialog from '@/components/products/DuplicateProductsDialog';
 import ConsignmentOwnerPicker from '@/components/products/ConsignmentOwnerPicker';
 import { format, parseISO, isToday, isThisWeek, isThisMonth, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -50,7 +49,7 @@ import { t } from '@/components/i18n/translations';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import PageLoader from '@/components/ui/PageLoader';
 import { useDraft } from '@/hooks/useDraft';
-import { findDuplicateProduct, duplicateKey } from '@/lib/productDuplicate';
+import { findDuplicateProduct } from '@/lib/productDuplicate';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 const PAGE_SIZE = 20;
@@ -105,8 +104,6 @@ export default function Products() {
   const [modelPickerSearch, setModelPickerSearch] = useState('');
   const [modelSuggestOpen, setModelSuggestOpen] = useState(false);
   const [modelSuggestSearch, setModelSuggestSearch] = useState('');
-  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
-  const [duplicateGroups, setDuplicateGroups] = useState([]);
 
   const [formData, setFormData] = useState({
     brand: '',
@@ -786,27 +783,7 @@ export default function Products() {
             <CheckSquare className="w-3 h-3" />
             <span>Выбрать</span>
           </button>
-          {can('delete_products') && (
-            <button
-              onClick={() => {
-                const groups = {};
-                products.forEach(p => {
-                  const key = duplicateKey(p);
-                  if (!key.replace(/\|/g, '')) return;
-                  (groups[key] = groups[key] || []).push(p);
-                });
-                const dupGroups = Object.values(groups).filter(g => g.length > 1);
-                if (dupGroups.length === 0) { alert('Дубликатов не найдено ✅'); return; }
-                setDuplicateGroups(dupGroups);
-                setDuplicateDialogOpen(true);
-              }}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all bg-white text-amber-600 border-amber-200 hover:border-amber-400 dark:bg-slate-800 dark:text-amber-400 dark:border-amber-700"
-              title="Найти и удалить дубликаты товаров"
-            >
-              <AlertCircle className="w-3 h-3" />
-              <span>Дубликаты</span>
-            </button>
-          )}
+
           </div>
         </div>
         {/* Дополнительные фильтры */}
@@ -1696,14 +1673,6 @@ export default function Products() {
         onClose={() => setOrphanedDialogOpen(false)}
         orphanedProducts={orphanedProducts}
         warehouses={warehouses}
-        onSaved={loadData}
-      />
-
-      {/* Duplicate Products Dialog */}
-      <DuplicateProductsDialog
-        open={duplicateDialogOpen}
-        onClose={() => setDuplicateDialogOpen(false)}
-        duplicateGroups={duplicateGroups}
         onSaved={loadData}
       />
 

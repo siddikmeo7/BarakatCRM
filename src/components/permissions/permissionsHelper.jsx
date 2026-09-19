@@ -110,6 +110,7 @@ export const PERMISSIONS = {
   MANAGE_EMPLOYEES: 'manage_employees',
   MANAGE_ROLES: 'manage_roles',
   MANAGE_SETTINGS: 'manage_settings',
+  VIEW_SETTINGS: 'view_settings',
   VIEW_SETTINGS_CODES: 'view_settings_codes',
   BACKUP_DATA: 'backup_data',
   DELETE_ALL_DATA: 'delete_all_data',

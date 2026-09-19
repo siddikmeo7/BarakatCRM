@@ -119,6 +119,7 @@ const PERMISSION_GROUPS = [
   {
     label: '⚙️ Настройки и управление',
     permissions: [
+      { key: 'view_settings',             label: 'Просматривать раздел «Настройки»' },
       { key: 'view_settings_language',    label: 'Язык интерфейса' },
       { key: 'view_settings_defaults',    label: 'Просмотр настроек' },
       { key: 'manage_settings_defaults',  label: 'Изменение настроек' },

@@ -306,6 +306,9 @@
         "manage_settings": {
           "type": "boolean"
         },
+        "view_settings": {
+          "type": "boolean"
+        },
         "view_settings_language": {
           "type": "boolean"
         },

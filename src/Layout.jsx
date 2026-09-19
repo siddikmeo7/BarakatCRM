@@ -32,6 +32,7 @@ import {
   Sun,
   PackageOpen,
   Wallet,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -50,7 +51,7 @@ const ALL_MENU_ITEMS = [
   { name: 'Expenses',          icon: TrendingDown,     labelKey: 'nav_expenses',     color: 'text-red-500',     activeBg: 'bg-red-500',     activeText: 'text-red-600',    permKey: 'view_expenses' },
   { name: 'AIAssistant',       icon: Bot,              labelKey: 'nav_ai',           color: 'text-purple-500',  activeBg: 'bg-purple-500',  activeText: 'text-purple-600', permKey: 'view_ai_assistant' },
   { name: 'EmployeeAnalytics', icon: Users,            labelKey: 'nav_emp_analytics', color: 'text-rose-500',    activeBg: 'bg-rose-500',    activeText: 'text-rose-600', permKey: 'view_employee_analytics', ownerOnly: false },
-  { name: 'Settings',            icon: Settings,         labelKey: 'nav_settings',     color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600', permKey: null },
+  { name: 'Settings',            icon: Settings,         labelKey: 'nav_settings',     color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600', permKey: 'view_settings' },
   { name: 'Salary',              icon: Wallet,           labelKey: 'nav_salary',      color: 'text-emerald-500',  activeBg: 'bg-emerald-500',  activeText: 'text-emerald-600', permKey: 'view_salary' },
 ];
 
@@ -523,7 +524,12 @@ export default function Layout({ children, currentPageName }) {
           </div>
         )}
 
-
+        <button
+          onClick={() => { if (confirm('Выйти из аккаунта?')) base44.auth.logout(); }}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+        >
+          <LogOut className="w-4 h-4" /> Выйти
+        </button>
       </div>
     </div>
   );
