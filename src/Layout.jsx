@@ -32,7 +32,6 @@ import {
   Sun,
   PackageOpen,
   Wallet,
-  LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -431,10 +430,7 @@ export default function Layout({ children, currentPageName }) {
   const MENU_ITEMS = ALL_MENU_ITEMS.filter(item => {
     // Сотрудник-администратор видит всё
     if (currentEmployee?.is_admin) return true;
-    // EmployeeAnalytics — только для владельца
-    if (item.ownerOnly && !isOwner) return false;
-    // Settings — всегда видна всем (сотрудники видят свой профиль, разрешения, выход)
-    if (item.name === 'Settings') return true;
+    // Все разделы gated by their view_* permission
     return canAccess(item.permKey);
   });
 
@@ -524,12 +520,6 @@ export default function Layout({ children, currentPageName }) {
           </div>
         )}
 
-        <button
-          onClick={() => { if (confirm('Выйти из аккаунта?')) base44.auth.logout(); }}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-        >
-          <LogOut className="w-4 h-4" /> Выйти
-        </button>
       </div>
     </div>
   );
