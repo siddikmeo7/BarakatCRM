@@ -897,6 +897,7 @@ export default function Warehouses() {
                         </button>
                       </th>
                     )}
+                    <th className="px-3 py-3 text-center text-sm font-medium text-slate-600 w-10">№</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Коробок</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Пар</th>
@@ -908,7 +909,8 @@ export default function Warehouses() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {warehouseProducts.map(product => {
+                  {warehouseProducts.map((product, index) => {
+                   const orderNum = index + 1;
                    const boxes = product.boxes_in_stock || 0;
                    const pairs = boxes * (product.pairs_per_box || 6);
                    const items = pairs * 2;
@@ -935,6 +937,9 @@ export default function Warehouses() {
                                : <Square className="w-4 h-4 text-slate-400" />}
                          </td>
                        )}
+                       <td className="px-3 py-3 text-center">
+                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-bold text-slate-500 dark:text-slate-300">{orderNum}</span>
+                       </td>
                        <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <ProductPhoto
