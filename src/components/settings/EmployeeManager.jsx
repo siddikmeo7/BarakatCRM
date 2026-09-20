@@ -627,15 +627,20 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
                     </div>
                   ))}
 
+                  {saving ? (
+                    <div className="flex items-center justify-center gap-3 py-4 px-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl text-indigo-700 dark:text-indigo-300">
+                      <div className="w-5 h-5 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin flex-shrink-0" />
+                      <span className="text-sm font-medium">Идёт загрузка, подождите — данные вводятся в систему…</span>
+                    </div>
+                  ) : (
                   <div className="flex gap-3 pt-2">
                     <Button variant="outline" onClick={() => setStep(1)} className="flex-1">← Назад</Button>
-                    <Button onClick={handleAdd} disabled={saving} className="flex-1 bg-indigo-600 hover:bg-indigo-700 gap-2">
-                      {saving
-                        ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                        : <Send className="w-4 h-4" />}
+                    <Button onClick={handleAdd} className="flex-1 bg-indigo-600 hover:bg-indigo-700 gap-2">
+                      <Send className="w-4 h-4" />
                       Добавить и отправить приглашение
                     </Button>
                   </div>
+                  )}
                 </div>
               )}
             </div>

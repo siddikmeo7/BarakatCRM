@@ -225,7 +225,9 @@ export default function Salary() {
     return <NoAccess message="Раздел «Зарплата» доступен только владельцу и администраторам." />;
   }
 
-  const canEdit = isOwner || isAdminEmp;
+  // Кнопки «Метод» и «Изменить ставку» доступны только владельцу
+  // или сотрудникам (включая админов) с явным разрешением manage_salary.
+  const canEdit = isOwner || can('manage_salary');
   const currentMethod = methodDialogEmp ? getSalaryMethod(methodDialogEmp.salary_method || 'per_box') : null;
 
   return (

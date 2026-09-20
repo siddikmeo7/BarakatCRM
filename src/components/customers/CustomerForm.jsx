@@ -163,16 +163,23 @@ export default function CustomerForm({ open, onClose, onSave, editingCustomer, b
             <p className="text-xs text-slate-400 mt-1">Поможет владельцу понять кто этот клиент</p>
           </div>
         </div>
+        {saving ? (
+          <div className="flex items-center justify-center gap-3 py-4 px-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl text-indigo-700 dark:text-indigo-300 mt-2">
+            <div className="w-5 h-5 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin flex-shrink-0" />
+            <span className="text-sm font-medium">Идёт загрузка, подождите — данные вводятся в систему…</span>
+          </div>
+        ) : (
         <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
           <Button variant="outline" onClick={onClose}>Отмена</Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !formData.name || !formData.phone}
+            disabled={!formData.name || !formData.phone}
             className="bg-indigo-600 hover:bg-indigo-700"
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingCustomer ? 'Сохранить' : 'Добавить'}
+            {editingCustomer ? 'Сохранить' : 'Добавить'}
           </Button>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );

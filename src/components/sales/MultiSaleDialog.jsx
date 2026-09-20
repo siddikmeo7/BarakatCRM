@@ -601,6 +601,12 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
           </div>
         )}
 
+        {saving ? (
+          <div className="flex items-center justify-center gap-3 py-4 px-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl text-indigo-700 dark:text-indigo-300">
+            <div className="w-5 h-5 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin flex-shrink-0" />
+            <span className="text-sm font-medium">Идёт загрузка, подождите — данные вводятся в систему…</span>
+          </div>
+        ) : (
         <div className="flex flex-wrap justify-end gap-2 pt-2">
           <Button
             variant="outline"
@@ -623,12 +629,13 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
           <Button variant="outline" onClick={handleClose}>{t(lang, 'cancel')}</Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !canSave}
+            disabled={!canSave}
             className="bg-indigo-600 hover:bg-indigo-700"
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t(lang, 'sales_sell_btn')}
+            {t(lang, 'sales_sell_btn')}
           </Button>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );
