@@ -82,7 +82,7 @@ const PERMISSION_LABELS = [
   { key: 'delete_all_data', label: 'Удалить все данные', icon: '⚠️' },
 ];
 
-export default function ProfileDetailDialog({ open, onClose, user, currentEmployee, business }) {
+export default function ProfileDetailDialog({ open, onClose, user, currentEmployee, business, onProfileUpdated }) {
   const { can, isOwner } = useEmployeeAccess();
   const [streak, setStreak] = useState(0);
   const [totalDays, setTotalDays] = useState(0);
@@ -224,6 +224,7 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
                   await base44.auth.updateMe({ avatar_url: url });
                 }
                 setAvatarUrl(url);
+                await onProfileUpdated?.();
               }}
             />
             <p className="text-[11px] text-slate-400 mt-3">Двойной клик по аватару — увеличить фото.</p>
@@ -236,9 +237,12 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
             <ProfileStylePicker
               currentEmployee={currentEmployee}
               user={user}
-              onSaved={(field, value) => {
-                if (field === 'profile_frame') setProfileFrame(value);
-                if (field === 'profile_sticker') setProfileSticker(value);
+              onSaved={async (savedSticker, savedFrame) => {
+                // Сразу обновляем превью аватара в диалоге сохранёнными значениями
+                setProfileSticker(savedSticker);
+                setProfileFrame(savedFrame);
+                // Перезагружаем данные родителя, чтобы карточка профиля обновилась
+                await onProfileUpdated?.();
               }}
             />
           </div>

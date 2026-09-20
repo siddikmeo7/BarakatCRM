@@ -532,6 +532,7 @@ export default function Settings() {
         user={user}
         currentEmployee={currentEmployee}
         business={business}
+        onProfileUpdated={loadData}
       />
 
       <div className="space-y-3">
