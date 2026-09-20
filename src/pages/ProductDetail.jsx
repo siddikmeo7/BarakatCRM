@@ -330,7 +330,7 @@ export default function ProductDetail() {
                   <td className="px-4 py-3 text-sm whitespace-nowrap">
                     {(sale.seller_name || sale.seller_email) && (
                       <div className="flex items-center gap-2">
-                        <EmployeeAvatar employee={sellerEmp} name={sale.seller_name || sale.seller_email} size="sm" className="!w-7 !h-7 !rounded-lg !text-xs" />
+                        <EmployeeAvatar employee={sellerEmp} name={sale.seller_name || sale.seller_email} sizeClass="!w-7 !h-7 !text-xs" />
                         <div className="min-w-0">
                           <p className="text-slate-900 dark:text-white truncate">{sale.seller_name || sale.seller_email}</p>
                           {sellerEmp?.is_admin && <span className="text-[10px] font-bold text-indigo-600">Админ</span>}

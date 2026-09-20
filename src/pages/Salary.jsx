@@ -89,10 +89,23 @@ export default function Salary() {
   }), [unifiedSales, dateRange]);
 
   // Per-employee aggregation
+  // Если есть активный профиль сотрудника и удалённый дубликат (тот же user_email),
+  // активный выигрывает — удалённый не показывается отдельной строкой с X.
+  // Удалённый показывается только если активного профиля с этим email больше нет.
   const employeeStats = useMemo(() => {
     const map = {};
     employees.forEach(e => {
-      map[e.user_email] = { employee: e, boxes: 0, pairs: 0, salesCount: 0, revenue: 0 };
+      const existing = map[e.user_email];
+      // Не создаём запись для удалённого, если уже есть активный с этим email
+      if (existing && !existing.employee.deleted_at && e.deleted_at) return;
+      // Заменяем удалённого на активного (тот же email)
+      if (existing && existing.employee.deleted_at && !e.deleted_at) {
+        map[e.user_email] = { employee: e, boxes: 0, pairs: 0, salesCount: 0, revenue: 0 };
+        return;
+      }
+      if (!existing) {
+        map[e.user_email] = { employee: e, boxes: 0, pairs: 0, salesCount: 0, revenue: 0 };
+      }
     });
     salesInRange.forEach(sale => {
       const email = sale.seller_email;
@@ -106,6 +119,12 @@ export default function Salary() {
     });
     return Object.values(map);
   }, [employees, salesInRange]);
+
+  // Список сотрудников для фильтра: активные + удалённые без активного дубликата
+  const dropdownEmployees = useMemo(() => {
+    const activeEmails = new Set(employees.filter(e => !e.deleted_at).map(e => e.user_email));
+    return employees.filter(e => !e.deleted_at || !activeEmails.has(e.user_email));
+  }, [employees]);
 
   const filteredStats = useMemo(() => {
     if (filterEmployee === 'all') return employeeStats;
@@ -305,7 +324,7 @@ export default function Salary() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Все сотрудники</SelectItem>
-              {employees.map(emp => (
+              {dropdownEmployees.map(emp => (
                 <SelectItem key={emp.id} value={emp.user_email}>{emp.name}</SelectItem>
               ))}
             </SelectContent>
