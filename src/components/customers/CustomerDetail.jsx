@@ -37,6 +37,7 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
   const [payments, setPayments] = useState([]);
   const [products, setProducts] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [deletedProducts, setDeletedProducts] = useState({}); // id → entity_data удалённого товара
   const [loadingExtra, setLoadingExtra] = useState(true);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
@@ -72,16 +73,25 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
 
   const loadCustomerActivity = async () => {
     try {
-      const [salesData, paymentsData, productsData, employeesData] = await Promise.all([
+      const [salesData, paymentsData, productsData, employeesData, deletedLogs] = await Promise.all([
         base44.entities.Sale.filter({ customer_id: c.id }),
         base44.entities.DebtPayment.filter({ customer_id: c.id }),
         business?.id ? base44.entities.Product.filter({ business_id: business.id }) : Promise.resolve([]),
-        business?.id ? base44.entities.Employee.filter({ business_id: business.id }) : Promise.resolve([])
+        business?.id ? base44.entities.Employee.filter({ business_id: business.id }) : Promise.resolve([]),
+        business?.id ? base44.entities.ActivityLog.filter({ business_id: business.id, entity_type: 'Product', action_type: 'delete' }) : Promise.resolve([])
       ]);
       setSales(salesData.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
       setPayments(paymentsData);
       setProducts(productsData);
       setEmployees(employeesData);
+      // Карта удалённых товаров: id → entity_data (бренд, модель, фото и т.д.)
+      const delMap = {};
+      (deletedLogs || []).forEach(log => {
+        if (log.entity_id && log.entity_data && !delMap[log.entity_id]) {
+          delMap[log.entity_id] = log.entity_data;
+        }
+      });
+      setDeletedProducts(delMap);
 
       if (c.added_by_employee_id) {
         try {
@@ -195,17 +205,15 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
       if (onCustomerUpdated) onCustomerUpdated(updated);
 
       if (payNotifyChannels.length > 0) {
-        const product = products.find(p => p.id === sale.product_id);
         const paidName = sale.product_id === 'manual'
           ? 'Товары не указаны'
-          : (product ? `${product.brand} ${product.model}` : 'Товар удалён');
+          : saleProductName(sale);
         const paidItems = [{ name: paidName, boxes: sale.boxes_sold || 0, amount }];
         // Оставшиеся непогашенные долги (другие продажи)
         const remainingItems = debtSales
           .filter(s => !s.is_cancelled && s.id !== sale.id && ((s.total_amount || 0) - getSalePaid(s.id)) > 0)
           .map(s => {
-            const p = products.find(pp => pp.id === s.product_id);
-            const name = s.product_id === 'manual' ? 'Товары не указаны' : (p ? `${p.brand} ${p.model}` : 'Товар удалён');
+            const name = s.product_id === 'manual' ? 'Товары не указаны' : saleProductName(s);
             return { name, boxes: s.boxes_sold || 0, remaining: (s.total_amount || 0) - getSalePaid(s.id), dueDate: s.payment_due_date ? fmtDue(s.payment_due_date) : '' };
           });
         const nearestDueDate = remainingItems.map(r => r.dueDate).filter(Boolean).sort()[0] || '';
@@ -263,8 +271,7 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
         const paidItems = [];
         const remainingItems = [];
         debtSales.filter(s => !s.is_cancelled).forEach(s => {
-          const prod = products.find(p => p.id === s.product_id);
-          const name = s.product_id === 'manual' ? 'Товары не указаны' : (prod ? `${prod.brand} ${prod.model}` : 'Товар удалён');
+          const name = s.product_id === 'manual' ? 'Товары не указаны' : saleProductName(s);
           const beforePaid = getSalePaid(s.id);
           const extra = appliedMap[s.id] || 0;
           const totalPaidNow = beforePaid + extra;
@@ -312,6 +319,21 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
   const formatDate = (dateStr) => {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  // Возвращает «товар» продажи: живой продукт либо снимок удалённого из журнала активности.
+  // Гарантирует, что имя/фото купленного товара сохраняются даже после удаления карточки товара.
+  const getSaleProduct = (sale) => {
+    if (!sale || !sale.product_id || sale.product_id === 'manual') return null;
+    const live = products.find(p => p.id === sale.product_id);
+    if (live) return live;
+    const snap = deletedProducts[sale.product_id];
+    return snap || null;
+  };
+  const saleProductName = (sale) => {
+    const p = getSaleProduct(sale);
+    if (!p) return 'Товар удалён';
+    return `${p.brand || ''} ${p.model || ''}`.trim() || 'Товар удалён';
   };
 
   // Responsible employee
@@ -568,7 +590,7 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
           ) : debtSales.length === 0 ? (
             <p className="text-center text-slate-400 py-8 text-sm">Нет покупок в долг</p>
           ) : debtSales.map(sale => {
-            const prod = products.find(p => p.id === sale.product_id);
+            const prod = getSaleProduct(sale);
             const paid = getSalePaid(sale.id);
             const remaining = (sale.total_amount || 0) - paid;
             const isPaid = remaining <= 0;
@@ -593,7 +615,7 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
                             </span>
                           </p>
                         ) : (
-                          <p className="font-semibold text-slate-900 dark:text-white text-sm">{prod ? `${prod.brand} ${prod.model}` : 'Товар удалён'}</p>
+                          <p className="font-semibold text-slate-900 dark:text-white text-sm">{saleProductName(sale)}</p>
                         )}
                         {isPaid && <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Погашен</span>}
                       </div>
@@ -690,13 +712,13 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
             {sales.slice(0, 15).map(sale => {
-              const product = products.find(p => p.id === sale.product_id);
+              const product = getSaleProduct(sale);
               return (
                 <div key={sale.id} className="px-3 py-2 flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sale.is_cancelled ? 'bg-red-400' : 'bg-green-400'}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                      {product ? `${product.brand} ${product.model}` : (sale.product_id === 'manual' ? 'Товары не указаны' : 'Товар удалён')}
+                      {sale.product_id === 'manual' ? 'Товары не указаны' : (product ? `${product.brand} ${product.model}` : 'Товар удалён')}
                     </p>
                     <p className="text-[10px] text-slate-400">
                       {sale.product_id === 'manual' ? 'долг без товара · ' : `${sale.boxes_sold || 0} кор. · `}
@@ -782,7 +804,7 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
           <DialogHeader><DialogTitle>Принять оплату</DialogTitle></DialogHeader>
           {payDialog && (() => {
             const { sale } = payDialog;
-            const prod = products.find(p => p.id === sale.product_id);
+            const prod = getSaleProduct(sale);
             const paid = getSalePaid(sale.id);
             const remaining = (sale.total_amount || 0) - paid;
             return (

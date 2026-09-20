@@ -886,10 +886,10 @@ export default function Warehouses() {
             </div>
             <div className="overflow-x-auto overflow-y-auto max-h-96">
               <table className="w-full">
-                <thead className="bg-slate-50">
+                <thead className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10 shadow-sm">
                   <tr>
                     {selectMode && (
-                      <th className="px-3 py-3 w-10">
+                      <th className="px-3 py-3 w-10 sticky top-0">
                         <button onClick={toggleSelectAll}>
                           {getUnsoldProductIds(warehouseProducts).every(id => selectedProductIds.includes(id)) && getUnsoldProductIds(warehouseProducts).length > 0
                             ? <CheckSquare className="w-4 h-4 text-indigo-600" />
