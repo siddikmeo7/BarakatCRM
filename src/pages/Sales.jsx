@@ -916,6 +916,16 @@ export default function Sales() {
                       )}
                     </td>
                     <td className="px-4 py-3">
+                      {(sale.seller_name || sale.seller_email) ? (
+                        <div className="flex items-center gap-1.5">
+                          <EmployeeAvatar employee={findSeller(sale)} name={sale.seller_name || sale.seller_email} sizeClass="!w-7 !h-7 !text-[10px]" />
+                          <span className="text-xs text-slate-600 dark:text-slate-300 truncate max-w-[120px]">{sale.seller_name || sale.seller_email}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
                       <ChevronRight className="w-4 h-4 text-slate-400" />
                     </td>
                   </tr>

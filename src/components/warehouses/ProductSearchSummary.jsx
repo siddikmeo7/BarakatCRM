@@ -71,49 +71,25 @@ export default function ProductSearchSummary({ query, products, sales, warehouse
   return (
     <div className="space-y-3">
       {/* === Закреплённая верхняя сводка === */}
-      <div className="sticky top-0 z-20 bg-white rounded-xl shadow-md border border-indigo-200 p-3 space-y-3">
-        <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-indigo-500" />
-          <span className="font-bold text-indigo-700 text-sm">Поиск: «{query}»</span>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-          <div className="bg-indigo-50 rounded-lg p-2 text-center">
-            <div className="flex items-center justify-center gap-1 mb-0.5">
-              <Boxes className="w-3.5 h-3.5 text-indigo-500" />
-              <p className="text-[11px] text-slate-500 font-medium">Всего было</p>
-            </div>
-            <p className="text-xl font-bold text-indigo-600">{can('view_warehouse_quantities') ? totalEver : '•••'}</p>
-          </div>
-          <div className="bg-blue-50 rounded-lg p-2 text-center">
-            <div className="flex items-center justify-center gap-1 mb-0.5">
-              <ShoppingCart className="w-3.5 h-3.5 text-blue-500" />
-              <p className="text-[11px] text-slate-500 font-medium">Продано</p>
-            </div>
-            <p className="text-xl font-bold text-blue-600">{can('view_warehouse_quantities') ? totalSold : '•••'}</p>
-          </div>
-          <div className="bg-emerald-50 rounded-lg p-2 text-center">
-            <div className="flex items-center justify-center gap-1 mb-0.5">
-              <Package className="w-3.5 h-3.5 text-emerald-500" />
-              <p className="text-[11px] text-slate-500 font-medium">Осталось</p>
-            </div>
-            <p className="text-xl font-bold text-emerald-600">{can('view_warehouse_quantities') ? totalStock : '•••'}</p>
-          </div>
-          <div className="bg-purple-50 rounded-lg p-2 text-center">
-            <div className="flex items-center justify-center gap-1 mb-0.5">
-              <WarehouseIcon className="w-3.5 h-3.5 text-purple-500" />
-              <p className="text-[11px] text-slate-500 font-medium">Складов</p>
-            </div>
-            <p className="text-xl font-bold text-purple-600">{byWarehouse.length}</p>
-          </div>
-          <div className="bg-orange-50 rounded-lg p-2 text-center">
-            <div className="flex items-center justify-center gap-1 mb-0.5">
-              <DollarSign className="w-3.5 h-3.5 text-orange-500" />
-              <p className="text-[11px] text-slate-500 font-medium">Закупка (остаток)</p>
-            </div>
-            <p className="text-base font-bold text-orange-600">
-              {can('view_warehouse_cost') ? `${totalPurchaseValue.toLocaleString()} с.` : '•••••'}
-            </p>
-          </div>
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur rounded-xl shadow-sm border border-indigo-200 px-2.5 py-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Layers className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
+          <span className="font-bold text-indigo-700 text-xs mr-0.5">«{query}»</span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[11px] font-semibold">
+            <Boxes className="w-3 h-3" /> Всего: {can('view_warehouse_quantities') ? totalEver : '•••'}
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[11px] font-semibold">
+            <ShoppingCart className="w-3 h-3" /> Прод: {can('view_warehouse_quantities') ? totalSold : '•••'}
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-semibold">
+            <Package className="w-3 h-3" /> Ост: {can('view_warehouse_quantities') ? totalStock : '•••'}
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 text-[11px] font-semibold">
+            <WarehouseIcon className="w-3 h-3" /> Скл: {byWarehouse.length}
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 text-[11px] font-semibold">
+            <DollarSign className="w-3 h-3" /> {can('view_warehouse_cost') ? `${totalPurchaseValue.toLocaleString()} с.` : '•••••'}
+          </span>
         </div>
       </div>
 

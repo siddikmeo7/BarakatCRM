@@ -42,7 +42,9 @@ import {
   BarChart2,
   RefreshCw,
   ShoppingCart,
-  Eye
+  Eye,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
 import ProductSearchSummary from '@/components/warehouses/ProductSearchSummary';
@@ -84,6 +86,7 @@ export default function Warehouses() {
   const [hideSoldOut, setHideSoldOut] = useState(true);
   const [globalSearch, setGlobalSearch] = useState('');
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [globalSearchFullscreen, setGlobalSearchFullscreen] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [selectMode, setSelectMode] = useState(false);
   const [deletingProducts, setDeletingProducts] = useState(false);
@@ -510,17 +513,28 @@ export default function Warehouses() {
 
       {/* Глобальный поиск товара по складам */}
       {globalSearchOpen && (
-        <div className="bg-white rounded-2xl shadow-sm border border-indigo-200 p-4 space-y-4">
-          <div className="flex items-center gap-3">
+        <div className={globalSearchFullscreen
+          ? "fixed inset-0 z-[60] bg-slate-50 dark:bg-slate-950 p-3 lg:p-6 overflow-auto"
+          : "bg-white rounded-2xl shadow-sm border border-indigo-200 p-4 space-y-4"}>
+          <div className={`flex items-center gap-3 ${globalSearchFullscreen ? 'bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 shadow-sm sticky top-0 z-10' : ''}`}>
             <Search className="w-5 h-5 text-indigo-500 flex-shrink-0" />
             <input
               autoFocus
               value={globalSearch}
               onChange={e => setGlobalSearch(e.target.value)}
               placeholder="Введите модель, бренд или тип товара..."
-              className="flex-1 outline-none text-slate-800 placeholder-slate-400 text-sm"
+              className="flex-1 outline-none text-slate-800 placeholder-slate-400 text-sm bg-transparent"
             />
-            <button onClick={() => setGlobalSearchOpen(false)}>
+            <button
+              onClick={() => setGlobalSearchFullscreen(v => !v)}
+              title={globalSearchFullscreen ? 'Свернуть' : 'Во весь экран'}
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
+            >
+              {globalSearchFullscreen
+                ? <Minimize2 className="w-4 h-4 text-slate-500" />
+                : <Maximize2 className="w-4 h-4 text-indigo-500" />}
+            </button>
+            <button onClick={() => { setGlobalSearchOpen(false); setGlobalSearchFullscreen(false); }} className="flex-shrink-0">
               <XIcon className="w-5 h-5 text-slate-400 hover:text-slate-600" />
             </button>
           </div>
@@ -528,7 +542,7 @@ export default function Warehouses() {
             globalSearchResults.length === 0 ? (
               <p className="text-slate-500 text-sm text-center py-4">Товары не найдены</p>
             ) : (
-              <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+              <div className={`space-y-4 pr-1 ${globalSearchFullscreen ? '' : 'max-h-[65vh] overflow-y-auto'}`}>
                 {/* Расширенная сводка: всего было, продано, осталось + по складам + по моделям */}
                 <ProductSearchSummary
                   query={globalSearch}

@@ -589,7 +589,7 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
             <p className="text-center text-slate-400 py-8 text-sm">Загрузка...</p>
           ) : debtSales.length === 0 ? (
             <p className="text-center text-slate-400 py-8 text-sm">Нет покупок в долг</p>
-          ) : debtSales.map(sale => {
+          ) : debtSales.map((sale, dIdx) => {
             const prod = getSaleProduct(sale);
             const paid = getSalePaid(sale.id);
             const remaining = (sale.total_amount || 0) - paid;
@@ -605,6 +605,7 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
               <div key={sale.id} className={`divide-y divide-slate-50 ${isPaid ? 'bg-emerald-50/60 dark:bg-emerald-900/10' : isOverdue ? 'bg-red-50/40 dark:bg-red-900/10' : ''}`}>
                 <div className="p-3">
                   <div className="flex items-start gap-3">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-xs font-bold text-indigo-600 dark:text-indigo-300 flex-shrink-0 mt-0.5">{dIdx + 1}</span>
                     <ProductPhoto photoUrl={prod?.photo_url} brand={prod?.brand} className="w-11 h-11 rounded-xl flex-shrink-0" textClassName="text-[10px]" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -711,11 +712,11 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
-            {sales.slice(0, 15).map(sale => {
+            {sales.slice(0, 15).map((sale, pIdx) => {
               const product = getSaleProduct(sale);
               return (
                 <div key={sale.id} className="px-3 py-2 flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sale.is_cancelled ? 'bg-red-400' : 'bg-green-400'}`} />
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 flex-shrink-0">{pIdx + 1}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
                       {sale.product_id === 'manual' ? 'Товары не указаны' : (product ? `${product.brand} ${product.model}` : 'Товар удалён')}
