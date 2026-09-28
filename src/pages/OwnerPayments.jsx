@@ -1,16 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Wallet, TrendingUp, Users, Loader2, Plus, CheckCircle, Clock, ArrowDownCircle, DollarSign } from 'lucide-react';
+import { Wallet, TrendingUp, Users, Loader2, Plus, CheckCircle, Clock, ArrowDownCircle, DollarSign, Merge, Trash2, Settings2, Search, ArrowUpDown } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import BackButton from '@/components/ui/BackButton';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+
+const SORT_OPTIONS = [
+  { value: 'name', label: 'По имени (А→Я)' },
+  { value: 'remaining_desc', label: 'По остатку (больше)' },
+  { value: 'owed_desc', label: 'По к выплате (больше)' },
+  { value: 'sales_desc', label: 'По кол-ву продаж' },
+];
 
 export default function OwnerPayments() {
+  const { isOwner, employee } = useEmployeeAccess();
+  const canManage = isOwner || employee?.is_admin;
+
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [payouts, setPayouts] = useState([]);
@@ -20,6 +31,17 @@ export default function OwnerPayments() {
   const [payoutForm, setPayoutForm] = useState({ amount: '', note: '' });
   const [saving, setSaving] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState(null);
+
+  // Управление разделом (только админ)
+  const [sortBy, setSortBy] = useState('remaining_desc');
+  const [query, setQuery] = useState('');
+  const [manageOpen, setManageOpen] = useState(false);
+  const [mergeTarget, setMergeTarget] = useState('');
+  const [mergeSources, setMergeSources] = useState([]);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (window.__barakatAccessReady) {
@@ -35,15 +57,13 @@ export default function OwnerPayments() {
     try {
       const biz = window.__barakatBusiness;
       if (!biz) { setLoading(false); return; }
-      if (biz) {
-        setBusiness(biz);
-        const [saleData, payoutData] = await Promise.all([
-          base44.entities.ConsignmentSale.filter({ business_id: biz.id }),
-          base44.entities.ConsignmentPayout.filter({ business_id: biz.id })
-        ]);
-        setSales(saleData.filter(s => !s.is_cancelled).sort((a, b) => new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date)));
-        setPayouts(payoutData.sort((a, b) => new Date(b.payout_date || b.created_date) - new Date(a.payout_date || a.created_date)));
-      }
+      setBusiness(biz);
+      const [saleData, payoutData] = await Promise.all([
+        base44.entities.ConsignmentSale.filter({ business_id: biz.id }),
+        base44.entities.ConsignmentPayout.filter({ business_id: biz.id })
+      ]);
+      setSales(saleData.filter(s => !s.is_cancelled).sort((a, b) => new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date)));
+      setPayouts(payoutData.sort((a, b) => new Date(b.payout_date || b.created_date) - new Date(a.payout_date || a.created_date)));
     } catch (e) {
       console.error('Error:', e);
     } finally {
@@ -66,7 +86,24 @@ export default function OwnerPayments() {
     if (!ownerMap[key]) ownerMap[key] = { name: key, email: p.owner_email || '', boxes: 0, owed: 0, paid: 0, salesCount: 0, profit: 0, revenue: 0 };
     ownerMap[key].paid += p.amount || 0;
   });
-  const owners = Object.values(ownerMap);
+
+  const owners = useMemo(() => {
+    let list = Object.values(ownerMap);
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      list = list.filter(o => o.name.toLowerCase().includes(q) || (o.email || '').toLowerCase().includes(q));
+    }
+    list = [...list].sort((a, b) => {
+      switch (sortBy) {
+        case 'name': return a.name.localeCompare(b.name, 'ru');
+        case 'remaining_desc': return (b.owed - b.paid) - (a.owed - a.paid);
+        case 'owed_desc': return b.owed - a.owed;
+        case 'sales_desc': return b.salesCount - a.salesCount;
+        default: return 0;
+      }
+    });
+    return list;
+  }, [sales, payouts, sortBy, query]);
 
   const totalOwed = owners.reduce((sum, o) => sum + o.owed, 0);
   const totalPaid = owners.reduce((sum, o) => sum + o.paid, 0);
@@ -79,12 +116,27 @@ export default function OwnerPayments() {
     ...payouts.filter(p => (p.owner_name || '') === selectedOwner).map(p => ({ ...p, type: 'payout' })),
   ].sort((a, b) => new Date(b.sale_date || b.payout_date || b.created_date) - new Date(a.sale_date || a.payout_date || a.created_date)) : [];
 
+  const logActivity = async (actionType, description, entityData = {}) => {
+    try {
+      const user = await base44.auth.me();
+      await base44.entities.ActivityLog.create({
+        business_id: business.id,
+        action_type: actionType,
+        entity_type: 'ConsignmentOwner',
+        entity_id: '',
+        entity_data: entityData,
+        user_email: user.email,
+        user_name: window.__barakatEmployee?.name || user.full_name || user.email,
+        description
+      });
+    } catch (_) {}
+  };
+
   const handlePayoutSave = async () => {
     const amount = parseFloat(payoutForm.amount);
     if (!payoutOwner || !amount || amount <= 0) return;
     setSaving(true);
     try {
-      const user = await base44.auth.me();
       const owner = owners.find(o => o.name === payoutOwner);
       await base44.entities.ConsignmentPayout.create({
         business_id: business.id,
@@ -94,15 +146,7 @@ export default function OwnerPayments() {
         payout_date: new Date().toISOString(),
         note: payoutForm.note || ''
       });
-      await base44.entities.ActivityLog.create({
-        business_id: business.id,
-        action_type: 'create',
-        entity_type: 'ConsignmentPayout',
-        entity_id: '',
-        entity_data: { owner_name: payoutOwner, amount },
-        user_email: user.email,
-        description: `Выплата владельцу ${payoutOwner}: ${amount.toLocaleString()} с.`
-      });
+      await logActivity('create', `Выплата владельцу ${payoutOwner}: ${amount.toLocaleString()} с.`, { owner_name: payoutOwner, amount });
       setPayoutOpen(false);
       setPayoutForm({ amount: '', note: '' });
       setPayoutOwner('');
@@ -112,6 +156,63 @@ export default function OwnerPayments() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Объединить нескольких владельцев в одного: все продажи и выплаты источников
+  // переносятся на выбранного владельца, после чего источники исчезают из списка.
+  const handleMerge = async () => {
+    if (!mergeTarget || mergeSources.length === 0) return;
+    const target = owners.find(o => o.name === mergeTarget);
+    if (!target) return;
+    if (mergeSources.includes(mergeTarget)) return;
+    setBusy(true);
+    try {
+      for (const srcName of mergeSources) {
+        await base44.entities.ConsignmentSale.updateMany(
+          { business_id: business.id, owner_name: srcName },
+          { $set: { owner_name: mergeTarget, owner_email: target.email || '' } }
+        );
+        await base44.entities.ConsignmentPayout.updateMany(
+          { business_id: business.id, owner_name: srcName },
+          { $set: { owner_name: mergeTarget, owner_email: target.email || '' } }
+        );
+      }
+      await logActivity('update', `Объединение владельцев: ${mergeSources.join(', ')} → ${mergeTarget}`, { target: mergeTarget, sources: mergeSources });
+      setMergeOpen(false);
+      setMergeTarget('');
+      setMergeSources([]);
+      setManageOpen(false);
+      setSelectedOwner(null);
+      await loadData();
+    } catch (e) {
+      console.error('Merge error:', e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Удалить владельца: удаляются все его продажи и выплаты в реализации.
+  const handleDeleteOwner = async () => {
+    if (!deleteTarget) return;
+    setBusy(true);
+    try {
+      await base44.entities.ConsignmentSale.deleteMany({ business_id: business.id, owner_name: deleteTarget });
+      await base44.entities.ConsignmentPayout.deleteMany({ business_id: business.id, owner_name: deleteTarget });
+      await logActivity('delete', `Удалён владелец: ${deleteTarget} (со всеми продажами и выплатами)`, { owner_name: deleteTarget });
+      setDeleteOpen(false);
+      setDeleteTarget('');
+      setManageOpen(false);
+      setSelectedOwner(null);
+      await loadData();
+    } catch (e) {
+      console.error('Delete error:', e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleSource = (name) => {
+    setMergeSources(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]);
   };
 
   if (loading) return (
@@ -129,10 +230,20 @@ export default function OwnerPayments() {
         title="Средства владельцев товаров"
         subtitle="Деньги к выплате поставщикам за реализованные товары"
         actions={
-          <Button onClick={() => setPayoutOpen(true)} size="sm" className="bg-amber-600 hover:bg-amber-700 gap-1.5 text-xs">
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Выплата</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            {canManage && (
+              <Button onClick={() => setManageOpen(true)} size="sm" variant="outline" className="gap-1.5 text-xs">
+                <Settings2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Управление</span>
+              </Button>
+            )}
+            {canManage && (
+              <Button onClick={() => setPayoutOpen(true)} size="sm" className="bg-amber-600 hover:bg-amber-700 gap-1.5 text-xs">
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Выплата</span>
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -168,6 +279,20 @@ export default function OwnerPayments() {
         </div>
       </div>
 
+      {/* Поиск и сортировка */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Поиск владельца по имени или email..." className="pl-9" />
+        </div>
+        <div className="relative">
+          <ArrowUpDown className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="pl-9 pr-8 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white appearance-none w-full sm:w-auto">
+            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
+      </div>
+
       {owners.length === 0 ? (
         <div className="text-center py-12 text-slate-500">
           <Wallet className="w-12 h-12 mx-auto mb-4 text-slate-300" />
@@ -188,7 +313,7 @@ export default function OwnerPayments() {
                       </div>
                       <div>
                         <p className="font-semibold text-slate-900 dark:text-white">{owner.name}</p>
-                        <p className="text-xs text-slate-400">{owner.salesCount} продаж · {owner.boxes} кор.</p>
+                        <p className="text-xs text-slate-400">{owner.salesCount} продаж · {owner.boxes} кор.{owner.email ? ` · ${owner.email}` : ''}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -214,11 +339,23 @@ export default function OwnerPayments() {
                       <p className="font-semibold text-emerald-700 dark:text-emerald-300">{owner.profit.toLocaleString()}</p>
                     </div>
                   </div>
-                  {remaining > 0 && (
-                    <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setPayoutOwner(owner.name); setPayoutOpen(true); }} className="w-full mt-3 text-xs h-8 border-amber-300 text-amber-700 hover:bg-amber-50">
-                      <ArrowDownCircle className="w-3.5 h-3.5" /> Выплатить {remaining.toLocaleString()} с.
-                    </Button>
-                  )}
+                  <div className="flex gap-2 mt-3">
+                    {canManage && remaining > 0 && (
+                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setPayoutOwner(owner.name); setPayoutOpen(true); }} className="flex-1 text-xs h-8 border-amber-300 text-amber-700 hover:bg-amber-50">
+                        <ArrowDownCircle className="w-3.5 h-3.5" /> Выплатить {remaining.toLocaleString()} с.
+                      </Button>
+                    )}
+                    {canManage && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setMergeTarget(''); setMergeSources([owner.name]); setMergeOpen(true); }} className="text-xs h-8 border-blue-300 text-blue-700 hover:bg-blue-50">
+                          <Merge className="w-3.5 h-3.5" /> Объединить
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setDeleteTarget(owner.name); setDeleteOpen(true); }} className="text-xs h-8 border-red-300 text-red-700 hover:bg-red-50">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
                 {isSelected && (
                   <div className="border-t border-slate-100 dark:border-slate-800 p-3 space-y-1.5 max-h-64 overflow-y-auto">
@@ -251,6 +388,7 @@ export default function OwnerPayments() {
         </div>
       )}
 
+      {/* Диалог выплаты */}
       <Dialog open={payoutOpen} onOpenChange={setPayoutOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Выплата владельцу товара</DialogTitle></DialogHeader>
@@ -279,6 +417,102 @@ export default function OwnerPayments() {
             <Button variant="outline" onClick={() => setPayoutOpen(false)}>Отмена</Button>
             <Button onClick={handlePayoutSave} disabled={saving || !payoutOwner || !payoutForm.amount} className="bg-amber-600 hover:bg-amber-700">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Выплатить'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог управления: объединение + удаление */}
+      <Dialog open={manageOpen} onOpenChange={setManageOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Управление владельцами</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <Merge className="w-4 h-4 text-blue-600" /> Объединить владельцев
+              </div>
+              <p className="text-xs text-slate-500">Перенести все продажи и выплаты нескольких владельцев на одного. Суммы автоматически сложатся.</p>
+              <Button size="sm" variant="outline" className="w-full" onClick={() => { setManageOpen(false); setMergeOpen(true); }}>
+                Открыть объединение
+              </Button>
+            </div>
+            <div className="border-t border-slate-100 dark:border-slate-800" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <Trash2 className="w-4 h-4 text-red-600" /> Удалить владельца
+              </div>
+              <p className="text-xs text-slate-500">Удалить владельца вместе со всеми его продажами и выплатами. Действие необратимо.</p>
+              <Button size="sm" variant="outline" className="w-full border-red-300 text-red-700 hover:bg-red-50" onClick={() => { setManageOpen(false); setDeleteOpen(true); }}>
+                Открыть удаление
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог объединения */}
+      <Dialog open={mergeOpen} onOpenChange={setMergeOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Объединить владельцев</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label>Кому перенести (целевой владелец)</Label>
+              <select value={mergeTarget} onChange={e => setMergeTarget(e.target.value)} className="w-full mt-1 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white">
+                <option value="">Выберите владельца</option>
+                {owners.map(o => <option key={o.name} value={o.name}>{o.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <Label>Какие владельцы переносятся</Label>
+              <div className="mt-1 max-h-56 overflow-y-auto space-y-1 border border-slate-200 dark:border-slate-700 rounded-lg p-2">
+                {owners.filter(o => o.name !== mergeTarget).map(o => (
+                  <label key={o.name} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+                    <input type="checkbox" checked={mergeSources.includes(o.name)} onChange={() => toggleSource(o.name)} className="w-4 h-4 accent-amber-600" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-slate-900 dark:text-white truncate">{o.name}</p>
+                      <p className="text-[10px] text-slate-400">{o.salesCount} продаж · остаток {(o.owed - o.paid).toLocaleString()} с.</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              {mergeSources.length > 0 && (
+                <p className="text-xs text-slate-500 mt-2">Выбрано: {mergeSources.length}. Все записи будут перенесены на «{mergeTarget || '...'}».</p>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setMergeOpen(false)}>Отмена</Button>
+            <Button onClick={handleMerge} disabled={busy || !mergeTarget || mergeSources.length === 0} className="bg-blue-600 hover:bg-blue-700">
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : `Объединить (${mergeSources.length})`}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог удаления */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Удалить владельца</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label>Владелец</Label>
+              <select value={deleteTarget} onChange={e => setDeleteTarget(e.target.value)} className="w-full mt-1 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white">
+                <option value="">Выберите владельца</option>
+                {owners.map(o => <option key={o.name} value={o.name}>{o.name} (остаток: {(o.owed - o.paid).toLocaleString()} с.)</option>)}
+              </select>
+            </div>
+            {deleteTarget && (
+              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                <p className="text-xs text-red-700 dark:text-red-300">
+                  Будут безвозвратно удалены все продажи и выплаты владельца «{deleteTarget}». Продажи останутся в общей истории как отменённые записи не будут — данные исчезнут. Рекомендуется сначала объединить, если владелец — дубликат.
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Отмена</Button>
+            <Button onClick={handleDeleteOwner} disabled={busy || !deleteTarget} className="bg-red-600 hover:bg-red-700">
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Удалить безвозвратно'}
             </Button>
           </div>
         </DialogContent>
