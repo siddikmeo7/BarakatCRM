@@ -90,6 +90,7 @@ export default function Sales() {
   const [profileCustomer, setProfileCustomer] = useState(null);
 
   const findSeller = (sale) => employees.find(e => e.user_email === sale.seller_email) || employees.find(e => e.name === sale.seller_name) || null;
+  const isDeletedSeller = (sale) => !!sale.seller_email && !findSeller(sale) && sale.seller_email !== business?.owner_email;
   
   const [formData, setFormData] = useState({
     product_id: '',
@@ -920,6 +921,7 @@ export default function Sales() {
                         <div className="flex items-center gap-1.5">
                           <EmployeeAvatar employee={findSeller(sale)} name={sale.seller_name || sale.seller_email} sizeClass="!w-7 !h-7 !text-[10px]" />
                           <span className="text-xs text-slate-600 dark:text-slate-300 truncate max-w-[120px]">{sale.seller_name || sale.seller_email}</span>
+                          {isDeletedSeller(sale) && <span className="text-[10px] text-red-500 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">удалён</span>}
                         </div>
                       ) : (
                         <span className="text-xs text-slate-400">—</span>
@@ -999,6 +1001,7 @@ export default function Sales() {
                       <div className="flex items-center gap-1.5 mt-1">
                         <EmployeeAvatar employee={findSeller(sale)} name={sale.seller_name || sale.seller_email} sizeClass="!w-6 !h-6 !text-[10px]" />
                         <p className="text-xs text-slate-400 truncate">{sale.seller_name || sale.seller_email}</p>
+                        {isDeletedSeller(sale) && <span className="text-[10px] text-red-500 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">удалён</span>}
                       </div>
                     )}
                   </div>
@@ -1070,6 +1073,7 @@ export default function Sales() {
                     <span className="flex items-center gap-1.5 min-w-0">
                       <EmployeeAvatar employee={findSeller(sale)} name={sale.seller_name || sale.seller_email} sizeClass="!w-6 !h-6 !text-[10px]" />
                       <span className="text-xs text-slate-400 truncate">{sale.seller_name || sale.seller_email}</span>
+                      {isDeletedSeller(sale) && <span className="text-[10px] text-red-500 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">удалён</span>}
                     </span>
                   )}
                 </div>

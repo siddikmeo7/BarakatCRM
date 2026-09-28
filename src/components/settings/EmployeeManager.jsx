@@ -398,6 +398,17 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     }
   };
 
+  const handlePermanentDelete = async (id) => {
+    if (confirm('Полностью удалить сотрудника из системы? Профиль исчезнет из всех списков, но история его продаж сохранится. Действие необратимо.')) {
+      try {
+        await base44.entities.Employee.delete(id);
+        onUpdate();
+      } catch (e) {
+        console.error('Error permanently deleting employee:', e);
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -422,6 +433,30 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
           </div>
         )}
       </div>
+
+      {/* Soft-deleted (frozen) employees — can be permanently removed */}
+      {employees.filter(e => e.deleted_at).length > 0 && (
+        <div className="space-y-2 pt-3 border-t border-slate-200">
+          <p className="text-xs text-slate-400 uppercase font-semibold">
+            Удалённые (замороженные) — {employees.filter(e => e.deleted_at).length}
+          </p>
+          {employees.filter(e => e.deleted_at).map(emp => (
+            <div key={emp.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 opacity-80">
+              <EmployeeAvatar employee={emp} sizeClass="w-8 h-8 text-sm" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{emp.name}</p>
+                <p className="text-xs text-slate-400 truncate">{emp.user_email}</p>
+              </div>
+              <button
+                onClick={() => handlePermanentDelete(emp.id)}
+                className="text-xs px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-800 flex items-center gap-1 flex-shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Удалить навсегда
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Dialog */}
       <Dialog open={addDialog} onOpenChange={(v) => { setAddDialog(v); if (!v) resetForm(); }}>

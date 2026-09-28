@@ -4,7 +4,7 @@ import { ru as dateFnsRu } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Mail, Copy, RotateCw, LogIn, Check, AlertCircle, Upload, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Copy, RotateCw, LogIn, Check, AlertCircle, Upload, User, Eye, EyeOff, Trash2 } from 'lucide-react';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 export default function EmployeeDetailDialog({ employee, open, onOpenChange, onUpdate }) {
@@ -13,6 +13,8 @@ export default function EmployeeDetailDialog({ employee, open, onOpenChange, onU
   const [copied, setCopied] = useState('');
   const [message, setMessage] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleCopy = (text, type) => {
     navigator.clipboard.writeText(text);
@@ -59,6 +61,20 @@ export default function EmployeeDetailDialog({ employee, open, onOpenChange, onU
       setMessage('❌ Ошибка при загрузке');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handlePermanentDelete = async () => {
+    setDeleting(true);
+    try {
+      await base44.entities.Employee.delete(employee.id);
+      onOpenChange(false);
+      onUpdate();
+    } catch (err) {
+      setMessage('❌ Ошибка при удалении');
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
     }
   };
 
@@ -180,6 +196,25 @@ export default function EmployeeDetailDialog({ employee, open, onOpenChange, onU
                 </p>
               </div>
             </div>
+          )}
+
+          {/* Permanent delete */}
+          {confirmDelete ? (
+            <div className="space-y-2">
+              <div className="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg leading-relaxed">
+                Сотрудник будет полностью удалён из системы. Профиль исчезнет из списков сотрудников, главной и аналитики, но история его продаж сохранится. Действие необратимо.
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)}>Отмена</Button>
+                <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={handlePermanentDelete} disabled={deleting}>
+                  {deleting ? 'Удаление...' : 'Удалить навсегда'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="outline" className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200 gap-2" onClick={() => setConfirmDelete(true)}>
+              <Trash2 className="w-4 h-4" /> Полностью удалить сотрудника
+            </Button>
           )}
 
           {/* Close button */}
