@@ -9,7 +9,6 @@ import {
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 
 const ALL_PERM_LABELS = {
-  view_dashboard: '📊 Дашборд',
   view_analytics: '📈 Аналитика',
   view_profit: '💰 Прибыль',
   view_stock_value: '🏷️ Стоимость склада',

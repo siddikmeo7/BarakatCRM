@@ -6,7 +6,7 @@ import { ru as dateFnsRu } from 'date-fns/locale';
 import { History, Shield, Snowflake, User, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 
 const PERM_LABELS = {
-  view_dashboard: 'Дашборд', view_analytics: 'Аналитика', view_profit: 'Прибыль',
+  view_analytics: 'Аналитика', view_profit: 'Прибыль',
   view_stock_value: 'Стоимость склада', view_purchase_price: 'Цена закупки',
   view_products: 'Товары', add_products: '+ Товары', edit_products: 'Ред. товары',
   delete_products: 'Удал. товары', move_products: 'Перемещение',

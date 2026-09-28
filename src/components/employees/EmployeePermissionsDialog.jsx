@@ -10,7 +10,6 @@ const PERMISSION_GROUPS = [
   {
     label: '📁 Видимость разделов меню',
     permissions: [
-      { key: 'view_dashboard',          label: 'Видеть раздел «Главное»' },
       { key: 'view_analytics',          label: 'Видеть раздел «Аналитика»' },
       { key: 'view_products',           label: 'Видеть раздел «Товары»' },
       { key: 'view_warehouses',         label: 'Видеть раздел «Склады»' },
@@ -220,7 +219,7 @@ export default function EmployeePermissionsDialog({ employee, onClose, onSaved, 
     PERMISSION_GROUPS.forEach(g => g.permissions.forEach(p => { none[p.key] = false; }));
     if (preset === 'seller') {
       setIsAdmin(false);
-      setPermissions({ ...none, view_dashboard: true, view_products: true, view_sales: true, view_own_sales_only: true, add_sales: true, view_warehouses: true, view_customers: true, view_customer_contacts: true, view_sale_customer: true, view_settings_language: true });
+      setPermissions({ ...none, view_products: true, view_sales: true, view_own_sales_only: true, add_sales: true, view_warehouses: true, view_customers: true, view_customer_contacts: true, view_sale_customer: true, view_settings_language: true });
     } else if (preset === 'manager') {
       setIsAdmin(false);
       setPermissions({ ...none, ...MANAGER_PERMISSIONS });

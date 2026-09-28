@@ -10,7 +10,7 @@ import {
   Plus, Trash2, Edit2, Mail, Phone, User,
   Eye, EyeOff, ShoppingCart, Package, Warehouse,
   Users, CreditCard, BarChart2, Shield, Check, X,
-  RotateCcw, ChevronDown, ChevronUp, Send, UserCheck, Copy, LayoutDashboard
+  RotateCcw, ChevronDown, ChevronUp, Send, UserCheck, Copy
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MANAGER_PERMISSIONS } from '@/lib/defaultRoles';
@@ -19,7 +19,6 @@ import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { toast } from '@/components/ui/use-toast';
 
 const ALL_PERMISSIONS = [
-  { key: 'view_dashboard',       label: 'Видеть главную',              icon: LayoutDashboard, group: 'main' },
   { key: 'view_analytics',       label: 'Просматривать аналитику',     icon: BarChart2,       group: 'analytics' },
   { key: 'view_profit',          label: 'Видеть прибыль',              icon: BarChart2,       group: 'analytics' },
   { key: 'view_stock_value',     label: 'Видеть стоимость товаров',    icon: Package,         group: 'analytics' },
@@ -65,7 +64,7 @@ const PRESETS = {
   seller: {
     label: '🛍️ Продавец',
     permissions: {
-      view_dashboard: true, view_analytics: false, view_profit: false, view_stock_value: false, view_purchase_price: false,
+      view_analytics: false, view_profit: false, view_stock_value: false, view_purchase_price: false,
       view_products: true, add_products: false, edit_products: false, delete_products: false, move_products: false,
       view_sales: true, add_sales: true, edit_sales: false, cancel_sales: false, manage_discounts: false,
       view_warehouses: true, manage_warehouses: false,

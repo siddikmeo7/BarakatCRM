@@ -17,7 +17,6 @@ import ProfilePhotoZoom from '@/components/settings/ProfilePhotoZoom';
 import ProfileStylePicker from '@/components/settings/ProfileStylePicker';
 
 const PERMISSION_LABELS = [
-  { key: 'view_dashboard', label: 'Дашборд', icon: '📊' },
   { key: 'view_analytics', label: 'Аналитика', icon: '📈' },
   { key: 'view_profit', label: 'Прибыль', icon: '💰' },
   { key: 'view_revenue', label: 'Выручка', icon: '💵' },

@@ -28,7 +28,8 @@ import {
   MoreHorizontal,
   X,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  Warehouse
 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -310,6 +311,26 @@ export default function Analytics() {
           </Link>
         }
       />
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100">
+        <h3 className="text-sm font-semibold text-slate-900 mb-2">Быстрый доступ</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { to: 'Products', icon: Package, label: 'Товары', from: 'from-indigo-50', to2: 'to-indigo-100', tc: 'text-indigo-600' },
+            { to: 'Sales', icon: ShoppingCart, label: 'Продажи', from: 'from-emerald-50', to2: 'to-emerald-100', tc: 'text-emerald-600' },
+            { to: 'Warehouses', icon: Warehouse, label: 'Склады', from: 'from-purple-50', to2: 'to-purple-100', tc: 'text-purple-600' },
+            { to: 'Customers', icon: Users, label: 'Клиенты', from: 'from-amber-50', to2: 'to-amber-100', tc: 'text-amber-600' },
+          ].map(item => (
+            <Link key={item.to} to={createPageUrl(item.to)}>
+              <div className={`flex items-center gap-2 p-2.5 bg-gradient-to-br ${item.from} ${item.to2} rounded-lg hover:shadow-sm transition-all cursor-pointer`}>
+                <item.icon className={`w-5 h-5 ${item.tc} flex-shrink-0`} />
+                <p className="text-xs font-medium text-slate-800 leading-tight">{item.label}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
 
       {/* Date Filter & Hide button */}
        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">

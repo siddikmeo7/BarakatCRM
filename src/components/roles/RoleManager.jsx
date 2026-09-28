@@ -13,7 +13,6 @@ const PERMISSION_GROUPS = [
     label: '📊 Дашборд и аналитика',
     color: 'indigo',
     perms: [
-      { key: 'view_dashboard', label: 'Просмотр дашборда' },
       { key: 'view_analytics', label: 'Просмотр аналитики' },
       { key: 'view_profit', label: 'Просмотр прибыли' },
       { key: 'view_stock_value', label: 'Стоимость склада' },

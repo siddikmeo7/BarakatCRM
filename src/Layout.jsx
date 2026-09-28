@@ -39,7 +39,6 @@ import { cn } from '@/lib/utils';
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
 const ALL_MENU_ITEMS = [
-  { name: 'Dashboard',    icon: LayoutDashboard, labelKey: 'nav_dashboard', color: 'text-indigo-500',  activeBg: 'bg-indigo-500',  activeText: 'text-indigo-600', permKey: 'view_dashboard' },
   { name: 'Analytics',   icon: TrendingUp,       labelKey: 'nav_analytics', color: 'text-emerald-500', activeBg: 'bg-emerald-500', activeText: 'text-emerald-600', permKey: 'view_analytics' },
   { name: 'Products',    icon: Package,          labelKey: 'nav_products',  color: 'text-blue-500',    activeBg: 'bg-blue-500',    activeText: 'text-blue-600', permKey: 'view_products' },
   { name: 'Warehouses',  icon: Warehouse,        labelKey: 'nav_warehouses',color: 'text-orange-500',  activeBg: 'bg-orange-500',  activeText: 'text-orange-600', permKey: 'view_warehouses' },

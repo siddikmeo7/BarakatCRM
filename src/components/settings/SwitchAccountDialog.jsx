@@ -86,7 +86,7 @@ export default function SwitchAccountDialog({ open, onClose, currentUser, curren
         localStorage.setItem(`barakat_emp_token_${emp.id}`, emp.login_session_token);
       }
       onClose();
-      window.location.href = createPageUrl('Dashboard');
+      window.location.href = createPageUrl('Analytics');
     } catch (e) {
       setError('Ошибка: ' + e.message);
     } finally {
@@ -101,7 +101,7 @@ export default function SwitchAccountDialog({ open, onClose, currentUser, curren
       localStorage.removeItem('barakatcrm_mode');
       sessionStorage.removeItem('barakatcrm_mode');
       onClose();
-      window.location.href = createPageUrl('Dashboard');
+      window.location.href = createPageUrl('Analytics');
     } finally {
       setSwitchingId(null);
     }

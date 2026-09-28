@@ -7,7 +7,6 @@ import { base44 } from '@/api/base44Client';
  */
 export const MANAGER_PERMISSIONS = {
   // 📊 Дашборд и аналитика — полный просмотр
-  view_dashboard: true,
   view_analytics: true,
   view_revenue: true,
   view_profit: true,

@@ -26,7 +26,6 @@ export function mergePermissions(rolePermissions, employeeOverrides) {
 
 export const PERMISSIONS = {
   // Главная / Аналитика
-  VIEW_DASHBOARD: 'view_dashboard',
   VIEW_ANALYTICS: 'view_analytics',
   VIEW_REVENUE: 'view_revenue',
   VIEW_PROFIT: 'view_profit',
