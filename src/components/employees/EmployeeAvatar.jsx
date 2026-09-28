@@ -78,7 +78,7 @@ export default function EmployeeAvatar({
 
   return (
     <div className={`relative inline-flex flex-shrink-0 ${className}`}>
-      <div className={wrapperCls} style={wrapperStyle}>
+      <div className={`${wrapperCls} overflow-hidden`} style={wrapperStyle}>
         {renderInner()}
       </div>
       {stickerEmoji && stickerBadge && !isDeleted && (

@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Package, ChevronRight, X } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
+import { resolveSaleProduct } from '@/lib/saleProductResolver';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -18,6 +19,7 @@ export default function CustomerPurchasesDialog({
   group,
   products,
   consignmentProducts,
+  deletedProductsMap = {},
   can,
   displayUnit = 'boxes',
   lang = 'ru',
@@ -30,28 +32,14 @@ export default function CustomerPurchasesDialog({
   const showName = can('view_sale_customer') || !!group.customer_id;
 
   const productName = (sale) => {
-    const p = sale._isConsignment
-      ? consignmentProducts.find(p => p.id === sale.product_id)
-      : products.find(p => p.id === sale.product_id);
+    const p = resolveSaleProduct(sale, products, consignmentProducts, deletedProductsMap);
     return p ? `${p.brand || ''} ${p.model || ''}`.trim() : '—';
   };
-  const productPhoto = (sale) => {
-    const p = sale._isConsignment
-      ? consignmentProducts.find(p => p.id === sale.product_id)
-      : products.find(p => p.id === sale.product_id);
-    return p?.photo_url || null;
-  };
+  const productPhoto = (sale) => resolveSaleProduct(sale, products, consignmentProducts, deletedProductsMap)?.photo_url || null;
 
-  const brandOf = (sale) => {
-    const p = sale._isConsignment
-      ? consignmentProducts.find(p => p.id === sale.product_id)
-      : products.find(p => p.id === sale.product_id);
-    return p?.brand || '';
-  };
+  const brandOf = (sale) => resolveSaleProduct(sale, products, consignmentProducts, deletedProductsMap)?.brand || '';
   const productMeta = (sale) => {
-    const p = sale._isConsignment
-      ? consignmentProducts.find(p => p.id === sale.product_id)
-      : products.find(p => p.id === sale.product_id);
+    const p = resolveSaleProduct(sale, products, consignmentProducts, deletedProductsMap);
     if (!p) return '';
     return [p.color, p.product_type, p.size_from && p.size_to ? `${p.size_from}–${p.size_to}` : null]
       .filter(Boolean).join(' · ');

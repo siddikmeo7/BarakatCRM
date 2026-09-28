@@ -119,7 +119,7 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
       } catch (_) {}
 
       // Обновляем остаток на складе
-      if (boxDiff !== 0 && product) {
+      if (boxDiff !== 0 && product && !product._deleted) {
         const currentStock = product.boxes_in_stock || 0;
         await base44.entities.Product.update(product.id, {
           boxes_in_stock: Math.max(0, currentStock - boxDiff)
@@ -173,8 +173,8 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
         });
       } catch (_) {}
 
-      // Возвращаем товар на склад
-      if (product) {
+      // Возвращаем товар на склад (только если товар ещё существует)
+      if (product && !product._deleted) {
         await base44.entities.Product.update(product.id, {
           boxes_in_stock: (product.boxes_in_stock || 0) + sale.boxes_sold
         });

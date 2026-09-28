@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { User, Phone, MapPin, Mail, ShoppingBag, UserPlus, X, MessageCircle, Send, Package } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
+import { resolveSaleProduct } from '@/lib/saleProductResolver';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -17,7 +18,7 @@ import { ru } from 'date-fns/locale';
  *  - products, consignmentProducts: for product names in purchase history
  *  - onClose: () => void
  */
-export default function CustomerProfileDialog({ customer, sales, employees, products, consignmentProducts, onClose }) {
+export default function CustomerProfileDialog({ customer, sales, employees, products, consignmentProducts, deletedProductsMap = {}, onClose }) {
   const findEmp = (email, name) =>
     employees.find(e => e.user_email === email) ||
     employees.find(e => e.name === name) ||
@@ -57,32 +58,17 @@ export default function CustomerProfileDialog({ customer, sales, employees, prod
   const totalBoxes = customerSales.reduce((sum, s) => sum + (s.boxes_sold || 0), 0);
 
   const prodName = (sale) => {
-    if (sale._isConsignment) {
-      const p = consignmentProducts?.find(p => p.id === sale.product_id);
-      return p ? `${p.brand} ${p.model}` : sale.brand && sale.model ? `${sale.brand} ${sale.model}` : 'Товар';
-    }
-    const p = products?.find(p => p.id === sale.product_id);
-    return p ? `${p.brand} ${p.model}` : 'Товар';
+    const p = resolveSaleProduct(sale, products, consignmentProducts, deletedProductsMap);
+    if (!p) return 'Товар удалён';
+    return `${p.brand || ''} ${p.model || ''}`.trim() || 'Товар удалён';
   };
 
-  const prodPhoto = (sale) => {
-    const p = sale._isConsignment
-      ? consignmentProducts?.find(p => p.id === sale.product_id)
-      : products?.find(p => p.id === sale.product_id);
-    return p?.photo_url || null;
-  };
+  const prodPhoto = (sale) => resolveSaleProduct(sale, products, consignmentProducts, deletedProductsMap)?.photo_url || null;
 
-  const brandOfSale = (sale) => {
-    const p = sale._isConsignment
-      ? consignmentProducts?.find(p => p.id === sale.product_id)
-      : products?.find(p => p.id === sale.product_id);
-    return p?.brand || '';
-  };
+  const brandOfSale = (sale) => resolveSaleProduct(sale, products, consignmentProducts, deletedProductsMap)?.brand || '';
 
   const prodMeta = (sale) => {
-    const p = sale._isConsignment
-      ? consignmentProducts?.find(p => p.id === sale.product_id)
-      : products?.find(p => p.id === sale.product_id);
+    const p = resolveSaleProduct(sale, products, consignmentProducts, deletedProductsMap);
     if (!p) return '';
     return [p.color, p.product_type, p.size_from && p.size_to ? `${p.size_from}–${p.size_to}` : null]
       .filter(Boolean).join(' · ');
@@ -94,10 +80,7 @@ export default function CustomerProfileDialog({ customer, sales, employees, prod
     <Dialog open={!!customer} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between pr-6">
-            <span>Профиль клиента</span>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
-          </DialogTitle>
+          <DialogTitle>Профиль клиента</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
@@ -152,7 +135,7 @@ export default function CustomerProfileDialog({ customer, sales, employees, prod
             </p>
             {addedByEmployee ? (
               <div className="flex items-center gap-2.5">
-                <EmployeeAvatar employee={addedByEmployee.emp || addedByEmployee} name={addedByEmployee.name || addedByEmployee.emp?.name} size="sm" className="!w-9 !h-9 !rounded-full" />
+                <EmployeeAvatar employee={addedByEmployee.emp || addedByEmployee} name={addedByEmployee.name || addedByEmployee.emp?.name} size="sm" />
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{addedByEmployee.name || addedByEmployee.emp?.name}</p>
                   <p className="text-xs text-slate-400">
@@ -175,7 +158,7 @@ export default function CustomerProfileDialog({ customer, sales, employees, prod
               <div className="space-y-2.5">
                 {sellers.map(s => (
                   <div key={s.email || s.name} className="flex items-center gap-2.5">
-                    <EmployeeAvatar employee={s.emp} name={s.name} size="sm" className="!w-9 !h-9 !rounded-full" />
+                    <EmployeeAvatar employee={s.emp} name={s.name} size="sm" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{s.name}</p>
                       <p className="text-xs text-slate-400">{s.count} продаж</p>

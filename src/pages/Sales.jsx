@@ -21,6 +21,7 @@ import CustomerPurchasesDialog from '@/components/sales/CustomerPurchasesDialog'
 import CustomerProfileDialog from '@/components/sales/CustomerProfileDialog';
 import SaleNotifyChannels from '@/components/sales/SaleNotifyChannels';
 import { buildSaleMessage, notifyCustomerChannels } from '@/lib/customerNotify';
+import { buildDeletedMaps, resolveSaleProduct, resolveCustomerForSale } from '@/lib/saleProductResolver';
 import { 
   Plus, 
   ShoppingCart, 
@@ -88,9 +89,12 @@ export default function Sales() {
   const [filterPaymentType, setFilterPaymentType] = useState('all'); // all, cash, debt
   const [selectedCustomerGroup, setSelectedCustomerGroup] = useState(null);
   const [profileCustomer, setProfileCustomer] = useState(null);
+  const [deletedMaps, setDeletedMaps] = useState({ products: {}, customers: {} });
 
   const findSeller = (sale) => employees.find(e => e.user_email === sale.seller_email) || employees.find(e => e.name === sale.seller_name) || null;
   const isDeletedSeller = (sale) => !!sale.seller_email && !findSeller(sale) && sale.seller_email !== business?.owner_email;
+  const getSaleProduct = (sale) => resolveSaleProduct(sale, products, consignmentProducts, deletedMaps.products);
+  const getSaleCustomer = (sale) => resolveCustomerForSale(sale, customers, deletedMaps.customers);
   
   const [formData, setFormData] = useState({
     product_id: '',
@@ -177,12 +181,14 @@ export default function Sales() {
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
-        const [salesData, productsData, warehousesData, customersData, employeesData] = await Promise.all([
+        const [salesData, productsData, warehousesData, customersData, employeesData, prodDelLogs, custDelLogs] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
           base44.entities.Warehouse.filter({ business_id: biz.id }),
           base44.entities.Customer.filter({ business_id: biz.id }),
-          base44.entities.Employee.filter({ business_id: biz.id })
+          base44.entities.Employee.filter({ business_id: biz.id }),
+          base44.entities.ActivityLog.filter({ business_id: biz.id, entity_type: 'Product', action_type: 'delete' }),
+          base44.entities.ActivityLog.filter({ business_id: biz.id, entity_type: 'Customer', action_type: 'delete' })
         ]);
         
         setSales(salesData.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
@@ -190,6 +196,7 @@ export default function Sales() {
         setWarehouses(warehousesData);
         setCustomers(customersData);
         setEmployees(employeesData);
+        setDeletedMaps(buildDeletedMaps(prodDelLogs, custDelLogs));
 
         // Загружаем данные по реализации отдельно — не должны ломать основной поток
         try {
@@ -850,7 +857,7 @@ export default function Sales() {
             <tbody className="divide-y divide-slate-100">
               {filteredSales.map((sale, idx) => {
                 const globalIdx = idx;
-                const product = sale._isConsignment ? consignmentProducts.find(p => p.id === sale.product_id) : products.find(p => p.id === sale.product_id);
+                const product = getSaleProduct(sale);
                 const customer = customers.find(c => c.id === sale.customer_id);
                 const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
                                   displayUnit === 'pairs' ? sale.pairs_sold : sale.items_sold;
@@ -901,7 +908,7 @@ export default function Sales() {
                     <td className="px-4 py-3">
                       {can('view_sale_customer') && (customer?.name || sale.customer_name) && sale.customer_name !== 'Неизвестный' ? (
                         <button
-                          onClick={(e) => { e.stopPropagation(); setProfileCustomer(customer || { id: sale.customer_id, name: sale.customer_name, phone: sale.customer_phone, address: sale.customer_address }); }}
+                          onClick={(e) => { e.stopPropagation(); setProfileCustomer(getSaleCustomer(sale)); }}
                           className="text-left group/c"
                         >
                           <p className="text-sm font-medium text-indigo-600 group-hover/c:underline truncate max-w-[140px]">👤 {customer?.name || sale.customer_name}</p>
@@ -940,7 +947,7 @@ export default function Sales() {
         {/* Mobile Cards */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredSales.map(sale => {
-            const product = sale._isConsignment ? consignmentProducts.find(p => p.id === sale.product_id) : products.find(p => p.id === sale.product_id);
+            const product = getSaleProduct(sale);
             const customer = customers.find(c => c.id === sale.customer_id);
             return (
               <div
@@ -985,7 +992,7 @@ export default function Sales() {
                     </div>
                     {can('view_sale_customer') && (customer?.name || sale.customer_name) && sale.customer_name !== 'Неизвестный' && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); setProfileCustomer(customer || { id: sale.customer_id, name: sale.customer_name, phone: sale.customer_phone || customer?.phone, address: customer?.address || sale.customer_address }); }}
+                        onClick={(e) => { e.stopPropagation(); setProfileCustomer(getSaleCustomer(sale)); }}
                         className="text-xs text-left mt-1 flex items-start gap-1 text-indigo-600 hover:underline"
                       >
                         <span className="font-medium">👤 {customer?.name || sale.customer_name}</span>
@@ -1021,7 +1028,7 @@ export default function Sales() {
         ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {paginatedSales.map(sale => {
-          const product = sale._isConsignment ? consignmentProducts.find(p => p.id === sale.product_id) : products.find(p => p.id === sale.product_id);
+          const product = getSaleProduct(sale);
           const customer = customers.find(c => c.id === sale.customer_id);
           const displayQty = displayUnit === 'boxes' ? sale.boxes_sold : 
                             displayUnit === 'pairs' ? sale.pairs_sold : sale.items_sold;
@@ -1123,7 +1130,7 @@ export default function Sales() {
       {selectedSale && (
         <SaleDetailDialog
           sale={selectedSale}
-          product={selectedSale._isConsignment ? (consignmentProducts.find(p => p.id === selectedSale.product_id) || products.find(p => p.id === selectedSale.product_id)) : products.find(p => p.id === selectedSale.product_id)}
+          product={getSaleProduct(selectedSale)}
           customer={customers.find(c => c.id === selectedSale.customer_id)}
           onClose={() => setSelectedSale(null)}
           onUpdated={() => { loadData(); setSelectedSale(null); }}
@@ -1138,6 +1145,7 @@ export default function Sales() {
           employees={employees}
           products={products}
           consignmentProducts={consignmentProducts}
+          deletedProductsMap={deletedMaps.products}
           onClose={() => setProfileCustomer(null)}
         />
       )}
@@ -1148,6 +1156,7 @@ export default function Sales() {
           group={selectedCustomerGroup}
           products={products}
           consignmentProducts={consignmentProducts}
+          deletedProductsMap={deletedMaps.products}
           can={can}
           displayUnit={displayUnit}
           lang={lang}
