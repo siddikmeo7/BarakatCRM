@@ -350,6 +350,7 @@ export default function Warehouses() {
     ? (() => {
         const q = globalSearch.toLowerCase();
         const matched = products.filter(p =>
+          (selectedWarehouse ? p.warehouse_id === selectedWarehouse.id : true) &&
           (hideSoldOut ? (p.boxes_in_stock || 0) > 0 : true) &&
           (p.model?.toLowerCase().includes(q) ||
            p.brand?.toLowerCase().includes(q) ||
@@ -447,22 +448,24 @@ export default function Warehouses() {
       {/* Search */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <SearchInput 
-            value={search} 
-            onChange={setSearch} 
-            placeholder="Поиск склада..."
-            className="max-w-md"
-          />
-          <div className="flex items-center gap-2">
+          {!selectedWarehouse && (
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Поиск склада..."
+              className="max-w-md"
+            />
+          )}
+          <div className={`flex items-center gap-2 ${selectedWarehouse ? 'w-full' : ''}`}>
             <Button
               variant="outline"
-              className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+              className={`gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 ${selectedWarehouse ? 'flex-1 h-10 justify-start' : ''}`}
               onClick={() => { setGlobalSearchOpen(true); setGlobalSearch(''); }}
             >
               <Search className="w-4 h-4" />
-              Поиск товара
+              {selectedWarehouse ? `Поиск товара на складе «${selectedWarehouse.name}»` : 'Поиск товара'}
             </Button>
-            <ViewToggle view={view} onChange={setView} />
+            {!selectedWarehouse && <ViewToggle view={view} onChange={setView} />}
           </div>
         </div>
       </div>
