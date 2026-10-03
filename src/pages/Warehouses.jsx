@@ -443,21 +443,24 @@ export default function Warehouses() {
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Склады"
-        subtitle={`${warehouses.length} складов`}
-        actions={
-          can('manage_warehouses') && (
-            <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-              <Plus className="w-4 h-4" />
-              Добавить склад
-            </Button>
-          )
-        }
-      />
+      {/* Заголовок раздела и уведомления — только в общем виде (не внутри конкретного склада) */}
+      {!selectedWarehouse && (
+        <PageHeader 
+          title="Склады"
+          subtitle={`${warehouses.length} складов`}
+          actions={
+            can('manage_warehouses') && (
+              <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+                <Plus className="w-4 h-4" />
+                Добавить склад
+              </Button>
+            )
+          }
+        />
+      )}
 
-      {/* Orphaned products banner */}
-      {orphanedProducts.length > 0 && (
+      {/* Orphaned products banner — только в общем виде */}
+      {!selectedWarehouse && orphanedProducts.length > 0 && (
         <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
           <div className="flex-1">
@@ -477,8 +480,8 @@ export default function Warehouses() {
         </div>
       )}
 
-      {/* Duplicate products banner */}
-      {duplicateGroups.length > 0 && (
+      {/* Duplicate products banner — только в общем виде */}
+      {!selectedWarehouse && duplicateGroups.length > 0 && (
         <div className="bg-red-50 border border-red-300 rounded-2xl p-4 flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <div className="flex-1">
