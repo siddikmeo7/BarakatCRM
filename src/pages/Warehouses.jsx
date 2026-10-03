@@ -48,7 +48,7 @@ import {
 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
 import ProductSearchSummary from '@/components/warehouses/ProductSearchSummary';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isToday, isYesterday, isThisWeek, isThisMonth, isThisYear, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import ViewToggle from '@/components/ui/ViewToggle';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import BrandedLoader from '@/components/ui/BrandedLoader';
@@ -84,6 +84,9 @@ export default function Warehouses() {
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [hideSoldOut, setHideSoldOut] = useState(true);
+  const [dateFilter, setDateFilter] = useState('all');
+  const [customDateFrom, setCustomDateFrom] = useState('');
+  const [customDateTo, setCustomDateTo] = useState('');
   const [globalSearch, setGlobalSearch] = useState('');
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchFullscreen, setGlobalSearchFullscreen] = useState(false);
@@ -331,10 +334,30 @@ export default function Warehouses() {
     return Object.values(map).filter(g => g.length > 1);
   })();
 
-  // Товары выбранного склада (с фильтрацией по модели); распроданные скрываются по умолчанию
+  // Фильтр по дате добавления товара (created_date)
+  const matchesDateFilter = (p) => {
+    if (dateFilter === 'all') return true;
+    if (!p.created_date) return false;
+    const d = parseISO(p.created_date);
+    if (dateFilter === 'today') return isToday(d);
+    if (dateFilter === 'yesterday') return isYesterday(d);
+    if (dateFilter === 'week') return isThisWeek(d, { weekStartsOn: 1 });
+    if (dateFilter === 'month') return isThisMonth(d);
+    if (dateFilter === 'year') return isThisYear(d);
+    if (dateFilter === 'custom') {
+      if (!customDateFrom) return true;
+      const from = startOfDay(new Date(customDateFrom));
+      const to = endOfDay(new Date(customDateTo || customDateFrom));
+      return isWithinInterval(d, { start: from, end: to });
+    }
+    return true;
+  };
+
+  // Товары выбранного склада (с фильтрацией по модели и дате); распроданные скрываются по умолчанию
   const warehouseProducts = selectedWarehouse
      ? products.filter(p => {
          if (hideSoldOut && (p.boxes_in_stock || 0) === 0) return false;
+         if (!matchesDateFilter(p)) return false;
          if (!productSearch) return p.warehouse_id === selectedWarehouse.id;
          const q = productSearch.toLowerCase();
          return p.warehouse_id === selectedWarehouse.id && (
@@ -900,6 +923,41 @@ export default function Warehouses() {
                   {hideSoldOut ? '✓ Скрыть распроданные' : 'Показать распроданные'}
                 </button>
               </div>
+              {/* Фильтр по дате добавления товара */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { key: 'all', label: 'Все' },
+                  { key: 'today', label: 'Сегодня' },
+                  { key: 'yesterday', label: 'Вчера' },
+                  { key: 'week', label: 'Неделя' },
+                  { key: 'month', label: 'Месяц' },
+                  { key: 'year', label: 'Год' },
+                  { key: 'custom', label: '📅 Период' },
+                ].map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => setDateFilter(f.key)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${dateFilter === f.key ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+                {dateFilter === 'custom' && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <Input type="date" value={customDateFrom} onChange={e => setCustomDateFrom(e.target.value)} className="h-7 text-xs w-36" />
+                    <span className="text-xs text-slate-400">—</span>
+                    <Input type="date" value={customDateTo} onChange={e => setCustomDateTo(e.target.value)} className="h-7 text-xs w-36" />
+                  </div>
+                )}
+                {dateFilter !== 'all' && (
+                  <button
+                    onClick={() => { setDateFilter('all'); setCustomDateFrom(''); setCustomDateTo(''); }}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium"
+                  >
+                    <XIcon className="w-3 h-3" /> Сбросить
+                  </button>
+                )}
+              </div>
             </div>
             <div className="overflow-x-auto overflow-y-auto max-h-96">
               <table className="w-full">
@@ -1009,7 +1067,7 @@ export default function Warehouses() {
             </div>
             {warehouseProducts.length === 0 && (
               <div className="text-center py-8 text-slate-500">
-                На этом складе пока нет товаров
+                {dateFilter !== 'all' ? 'Нет товаров за выбранный период' : 'На этом складе пока нет товаров'}
               </div>
             )}
           </div>
