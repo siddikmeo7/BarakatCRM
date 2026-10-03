@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
 import ProductSearchSummary from '@/components/warehouses/ProductSearchSummary';
+import WarehouseProductFilters from '@/components/warehouses/WarehouseProductFilters';
 import { format, parseISO, isToday, isYesterday, isThisWeek, isThisMonth, isThisYear, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import ViewToggle from '@/components/ui/ViewToggle';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
@@ -87,6 +88,12 @@ export default function Warehouses() {
   const [dateFilter, setDateFilter] = useState('all');
   const [customDateFrom, setCustomDateFrom] = useState('');
   const [customDateTo, setCustomDateTo] = useState('');
+  const [employeeFilter, setEmployeeFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
+  const [creators, setCreators] = useState([]);
+  const [productTypes, setProductTypes] = useState([]);
   const [globalSearch, setGlobalSearch] = useState('');
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchFullscreen, setGlobalSearchFullscreen] = useState(false);
@@ -141,7 +148,11 @@ export default function Warehouses() {
         setWarehouses(warehousesData);
         setProducts(productsData);
         setSales(salesData);
-      }
+        setProductTypes([...new Set(productsData.map(p => p.product_type).filter(Boolean))].sort());
+        base44.functions.invoke('getProductCreators', {})
+          .then(res => setCreators(res.data?.creators || []))
+          .catch(() => setCreators([]));
+        }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -353,20 +364,39 @@ export default function Warehouses() {
     return true;
   };
 
-  // Товары выбранного склада (с фильтрацией по модели и дате); распроданные скрываются по умолчанию
+  // Общий предикат по всем фильтрам (дата + сотрудник + тип + цена)
+  const matchesAllFilters = (p) => {
+    if (!matchesDateFilter(p)) return false;
+    if (employeeFilter !== 'all' && p.created_by_id !== employeeFilter) return false;
+    if (typeFilter !== 'all' && p.product_type !== typeFilter) return false;
+    if (priceMin && (p.sale_price || 0) < Number(priceMin)) return false;
+    if (priceMax && (p.sale_price || 0) > Number(priceMax)) return false;
+    return true;
+  };
+
+  // Товары выбранного склада (со всеми фильтрами); распроданные скрываются по умолчанию
   const warehouseProducts = selectedWarehouse
      ? products.filter(p => {
-         if (hideSoldOut && (p.boxes_in_stock || 0) === 0) return false;
-         if (!matchesDateFilter(p)) return false;
-         if (!productSearch) return p.warehouse_id === selectedWarehouse.id;
-         const q = productSearch.toLowerCase();
-         return p.warehouse_id === selectedWarehouse.id && (
-           p.model?.toLowerCase().includes(q) ||
-           p.brand?.toLowerCase().includes(q) ||
-           p.product_type?.toLowerCase().includes(q)
+          if (hideSoldOut && (p.boxes_in_stock || 0) === 0) return false;
+          if (!matchesAllFilters(p)) return false;
+          if (!productSearch) return p.warehouse_id === selectedWarehouse.id;
+          const q = productSearch.toLowerCase();
+          return p.warehouse_id === selectedWarehouse.id && (
+            p.model?.toLowerCase().includes(q) ||
+            p.brand?.toLowerCase().includes(q) ||
+            p.product_type?.toLowerCase().includes(q)
          );
       })
      : [];
+
+  // Активен ли хоть один фильтр (для показа плоского списка товаров в разделе склада)
+  const anyFilterActive =
+    dateFilter !== 'all' || employeeFilter !== 'all' || typeFilter !== 'all' || !!priceMin || !!priceMax;
+
+  // Товары по всем складам, подходящие под фильтры (для главного вида раздела)
+  const allFilteredProducts = anyFilterActive
+    ? products.filter(p => matchesAllFilters(p))
+    : [];
 
   // Глобальный поиск: найти товар по всем складам
   const globalSearchResults = globalSearch.trim().length > 0
@@ -491,6 +521,21 @@ export default function Warehouses() {
             {!selectedWarehouse && <ViewToggle view={view} onChange={setView} />}
           </div>
         </div>
+        {!selectedWarehouse && (
+          <div className="mt-3 pt-3 border-t border-slate-100">
+            <WarehouseProductFilters
+              dateFilter={dateFilter} setDateFilter={setDateFilter}
+              customDateFrom={customDateFrom} setCustomDateFrom={setCustomDateFrom}
+              customDateTo={customDateTo} setCustomDateTo={setCustomDateTo}
+              employeeFilter={employeeFilter} setEmployeeFilter={setEmployeeFilter}
+              creators={creators}
+              typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+              productTypes={productTypes}
+              priceMin={priceMin} setPriceMin={setPriceMin}
+              priceMax={priceMax} setPriceMax={setPriceMax}
+            />
+          </div>
+        )}
       </div>
 
       {/* Summary banner — totals across all warehouses */}
@@ -583,8 +628,65 @@ export default function Warehouses() {
         </div>
       )}
 
-      {/* Warehouses View */}
-      {!selectedWarehouse && view === 'grid' ? (
+      {/* Filtered products across all warehouses (when any filter active) */}
+      {!selectedWarehouse && anyFilterActive ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-3">
+            <h3 className="font-semibold text-slate-900">Товары по фильтру ({allFilteredProducts.length})</h3>
+            <button
+              onClick={() => { setDateFilter('all'); setCustomDateFrom(''); setCustomDateTo(''); setEmployeeFilter('all'); setTypeFilter('all'); setPriceMin(''); setPriceMax(''); }}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium"
+            >
+              <XIcon className="w-3.5 h-3.5" /> Сбросить фильтры
+            </button>
+          </div>
+          <div className="overflow-x-auto overflow-y-auto max-h-[65vh]">
+            <table className="w-full">
+              <thead className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10 shadow-sm">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Склад</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Тип</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Коробок</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Цена</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Добавил</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Дата</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {allFilteredProducts.map(p => {
+                  const wh = warehouses.find(w => w.id === p.warehouse_id);
+                  const creator = creators.find(c => c.id === p.created_by_id);
+                  const boxes = p.boxes_in_stock || 0;
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50 cursor-pointer"
+                      onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id}>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <ProductPhoto photoUrl={p.photo_url} brand={p.brand} className="w-9 h-9 rounded-lg" />
+                          <div>
+                            <p className="font-medium text-slate-900">{p.brand}</p>
+                            <p className="text-xs text-slate-500">{p.model}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{wh?.name || '—'}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{p.product_type || '—'}</td>
+                      <td className="px-4 py-3 text-center font-semibold text-indigo-600">{boxes}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-blue-600">{can('view_stock_value') ? `${(p.sale_price || 0).toLocaleString()} с.` : '•••••'}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{creator?.name || '—'}</td>
+                      <td className="px-4 py-3 text-xs text-slate-500">{p.created_date ? format(parseISO(p.created_date), 'dd.MM.yyyy') : ''}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {allFilteredProducts.length === 0 && (
+            <div className="text-center py-8 text-slate-500">Нет товаров по выбранному фильтру</div>
+          )}
+        </div>
+      ) : !selectedWarehouse && view === 'grid' ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredWarehouses.map(warehouse => {
             const stats = getWarehouseStats(warehouse.id);
@@ -923,41 +1025,18 @@ export default function Warehouses() {
                   {hideSoldOut ? '✓ Скрыть распроданные' : 'Показать распроданные'}
                 </button>
               </div>
-              {/* Фильтр по дате добавления товара */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                {[
-                  { key: 'all', label: 'Все' },
-                  { key: 'today', label: 'Сегодня' },
-                  { key: 'yesterday', label: 'Вчера' },
-                  { key: 'week', label: 'Неделя' },
-                  { key: 'month', label: 'Месяц' },
-                  { key: 'year', label: 'Год' },
-                  { key: 'custom', label: '📅 Период' },
-                ].map(f => (
-                  <button
-                    key={f.key}
-                    onClick={() => setDateFilter(f.key)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${dateFilter === f.key ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-                {dateFilter === 'custom' && (
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <Input type="date" value={customDateFrom} onChange={e => setCustomDateFrom(e.target.value)} className="h-7 text-xs w-36" />
-                    <span className="text-xs text-slate-400">—</span>
-                    <Input type="date" value={customDateTo} onChange={e => setCustomDateTo(e.target.value)} className="h-7 text-xs w-36" />
-                  </div>
-                )}
-                {dateFilter !== 'all' && (
-                  <button
-                    onClick={() => { setDateFilter('all'); setCustomDateFrom(''); setCustomDateTo(''); }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium"
-                  >
-                    <XIcon className="w-3 h-3" /> Сбросить
-                  </button>
-                )}
-              </div>
+              {/* Фильтры: дата, сотрудник, тип, цена */}
+              <WarehouseProductFilters
+                dateFilter={dateFilter} setDateFilter={setDateFilter}
+                customDateFrom={customDateFrom} setCustomDateFrom={setCustomDateFrom}
+                customDateTo={customDateTo} setCustomDateTo={setCustomDateTo}
+                employeeFilter={employeeFilter} setEmployeeFilter={setEmployeeFilter}
+                creators={creators}
+                typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+                productTypes={productTypes}
+                priceMin={priceMin} setPriceMin={setPriceMin}
+                priceMax={priceMax} setPriceMax={setPriceMax}
+              />
             </div>
             <div className="overflow-x-auto overflow-y-auto max-h-96">
               <table className="w-full">
