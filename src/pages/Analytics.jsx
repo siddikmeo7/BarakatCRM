@@ -78,6 +78,7 @@ export default function Analytics() {
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [showLossModal, setShowLossModal] = useState(false);
+  const [deletedProductsMap, setDeletedProductsMap] = useState({});
 
 
 
@@ -145,17 +146,29 @@ export default function Analytics() {
         setBusiness(biz);
         setLang(biz.language || 'ru');
         
-        const [salesData, productsData, customersData, expensesData] = await Promise.all([
+        const [salesData, productsData, customersData, expensesData, delLogs] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
           base44.entities.Customer.filter({ business_id: biz.id }),
           base44.entities.Expense.filter({ business_id: biz.id }),
+          base44.entities.ActivityLog.filter({ business_id: biz.id, action_type: 'delete' }).catch(() => []),
         ]);
         
         setSales(salesData);
         setProducts(productsData);
         setCustomers(customersData);
         setExpenses(expensesData);
+
+        // Снимки удалённых товаров из журнала активности — чтобы продажи удалённых
+        // товаров оставались в разбивках аналитики (история продаж сохраняется,
+        // а складские метрики считаются только по живым товарам).
+        const dpm = {};
+        (delLogs || []).forEach(log => {
+          if ((log.entity_type === 'Product' || log.entity_type === 'ConsignmentProduct') && log.entity_id && log.entity_data && !dpm[log.entity_id]) {
+            dpm[log.entity_id] = log.entity_data;
+          }
+        });
+        setDeletedProductsMap(dpm);
 
         // Загружаем продажи на реализации отдельно
         try {
@@ -258,6 +271,16 @@ export default function Analytics() {
 
   // Маржа прибыли
   const profitMargin = totalRevenue ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0;
+
+  // Разрешение товара продажи: живой продукт либо снимок удалённого из журнала.
+  // Гарантирует, что продажи удалённых товаров остаются в разбивках аналитики.
+  const resolveProductInfo = (pid) => {
+    if (!pid) return null;
+    const live = products.find(p => p.id === pid);
+    if (live) return live;
+    const snap = deletedProductsMap[pid];
+    return snap ? { ...snap, _deleted: true } : null;
+  };
 
   if (loading) {
     return <BrandedLoader message="Загрузка аналитики..." />;
@@ -729,7 +752,7 @@ export default function Analytics() {
                 return Object.entries(productStats)
                   .sort((a, b) => b[1].revenue - a[1].revenue)
                   .map(([pid, stats], i) => {
-                    const product = products.find(p => p.id === pid);
+                    const product = resolveProductInfo(pid);
                     if (!product) return null;
                     return (
                       <div key={pid} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-indigo-50 transition-colors">
@@ -817,7 +840,7 @@ export default function Analytics() {
             }
 
             return sorted.slice(0, 10).map(([productId, stats], index) => {
-              const product = products.find(p => p.id === productId);
+              const product = resolveProductInfo(productId);
               if (!product) return null;
 
               return (
@@ -873,7 +896,7 @@ export default function Analytics() {
               {lossSales
                 .sort((a, b) => (a.profit || 0) - (b.profit || 0)) // самые большие убытки сверху
                 .map(sale => {
-                  const product = products.find(p => p.id === sale.product_id);
+                  const product = resolveProductInfo(sale.product_id);
                   const lossPerBox = sale.boxes_sold ? Math.round((sale.profit || 0) / sale.boxes_sold) : 0;
                   return (
                     <div key={sale.id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-red-50 transition-colors">
