@@ -163,6 +163,17 @@ export default function Salary() {
     return { boxes, salary };
   }, [employeeStats, unifiedSales]);
 
+  // Сотрудники с фиксированным ежемесячным окладом — зарплата к оплате за текущий месяц
+  const monthlyDueEmployees = useMemo(() => {
+    return employees
+      .filter(e => !e.deleted_at && e.salary_method === 'fixed_monthly' && (e.salary_rate || 0) > 0)
+      .map(e => ({ employee: e, amount: e.salary_rate || 0 }));
+  }, [employees]);
+
+  const _monthLabelRaw = format(new Date(), 'LLLL yyyy', { locale: ru });
+  const monthLabel = _monthLabelRaw.charAt(0).toUpperCase() + _monthLabelRaw.slice(1);
+  const monthEndLabel = format(endOfMonth(new Date()), 'd LLLL', { locale: ru });
+
   const setQuickPeriod = (period) => {
     const now = new Date();
     if (period === 'today') setDateRange({ from: startOfDay(now), to: endOfDay(now) });
@@ -269,6 +280,30 @@ export default function Salary() {
           <p className="text-sm opacity-90 mb-1.5">{todayTotals.boxes} коробок продано</p>
         </div>
       </div>
+
+      {/* Уведомление: зарплата к оплате за текущий месяц (фиксированный оклад) */}
+      {monthlyDueEmployees.length > 0 && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Wallet className="w-4 h-4 text-red-600" />
+            <span className="text-sm font-bold text-red-700 dark:text-red-300">
+              ⚠️ Зарплата к оплате за {monthLabel}
+            </span>
+          </div>
+          <p className="text-xs text-red-600 dark:text-red-400 mb-3">
+            Период: 1 {_monthLabelRaw} — {monthEndLabel} · эти сотрудники должны получить ежемесячный оклад:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {monthlyDueEmployees.map(({ employee, amount }) => (
+              <div key={employee.id} className="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 border border-red-200 dark:border-red-800">
+                <EmployeeAvatar employee={employee} size="sm" />
+                <span className="text-sm font-medium text-slate-900 dark:text-white">{employee.name}</span>
+                <span className="text-sm font-bold text-red-600">{fmtMoney(amount)} с.</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Summary cards for selected period */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -432,6 +467,13 @@ export default function Salary() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <span className="font-bold text-emerald-600 text-lg">{fmtMoney(salary)} с.</span>
+                      {emp.salary_method === 'fixed_monthly' && (emp.salary_rate || 0) > 0 && (
+                        <div className="mt-1">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 text-[10px] font-bold">
+                            ⚠️ К оплате за {monthLabel}
+                          </span>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
