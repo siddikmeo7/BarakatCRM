@@ -86,11 +86,25 @@ Deno.serve(async (req: Request) => {
     //   const product = (await base44.asServiceRole.entities.Product.filter({ id: productId }))[0];
     //   if (!product) return new Response(JSON.stringify({ error: "Unknown product" }), { status: 400 });
     //   const productName = product.name; const price = String(product.price); const currency = product.currency ?? "USD";
-    const productName = "Purchase"; // TODO: from your trusted product source
-    const price = "0.00";           // TODO: authoritative per-unit price (major units), resolved server-side
-    const currency = "USD";
-    // For a SUBSCRIPTION set this to Wix's subscriptionInfo; leave null for a one-time payment.
-    const subscriptionInfo = null;
+    // Цена берётся ТОЛЬКО из базы (SubscriptionPlan) — клиент присылает лишь идентификатор
+    // продукта, поэтому подделать сумму невозможно.
+    const planRes = await base44.asServiceRole.entities.SubscriptionPlan.list();
+    const plans = Array.isArray(planRes) ? planRes : (planRes?.items ?? []);
+    const plan = plans.find((p: any) => p.is_active !== false);
+    if (!plan?.price || !(parseFloat(String(plan.price)) > 0)) {
+      console.error("create-checkout: активный тариф не настроен (SubscriptionPlan)");
+      return new Response(JSON.stringify({ error: "Тариф не настроен" }), { status: 500 });
+    }
+    const productName = plan.name || "BarakatCRM — подписка";
+    const price = String(plan.price);
+    const currency = plan.currency || "TJS";
+    // Подписка: списание каждый месяц с автопродлением. Бесплатный месяц выдаётся внутри приложения
+    // (пробный период по дате создания бизнеса), поэтому пробного периода Wix здесь нет — оплата сразу.
+    const subscriptionInfo = {
+      subscriptionSettings: { frequency: "MONTH", interval: 1, autoRenewal: true },
+      title: plan.title || productName,
+      description: plan.description || "Доступ к BarakatCRM для одного бизнеса, списание каждый месяц",
+    };
     // Where Wix returns the buyer. Both MUST be real, PUBLICLY reachable routes in this app: the
     // returning buyer is often anonymous, so a missing or login-gated route strands a paid customer.
     // Match your router exactly — `/ThankYou`, not `/thank-you`.

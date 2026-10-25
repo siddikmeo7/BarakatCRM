@@ -143,9 +143,26 @@ async function handleOrderApproved(db: any, eventData: any): Promise<Response> {
   const buyerEmail: string | null = purchase.buyerEmail ?? extractBuyerEmail(order);
 
   // ===== APP-SPECIFIC =====
-  // Grant whatever the buyer paid for. This runs BEFORE we mark the purchase paid: if it
-  // throws or times out, the status stays "pending", so Wix's retry re-runs the grant
-  // rather than hitting the "already paid" short-circuit above and skipping it forever.
+  // Доступ выдаём бизнесу, который оплатил подписку: находим бизнес по email владельца
+  // (buyerEmail приходит из сессии покупателя, подделать его нельзя) и включаем подписку.
+  // Идемпотентно: update не создаёт дублей, повторная доставка вебхука безопасна.
+  if (buyerEmail) {
+    const businesses = await db.entities.Business.filter({ owner_email: buyerEmail });
+    const business = businesses?.[0];
+    if (business) {
+      await db.entities.Business.update(business.id, {
+        subscription_status: "active",
+        subscription_started_at: new Date().toISOString(),
+        subscription_note: `Оплата Base44 Payments: ${purchase.amount ?? ""} ${purchase.currency ?? ""}`.trim(),
+      });
+      console.log("payments-webhook: подписка активирована", { businessId: business.id, buyerEmail });
+    } else {
+      console.error("payments-webhook: бизнес для оплатившего не найден — нужна ручная активация", { buyerEmail, purchaseId: purchase.id });
+    }
+  } else {
+    console.error("payments-webhook: у покупки нет email покупателя — активировать нечем", { purchaseId: purchase.id });
+  }
+  // Ниже — исходные подсказки платформы по этому региону (начисление уже выполнено выше).
   //
   // It MUST therefore be idempotent — Wix can also deliver duplicates CONCURRENTLY, so the
   // "pending" check above is NOT a lock: two invocations can both reach this block. Make every
@@ -217,10 +234,23 @@ async function handleSubscriptionEnded(db: any, eventData: any): Promise<Respons
   }
 
   // ===== APP-SPECIFIC =====
-  // Revoke whatever access the subscription granted (mirror of the grant). Runs BEFORE we
-  // mark the purchase canceled: if it throws, the status stays as-is so Wix's retry re-runs
-  // the revoke rather than hitting the "already canceled" short-circuit and leaving access on.
-  // Must be idempotent.
+  // Отмена или завершение подписки закрывает доступ бизнесу (зеркало выдачи). Идемпотентно.
+  const revokeEmail: string | null = purchase.buyerEmail ?? null;
+  if (revokeEmail) {
+    const businesses = await db.entities.Business.filter({ owner_email: revokeEmail });
+    const business = businesses?.[0];
+    if (business) {
+      await db.entities.Business.update(business.id, {
+        subscription_status: "expired",
+        subscription_note: "Подписка отменена или завершилась",
+      });
+      console.log("payments-webhook: доступ бизнеса закрыт", { businessId: business.id, subscriptionId });
+    } else {
+      console.error("payments-webhook: бизнес для отменённой подписки не найден", { revokeEmail, subscriptionId });
+    }
+  } else {
+    console.error("payments-webhook: нет email для отзыва доступа", { subscriptionId });
+  }
   // ===== END APP-SPECIFIC =====
 
   // Mark canceled LAST, so "canceled" always implies access was actually revoked.

@@ -7,6 +7,7 @@ import { ArrowLeft, Building2, Users, Copy, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { ensureManagerRole } from '@/lib/defaultRoles';
+import { TRIAL_DAYS } from '@/lib/subscription';
 
 export default function BusinessAccess() {
   const [step, setStep] = useState('main'); // main, manage, join, employee
@@ -71,7 +72,10 @@ export default function BusinessAccess() {
         default_size_to: 44,
         default_pairs_per_box: 6,
         default_product_type: 'Туфли',
-        language: 'ru'
+        language: 'ru',
+        // Бесплатный первый месяц: доступ открыт TRIAL_DAYS дней с момента создания бизнеса
+        subscription_status: 'trial',
+        trial_ends_at: new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString()
       });
 
       setBusiness(newBiz);

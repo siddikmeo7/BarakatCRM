@@ -5,6 +5,10 @@ import { base44 } from '@/api/base44Client';
 import { t } from '@/components/i18n/translations';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
 import { countDueSalaries } from '@/lib/salaryPeriod';
+import SubscriptionStatusBadge from '@/components/subscription/SubscriptionStatusBadge';
+import SubscriptionDialog from '@/components/subscription/SubscriptionDialog';
+import SubscriptionGate from '@/components/subscription/SubscriptionGate';
+import { getSubscriptionState } from '@/lib/subscription';
 
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
@@ -81,6 +85,7 @@ export default function Layout({ children, currentPageName }) {
   const [roleName, setRoleName] = useState('');
   const [frozenBlocked, setFrozenBlocked] = useState(false);
   const [dueSalaryCount, setDueSalaryCount] = useState(0);
+  const [subDialogOpen, setSubDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -101,8 +106,10 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     if (!business?.id) return;
     const unsubscribe = base44.entities.Business.subscribe((event) => {
-      if (event.id === business.id && event.data?.language) {
-        setLang(event.data.language);
+      if (event.id === business.id && event.data) {
+        if (event.data.language) setLang(event.data.language);
+        // Держим статус подписки актуальным: оплата включает доступ без перезагрузки
+        setBusiness(prev => (prev ? { ...prev, ...event.data } : prev));
       }
     });
     return unsubscribe;
@@ -438,6 +445,25 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
+  const subscriptionState = getSubscriptionState(business, { isPlatformAdmin: user?.email === ADMIN_EMAIL });
+
+  const refreshBusiness = async () => {
+    if (!business?.id) return;
+    const fresh = (await base44.entities.Business.filter({ id: business.id }))[0];
+    if (fresh) setBusiness(fresh);
+  };
+
+  // Пробный месяц закончился (или доступ закрыт) — вместо приложения показываем экран оплаты
+  if (business && subscriptionState.blocked) {
+    return (
+      <SubscriptionGate
+        business={business}
+        isEmployee={!!currentEmployee}
+        onRefresh={refreshBusiness}
+      />
+    );
+  }
+
   const isAdmin = user?.email === ADMIN_EMAIL;
   const isAdminPage = currentPageName?.startsWith('Admin');
   // Владелец = нет записи сотрудника. Админ-сотрудник — это currentEmployee,
@@ -517,6 +543,19 @@ export default function Layout({ children, currentPageName }) {
           })}
         </div>
       </nav>
+
+      {/* Подписка бизнеса: статус доступа и оплата */}
+      {business && (
+        <div className="px-4 pt-3">
+          <button
+            onClick={() => { setDrawerOpen(false); setSubDialogOpen(true); }}
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-800 px-3 py-2.5 flex items-center justify-between gap-2 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Подписка</span>
+            <SubscriptionStatusBadge business={business} isPlatformAdmin={user?.email === ADMIN_EMAIL} />
+          </button>
+        </div>
+      )}
 
       {/* User Info */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
@@ -657,6 +696,14 @@ export default function Layout({ children, currentPageName }) {
           {children}
         </motion.div>
       </main>
+
+      <SubscriptionDialog
+        business={business}
+        open={subDialogOpen}
+        onOpenChange={setSubDialogOpen}
+        onRefresh={refreshBusiness}
+        canPay={isOwner || user?.email === ADMIN_EMAIL}
+      />
     </div>
   );
 }

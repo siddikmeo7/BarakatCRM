@@ -14,6 +14,9 @@ import {
   Users
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import SubscriptionStatusBadge from '@/components/subscription/SubscriptionStatusBadge';
+import BusinessSubscriptionActions from '@/components/subscription/BusinessSubscriptionActions';
+import PlanEditorCard from '@/components/subscription/PlanEditorCard';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
@@ -62,6 +65,16 @@ export default function AdminBusinesses() {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Обновление списка бизнесов после изменения подписки
+  const reloadBusinesses = async () => {
+    const data = await base44.entities.Business.list();
+    setBusinesses(data);
+    if (selectedBusiness) {
+      const fresh = data.find(b => b.id === selectedBusiness.id);
+      if (fresh) setSelectedBusiness(fresh);
     }
   };
 
@@ -134,6 +147,8 @@ export default function AdminBusinesses() {
         subtitle={`${businesses.length} зарегистрированных бизнесов`}
       />
 
+      <PlanEditorCard />
+
       {/* Search */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
         <SearchInput 
@@ -156,6 +171,7 @@ export default function AdminBusinesses() {
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Продаж</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Выручка</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Прибыль</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Подписка</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Статус</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Действия</th>
               </tr>
@@ -185,6 +201,9 @@ export default function AdminBusinesses() {
                     </td>
                     <td className="px-4 py-4 text-right font-semibold text-emerald-600">
                       {stats.profit.toLocaleString()} с.
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <SubscriptionStatusBadge business={biz} />
                     </td>
                     <td className="px-4 py-4 text-center">
                       <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
@@ -258,6 +277,11 @@ export default function AdminBusinesses() {
                       <p className="text-sm text-slate-500">{selectedBusiness.phone}</p>
                     )}
                   </div>
+                </div>
+
+                <div className="space-y-3">
+                  <SubscriptionStatusBadge business={selectedBusiness} />
+                  <BusinessSubscriptionActions business={selectedBusiness} onUpdated={reloadBusinesses} />
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
