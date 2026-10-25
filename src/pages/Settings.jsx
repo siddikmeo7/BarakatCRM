@@ -28,15 +28,11 @@ import {
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
-import EmployeePersonalInfoPanel from '@/components/employees/EmployeePersonalInfoPanel';
 import EmployeeCard from '@/components/employees/EmployeeCard';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
-import ProfilePhotoZoom from '@/components/settings/ProfilePhotoZoom';
-import ProfileStylePicker from '@/components/settings/ProfileStylePicker';
 import SwitchAccountDialog from '@/components/settings/SwitchAccountDialog';
 import EmployeeProfilePanel from '@/components/settings/EmployeeProfilePanel';
-import ProfileCard from '@/components/settings/ProfileCard';
-import ProfileDetailDialog from '@/components/settings/ProfileDetailDialog';
+import AccountActionsCard from '@/components/profile/AccountActionsCard';
 import DataManagementPanel from '@/components/settings/DataManagementPanel';
 import { recordLogin } from '@/lib/loginTracker';
 
@@ -421,22 +417,6 @@ export default function Settings() {
         <BackButton className="mb-1" />
         <PageHeader title="Настройки" subtitle="Ваш профиль и аккаунт" />
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
-          <div className="flex items-center gap-3">
-            <div onDoubleClick={() => setProfileZoomOpen(true)} title="Двойной клик — увеличить" className="cursor-zoom-in">
-              <EmployeeAvatar employee={currentEmployee} size="md" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-slate-900 truncate">{currentEmployee.name}</p>
-              <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-              <div className="flex flex-wrap gap-1 mt-0.5">
-                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs">👤 Сотрудник</span>
-                {currentEmployee.is_frozen
-                  ? <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">🧊 Заморожен</span>
-                  : <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block"/>Активен</span>
-                }
-              </div>
-            </div>
-          </div>
           {business && (
             <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-3 flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-sm">
@@ -453,21 +433,13 @@ export default function Settings() {
             <div className="bg-slate-50 rounded-xl p-3"><p className="text-xs text-slate-400 mb-0.5">💻 Устройство</p><p className="text-xs font-semibold text-slate-800 truncate">{parseDevice(currentEmployee.device_info)}</p></div>
           </div>
           <div className="border-t border-slate-100 pt-3">
-            <p className="text-xs font-medium text-slate-500 mb-2">Фото профиля</p>
-            <AvatarPicker key={currentEmployee?.avatar_url || 'no-avatar'} currentAvatar={currentEmployee?.avatar_url || null} onSave={async (url) => { await base44.entities.Employee.update(currentEmployee.id, { avatar_url: url }); window.__barakatEmployee = { ...currentEmployee, avatar_url: url }; await loadData(); }} />
-            <p className="text-[11px] text-slate-400 mt-2">Двойной клик по аватару — увеличить фото.</p>
+            <p className="text-xs text-slate-500">Имя, телефон, фото, рамка и стикер профиля меняются в разделе «Профиль» — карточка с вашим именем внизу меню.</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
-            <p className="text-xs font-medium text-slate-500 mb-3">Рамка и стикер профиля</p>
-            <ProfileStylePicker currentEmployee={currentEmployee} user={user} onSaved={loadData} />
-          </div>
-          <ProfilePhotoZoom open={profileZoomOpen} onClose={() => setProfileZoomOpen(false)} avatarUrl={currentEmployee?.avatar_url} name={currentEmployee?.name} isAdmin={currentEmployee?.is_admin} profileSticker={currentEmployee?.profile_sticker} profileFrame={currentEmployee?.profile_frame} />
           <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
             <Button variant="outline" className="gap-1.5 text-indigo-600 hover:bg-indigo-50 border-indigo-200 text-sm" onClick={() => setSwitchAccountOpen(true)}><ArrowLeftRight className="w-4 h-4" /> Сменить аккаунт</Button>
             <Button variant="outline" className="gap-1.5 text-red-600 hover:bg-red-50 border-red-200 text-sm" onClick={() => { if (confirm('Выйти из аккаунта?')) { const mode = localStorage.getItem('barakatcrm_mode'); if (mode?.startsWith('employee_')) { const empId = mode.replace('employee_', ''); localStorage.removeItem(`barakat_emp_token_${empId}`); localStorage.removeItem('barakatcrm_mode'); } base44.auth.logout(); } }}><LogOut className="w-4 h-4" /> Выйти</Button>
           </div>
         </div>
-        <EmployeePersonalInfoPanel employee={currentEmployee} onSaved={loadData} />
         <EmployeeProfilePanel employee={currentEmployee} business={business} user={user} mergedPermissions={window.__barakatMergedPermissions} />
         {canPerm('view_activity_log') && (
           <div onClick={() => navigate(createPageUrl('ActivityLog'))} className="bg-white hover:bg-indigo-50 rounded-2xl p-4 cursor-pointer border border-slate-100 flex items-center justify-between transition-all shadow-sm">
@@ -512,13 +484,8 @@ export default function Settings() {
       <BackButton />
       <PageHeader title={t(lang, 'settings_title')} subtitle={t(lang, 'settings_subtitle')} />
 
-      {/* Новая карточка профиля */}
-      <ProfileCard
-        user={user}
-        currentEmployee={currentEmployee}
-        business={business}
-        lang={lang}
-        onOpenProfile={() => setProfileDialogOpen(true)}
+      {/* Аккаунт: смена аккаунта и выход. Личные данные и их правка — в разделе «Профиль» */}
+      <AccountActionsCard
         onSwitchAccount={() => setSwitchAccountOpen(true)}
         onLogout={() => {
           if (confirm(t(lang, 'settings_logout_confirm'))) {
@@ -527,15 +494,6 @@ export default function Settings() {
             base44.auth.logout();
           }
         }}
-      />
-
-      <ProfileDetailDialog
-        open={profileDialogOpen}
-        onClose={() => setProfileDialogOpen(false)}
-        user={user}
-        currentEmployee={currentEmployee}
-        business={business}
-        onProfileUpdated={loadData}
       />
 
       <div className="space-y-3">

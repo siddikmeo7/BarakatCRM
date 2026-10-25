@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { base44 } from '@/api/base44Client';
 import BackButton from '@/components/ui/BackButton';
+import NoAccess from '@/components/ui/NoAccess';
+import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import { Database, KeyRound, HardDrive, Server, Wallet, Bell, Globe, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 // Пошаговый план переноса BarakatCRM со платформы Base44 на собственный сервер.
@@ -53,7 +56,28 @@ const TO_REPLACE = [
   { what: 'Backend-функции и автоматизации', how: 'Ваш сервис + планировщик задач' },
 ];
 
+const ADMIN_EMAIL = 'siddikme2007@gmail.com';
+
 export default function MigrationPlan() {
+  const { employee, isOwner, isReady } = useEmployeeAccess();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => setUser(null));
+  }, []);
+
+  // Техническая информация о переносе — только владельцу бизнеса и администратору
+  const allowed = isOwner || !!employee?.is_admin || user?.email === ADMIN_EMAIL;
+  if (!isReady) return null;
+  if (!allowed) {
+    return (
+      <NoAccess
+        message="Раздел доступен только владельцу бизнеса."
+        subMessage="Здесь описана техническая часть: серверы, база данных и перенос системы."
+      />
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto space-y-4 pb-24">
       <BackButton />

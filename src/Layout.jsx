@@ -50,7 +50,6 @@ const ALL_MENU_ITEMS = [
   { name: 'Expenses',          icon: TrendingDown,     labelKey: 'nav_expenses',     color: 'text-red-500',     activeBg: 'bg-red-500',     activeText: 'text-red-600',    permKey: 'view_expenses' },
   { name: 'AIAssistant',       icon: Bot,              labelKey: 'nav_ai',           color: 'text-purple-500',  activeBg: 'bg-purple-500',  activeText: 'text-purple-600', permKey: 'view_ai_assistant' },
   { name: 'EmployeeAnalytics', icon: Users,            labelKey: 'nav_emp_analytics', color: 'text-rose-500',    activeBg: 'bg-rose-500',    activeText: 'text-rose-600', permKey: 'view_employee_analytics', ownerOnly: false },
-  { name: 'Profile',             icon: UserCircle,       labelKey: 'nav_profile',      color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600', permKey: 'view_settings' },
   { name: 'Salary',              icon: Wallet,           labelKey: 'nav_salary',      color: 'text-emerald-500',  activeBg: 'bg-emerald-500',  activeText: 'text-emerald-600', permKey: 'view_salary' },
 ];
 

@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { Settings, Info, Mail, ChevronRight, Server } from 'lucide-react';
 
 // Переходы из профиля: настройки бизнеса, о системе, контакты
-export default function ProfileNavCard() {
+export default function ProfileNavCard({ showServerPlan = false }) {
   const navigate = useNavigate();
 
   return (
@@ -23,6 +23,7 @@ export default function ProfileNavCard() {
         <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
       </button>
 
+      {showServerPlan && (
       <Link
         to="/MigrationPlan"
         className="w-full bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 flex items-center gap-3 transition-colors hover:border-indigo-300 dark:hover:border-indigo-700"
@@ -36,6 +37,7 @@ export default function ProfileNavCard() {
         </div>
         <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
       </Link>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <Link

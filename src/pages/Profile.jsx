@@ -7,6 +7,7 @@ import ProfileBusinessCard from '@/components/profile/ProfileBusinessCard';
 import ProfileSubscriptionCard from '@/components/profile/ProfileSubscriptionCard';
 import PaymentHistoryCard from '@/components/profile/PaymentHistoryCard';
 import ProfileNavCard from '@/components/profile/ProfileNavCard';
+import MyProfileSection from '@/components/profile/MyProfileSection';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
@@ -57,6 +58,13 @@ export default function Profile() {
       <h1 className="text-2xl font-black text-slate-900 dark:text-white">Профиль</h1>
 
       <ProfileIdentityCard user={user} employee={employee} business={business} roleName={roleName} />
+      <MyProfileSection
+        user={user}
+        employee={employee}
+        business={business}
+        roleName={roleName}
+        onSaved={load}
+      />
       <ProfileBusinessCard business={business} showCodes={isOwner || !!employee?.is_admin} />
       <ProfileSubscriptionCard
         business={business}
@@ -66,7 +74,7 @@ export default function Profile() {
         onRefresh={() => refreshBusiness()}
       />
       <PaymentHistoryCard ownerEmail={business?.owner_email} />
-      <ProfileNavCard />
+      <ProfileNavCard showServerPlan={isOwner || isPlatformAdmin || !!employee?.is_admin} />
 
       <SubscriptionDialog
         business={business}
