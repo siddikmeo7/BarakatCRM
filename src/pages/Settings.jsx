@@ -5,6 +5,7 @@ import { createPageUrl } from '../utils';
 import { useNavigate } from 'react-router-dom';
 import { t } from '@/components/i18n/translations';
 import PageHeader from '@/components/ui/PageHeader';
+import BackButton from '@/components/ui/BackButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -417,6 +418,7 @@ export default function Settings() {
     };
     return (
       <div className="space-y-4">
+        <BackButton className="mb-1" />
         <PageHeader title="Настройки" subtitle="Ваш профиль и аккаунт" />
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
           <div className="flex items-center gap-3">
@@ -507,6 +509,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
+      <BackButton />
       <PageHeader title={t(lang, 'settings_title')} subtitle={t(lang, 'settings_subtitle')} />
 
       {/* Новая карточка профиля */}

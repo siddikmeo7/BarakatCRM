@@ -5,8 +5,6 @@ import { base44 } from '@/api/base44Client';
 import { t } from '@/components/i18n/translations';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
 import { countDueSalaries } from '@/lib/salaryPeriod';
-import SubscriptionStatusBadge from '@/components/subscription/SubscriptionStatusBadge';
-import SubscriptionDialog from '@/components/subscription/SubscriptionDialog';
 import SubscriptionGate from '@/components/subscription/SubscriptionGate';
 import { getSubscriptionState } from '@/lib/subscription';
 
@@ -35,8 +33,7 @@ import {
   Moon,
   Sun,
   Wallet,
-  Info,
-  Mail,
+  UserCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,7 +50,7 @@ const ALL_MENU_ITEMS = [
   { name: 'Expenses',          icon: TrendingDown,     labelKey: 'nav_expenses',     color: 'text-red-500',     activeBg: 'bg-red-500',     activeText: 'text-red-600',    permKey: 'view_expenses' },
   { name: 'AIAssistant',       icon: Bot,              labelKey: 'nav_ai',           color: 'text-purple-500',  activeBg: 'bg-purple-500',  activeText: 'text-purple-600', permKey: 'view_ai_assistant' },
   { name: 'EmployeeAnalytics', icon: Users,            labelKey: 'nav_emp_analytics', color: 'text-rose-500',    activeBg: 'bg-rose-500',    activeText: 'text-rose-600', permKey: 'view_employee_analytics', ownerOnly: false },
-  { name: 'Settings',            icon: Settings,         labelKey: 'nav_settings',     color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600', permKey: 'view_settings' },
+  { name: 'Profile',             icon: UserCircle,       labelKey: 'nav_profile',      color: 'text-slate-500',   activeBg: 'bg-slate-500',   activeText: 'text-slate-600', permKey: 'view_settings' },
   { name: 'Salary',              icon: Wallet,           labelKey: 'nav_salary',      color: 'text-emerald-500',  activeBg: 'bg-emerald-500',  activeText: 'text-emerald-600', permKey: 'view_salary' },
 ];
 
@@ -87,7 +84,6 @@ export default function Layout({ children, currentPageName }) {
   const [roleName, setRoleName] = useState('');
   const [frozenBlocked, setFrozenBlocked] = useState(false);
   const [dueSalaryCount, setDueSalaryCount] = useState(0);
-  const [subDialogOpen, setSubDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -562,38 +558,15 @@ export default function Layout({ children, currentPageName }) {
           })}
         </div>
 
-        {/* Публичные страницы: о системе и контакты */}
-        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-0.5">
-          <Link to="/About" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-slate-100 dark:bg-slate-800">
-              <Info className="w-4 h-4 text-slate-500" />
-            </div>
-            О системе
-          </Link>
-          <Link to="/Contact" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-slate-100 dark:bg-slate-800">
-              <Mail className="w-4 h-4 text-slate-500" />
-            </div>
-            Контакты
-          </Link>
-        </div>
       </nav>
 
-      {/* Подписка бизнеса: статус доступа и оплата */}
-      {business && (
-        <div className="px-4 pt-3">
-          <button
-            onClick={() => { setDrawerOpen(false); setSubDialogOpen(true); }}
-            className="w-full rounded-xl border border-slate-200 dark:border-slate-800 px-3 py-2.5 flex items-center justify-between gap-2 transition hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Подписка</span>
-            <SubscriptionStatusBadge business={business} isPlatformAdmin={user?.email === ADMIN_EMAIL} />
-          </button>
-        </div>
-      )}
-
-      {/* User Info */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+      {/* Карточка пользователя: нажатие открывает раздел «Профиль» */}
+      <Link
+        to="/Profile"
+        onClick={() => setDrawerOpen(false)}
+        title="Открыть профиль"
+        className="block p-4 border-t border-slate-200 dark:border-slate-800 space-y-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+      >
         {/* Current user status card */}
         {currentEmployee ? (
           <div className={`rounded-xl px-3 py-2.5 flex items-center gap-3 ${currentEmployee.is_admin ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border border-indigo-200 dark:border-indigo-700' : 'bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700'}`}>
@@ -626,7 +599,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
         )}
 
-      </div>
+      </Link>
     </div>
   );
 
@@ -732,13 +705,6 @@ export default function Layout({ children, currentPageName }) {
         </motion.div>
       </main>
 
-      <SubscriptionDialog
-        business={business}
-        open={subDialogOpen}
-        onOpenChange={setSubDialogOpen}
-        onRefresh={refreshBusiness}
-        canPay={isOwner || user?.email === ADMIN_EMAIL}
-      />
     </div>
   );
 }
