@@ -11,6 +11,7 @@ export default function ProfileSubscriptionCard({ business, canPay, isPlatformAd
   const [access, setAccess] = useState(null);
   const [payments, setPayments] = useState([]);
   const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState(null);
 
   useEffect(() => {
     loadPlan().then(setPlan).catch(() => setPlan(null));
@@ -24,9 +25,31 @@ export default function ProfileSubscriptionCard({ business, canPay, isPlatformAd
 
   const state = getSubscriptionState(business, { isPlatformAdmin });
 
+  // Проверка оплаты: после проверки показываем результат, чтобы было понятно, нашлась оплата или нет
   const refresh = async () => {
     setChecking(true);
-    try { await onRefresh?.(); } finally { setChecking(false); }
+    setCheckResult(null);
+    try {
+      await onRefresh?.();
+      const fresh = business?.id ? await fetchAccessState(business.id) : null;
+      if (fresh) setAccess(fresh);
+      if (!fresh) {
+        setCheckResult({ ok: false, text: 'Не удалось проверить оплату. Попробуйте ещё раз через минуту.' });
+      } else if (fresh.allowed === false) {
+        setCheckResult({ ok: false, text: 'Оплата пока не найдена. Если вы только что оплатили, подождите минуту и нажмите снова.' });
+      } else {
+        setCheckResult({
+          ok: true,
+          text: fresh.paidUntil
+            ? `Оплата найдена — подписка активна до ${format(new Date(fresh.paidUntil), 'dd.MM.yyyy')}`
+            : 'Доступ открыт — оплата не требуется'
+        });
+      }
+    } catch (e) {
+      setCheckResult({ ok: false, text: 'Не удалось проверить оплату. Попробуйте ещё раз через минуту.' });
+    } finally {
+      setChecking(false);
+    }
   };
 
   return (
@@ -118,9 +141,15 @@ export default function ProfileSubscriptionCard({ business, canPay, isPlatformAd
         )}
         <Button variant="outline" onClick={refresh} disabled={checking} className="gap-2 rounded-full">
           {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-          Проверить оплату
+          {checking ? 'Проверяем...' : 'Проверить оплату'}
         </Button>
       </div>
+
+      {checkResult && (
+        <p className={`mx-4 mb-4 rounded-xl px-3 py-2 text-xs ${checkResult.ok ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'}`}>
+          {checkResult.text}
+        </p>
+      )}
     </div>
   );
 }

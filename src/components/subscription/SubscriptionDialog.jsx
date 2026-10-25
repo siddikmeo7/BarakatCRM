@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Loader2, RefreshCw, ShieldCheck, CalendarClock, Info } from 'lucide-react';
-import { getSubscriptionState, loadPlan, formatPrice, startSubscriptionCheckout, TRIAL_DAYS } from '@/lib/subscription';
+import { getSubscriptionState, loadPlan, formatPrice, startSubscriptionCheckout, fetchAccessState, TRIAL_DAYS } from '@/lib/subscription';
 import SubscriptionStatusBadge from './SubscriptionStatusBadge';
 import AlifPayPanel from './AlifPayPanel';
 
@@ -10,6 +10,7 @@ export default function SubscriptionDialog({ business, open, onOpenChange, onRef
   const [plan, setPlan] = useState(null);
   const [paying, setPaying] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -32,14 +33,35 @@ export default function SubscriptionDialog({ business, open, onOpenChange, onRef
     }
   };
 
+  // Проверка оплаты: после проверки показываем результат, чтобы было понятно, нашлась оплата или нет
   const handleRefresh = async () => {
     setChecking(true);
-    try { await onRefresh?.(); } finally { setChecking(false); }
+    setCheckResult(null);
+    try {
+      await onRefresh?.();
+      const fresh = business?.id ? await fetchAccessState(business.id) : null;
+      if (!fresh) {
+        setCheckResult({ ok: false, text: 'Не удалось проверить оплату. Попробуйте ещё раз через минуту.' });
+      } else if (fresh.allowed === false) {
+        setCheckResult({ ok: false, text: 'Оплата пока не найдена. Если вы только что оплатили, подождите минуту и нажмите снова.' });
+      } else {
+        setCheckResult({
+          ok: true,
+          text: fresh.paidUntil
+            ? `Оплата найдена — подписка активна до ${new Date(fresh.paidUntil).toLocaleDateString('ru-RU')}`
+            : 'Доступ открыт — оплата не требуется'
+        });
+      }
+    } catch (e) {
+      setCheckResult({ ok: false, text: 'Не удалось проверить оплату. Попробуйте ещё раз через минуту.' });
+    } finally {
+      setChecking(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-3xl">
+      <DialogContent className="max-w-md rounded-3xl max-h-[90vh] grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-[17px] font-bold text-slate-900 dark:text-white">
             <CreditCard className="w-5 h-5 text-indigo-600" />
@@ -47,7 +69,7 @@ export default function SubscriptionDialog({ business, open, onOpenChange, onRef
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 pt-1">
+        <div className="space-y-4 pt-1 overflow-y-auto custom-scroll pr-1">
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{business?.name}</p>
@@ -104,6 +126,11 @@ export default function SubscriptionDialog({ business, open, onOpenChange, onRef
                 Проверить оплату
               </Button>
               <p className="text-xs text-slate-400 text-center">После оплаты доступ откроется автоматически, обычно в течение минуты</p>
+              {checkResult && (
+                <p className={`text-xs text-center rounded-xl px-3 py-2 ${checkResult.ok ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'}`}>
+                  {checkResult.text}
+                </p>
+              )}
             </div>
           ) : (
             <p className="text-xs text-slate-500 dark:text-slate-400">Оплату подписки выполняет владелец бизнеса.</p>

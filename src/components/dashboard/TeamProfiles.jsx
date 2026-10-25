@@ -64,7 +64,16 @@ export default function TeamProfiles() {
         setRoles(rls);
         // Владелец — синтетическая запись (не сотрудник)
         const ownerName = (me?.email === biz.owner_email ? me?.full_name : '') || nameFromEmail(biz.owner_email) || 'Владелец';
-        setOwner({ __isOwner: true, name: ownerName, user_email: biz.owner_email, is_active: true });
+        // Фото, стикер и рамку владельца показываем так же, как у сотрудников
+        setOwner({
+          __isOwner: true,
+          name: ownerName,
+          user_email: biz.owner_email,
+          is_active: true,
+          avatar_url: me?.avatar_url || me?.data?.avatar_url,
+          profile_sticker: me?.profile_sticker || me?.data?.profile_sticker,
+          profile_frame: me?.profile_frame || me?.data?.profile_frame,
+        });
       })
       .catch(() => {})
       .finally(() => setLoading(false));

@@ -38,8 +38,8 @@ export default function ProfileCard({ user, currentEmployee, business, lang, onO
               avatarUrl={avatarUrl}
               name={displayName}
               isAdmin={currentEmployee?.is_admin}
-              profileSticker={currentEmployee?.profile_sticker || user?.data?.profile_sticker}
-              profileFrame={currentEmployee?.profile_frame || user?.data?.profile_frame}
+              profileSticker={currentEmployee?.profile_sticker || user?.data?.profile_sticker || user?.profile_sticker}
+              profileFrame={currentEmployee?.profile_frame || user?.data?.profile_frame || user?.profile_frame}
               sizeClass="w-20 h-20 rounded-2xl text-2xl"
             />
           </div>
@@ -113,7 +113,7 @@ export default function ProfileCard({ user, currentEmployee, business, lang, onO
           </Button>
         </div>
       </div>
-      <ProfilePhotoZoom open={zoomOpen} onClose={() => setZoomOpen(false)} avatarUrl={avatarUrl} name={displayName} isAdmin={currentEmployee?.is_admin} profileSticker={currentEmployee?.profile_sticker || user?.data?.profile_sticker} profileFrame={currentEmployee?.profile_frame || user?.data?.profile_frame} />
+      <ProfilePhotoZoom open={zoomOpen} onClose={() => setZoomOpen(false)} avatarUrl={avatarUrl} name={displayName} isAdmin={currentEmployee?.is_admin} profileSticker={currentEmployee?.profile_sticker || user?.data?.profile_sticker || user?.profile_sticker} profileFrame={currentEmployee?.profile_frame || user?.data?.profile_frame || user?.profile_frame} />
     </div>
   );
 }
