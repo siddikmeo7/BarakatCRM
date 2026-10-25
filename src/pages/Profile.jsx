@@ -12,7 +12,7 @@ import MyProfileSection from '@/components/profile/MyProfileSection';
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
 export default function Profile() {
-  const employee = window.__barakatEmployee || null;
+  const [employee, setEmployee] = useState(window.__barakatEmployee || null);
   const [user, setUser] = useState(null);
   const [business, setBusiness] = useState(window.__barakatBusiness || null);
   const [roleName, setRoleName] = useState('');
@@ -32,10 +32,25 @@ export default function Profile() {
     try {
       const me = await base44.auth.me();
       setUser(me);
+      await refreshEmployee();
       await refreshBusiness(window.__barakatBusiness?.id || business?.id);
+      // Сообщаем остальным разделам (меню, аватары), что профиль изменился
+      window.dispatchEvent(new Event('barakatProfileUpdated'));
     } catch (_) {
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Перечитываем запись сотрудника: фото, стикер, рамка и личные данные
+  // должны отображаться сразу после сохранения, без перезагрузки страницы.
+  const refreshEmployee = async () => {
+    const id = window.__barakatEmployee?.id;
+    if (!id) return;
+    const fresh = (await base44.entities.Employee.filter({ id }))[0];
+    if (fresh) {
+      setEmployee(fresh);
+      window.__barakatEmployee = fresh;
     }
   };
 

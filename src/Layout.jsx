@@ -101,6 +101,27 @@ export default function Layout({ children, currentPageName }) {
     loadUserAndBusiness();
   }, []);
 
+  // После сохранения профиля (данные, фото, стикер) обновляем карточку пользователя
+  // в меню и запись сотрудника — без перезагрузки страницы.
+  useEffect(() => {
+    const onProfileUpdated = async () => {
+      try {
+        const me = await base44.auth.me();
+        setUser(me);
+        const empId = window.__barakatEmployee?.id;
+        if (empId) {
+          const fresh = (await base44.entities.Employee.filter({ id: empId }))[0];
+          if (fresh) {
+            setCurrentEmployee(fresh);
+            window.__barakatEmployee = fresh;
+          }
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('barakatProfileUpdated', onProfileUpdated);
+    return () => window.removeEventListener('barakatProfileUpdated', onProfileUpdated);
+  }, []);
+
   useEffect(() => {
     if (!business?.id) return;
     const unsubscribe = base44.entities.Business.subscribe((event) => {
@@ -173,13 +194,13 @@ export default function Layout({ children, currentPageName }) {
     setDrawerOpen(false);
   }, [currentPageName]);
 
-  // Редирект на Products при первом входе в мобильной версии
+  // При первом входе в приложение открываем раздел «Профиль»
   useEffect(() => {
     if (loading || !business) return;
-    if (window.innerWidth >= 768) return; // только мобильная
-    if (window.__redirectToProducts && currentPageName !== 'Products') {
-      window.__redirectToProducts = false;
-      navigate(createPageUrl('Products'));
+    if (currentPageName?.startsWith('Admin')) return; // админ-разделы не трогаем
+    if (window.__redirectToProfile && currentPageName !== 'Profile') {
+      window.__redirectToProfile = false;
+      navigate('/Profile');
     }
   }, [loading, business, currentPageName]);
 
@@ -206,12 +227,11 @@ export default function Layout({ children, currentPageName }) {
       setUser(currentUser);
       recordLogin(currentUser.email);
 
-      // Редирект на Products после первого входа
-      const firstLoginKey = `first_login_${currentUser.email}`;
-      if (!sessionStorage.getItem(firstLoginKey)) {
-        sessionStorage.setItem(firstLoginKey, '1');
-        // Редирект будет после загрузки бизнеса
-        window.__redirectToProducts = true;
+      // При входе в приложение сразу открываем раздел «Профиль» (один раз за сессию вкладки)
+      if (!sessionStorage.getItem('barakatcrm_opened')) {
+        sessionStorage.setItem('barakatcrm_opened', '1');
+        // Редирект выполнится после загрузки бизнеса
+        window.__redirectToProfile = true;
       }
 
       // Платформенный админ (siddikme2007@gmail.com) тоже может войти в бизнес как сотрудник
@@ -597,10 +617,15 @@ export default function Layout({ children, currentPageName }) {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:ring-2 group-hover:ring-indigo-300">
-              <span className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-                {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
-              </span>
+            <div className="transition-all duration-200 group-hover:scale-110 group-hover:ring-2 group-hover:ring-indigo-300 rounded-full">
+              <EmployeeAvatar
+                avatarUrl={user?.data?.avatar_url || user?.avatar_url}
+                name={user?.full_name || user?.email}
+                isAdmin
+                profileSticker={user?.data?.profile_sticker || user?.profile_sticker}
+                profileFrame={user?.data?.profile_frame || user?.profile_frame}
+                size="sm"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <p className="origin-left text-sm font-semibold text-slate-900 dark:text-white truncate transition-all duration-200 group-hover:scale-105 group-hover:text-indigo-600 dark:group-hover:text-indigo-300">{user?.full_name || 'User'}</p>

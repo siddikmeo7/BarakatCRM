@@ -86,10 +86,10 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
   const [streak, setStreak] = useState(0);
   const [totalDays, setTotalDays] = useState(0);
   const [calendar, setCalendar] = useState([]);
-  const [avatarUrl, setAvatarUrl] = useState(currentEmployee?.avatar_url || user?.data?.avatar_url || null);
+  const [avatarUrl, setAvatarUrl] = useState(currentEmployee?.avatar_url || user?.data?.avatar_url || user?.avatar_url || null);
   const [zoomOpen, setZoomOpen] = useState(false);
-  const [profileFrame, setProfileFrame] = useState(currentEmployee?.profile_frame || user?.data?.profile_frame || 'none');
-  const [profileSticker, setProfileSticker] = useState(currentEmployee?.profile_sticker || user?.data?.profile_sticker || 'none');
+  const [profileFrame, setProfileFrame] = useState(currentEmployee?.profile_frame || user?.data?.profile_frame || user?.profile_frame || 'none');
+  const [profileSticker, setProfileSticker] = useState(currentEmployee?.profile_sticker || user?.data?.profile_sticker || user?.profile_sticker || 'none');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -121,14 +121,16 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
           address: currentEmployee.address || '',
         });
       } else if (user) {
+        // Значение может лежать в user.data или прямо в user
+        const me = { ...(user.data || {}), ...user };
         setPersonalInfo({
-          full_name: user.full_name || user.data?.full_name || '',
-          phone: user.data?.phone || '',
-          phone2: user.data?.phone2 || '',
-          whatsapp: user.data?.whatsapp || '',
-          telegram: user.data?.telegram || '',
-          age: user.data?.age || '',
-          address: user.data?.address || '',
+          full_name: me.full_name || '',
+          phone: me.phone || '',
+          phone2: me.phone2 || '',
+          whatsapp: me.whatsapp || '',
+          telegram: me.telegram || '',
+          age: me.age || '',
+          address: me.address || '',
         });
       }
     }
@@ -174,6 +176,8 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
           window.__barakatEmployee = { ...window.__barakatEmployee, ...personalInfo };
         }
       }
+      // Перечитываем профиль на странице: строки должны показать новые данные
+      await onProfileUpdated?.();
       setSaved(true);
       setTimeout(() => { setSaved(false); setEditing(false); }, 1500);
     } catch (err) {
@@ -324,12 +328,12 @@ export default function ProfileDetailDialog({ open, onClose, user, currentEmploy
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <InfoRow icon={UserIcon} label="Имя" value={currentEmployee?.full_name || currentEmployee?.name || user?.full_name || user?.data?.full_name || '—'} />
                 <InfoRow icon={Mail} label="Email" value={user?.email || '—'} />
-                <InfoRow icon={Phone} label="Телефон 1" value={currentEmployee?.phone || user?.data?.phone || '—'} />
-                <InfoRow icon={Phone} label="Телефон 2" value={currentEmployee?.phone2 || user?.data?.phone2 || '—'} />
-                <InfoRow icon={MessageCircle} label="WhatsApp" value={currentEmployee?.whatsapp || user?.data?.whatsapp || '—'} />
-                <InfoRow icon={MessageCircle} label="Telegram" value={currentEmployee?.telegram || user?.data?.telegram || '—'} />
-                {(currentEmployee?.age || user?.data?.age) && <InfoRow icon={Calendar} label="Возраст" value={String(currentEmployee?.age || user?.data?.age)} />}
-                {(currentEmployee?.address || user?.data?.address) && <InfoRow icon={MapPin} label="Адрес" value={currentEmployee?.address || user?.data?.address} />}
+                <InfoRow icon={Phone} label="Телефон 1" value={currentEmployee?.phone || user?.data?.phone || user?.phone || '—'} />
+                <InfoRow icon={Phone} label="Телефон 2" value={currentEmployee?.phone2 || user?.data?.phone2 || user?.phone2 || '—'} />
+                <InfoRow icon={MessageCircle} label="WhatsApp" value={currentEmployee?.whatsapp || user?.data?.whatsapp || user?.whatsapp || '—'} />
+                <InfoRow icon={MessageCircle} label="Telegram" value={currentEmployee?.telegram || user?.data?.telegram || user?.telegram || '—'} />
+                {(currentEmployee?.age || user?.data?.age || user?.age) && <InfoRow icon={Calendar} label="Возраст" value={String(currentEmployee?.age || user?.data?.age || user?.age)} />}
+                {(currentEmployee?.address || user?.data?.address || user?.address) && <InfoRow icon={MapPin} label="Адрес" value={currentEmployee?.address || user?.data?.address || user?.address} />}
                 <InfoRow icon={Crown} label="Роль" value={!currentEmployee ? '👑 Владелец' : currentEmployee.is_admin ? '🛡️ Администратор' : '👤 Сотрудник'} />
                 <InfoRow icon={Calendar} label="В системе с" value={user?.created_date ? format(new Date(user.created_date), 'dd MMM yyyy') : '—'} />
                 <InfoRow icon={Clock} label="Последний вход" value={lastLogin ? format(new Date(lastLogin), 'dd MMM yyyy, HH:mm') : '—'} />

@@ -10,13 +10,13 @@ import { PROFILE_STICKERS, PROFILE_FRAMES, getFrameWrapper } from '@/lib/profile
  * onSaved — колбэк после успешного сохранения (без аргументов).
  */
 export default function ProfileStylePicker({ currentEmployee, user, onSaved }) {
-  const [sticker, setSticker] = useState(currentEmployee?.profile_sticker || user?.data?.profile_sticker || 'none');
-  const [frame, setFrame] = useState(currentEmployee?.profile_frame || user?.data?.profile_frame || 'none');
+  const [sticker, setSticker] = useState(currentEmployee?.profile_sticker || user?.data?.profile_sticker || user?.profile_sticker || 'none');
+  const [frame, setFrame] = useState(currentEmployee?.profile_frame || user?.data?.profile_frame || user?.profile_frame || 'none');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const initialSticker = currentEmployee?.profile_sticker || user?.data?.profile_sticker || 'none';
-  const initialFrame = currentEmployee?.profile_frame || user?.data?.profile_frame || 'none';
+  const initialSticker = currentEmployee?.profile_sticker || user?.data?.profile_sticker || user?.profile_sticker || 'none';
+  const initialFrame = currentEmployee?.profile_frame || user?.data?.profile_frame || user?.profile_frame || 'none';
   const hasChanges = sticker !== initialSticker || frame !== initialFrame;
 
   const handleSave = async () => {

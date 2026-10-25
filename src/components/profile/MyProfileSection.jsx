@@ -11,13 +11,16 @@ export default function MyProfileSection({ user, employee, business, roleName, o
   const [editOpen, setEditOpen] = useState(false);
   const [styleOpen, setStyleOpen] = useState(false);
 
+  // Данные берём из записи сотрудника, иначе из профиля пользователя
+  // (значение может лежать и в user.data, и прямо в user).
+  const me = user?.data ? { ...user.data, ...user } : (user || {});
   const rows = [
-    { icon: UserIcon, label: 'Полное имя', value: employee?.full_name || employee?.name || user?.full_name || '—' },
-    { icon: Phone, label: 'Телефон 1', value: employee?.phone || user?.data?.phone || '—' },
-    { icon: Phone, label: 'Телефон 2', value: employee?.phone2 || user?.data?.phone2 || '—' },
-    { icon: MessageCircle, label: 'WhatsApp', value: employee?.whatsapp || user?.data?.whatsapp || '—' },
-    { icon: Send, label: 'Telegram', value: employee?.telegram || user?.data?.telegram || '—' },
-    { icon: Calendar, label: 'Возраст', value: employee?.age || user?.data?.age || '—' },
+    { icon: UserIcon, label: 'Полное имя', value: employee?.full_name || employee?.name || user?.full_name || me.full_name || '—' },
+    { icon: Phone, label: 'Телефон 1', value: employee?.phone || me.phone || '—' },
+    { icon: Phone, label: 'Телефон 2', value: employee?.phone2 || me.phone2 || '—' },
+    { icon: MessageCircle, label: 'WhatsApp', value: employee?.whatsapp || me.whatsapp || '—' },
+    { icon: Send, label: 'Telegram', value: employee?.telegram || me.telegram || '—' },
+    { icon: Calendar, label: 'Возраст', value: employee?.age || me.age || '—' },
   ];
 
   return (
