@@ -12,6 +12,7 @@ export function buildSaleMessage({
   totalAmount,
   paidAmount,
   remainingDebt,
+  totalDebt,      // долг клиента по всем покупкам
   dueDate,
   isDebt
 }) {
@@ -27,7 +28,8 @@ export function buildSaleMessage({
   }
   msg += `\n💳 Итого: ${Number(totalAmount || 0).toLocaleString('ru-RU')} с.\n`;
   if (paidAmount > 0) msg += `✅ Оплачено: ${Number(paidAmount).toLocaleString('ru-RU')} с.\n`;
-  if (isDebt && remainingDebt > 0) msg += `🔴 Остаток долга: ${Number(remainingDebt).toLocaleString('ru-RU')} с.\n`;
+  if (isDebt && remainingDebt > 0) msg += `🔴 Остаток по этой покупке: ${Number(remainingDebt).toLocaleString('ru-RU')} с.\n`;
+  if (isDebt && totalDebt > 0) msg += `📊 Общий долг по всем покупкам: ${Number(totalDebt).toLocaleString('ru-RU')} с.\n`;
   if (dueDate) msg += `📅 Срок оплаты: ${dueDate}\n`;
   msg += `\nСпасибо за покупку!`;
   return msg;
@@ -185,8 +187,9 @@ export function buildDebtReminderMessage({
   return msg;
 }
 
-// Собирает все данные по клиенту (продажи + оплаты + товары) и формирует полное сообщение
-export function buildCustomerDebtReminder({ customer, sales, products, payments, businessName }) {
+// Общий сбор данных клиента (купленные товары, суммы, оплаты, остаток долга) —
+// единый источник для всех сообщений о долге.
+export function collectCustomerDebt({ customer, sales, products, payments }) {
   const customerSales = (sales || []).filter(s => s.customer_id === customer.id && !s.is_cancelled);
   const items = customerSales.map(s => {
     const prod = (products || []).find(p => p.id === s.product_id);
@@ -201,12 +204,19 @@ export function buildCustomerDebtReminder({ customer, sales, products, payments,
     return sum + paid;
   }, 0);
   const remainingDebt = Math.max(0, totalAmount - paidAmount);
-  // Ближайшая (самая ранняя непросроченная или вообще ближайшая) дата оплаты
+  // Ближайшая (самая ранняя) дата оплаты
   const dueDates = customerSales
     .map(s => s.payment_due_date)
     .filter(Boolean)
     .sort((a, b) => new Date(a) - new Date(b));
   const nearestDueDate = dueDates[0] ? fmtDate(dueDates[0]) : '';
+  return { items, totalAmount, paidAmount, remainingDebt, nearestDueDate };
+}
+
+// Собирает все данные по клиенту (продажи + оплаты + товары) и формирует полное сообщение
+export function buildCustomerDebtReminder({ customer, sales, products, payments, businessName }) {
+  const { items, totalAmount, paidAmount, remainingDebt, nearestDueDate } =
+    collectCustomerDebt({ customer, sales, products, payments });
   return buildDebtReminderMessage({
     customerName: customer.name,
     businessName,

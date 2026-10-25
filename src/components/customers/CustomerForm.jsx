@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import PhoneInput from '@/components/ui/PhoneInput';
 import { Loader2, UserPlus } from 'lucide-react';
 
 export default function CustomerForm({ open, onClose, onSave, editingCustomer, business }) {
@@ -83,10 +84,9 @@ export default function CustomerForm({ open, onClose, onSave, editingCustomer, b
           </div>
           <div>
             <Label className="text-sm font-medium">Телефон *</Label>
-            <Input
+            <PhoneInput
               value={formData.phone}
-              onChange={e => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="+992..."
+              onChange={phone => setFormData({ ...formData, phone })}
               className="mt-1.5"
             />
           </div>
@@ -106,17 +106,17 @@ export default function CustomerForm({ open, onClose, onSave, editingCustomer, b
             <>
               <div>
                 <Label className="text-sm font-medium">WhatsApp</Label>
-                <Input
+                <PhoneInput
                   value={formData.whatsapp}
-                  onChange={e => setFormData({ ...formData, whatsapp: e.target.value })}
+                  onChange={whatsapp => setFormData({ ...formData, whatsapp })}
                   className="mt-1.5"
                 />
               </div>
               <div>
                 <Label className="text-sm font-medium">Telegram</Label>
-                <Input
+                <PhoneInput
                   value={formData.telegram}
-                  onChange={e => setFormData({ ...formData, telegram: e.target.value })}
+                  onChange={telegram => setFormData({ ...formData, telegram })}
                   className="mt-1.5"
                 />
               </div>

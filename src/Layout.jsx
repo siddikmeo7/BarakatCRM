@@ -575,10 +575,10 @@ export default function Layout({ children, currentPageName }) {
         onClick={() => setDrawerOpen(false)}
         title="Открыть профиль"
         className={cn(
-          "block p-4 border-t space-y-3 transition-colors",
+          "block p-4 border-t space-y-3 transition-colors border-l-2",
           currentPageName === 'Profile'
-            ? "bg-emerald-50 dark:bg-emerald-900/25 border-[#217346] ring-1 ring-inset ring-[#217346]"
-            : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+            ? "border-l-indigo-500 border-slate-200 dark:border-slate-800"
+            : "border-l-transparent border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50"
         )}
       >
         {/* Current user status card */}
@@ -614,8 +614,8 @@ export default function Layout({ children, currentPageName }) {
         )}
 
         {currentPageName === 'Profile' && (
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#217346] dark:text-emerald-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#217346] dark:bg-emerald-400" />
+          <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
             Открыт раздел «Профиль»
           </div>
         )}
@@ -692,7 +692,7 @@ export default function Layout({ children, currentPageName }) {
             const active = currentMenu.find(i => i.name === currentPageName);
             if (!active && currentPageName === 'Profile') {
               return (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#217346] text-white">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-500 text-white">
                   <UserCircle className="w-3 h-3" />
                   Профиль
                 </div>

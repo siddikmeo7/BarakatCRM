@@ -332,6 +332,7 @@ export default function MultiSaleDialog({ open, onClose, products, customers, bu
           totalAmount: grandTotal,
           paidAmount: paidNow,
           remainingDebt,
+          totalDebt: isDebt ? (customerRec2.total_debt || 0) + remainingDebt : 0,
           dueDate: isDebt ? paymentDueDate : '',
           isDebt
         });

@@ -14,7 +14,7 @@ import {
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import ProductPhoto from '@/components/products/ProductPhoto';
 import SaleNotifyChannels from '@/components/sales/SaleNotifyChannels';
-import { buildPaymentMessage, buildDetailedPaymentMessage, notifyCustomerChannels, buildCustomerDebtReminder, sendWhatsApp } from '@/lib/customerNotify';
+import { buildPaymentMessage, buildDetailedPaymentMessage, notifyCustomerChannels, buildCustomerDebtReminder, buildDebtReminderMessage, collectCustomerDebt, sendWhatsApp } from '@/lib/customerNotify';
 import { format, parseISO, isToday, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -173,6 +173,28 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
           description: `Добавлен долг ${addDebtAmount} с. клиенту ${c.name}`
         });
       } catch (_) {}
+      // Долг добавлен — клиенту автоматически уходит детализация: товары, суммы и остаток долга
+      const autoChannels = notifyDefaults();
+      if (autoChannels.length > 0) {
+        const added = parseFloat(addDebtAmount);
+        const collected = collectCustomerDebt({ customer: c, sales, products, payments });
+        const items = [
+          ...collected.items,
+          { name: addDebtNote || 'Дополнительный долг', boxes: 0, total: added, dueDate: '' }
+        ];
+        const totalAmount = collected.totalAmount + added;
+        const message = buildDebtReminderMessage({
+          customerName: c.name,
+          businessName: business?.name,
+          items,
+          totalAmount,
+          paidAmount: collected.paidAmount,
+          remainingDebt: Math.max(0, totalAmount - collected.paidAmount),
+          nearestDueDate: collected.nearestDueDate,
+          now: new Date()
+        });
+        notifyCustomerChannels({ customer: c, channels: autoChannels, message, emailSubject: `Задолженность — ${business?.name || ''}` });
+      }
       setAddDebtOpen(false); setAddDebtAmount(''); setAddDebtNote('');
       await loadCustomerActivity();
       if (onCustomerUpdated) onCustomerUpdated({ ...c, total_debt: (c.total_debt || 0) + parseFloat(addDebtAmount) });
@@ -209,13 +231,19 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
           ? 'Товары не указаны'
           : saleProductName(sale);
         const paidItems = [{ name: paidName, boxes: sale.boxes_sold || 0, amount }];
-        // Оставшиеся непогашенные долги (другие продажи)
-        const remainingItems = debtSales
-          .filter(s => !s.is_cancelled && s.id !== sale.id && ((s.total_amount || 0) - getSalePaid(s.id)) > 0)
-          .map(s => {
-            const name = s.product_id === 'manual' ? 'Товары не указаны' : saleProductName(s);
-            return { name, boxes: s.boxes_sold || 0, remaining: (s.total_amount || 0) - getSalePaid(s.id), dueDate: s.payment_due_date ? fmtDue(s.payment_due_date) : '' };
-          });
+        // Оставшиеся непогашенные долги: остаток этой же покупки и другие покупки
+        const saleLeftover = Math.max(0, saleRemaining - amount);
+        const remainingItems = [
+          ...(saleLeftover > 0
+            ? [{ name: paidName, boxes: sale.boxes_sold || 0, remaining: saleLeftover, dueDate: sale.payment_due_date ? fmtDue(sale.payment_due_date) : '' }]
+            : []),
+          ...debtSales
+            .filter(s => !s.is_cancelled && s.id !== sale.id && ((s.total_amount || 0) - getSalePaid(s.id)) > 0)
+            .map(s => {
+              const name = s.product_id === 'manual' ? 'Товары не указаны' : saleProductName(s);
+              return { name, boxes: s.boxes_sold || 0, remaining: (s.total_amount || 0) - getSalePaid(s.id), dueDate: s.payment_due_date ? fmtDue(s.payment_due_date) : '' };
+            })
+        ];
         const nearestDueDate = remainingItems.map(r => r.dueDate).filter(Boolean).sort()[0] || '';
         const message = buildDetailedPaymentMessage({
           customerName: c.name, businessName: business?.name,
@@ -290,6 +318,12 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
       }
       setBulkPayOpen(false); setBulkPayAmount(''); setBulkNotifyChannels([]);
     } finally { setBulkPaySaving(false); }
+  };
+
+  // Каналы отправки по умолчанию: сообщения клиенту уходят автоматически
+  const notifyDefaults = () => {
+    const def = business?.default_notify_channels;
+    return Array.isArray(def) && def.length ? def : ['whatsapp'];
   };
 
   const sendReminder = async () => {
@@ -381,7 +415,7 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
           </Button>
         )}
         {can('manage_debts') && totalRemaining > 0 && (
-          <Button size="sm" onClick={() => { setBulkPayOpen(true); setBulkPayAmount(''); }}
+          <Button size="sm" onClick={() => { setBulkPayOpen(true); setBulkPayAmount(''); setBulkNotifyChannels(notifyDefaults()); }}
             className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 text-xs flex-1">
             <DollarSign className="w-3.5 h-3.5" /> Погасить долг
           </Button>
@@ -669,7 +703,7 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
                       <ChevronRight className={`w-3 h-3 transition-transform ${isHistoryOpen ? 'rotate-90' : ''}`} />
                     </button>
                     {!isPaid && can('manage_debts') && (
-                      <Button size="sm" onClick={() => { setPayDialog({ sale }); setPayAmount(remaining.toString()); const def = business?.default_notify_channels; setPayNotifyChannels(Array.isArray(def) && def.length ? def : []); }} className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs px-3">
+                      <Button size="sm" onClick={() => { setPayDialog({ sale }); setPayAmount(remaining.toString()); setPayNotifyChannels(notifyDefaults()); }} className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs px-3">
                         <DollarSign className="w-3 h-3 mr-1" /> Оплатить
                       </Button>
                     )}

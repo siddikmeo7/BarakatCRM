@@ -481,6 +481,7 @@ export default function Sales() {
           totalAmount,
           paidAmount: paidNow,
           remainingDebt: remaining,
+          totalDebt: formData.is_debt ? (customerRec.total_debt || 0) + remaining : 0,
           dueDate: formData.is_debt ? paymentDueDate : '',
           isDebt: formData.is_debt
         });
