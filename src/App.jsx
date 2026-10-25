@@ -13,6 +13,7 @@ import ThankYou from './pages/ThankYou';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Profile from './pages/Profile';
+import MigrationPlan from './pages/MigrationPlan';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
       ))}
       <Route path="/Salary" element={<LayoutWrapper currentPageName="Salary"><Salary /></LayoutWrapper>} />
       <Route path="/Profile" element={<LayoutWrapper currentPageName="Profile"><Profile /></LayoutWrapper>} />
+      <Route path="/MigrationPlan" element={<LayoutWrapper currentPageName="MigrationPlan"><MigrationPlan /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
       <Route path="/ThankYou" element={<ThankYou />} />
       <Route path="/About" element={<About />} />
