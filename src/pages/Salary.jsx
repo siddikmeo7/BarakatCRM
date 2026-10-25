@@ -14,7 +14,10 @@ import { parseISO, isWithinInterval, startOfDay, endOfDay, startOfWeek, endOfWee
 import { ru } from 'date-fns/locale';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { SALARY_METHODS, getSalaryMethod, computeSalary } from '@/lib/salary';
+import { getSalaryPeriod, getSalaryDueState } from '@/lib/salaryPeriod';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import SalaryDueBadge from '@/components/salary/SalaryDueBadge';
+import EmployeeSalaryDialog from '@/components/salary/EmployeeSalaryDialog';
 
 export default function Salary() {
   const [business, setBusiness] = useState(null);
@@ -22,6 +25,9 @@ export default function Salary() {
   const [sales, setSales] = useState([]);
   const [consignmentSales, setConsignmentSales] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [payments, setPayments] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [selectedEmp, setSelectedEmp] = useState(null);
 
   const [dateRange, setDateRange] = useState({ from: startOfDay(new Date()), to: endOfDay(new Date()) });
   const [filterEmployee, setFilterEmployee] = useState('all');
@@ -50,14 +56,18 @@ export default function Salary() {
       if (!biz) { setLoading(false); return; }
       setBusiness(biz);
 
-      const [salesData, consignmentSaleData, employeesData] = await Promise.all([
+      const [salesData, consignmentSaleData, employeesData, paymentsData, schedulesData] = await Promise.all([
         base44.entities.Sale.filter({ business_id: biz.id }),
         base44.entities.ConsignmentSale.filter({ business_id: biz.id }),
-        base44.entities.Employee.filter({ business_id: biz.id })
+        base44.entities.Employee.filter({ business_id: biz.id }),
+        base44.entities.SalaryPayment.filter({ business_id: biz.id }).catch(() => []),
+        base44.entities.SalarySchedule.filter({ business_id: biz.id }).catch(() => [])
       ]);
       setSales(salesData);
       setConsignmentSales(consignmentSaleData);
       setEmployees(employeesData);
+      setPayments(paymentsData || []);
+      setSchedules(schedulesData || []);
     } catch (e) {
       console.error('Error loading salary data:', e);
     } finally {
@@ -163,16 +173,49 @@ export default function Salary() {
     return { boxes, salary };
   }, [employeeStats, unifiedSales]);
 
+  // Выплаты и графики выплат, сгруппированные по сотруднику
+  const paymentsByEmployee = useMemo(() => {
+    const map = {};
+    payments.forEach(p => {
+      if (!map[p.employee_id]) map[p.employee_id] = [];
+      map[p.employee_id].push(p);
+    });
+    return map;
+  }, [payments]);
+
+  const scheduleByEmployee = useMemo(() => {
+    const map = {};
+    schedules.forEach(s => { map[s.employee_id] = s; });
+    return map;
+  }, [schedules]);
+
+  // Состояние выплаты за текущий месяц для каждого сотрудника
+  const dueStates = useMemo(() => {
+    const now = new Date();
+    const map = {};
+    employees.forEach(e => {
+      map[e.id] = getSalaryDueState({
+        employee: e,
+        schedule: scheduleByEmployee[e.id],
+        payments: paymentsByEmployee[e.id] || [],
+        now,
+      });
+    });
+    return map;
+  }, [employees, scheduleByEmployee, paymentsByEmployee]);
+
   // Сотрудники с фиксированным ежемесячным окладом — зарплата к оплате за текущий месяц
   const monthlyDueEmployees = useMemo(() => {
     return employees
       .filter(e => !e.deleted_at && e.salary_method === 'fixed_monthly' && (e.salary_rate || 0) > 0)
-      .map(e => ({ employee: e, amount: e.salary_rate || 0 }));
-  }, [employees]);
+      .map(e => ({ employee: e, amount: e.salary_rate || 0, dueState: dueStates[e.id] }))
+      .filter(x => x.dueState?.status !== 'paid')
+      .sort((a, b) => (b.dueState?.status === 'due' ? 1 : 0) - (a.dueState?.status === 'due' ? 1 : 0));
+  }, [employees, dueStates]);
 
-  const _monthLabelRaw = format(new Date(), 'LLLL yyyy', { locale: ru });
-  const monthLabel = _monthLabelRaw.charAt(0).toUpperCase() + _monthLabelRaw.slice(1);
-  const monthEndLabel = format(endOfMonth(new Date()), 'd LLLL', { locale: ru });
+  // Названия периода берём из общего хелпера (src/lib/salaryPeriod.js) —
+  // переменные периода определены корректно во всех разделах приложения.
+  const { monthLabelRaw, monthLabel, monthEndLabel } = getSalaryPeriod();
 
   const setQuickPeriod = (period) => {
     const now = new Date();
@@ -236,6 +279,21 @@ export default function Salary() {
     }
   };
 
+  // Открыть профиль сотрудника с историей выплат и графиком зарплаты
+  const openEmployee = (employee, statArg) => {
+    const stats = statArg || employeeStats.find(s => s.employee.id === employee.id) || {};
+    setSelectedEmp({
+      employee,
+      stat: {
+        boxes: stats.boxes || 0,
+        pairs: stats.pairs || 0,
+        salesCount: stats.salesCount || 0,
+        revenue: stats.revenue || 0,
+        salary: computeSalary(stats, employee),
+      },
+    });
+  };
+
   const fmtMoney = (n) => (n || 0).toLocaleString('ru-RU');
   const periodLabel = dateRange?.from
     ? (dateRange.to && dateRange.to.getTime() !== dateRange.from.getTime()
@@ -291,15 +349,21 @@ export default function Salary() {
             </span>
           </div>
           <p className="text-xs text-red-600 dark:text-red-400 mb-3">
-            Период: 1 {_monthLabelRaw} — {monthEndLabel} · эти сотрудники должны получить ежемесячный оклад:
+            Период: 1 {monthLabelRaw} — {monthEndLabel} · эти сотрудники должны получить ежемесячный оклад:
           </p>
           <div className="flex flex-wrap gap-2">
-            {monthlyDueEmployees.map(({ employee, amount }) => (
-              <div key={employee.id} className="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 border border-red-200 dark:border-red-800">
+            {monthlyDueEmployees.map(({ employee, amount, dueState }) => (
+              <button
+                key={employee.id}
+                onClick={() => openEmployee(employee)}
+                title="Открыть профиль и историю выплат"
+                className="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 border border-red-200 dark:border-red-800 hover:border-red-400 transition-colors"
+              >
                 <EmployeeAvatar employee={employee} size="sm" />
                 <span className="text-sm font-medium text-slate-900 dark:text-white">{employee.name}</span>
                 <span className="text-sm font-bold text-red-600">{fmtMoney(amount)} с.</span>
-              </div>
+                <SalaryDueBadge state={dueState} />
+              </button>
             ))}
           </div>
         </div>
@@ -414,7 +478,12 @@ export default function Salary() {
                 const method = getSalaryMethod(emp.salary_method || 'per_box');
                 const empCanEdit = canEdit && !emp._unknown;
                 return (
-                  <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <tr
+                    key={emp.id}
+                    onClick={() => openEmployee(emp, { boxes, pairs, salesCount, revenue, salary })}
+                    title="Открыть профиль и историю выплат"
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <EmployeeAvatar employee={emp} size="sm" />
@@ -426,7 +495,7 @@ export default function Salary() {
                     </td>
                     <td className="px-4 py-3 text-center font-bold text-indigo-600">{boxes}</td>
                     <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-300">{salesCount}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                       {isEditing ? (
                         <div className="flex items-center justify-center gap-1">
                           <Input
@@ -468,10 +537,8 @@ export default function Salary() {
                     <td className="px-4 py-3 text-right">
                       <span className="font-bold text-emerald-600 text-lg">{fmtMoney(salary)} с.</span>
                       {emp.salary_method === 'fixed_monthly' && (emp.salary_rate || 0) > 0 && (
-                        <div className="mt-1">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 text-[10px] font-bold">
-                            ⚠️ К оплате за {monthLabel}
-                          </span>
+                        <div className="mt-1 flex justify-end">
+                          <SalaryDueBadge state={dueStates[emp.id]} />
                         </div>
                       )}
                     </td>
@@ -560,6 +627,19 @@ export default function Salary() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Профиль сотрудника: история выплат, срок и график зарплаты */}
+      {selectedEmp && (
+        <EmployeeSalaryDialog
+          key={selectedEmp.employee.id}
+          employee={selectedEmp.employee}
+          stat={selectedEmp.stat}
+          business={business}
+          canManage={canEdit}
+          onClose={() => setSelectedEmp(null)}
+          onChanged={loadData}
+        />
+      )}
     </div>
   );
 }

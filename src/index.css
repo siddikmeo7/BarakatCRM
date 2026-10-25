@@ -237,3 +237,12 @@
 .dark .custom-scroll::-webkit-scrollbar-thumb:hover {
   background: hsl(0 0% 45%);
 }
+
+/* Мигание: сотруднику пора получить зарплату */
+@keyframes salary-due-blink {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+  50% { opacity: 0.5; box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+.animate-salary-due {
+  animation: salary-due-blink 1.1s ease-in-out infinite;
+}
