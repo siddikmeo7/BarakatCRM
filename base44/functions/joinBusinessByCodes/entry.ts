@@ -75,10 +75,10 @@ export default async function(req) {
       } catch (_) {}
     }
 
-    // Update business_id on user for RLS (updates token immediately)
+    // Привязка бизнеса — только сервером (поле business_id заблокировано для пользователя)
     if (user.data?.business_id !== biz.id) {
       try {
-        await base44.auth.updateMe({ business_id: biz.id });
+        await base44.asServiceRole.entities.User.update(user.id, { business_id: biz.id });
       } catch (_) {}
     }
 

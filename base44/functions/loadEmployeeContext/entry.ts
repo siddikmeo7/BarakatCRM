@@ -39,10 +39,12 @@ export default async function(req) {
       } catch (_) {}
     }
 
-    // Update business_id on user for RLS
+    // Привязка бизнеса — только сервером (поле business_id недоступно пользователю).
+    // Клиент здесь действует от имени пользователя, поэтому пишем сервисной ролью —
+    // сотрудник уже подтверждён: email записи совпадает с email вошедшего.
     if (user.data?.business_id !== emp.business_id) {
       try {
-        await base44.auth.updateMe({ business_id: emp.business_id });
+        await base44.asServiceRole.entities.User.update(user.id, { business_id: emp.business_id });
       } catch (_) {}
     }
 

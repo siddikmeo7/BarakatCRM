@@ -772,8 +772,9 @@ export default function Settings() {
                   const bizName = res.data.business_name;
                   const empName = res.data.employee_name;
                   const isAdmin = res.data.is_admin;
-                  // Обновляем business_id в токене ДО перезагрузки, чтобы RLS сразу видела новый бизнес.
-                  try { await base44.auth.updateMe({ business_id: bizId }); } catch (_) {}
+                  // Привязка бизнеса выполняется на сервере (проверяет право доступа).
+                  // Сразу после этого страница перезагружается — доступ уже действует.
+                  try { await base44.functions.invoke('activateBusiness', { business_id: bizId }); } catch (_) {}
                   localStorage.setItem('barakatcrm_mode', `employee_${empId}`);
                   sessionStorage.setItem('barakatcrm_mode', `employee_${empId}`);
                   saveBusinessToHistory(bizId, bizName, empId, empName, isAdmin ? 'admin' : 'employee');

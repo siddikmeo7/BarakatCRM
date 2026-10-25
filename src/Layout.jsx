@@ -261,6 +261,25 @@ export default function Layout({ children, currentPageName }) {
               } catch (_) {}
             };
 
+            // Привязка активного бизнеса выполняется ТОЛЬКО на сервере:
+            // поле business_id в профиле пользователя заблокировано для изменений из приложения.
+            // Сервер сам проверяет, что пользователь — владелец бизнеса или его сотрудник.
+            const bindBusiness = async (bizId) => {
+              try {
+                const res = await base44.functions.invoke('activateBusiness', { business_id: bizId });
+                if (!res.data?.business_id) return false;
+                // Один раз за сессию вкладки: правила доступа должны увидеть новый бизнес
+                const key = `barakatcrm_bound_${bizId}`;
+                if (!sessionStorage.getItem(key)) {
+                  sessionStorage.setItem(key, '1');
+                  setTimeout(() => window.location.reload(), 400);
+                }
+                return true;
+              } catch (_) {
+                return false;
+              }
+            };
+
             if (savedMode && savedMode.startsWith('employee_')) {
               const empId = savedMode.replace('employee_', '');
               let emp = null, biz = null, rolePerms = null, ctxError = null;
@@ -321,11 +340,9 @@ export default function Layout({ children, currentPageName }) {
               window.__barakatMergedPermissions = mergedPerms;
               window.__barakatAccessReady = true;
               window.dispatchEvent(new Event('barakatAccessReady'));
-              // КРИТИЧНО для RLS: всегда обновляем business_id в токене на фронте.
-              // auth.me() возвращает свежие данные из БД (business_id уже мог измениться
-              // бэкендом joinBusinessByCodes), поэтому сравнение «!==» пропустит updateMe —
-              // токен останется устаревшим и RLS вернёт пусто. Обновляем безусловно.
-              try { await base44.auth.updateMe({ business_id: biz.id }); } catch (_) {}
+              // Привязка бизнеса — только через сервер (поле business_id недоступно пользователю).
+              // Сотрудник уже подтверждён выше (email совпадает с записью сотрудника).
+              await bindBusiness(biz.id);
               await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
               localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
               if (emp.login_session_token) {
@@ -348,9 +365,9 @@ export default function Layout({ children, currentPageName }) {
 
             // По умолчанию: если есть свой бизнес — владелец
             if (businesses.length > 0) {
-              // Persist business_id for RLS security
+              // Persist business_id for RLS security (серверная привязка)
               if (currentUser.email !== ADMIN_EMAIL && currentUser.data?.business_id !== businesses[0].id) {
-                await base44.auth.updateMe({ business_id: businesses[0].id });
+                await bindBusiness(businesses[0].id);
               }
               setBusiness(businesses[0]);
               setLang(businesses[0].language || 'ru');
@@ -395,8 +412,8 @@ export default function Layout({ children, currentPageName }) {
                     window.__barakatMergedPermissions = mergedPerms2;
                     window.__barakatAccessReady = true;
                     window.dispatchEvent(new Event('barakatAccessReady'));
-                    // КРИТИЧНО для RLS: всегда обновляем business_id в токене на фронте (см. выше)
-                    try { await base44.auth.updateMe({ business_id: biz.id }); } catch (_) {}
+                    // Привязка бизнеса — только на сервере (см. bindBusiness)
+                    await bindBusiness(biz.id);
                     await registerDeviceSession(biz.id, currentUser.email, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee', emp.id);
                     localStorage.setItem('barakatcrm_mode', `employee_${emp.id}`);
                     saveBusinessToHistory(biz.id, biz.name, emp.id, emp.name || currentUser.full_name, emp.is_admin ? 'admin' : 'employee');
