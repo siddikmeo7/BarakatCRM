@@ -10,6 +10,8 @@ import BrandedLoader from '@/components/ui/BrandedLoader';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ThankYou from './pages/ThankYou';
+import About from './pages/About';
+import Contact from './pages/Contact';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -19,16 +21,20 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
+// Публичные страницы: доступны без входа в систему
+const PUBLIC_PATHS = ['/About', '/Contact'];
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const isPublicPage = PUBLIC_PATHS.includes(window.location.pathname);
 
   // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  if (!isPublicPage && (isLoadingPublicSettings || isLoadingAuth)) {
     return <BrandedLoader fullScreen message="Подключение к BarakatCRM..." />;
   }
 
   // Handle authentication errors
-  if (authError) {
+  if (!isPublicPage && authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
@@ -60,6 +66,8 @@ const AuthenticatedApp = () => {
       <Route path="/Salary" element={<LayoutWrapper currentPageName="Salary"><Salary /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
       <Route path="/ThankYou" element={<ThankYou />} />
+      <Route path="/About" element={<About />} />
+      <Route path="/Contact" element={<Contact />} />
     </Routes>
   );
 };
