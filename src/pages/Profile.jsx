@@ -59,27 +59,26 @@ export default function Profile() {
 
       <ProfileIdentityCard user={user} employee={employee} business={business} roleName={roleName} />
 
-      {/* Данные профиля занимают всю ширину экрана: на широком экране — две колонки */}
-      <div className="grid gap-4 lg:grid-cols-2 items-start">
-        <MyProfileSection
-          user={user}
-          employee={employee}
-          business={business}
-          roleName={roleName}
-          onSaved={load}
-        />
-        <div className="space-y-4">
-          <ProfileBusinessCard business={business} showCodes={isOwner || !!employee?.is_admin} />
-          <ProfileSubscriptionCard
-            business={business}
-            isPlatformAdmin={isPlatformAdmin}
-            canPay={isOwner || isPlatformAdmin}
-            onPay={() => setSubOpen(true)}
-            onRefresh={() => refreshBusiness()}
-          />
-          <PaymentHistoryCard ownerEmail={business?.owner_email} />
-        </div>
-      </div>
+      {/* Данные идут одним списком сверху вниз — прокручиваешь и просматриваешь по порядку */}
+      <MyProfileSection
+        user={user}
+        employee={employee}
+        business={business}
+        roleName={roleName}
+        onSaved={load}
+      />
+
+      <ProfileBusinessCard business={business} showCodes={isOwner || !!employee?.is_admin} />
+
+      <ProfileSubscriptionCard
+        business={business}
+        isPlatformAdmin={isPlatformAdmin}
+        canPay={isOwner || isPlatformAdmin}
+        onPay={() => setSubOpen(true)}
+        onRefresh={() => refreshBusiness()}
+      />
+
+      <PaymentHistoryCard ownerEmail={business?.owner_email} />
 
       <ProfileNavCard showServerPlan={isOwner || isPlatformAdmin || !!employee?.is_admin} />
 

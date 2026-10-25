@@ -505,7 +505,7 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
   }
 
   return (
-    <div className="h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div className="h-[calc(100vh-5.5rem)] lg:h-[calc(100vh-7.5rem)] flex overflow-hidden bg-slate-50 dark:bg-slate-950">
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
@@ -573,12 +573,13 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
         <div className="h-16 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 gap-3 flex-shrink-0 bg-white dark:bg-slate-900">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
-            title={t(lang, 'ai_new_chat')}
+            className="flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors flex-shrink-0"
+            title={lang === 'tj' ? 'Таърих' : lang === 'en' ? 'History' : 'История'}
           >
-            <History className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            <History className="w-4 h-4" />
+            <span className="text-sm font-medium">{lang === 'tj' ? 'Таърих' : lang === 'en' ? 'History' : 'История'}</span>
           </button>
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
             <Bot className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
@@ -627,66 +628,60 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
               <p className="text-slate-500 dark:text-slate-400 text-sm">{t(lang, 'ai_greeting_sub')}</p>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
               {messages.map((msg, i) => (
-                 <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                   {msg.role === 'assistant' && (
-                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-1">
-                       <Bot className="w-4 h-4 text-white" />
-                     </div>
-                   )}
-                   <div className={`max-w-md ${msg.role === 'user' ? '' : ''}`}>
-                     <div className={`rounded-lg px-4 py-2 text-sm ${
-                       msg.role === 'user'
-                         ? 'bg-indigo-600 text-white'
-                         : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white'
-                     }`}>
-                       {msg.role === 'assistant' ? (
-                         <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:my-2">
-                           {msg.content}
-                         </ReactMarkdown>
-                       ) : (
-                         <p className="break-words">{msg.content}</p>
-                       )}
-                     </div>
-                   </div>
-                 </div>
-               ))}
+                <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.role === 'assistant' && (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Bot className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                  {msg.role === 'assistant' ? (
+                    <div className="flex-1 min-w-0 pt-1">
+                      <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none text-[15px] leading-relaxed prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 prose-headings:my-3 prose-headings:font-semibold prose-pre:rounded-xl prose-pre:bg-slate-100 dark:prose-pre:bg-slate-800">
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <div className="max-w-[85%] rounded-3xl bg-slate-100 dark:bg-slate-800 px-4 py-2.5 text-[15px] leading-relaxed text-slate-900 dark:text-slate-100">
+                      <p className="break-words whitespace-pre-wrap">{msg.content}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
               {sending && (
-                 <div className="flex gap-3 justify-start">
-                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                     <Bot className="w-4 h-4 text-white" />
-                   </div>
-                   <div className="bg-white dark:bg-slate-800 rounded-lg px-4 py-2 flex items-center gap-2">
-                     <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
-                     <span className="text-slate-600 dark:text-slate-400 text-sm">{t(lang, 'ai_thinking')}</span>
-                   </div>
-                 </div>
-               )}
+                <div className="flex gap-3 justify-start">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex items-center gap-2 pt-1.5 text-sm text-slate-500 dark:text-slate-400">
+                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                    {t(lang, 'ai_thinking')}
+                  </div>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
           )}
         </div>
 
         {/* Input */}
-        <div className="border-t border-slate-200 dark:border-slate-800 p-4 bg-white dark:bg-slate-900">
+        <div className="border-t border-slate-200 dark:border-slate-800 px-4 py-4 bg-white dark:bg-slate-900 flex-shrink-0">
           <div className="max-w-3xl mx-auto">
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
-                <Input
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder={t(lang, 'ai_placeholder')}
-                  disabled={sending || !businessData}
-                  className="rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
+            <div className="flex gap-2 items-center rounded-3xl border border-slate-200 dark:border-slate-700 px-2 py-1.5 shadow-sm focus-within:border-indigo-400 transition-colors">
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder={t(lang, 'ai_placeholder')}
+                disabled={sending || !businessData}
+                className="flex-1 border-0 shadow-none focus-visible:ring-0"
+              />
               <Button
                 onClick={sendMessage}
                 disabled={sending || !input.trim() || !businessData}
-                className="bg-indigo-600 hover:bg-indigo-700 rounded-lg h-10 w-10 p-0 flex-shrink-0"
+                className="bg-indigo-600 hover:bg-indigo-700 rounded-full h-9 w-9 p-0 flex-shrink-0"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>

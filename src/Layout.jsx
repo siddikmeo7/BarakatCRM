@@ -575,18 +575,18 @@ export default function Layout({ children, currentPageName }) {
         onClick={() => setDrawerOpen(false)}
         title="Открыть профиль"
         className={cn(
-          "block p-4 border-t space-y-3 transition-colors border-l-2",
+          "group block p-4 border-t space-y-3 transition-all duration-200 border-l-2",
           currentPageName === 'Profile'
             ? "border-l-indigo-500 border-slate-200 dark:border-slate-800"
-            : "border-l-transparent border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+            : "border-l-transparent border-slate-200 dark:border-slate-800 hover:bg-indigo-50/70 dark:hover:bg-indigo-900/20"
         )}
       >
         {/* Current user status card */}
         {currentEmployee ? (
-          <div className={`rounded-xl px-3 py-2.5 flex items-center gap-3 ${currentEmployee.is_admin ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border border-indigo-200 dark:border-indigo-700' : 'bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700'}`}>
+          <div className={`rounded-xl px-3 py-2.5 flex items-center gap-3 transition-all duration-200 group-hover:ring-1 group-hover:ring-indigo-300 dark:group-hover:ring-indigo-700 ${currentEmployee.is_admin ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border border-indigo-200 dark:border-indigo-700' : 'bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700'}`}>
             <EmployeeAvatar employee={currentEmployee} size="sm" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{currentEmployee.name}</p>
+              <p className="origin-left text-sm font-semibold text-slate-900 dark:text-white truncate transition-all duration-200 group-hover:scale-105 group-hover:text-indigo-600 dark:group-hover:text-indigo-300">{currentEmployee.name}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${currentEmployee.is_admin ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
                   {currentEmployee.is_admin ? '👑 Админ' : (roleName || '🛍️ Сотрудник')}
@@ -597,26 +597,19 @@ export default function Layout({ children, currentPageName }) {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:ring-2 group-hover:ring-indigo-300">
               <span className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
                 {user?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user?.full_name || 'User'}</p>
+              <p className="origin-left text-sm font-semibold text-slate-900 dark:text-white truncate transition-all duration-200 group-hover:scale-105 group-hover:text-indigo-600 dark:group-hover:text-indigo-300">{user?.full_name || 'User'}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
                   👑 Владелец
                 </span>
               </div>
             </div>
-          </div>
-        )}
-
-        {currentPageName === 'Profile' && (
-          <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-            Открыт раздел «Профиль»
           </div>
         )}
 

@@ -36,12 +36,13 @@ export default function MyProfileSection({ user, employee, business, roleName, o
           </Button>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-2">
+        {/* Данные — одним списком: строка за строкой сверху вниз */}
+        <div className="rounded-xl border border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
           {rows.map((row) => (
-            <div key={row.label} className="flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-800 px-3 py-2">
+            <div key={row.label} className="flex items-center gap-3 px-3 py-2.5">
               <row.icon className="w-4 h-4 text-slate-400 flex-none" />
-              <span className="text-xs text-slate-400">{row.label}</span>
-              <span className="ml-auto text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{row.value}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 flex-none">{row.label}</span>
+              <span className="ml-auto text-sm font-medium text-slate-800 dark:text-slate-200 truncate text-right">{row.value}</span>
             </div>
           ))}
         </div>
