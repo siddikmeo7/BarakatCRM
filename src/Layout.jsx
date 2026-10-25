@@ -6,7 +6,7 @@ import { t } from '@/components/i18n/translations';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
 import { countDueSalaries } from '@/lib/salaryPeriod';
 import SubscriptionGate from '@/components/subscription/SubscriptionGate';
-import { getSubscriptionState } from '@/lib/subscription';
+import { getSubscriptionState, fetchAccessState } from '@/lib/subscription';
 
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
@@ -83,6 +83,7 @@ export default function Layout({ children, currentPageName }) {
   const [showWelcome, setShowWelcome] = useState(false);
   const [roleName, setRoleName] = useState('');
   const [frozenBlocked, setFrozenBlocked] = useState(false);
+  const [serverAccess, setServerAccess] = useState(null);
   const [dueSalaryCount, setDueSalaryCount] = useState(0);
   const navigate = useNavigate();
 
@@ -112,6 +113,13 @@ export default function Layout({ children, currentPageName }) {
     });
     return unsubscribe;
   }, [business?.id]);
+
+  // Доступ проверяется на сервере: пробный период, оплаченный период,
+  // бесплатные исключения для пользователя или бизнеса.
+  useEffect(() => {
+    if (!business?.id) { setServerAccess(null); return; }
+    fetchAccessState(business.id).then(setServerAccess).catch(() => setServerAccess(null));
+  }, [business?.id, business?.subscription_status]);
 
   // Счётчик «пора выплатить зарплату» для пункта меню «Зарплата»:
   // обновляется при выплате (событие + realtime) и исчезает, когда все выплаты закрыты.
@@ -468,8 +476,10 @@ export default function Layout({ children, currentPageName }) {
     if (fresh) setBusiness(fresh);
   };
 
-  // Пробный месяц закончился (или доступ закрыт) — вместо приложения показываем экран оплаты
-  if (business && subscriptionState.blocked) {
+  // Пробный месяц закончился (или доступ закрыт) — вместо приложения показываем экран оплаты.
+  // Решение принимает серверная проверка, локальный расчёт — только запасной вариант.
+  const accessBlocked = serverAccess ? serverAccess.allowed === false : subscriptionState.blocked;
+  if (business && accessBlocked) {
     return (
       <SubscriptionGate
         business={business}

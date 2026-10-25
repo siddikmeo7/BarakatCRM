@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import SubscriptionStatusBadge from '@/components/subscription/SubscriptionStatusBadge';
 import BusinessSubscriptionActions from '@/components/subscription/BusinessSubscriptionActions';
 import PlanEditorCard from '@/components/subscription/PlanEditorCard';
+import FreeAccessPanel from '@/components/subscription/FreeAccessPanel';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
@@ -283,6 +284,8 @@ export default function AdminBusinesses() {
                   <SubscriptionStatusBadge business={selectedBusiness} />
                   <BusinessSubscriptionActions business={selectedBusiness} onUpdated={reloadBusinesses} />
                 </div>
+
+                <FreeAccessPanel business={selectedBusiness} onChanged={reloadBusinesses} />
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div className="p-4 bg-slate-50 rounded-xl">

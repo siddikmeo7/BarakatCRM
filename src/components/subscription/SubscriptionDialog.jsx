@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { CreditCard, Loader2, RefreshCw, ShieldCheck, CalendarClock, Info } from 'lucide-react';
 import { getSubscriptionState, loadPlan, formatPrice, startSubscriptionCheckout, TRIAL_DAYS } from '@/lib/subscription';
 import SubscriptionStatusBadge from './SubscriptionStatusBadge';
+import AlifPayPanel from './AlifPayPanel';
 
 export default function SubscriptionDialog({ business, open, onOpenChange, onRefresh, canPay = false }) {
   const [plan, setPlan] = useState(null);
@@ -80,9 +81,11 @@ export default function SubscriptionDialog({ business, open, onOpenChange, onRef
             </li>
             <li className="flex items-start gap-2">
               <Info className="w-4 h-4 text-slate-400 mt-0.5 flex-none" />
-              Оплата проходит на защищённой странице Base44 Payments
+              Оплата проходит на защищённой странице банка или платёжного сервиса
             </li>
           </ul>
+
+          <AlifPayPanel business={business} canPay={canPay} onRefresh={onRefresh} />
 
           {error && <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>}
 
@@ -94,7 +97,7 @@ export default function SubscriptionDialog({ business, open, onOpenChange, onRef
                 className="w-full rounded-full bg-indigo-600 hover:bg-indigo-700 font-bold gap-2"
               >
                 {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                {paying ? 'Переходим к оплате...' : 'Оплатить подписку'}
+                {paying ? 'Переходим к оплате...' : 'Оплатить через Base44 Payments'}
               </Button>
               <Button variant="outline" onClick={handleRefresh} disabled={checking} className="w-full rounded-full gap-2">
                 <RefreshCw className={`w-4 h-4 ${checking ? 'animate-spin' : ''}`} />
