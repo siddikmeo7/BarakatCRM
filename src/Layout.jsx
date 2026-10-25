@@ -34,6 +34,7 @@ import {
   Sun,
   Wallet,
   UserCircle,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -516,24 +517,29 @@ export default function Layout({ children, currentPageName }) {
   const DrawerContent = () => (
     <div className="flex flex-col h-full">
       {/* Drawer Header */}
-      <div className="h-16 flex items-center justify-between px-5 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
-        <div className="flex-1 min-w-0">
-          <p className="font-black text-slate-900 dark:text-white text-lg uppercase tracking-tight truncate">{business?.name || 'Бизнес'}</p>
+      <div className="h-14 px-4 bg-[#217346] flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <FileSpreadsheet className="w-4 h-4 text-white/90 flex-none" />
+          <div className="min-w-0">
+            <p className="font-bold text-white text-sm uppercase tracking-tight truncate">{business?.name || 'Бизнес'}</p>
+            <p className="text-[10px] text-emerald-100/90 truncate">Разделы — как листы книги</p>
+          </div>
         </div>
         <button
           onClick={() => setDrawerOpen(false)}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="p-2 rounded hover:bg-white/15 transition-colors"
         >
-          <X className="w-5 h-5 text-slate-500" />
+          <X className="w-5 h-5 text-white" />
         </button>
       </div>
 
 
 
       {/* Menu Items */}
-      <nav className="flex-1 overflow-y-auto py-3 px-3">
-        <div className="space-y-0.5">
-          {currentMenu.map((item) => {
+      {/* Меню в стиле таблицы Excel: плотные строки, сетка, номер строки, зелёная активная строка */}
+      <nav className="flex-1 overflow-y-auto">
+        <div className="border-t border-slate-200 dark:border-slate-800">
+          {currentMenu.map((item, index) => {
             const isActive = currentPageName === item.name;
             return (
               <Link
@@ -541,24 +547,32 @@ export default function Layout({ children, currentPageName }) {
                 to={createPageUrl(item.name)}
                 onClick={() => setDrawerOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
+                  "flex items-stretch border-b border-slate-200 dark:border-slate-800 transition-colors",
                   isActive
-                    ? `${item.activeBg} shadow-md`
-                    : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                    ? "bg-[#217346]"
+                    : "hover:bg-emerald-50 dark:hover:bg-slate-800/60"
                 )}
               >
-                {/* Colored icon box when inactive, white when active */}
-                <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all",
-                  isActive ? "bg-white/20" : "bg-slate-100 dark:bg-slate-800"
+                {/* Номер строки — как в Excel */}
+                <span className={cn(
+                  "w-6 flex-none flex items-center justify-center text-[10px] font-mono border-r",
+                  isActive
+                    ? "bg-[#1b5e3a] text-emerald-100 border-emerald-700"
+                    : "bg-slate-50 dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-slate-800"
                 )}>
-                  <item.icon className={cn("w-4 h-4", isActive ? "text-white" : item.color)} />
-                </div>
-                <span className={cn("text-sm font-medium", isActive ? "text-white" : "text-slate-700 dark:text-slate-300")}>
+                  {index + 1}
+                </span>
+                <span className="w-7 flex-none flex items-center justify-center">
+                  <item.icon className={cn("w-3.5 h-3.5", isActive ? "text-white" : item.color)} />
+                </span>
+                <span className={cn(
+                  "flex-1 py-2 pr-2 text-[12.5px] font-medium tracking-tight truncate",
+                  isActive ? "text-white" : "text-slate-700 dark:text-slate-300"
+                )}>
                   {t(lang, item.labelKey)}
                 </span>
                 {item.name === 'Salary' && dueSalaryCount > 0 && (
-                  <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center animate-salary-due">
+                  <span className="my-auto mr-2 min-w-5 h-5 px-1.5 rounded bg-red-500 text-white text-[10px] font-black flex items-center justify-center animate-salary-due">
                     {dueSalaryCount}
                   </span>
                 )}
@@ -574,7 +588,12 @@ export default function Layout({ children, currentPageName }) {
         to="/Profile"
         onClick={() => setDrawerOpen(false)}
         title="Открыть профиль"
-        className="block p-4 border-t border-slate-200 dark:border-slate-800 space-y-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+        className={cn(
+          "block p-4 border-t space-y-3 transition-colors",
+          currentPageName === 'Profile'
+            ? "bg-emerald-50 dark:bg-emerald-900/25 border-[#217346] ring-1 ring-inset ring-[#217346]"
+            : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+        )}
       >
         {/* Current user status card */}
         {currentEmployee ? (
@@ -605,6 +624,13 @@ export default function Layout({ children, currentPageName }) {
                 </span>
               </div>
             </div>
+          </div>
+        )}
+
+        {currentPageName === 'Profile' && (
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#217346] dark:text-emerald-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#217346] dark:bg-emerald-400" />
+            Открыт раздел «Профиль»
           </div>
         )}
 
@@ -678,6 +704,14 @@ export default function Layout({ children, currentPageName }) {
         <div className="flex-1 flex items-center justify-center">
           {(() => {
             const active = currentMenu.find(i => i.name === currentPageName);
+            if (!active && currentPageName === 'Profile') {
+              return (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#217346] text-white">
+                  <UserCircle className="w-3 h-3" />
+                  Профиль
+                </div>
+              );
+            }
             if (!active) return null;
             return (
               <div className={cn("flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium", active.activeBg, "text-white")}>
@@ -701,14 +735,14 @@ export default function Layout({ children, currentPageName }) {
       </header>
 
       {/* === PAGE CONTENT === */}
-      <main className="pt-14">
+      <main className="pt-14 w-full">
         <motion.div
           key={currentPageName}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.25 }}
-          className="p-4 lg:p-8 min-h-screen"
+          className="p-3 sm:p-4 lg:p-6 w-full min-h-screen"
         >
           {children}
         </motion.div>

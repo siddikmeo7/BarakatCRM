@@ -519,7 +519,7 @@ export default function Settings() {
             </div>
 
             {/* Editable fields */}
-            <div className="grid gap-4 max-w-2xl">
+            <div className="grid gap-4 w-full">
               <div>
                 <Label className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-slate-400" />{t(lang,'settings_biz_name')}</Label>
                 <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="mt-1.5" placeholder="Название бизнеса" />

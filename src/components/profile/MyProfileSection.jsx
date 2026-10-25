@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import ProfileStylePicker from '@/components/settings/ProfileStylePicker';
 import ProfileDetailDialog from '@/components/settings/ProfileDetailDialog';
-import { Pencil, Phone, MessageCircle, Send, Calendar, User as UserIcon } from 'lucide-react';
+import { Pencil, Phone, MessageCircle, Send, Calendar, User as UserIcon, Palette, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // Личные данные пользователя и их изменение — это раздел «Профиль».
 // Работает и для владельца, и для сотрудника: форма сама сохраняет в нужную запись.
 export default function MyProfileSection({ user, employee, business, roleName, onSaved }) {
   const [editOpen, setEditOpen] = useState(false);
+  const [styleOpen, setStyleOpen] = useState(false);
 
   const rows = [
     { icon: UserIcon, label: 'Полное имя', value: employee?.full_name || employee?.name || user?.full_name || '—' },
@@ -45,9 +47,23 @@ export default function MyProfileSection({ user, employee, business, roleName, o
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-4">
-        <p className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Фото, рамка и стикер профиля</p>
-        <ProfileStylePicker currentEmployee={employee} user={user} onSaved={onSaved} />
+      {/* Блок оформления открывается по кнопке, а не сразу */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setStyleOpen(v => !v)}
+          className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+        >
+          <Palette className="w-4 h-4 text-emerald-600 flex-none" />
+          <span className="text-sm font-semibold text-slate-900 dark:text-white">Фото, рамка и стикер профиля</span>
+          <span className="ml-auto text-xs text-slate-400">{styleOpen ? 'Скрыть' : 'Открыть'}</span>
+          <ChevronDown className={cn("w-4 h-4 text-slate-400 flex-none transition-transform", styleOpen && "rotate-180")} />
+        </button>
+        {styleOpen && (
+          <div className="px-4 pb-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <ProfileStylePicker currentEmployee={employee} user={user} onSaved={onSaved} />
+          </div>
+        )}
       </div>
 
       <ProfileDetailDialog

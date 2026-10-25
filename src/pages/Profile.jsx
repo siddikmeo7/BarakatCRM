@@ -54,26 +54,33 @@ export default function Profile() {
   const isPlatformAdmin = user?.email === ADMIN_EMAIL;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 pb-24">
+    <div className="w-full space-y-4 pb-24">
       <h1 className="text-2xl font-black text-slate-900 dark:text-white">Профиль</h1>
 
       <ProfileIdentityCard user={user} employee={employee} business={business} roleName={roleName} />
-      <MyProfileSection
-        user={user}
-        employee={employee}
-        business={business}
-        roleName={roleName}
-        onSaved={load}
-      />
-      <ProfileBusinessCard business={business} showCodes={isOwner || !!employee?.is_admin} />
-      <ProfileSubscriptionCard
-        business={business}
-        isPlatformAdmin={isPlatformAdmin}
-        canPay={isOwner || isPlatformAdmin}
-        onPay={() => setSubOpen(true)}
-        onRefresh={() => refreshBusiness()}
-      />
-      <PaymentHistoryCard ownerEmail={business?.owner_email} />
+
+      {/* Данные профиля занимают всю ширину экрана: на широком экране — две колонки */}
+      <div className="grid gap-4 lg:grid-cols-2 items-start">
+        <MyProfileSection
+          user={user}
+          employee={employee}
+          business={business}
+          roleName={roleName}
+          onSaved={load}
+        />
+        <div className="space-y-4">
+          <ProfileBusinessCard business={business} showCodes={isOwner || !!employee?.is_admin} />
+          <ProfileSubscriptionCard
+            business={business}
+            isPlatformAdmin={isPlatformAdmin}
+            canPay={isOwner || isPlatformAdmin}
+            onPay={() => setSubOpen(true)}
+            onRefresh={() => refreshBusiness()}
+          />
+          <PaymentHistoryCard ownerEmail={business?.owner_email} />
+        </div>
+      </div>
+
       <ProfileNavCard showServerPlan={isOwner || isPlatformAdmin || !!employee?.is_admin} />
 
       <SubscriptionDialog

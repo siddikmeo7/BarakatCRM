@@ -135,7 +135,7 @@ export default function UserProfile() {
     : { label: 'Сотрудник', color: 'bg-slate-100 text-slate-600', icon: '👤' };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5 pb-24">
+    <div className="w-full space-y-5 pb-24">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Профиль</h1>
