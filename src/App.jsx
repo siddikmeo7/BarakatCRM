@@ -9,6 +9,7 @@ import Salary from './pages/Salary';
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import ThankYou from './pages/ThankYou';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -58,6 +59,7 @@ const AuthenticatedApp = () => {
       ))}
       <Route path="/Salary" element={<LayoutWrapper currentPageName="Salary"><Salary /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
+      <Route path="/ThankYou" element={<ThankYou />} />
     </Routes>
   );
 };
