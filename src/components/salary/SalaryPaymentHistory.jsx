@@ -28,7 +28,11 @@ export default function SalaryPaymentHistory({ payments = [], loading }) {
               </div>
               <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground flex-wrap">
                 <span>{getSalaryMethod(p.method).icon} {getSalaryMethod(p.method).label}</span>
-                {p.period_label && <span>· за {p.period_label}</span>}
+                {p.period_label && (
+                  <span className="text-foreground font-semibold">
+                    · Зарплата за {p.method === 'fixed_monthly' ? `месяц ${p.period_label}` : p.period_label}
+                  </span>
+                )}
               </div>
               {p.note && <p className="text-[11px] text-muted-foreground mt-1">{p.note}</p>}
               {p.paid_by_name && <p className="text-[11px] text-muted-foreground mt-1">Выплатил: {p.paid_by_name}</p>}

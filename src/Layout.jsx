@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import { t } from '@/components/i18n/translations';
-import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
+import { countDueSalaries } from '@/lib/salaryPeriod';
 
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
@@ -30,10 +30,8 @@ import {
   FileText,
   Moon,
   Sun,
-  PackageOpen,
   Wallet,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
@@ -82,6 +80,7 @@ export default function Layout({ children, currentPageName }) {
   const [showWelcome, setShowWelcome] = useState(false);
   const [roleName, setRoleName] = useState('');
   const [frozenBlocked, setFrozenBlocked] = useState(false);
+  const [dueSalaryCount, setDueSalaryCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -107,6 +106,34 @@ export default function Layout({ children, currentPageName }) {
       }
     });
     return unsubscribe;
+  }, [business?.id]);
+
+  // Счётчик «пора выплатить зарплату» для пункта меню «Зарплата»:
+  // обновляется при выплате (событие + realtime) и исчезает, когда все выплаты закрыты.
+  useEffect(() => {
+    if (!business?.id) { setDueSalaryCount(0); return; }
+    let alive = true;
+    const compute = async () => {
+      try {
+        const [emps, pays, scheds] = await Promise.all([
+          base44.entities.Employee.filter({ business_id: business.id }),
+          base44.entities.SalaryPayment.filter({ business_id: business.id }),
+          base44.entities.SalarySchedule.filter({ business_id: business.id }),
+        ]);
+        if (alive) setDueSalaryCount(countDueSalaries({ employees: emps, payments: pays, schedules: scheds }));
+      } catch (_) {}
+    };
+    compute();
+    const unsubPayments = base44.entities.SalaryPayment.subscribe(() => compute());
+    const unsubSchedules = base44.entities.SalarySchedule.subscribe(() => compute());
+    const onChanged = () => compute();
+    window.addEventListener('salaryPaymentsChanged', onChanged);
+    return () => {
+      alive = false;
+      unsubPayments?.();
+      unsubSchedules?.();
+      window.removeEventListener('salaryPaymentsChanged', onChanged);
+    };
   }, [business?.id]);
 
   // Загружаем название роли сотрудника для отображения статуса в меню (Админ/Менеджер/Сотрудник)
@@ -480,6 +507,11 @@ export default function Layout({ children, currentPageName }) {
                 <span className={cn("text-sm font-medium", isActive ? "text-white" : "text-slate-700 dark:text-slate-300")}>
                   {t(lang, item.labelKey)}
                 </span>
+                {item.name === 'Salary' && dueSalaryCount > 0 && (
+                  <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center animate-salary-due">
+                    {dueSalaryCount}
+                  </span>
+                )}
               </Link>
             );
           })}

@@ -8,8 +8,14 @@ import SalaryPaymentHistory from './SalaryPaymentHistory';
 import SalaryScheduleEditor from './SalaryScheduleEditor';
 import SalaryDueBadge from './SalaryDueBadge';
 import { getSalaryMethod } from '@/lib/salary';
-import { getSalaryDueState, getSalaryPeriod, formatDueMoment, formatPaidAt, formatPayDay } from '@/lib/salaryPeriod';
-import { Wallet, Banknote, Calendar, Settings2, Loader2, AlertTriangle, CheckCircle2, Clock, CalendarOff } from 'lucide-react';
+import {
+  getSalaryDueState, getSalaryPeriod, getDueMoment, shiftPayDate,
+  formatDueMoment, formatPaidAt, formatPayDay
+} from '@/lib/salaryPeriod';
+import {
+  Wallet, Banknote, Calendar, Settings2, Loader2, AlertTriangle,
+  CheckCircle2, Clock, CalendarOff, Package, TrendingUp, ShoppingCart
+} from 'lucide-react';
 
 const fmtMoney = (n) => (n || 0).toLocaleString('ru-RU');
 
@@ -22,13 +28,16 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
   const [saving, setSaving] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [paidFlash, setPaidFlash] = useState('');
   const period = getSalaryPeriod();
 
   const isReal = !!employee?.id && !employee._unknown;
   const method = getSalaryMethod(employee?.salary_method || 'per_box');
-  const suggested = employee?.salary_method === 'fixed_monthly'
-    ? Number(employee?.salary_rate || 0)
-    : Number(stat?.salary || 0);
+  const isMonthly = employee?.salary_method === 'fixed_monthly';
+  const rate = employee?.salary_method === 'per_box'
+    ? Number(employee?.salary_per_box || 0)
+    : Number(employee?.salary_rate || 0);
+  const suggested = isMonthly ? rate : Number(stat?.salary || 0);
 
   const load = async () => {
     if (!isReal) { setLoading(false); return; }
@@ -70,6 +79,11 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
         paid_by_email: user.email || '',
         note: note.trim(),
       });
+      // Индивидуальный график: после выплаты переносим следующую дату на месяц вперёд
+      if (schedule?.id) {
+        const next = shiftPayDate(getDueMoment(schedule) || new Date(), 1);
+        await base44.entities.SalarySchedule.update(schedule.id, { next_pay_date: next.toISOString() });
+      }
       await base44.entities.ActivityLog.create({
         business_id: business.id,
         action_type: 'create',
@@ -79,8 +93,10 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
         user_name: payerName,
         description: `Выплачена зарплата: ${employee.name} — ${value} с. за ${period.monthLabel}`,
       });
+      setPaidFlash(`Зарплата ${fmtMoney(value)} с. выдана за ${isMonthly ? `месяц ${period.monthLabel}` : period.monthLabel}`);
       setNote('');
       await load();
+      window.dispatchEvent(new Event('salaryPaymentsChanged'));
       onChanged?.();
     } finally {
       setSaving(false);
@@ -101,6 +117,7 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
       }
       await load();
       setShowSchedule(false);
+      window.dispatchEvent(new Event('salaryPaymentsChanged'));
       onChanged?.();
     } finally {
       setSavingSchedule(false);
@@ -124,7 +141,7 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
         <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-3">
           <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4" />
-            Зарплата за {period.monthLabel} выплачена
+            Зарплата за {dueState.paid.period_label || period.monthLabel} выплачена
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {fmtMoney(dueState.paid.amount)} с. · {formatPaidAt(dueState.paid.paid_at)}
@@ -149,9 +166,9 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
         <div className="rounded-2xl border border-border bg-muted/40 p-3">
           <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
             <CalendarOff className="w-4 h-4 text-muted-foreground" />
-            День и время выплаты не заданы
+            Дата и время выплаты не заданы
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Задайте день и время — и система будет напоминать о выплате мигающим индикатором.</p>
+          <p className="text-xs text-muted-foreground mt-1">Задайте дату и время — и система будет напоминать о выплате мигающим индикатором.</p>
         </div>
       );
     }
@@ -164,6 +181,13 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
     );
   };
 
+  const salesCells = [
+    { label: 'Продаж', value: stat?.salesCount ?? 0, icon: ShoppingCart, cls: 'text-indigo-600' },
+    { label: 'Коробок', value: stat?.boxes ?? 0, icon: Package, cls: 'text-blue-600' },
+    { label: 'Пар', value: stat?.pairs ?? 0, icon: Package, cls: 'text-teal-600' },
+    { label: 'Выручка', value: `${fmtMoney(stat?.revenue)} с.`, icon: TrendingUp, cls: 'text-emerald-600' },
+  ];
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -175,27 +199,38 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
         </DialogHeader>
 
         <div className="space-y-3 pt-1">
-          {/* Employee */}
+          {/* Employee + тип зарплаты */}
           <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
             <EmployeeAvatar employee={employee} size="md" />
             <div className="min-w-0 flex-1">
               <p className="font-bold text-foreground truncate">{employee?.name || 'Сотрудник'}</p>
               <p className="text-xs text-muted-foreground truncate">
-                {method.icon} {method.label} · {fmtMoney(employee?.salary_method === 'per_box' ? employee?.salary_per_box : employee?.salary_rate)}{method.key === 'percent_revenue' ? '%' : ' с.'}
+                {method.icon} {method.label} · {fmtMoney(rate)}{method.key === 'percent_revenue' ? '%' : ' с.'}
               </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{formatPayDay(schedule)}</p>
             </div>
             <SalaryDueBadge state={dueState} />
           </div>
 
-          {/* Period amount */}
+          {/* Продажи за выбранный период */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {salesCells.map(cell => (
+              <div key={cell.label} className="rounded-xl border border-border bg-card p-2.5 text-center">
+                <cell.icon className={`w-4 h-4 mx-auto mb-1 ${cell.cls}`} />
+                <p className="text-sm font-bold text-foreground">{cell.value}</p>
+                <p className="text-[10px] text-muted-foreground">{cell.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Зарплата за текущий месяц */}
           <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-4 text-white">
-            <p className="text-xs opacity-90">Зарплата за {period.monthLabel}</p>
+            <p className="text-xs opacity-90">
+              {isMonthly ? `Зарплата за месяц · ${period.monthLabel}` : `Зарплата от продаж · ${period.monthLabel}`}
+            </p>
             <p className="text-2xl font-black mt-1">
               {fmtMoney(dueState.status === 'paid' ? dueState.paid.amount : suggested)} с.
             </p>
-            {stat && employee?.salary_method !== 'fixed_monthly' && (
-              <p className="text-[11px] opacity-90 mt-1">{stat.boxes} коробок · {stat.salesCount} продаж</p>
-            )}
           </div>
 
           {renderDueCard()}
@@ -205,6 +240,9 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
               <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                 <Banknote className="w-4 h-4 text-emerald-600" />
                 Выдать зарплату
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {isMonthly ? `Начисление за месяц: ${period.monthLabel}` : `Начисление по продажам за ${period.monthLabel}`}
               </p>
               <div className="flex gap-2">
                 <Input
@@ -220,17 +258,23 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
                 </Button>
               </div>
               <Input value={note} onChange={e => setNote(e.target.value)} placeholder="Примечание (необязательно)" />
-              <p className="text-[11px] text-muted-foreground">Запись сохранится в истории за {period.monthLabel}.</p>
+              {paidFlash ? (
+                <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {paidFlash}
+                </p>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">Запись сохранится в истории за {period.monthLabel}.</p>
+              )}
             </div>
           )}
 
-          {/* Schedule */}
+          {/* Индивидуальный график выплат */}
           <div className="rounded-2xl border border-border bg-card p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-indigo-500" />
-                  День и время выплаты
+                  График выплат
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">{formatPayDay(schedule)}</p>
               </div>

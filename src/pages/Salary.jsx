@@ -294,6 +294,12 @@ export default function Salary() {
     });
   };
 
+  // Сколько сотрудников уже ждут выплату (для светящегося счётчика раздела)
+  const dueCount = useMemo(
+    () => Object.values(dueStates).filter(s => s?.status === 'due').length,
+    [dueStates]
+  );
+
   const fmtMoney = (n) => (n || 0).toLocaleString('ru-RU');
   const periodLabel = dateRange?.from
     ? (dateRange.to && dateRange.to.getTime() !== dateRange.from.getTime()
@@ -326,6 +332,18 @@ export default function Salary() {
         title="Зарплата сотрудников"
         subtitle={`Расчёт по выбранному методу · ${periodLabel}`}
       />
+
+      {/* Светящийся счётчик: сколько сотрудников ждут выплату */}
+      {dueCount > 0 && (
+        <div className="flex items-center gap-3 rounded-2xl border-2 border-red-400 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-4 py-3 animate-salary-due">
+          <span className="w-8 h-8 rounded-full bg-red-500 text-white text-sm font-black flex items-center justify-center flex-shrink-0">
+            {dueCount}
+          </span>
+          <span className="text-sm font-bold text-red-700 dark:text-red-300">
+            {dueCount === 1 ? 'Одному сотруднику пора выплатить зарплату' : `${dueCount} сотрудникам пора выплатить зарплату`}
+          </span>
+        </div>
+      )}
 
       {/* Today highlight */}
       <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white shadow-lg">

@@ -12,8 +12,7 @@ import {
   Users, TrendingUp, ShoppingCart, DollarSign, Eye, EyeOff,
   BarChart2, GitCompare, User, Target, Zap, CheckCircle,
   CreditCard, ChevronDown, Package, PackageOpen, RefreshCw, Trophy,
-  Medal, Star, Clock, Calendar, ArrowUpRight, ArrowDownRight,
-  List, Filter
+  Calendar, List
 } from 'lucide-react';
 import {
   format, subDays, startOfDay, endOfDay, startOfMonth, endOfMonth,
@@ -22,6 +21,7 @@ import {
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
+import EmployeeSalaryPanel from '@/components/analytics/EmployeeSalaryPanel';
 
 // ─── Constants ───────────────────────────────────────────────
 const COLORS = [
@@ -810,6 +810,9 @@ export default function EmployeeAnalytics() {
                     <MiniStat label="Продаж в долг" value={emp.allTime.debtCount} color="text-red-500" />
                   </div>
                 </div>
+
+                {/* Salary: тип, срок, выплаты */}
+                <EmployeeSalaryPanel employee={employees.find(e => e.user_email === emp.email)} />
 
                 {/* Consignment stats */}
                 {emp.consignmentCount > 0 && (
