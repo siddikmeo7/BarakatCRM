@@ -87,59 +87,6 @@
   }
 }
 
-/* ===== Excel-стиль таблиц: компактно, читабельно, с сеткой =====
-   Правила в базовом слое: цвета строк/ячеек, заданные в разделах (например
-   красная подсветка долга), продолжают работать, а плотность и сетка
-   становятся едиными во всех таблицах приложения. */
-@layer base {
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    font-variant-numeric: tabular-nums;
-  }
-
-  table thead th {
-    padding: 5px 8px !important;
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    border-bottom: 1px solid hsl(var(--border)) !important;
-    border-right: 1px solid hsl(var(--border));
-    background-color: hsl(var(--muted));
-  }
-
-  table tbody td {
-    padding: 4px 8px !important;
-    font-size: 12.5px !important;
-    line-height: 1.35;
-    vertical-align: middle;
-    border-bottom: 1px solid hsl(var(--border));
-    border-right: 1px solid hsl(var(--border));
-  }
-
-  /* Полосы «зебры» — как в Excel. Явные цвета строк из разделов остаются приоритетнее. */
-  table tbody tr:nth-child(even) {
-    background-color: hsl(var(--muted) / 0.45);
-  }
-
-  table tbody tr:hover {
-    background-color: hsl(var(--primary) / 0.07);
-  }
-
-  table th:last-child,
-  table td:last-child {
-    border-right: 0;
-  }
-
-  /* Числовые колонки — ровные цифры и выравнивание вправо */
-  table td.tabular-number {
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-  }
-}
-
 /* ===== DARK MODE GLOBAL OVERRIDES ===== */
 
 /* Белые карточки → тёмный фон */

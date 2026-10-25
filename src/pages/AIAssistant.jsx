@@ -627,7 +627,7 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
               <p className="text-slate-500 dark:text-slate-400 text-sm">{t(lang, 'ai_greeting_sub')}</p>
             </div>
           ) : (
-            <div className="w-full px-4 py-6 space-y-4">
+            <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
               {messages.map((msg, i) => (
                  <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                    {msg.role === 'assistant' && (
@@ -670,7 +670,7 @@ ${newMessages.slice(-10).map(m => `${m.role === 'user' ? 'Пользовател
 
         {/* Input */}
         <div className="border-t border-slate-200 dark:border-slate-800 p-4 bg-white dark:bg-slate-900">
-          <div className="w-full">
+          <div className="max-w-3xl mx-auto">
             <div className="flex gap-2 items-end">
               <div className="flex-1">
                 <Input

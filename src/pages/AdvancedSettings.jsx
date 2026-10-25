@@ -153,7 +153,7 @@ export default function AdvancedSettings() {
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-6">Настройки отображения</h3>
             
-            <div className="space-y-6 w-full">
+            <div className="space-y-6 max-w-2xl">
               <div className="flex items-center justify-between p-4 border border-slate-200 rounded-xl">
                 <div>
                   <h4 className="font-medium text-slate-900">Компактный вид</h4>

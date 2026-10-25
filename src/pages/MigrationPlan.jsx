@@ -79,7 +79,7 @@ export default function MigrationPlan() {
   }
 
   return (
-    <div className="w-full space-y-4 pb-24">
+    <div className="max-w-3xl mx-auto space-y-4 pb-24">
       <BackButton />
       <div>
         <h1 className="text-2xl font-black text-slate-900 dark:text-white">Свой сервер и независимость от платформы</h1>
