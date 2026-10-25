@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
-  Plus, Trash2, Loader2, Receipt, TrendingDown, Pencil, Search,
-  Home, Users, Truck, Zap, Megaphone, MoreHorizontal, Calendar,
-  UtensilsCrossed, History, User, ShoppingBasket, Heart, GraduationCap,
-  Landmark, ScrollText, UserCircle
+  Plus, Loader2, Receipt, TrendingDown, Pencil, Users,
+  Home, Truck, Zap, Megaphone, MoreHorizontal, UtensilsCrossed,
+  History, User, ShoppingBasket, Heart, GraduationCap, Landmark,
+  ScrollText, UserCircle
 } from 'lucide-react';
 import { format, parseISO, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -18,20 +18,24 @@ import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import BackButton from '@/components/ui/BackButton';
 import OwnerProfitControl from '@/components/expenses/OwnerProfitControl';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
+import ExpenseDonut from '@/components/expenses/ExpenseDonut';
+import ExpenseCard from '@/components/expenses/ExpenseCard';
+import SpentByPanel from '@/components/expenses/SpentByPanel';
+import { CAP, CARD, EXPENSE_HERO_IMG, fmtMoney } from '@/components/expenses/expenseDesign';
 
 const CATEGORIES = [
-  { value: 'Аренда', label: 'Аренда', icon: Home, color: 'bg-blue-100 text-blue-600' },
-  { value: 'Зарплата', label: 'Зарплата', icon: Users, color: 'bg-green-100 text-green-600' },
-  { value: 'Транспорт', label: 'Транспорт', icon: Truck, color: 'bg-orange-100 text-orange-600' },
-  { value: 'Коммунальные', label: 'Коммунальные', icon: Zap, color: 'bg-yellow-100 text-yellow-600' },
-  { value: 'Реклама', label: 'Реклама', icon: Megaphone, color: 'bg-purple-100 text-purple-600' },
-  { value: 'Еда', label: 'Еда', icon: UtensilsCrossed, color: 'bg-rose-100 text-rose-600' },
-  { value: 'На дом', label: 'На дом', icon: ShoppingBasket, color: 'bg-amber-100 text-amber-600' },
-  { value: 'Личные', label: 'Личные', icon: Heart, color: 'bg-pink-100 text-pink-600' },
-  { value: 'Обучение', label: 'Обучение', icon: GraduationCap, color: 'bg-violet-100 text-violet-600' },
-  { value: 'Налог', label: 'Налог', icon: Landmark, color: 'bg-cyan-100 text-cyan-600' },
-  { value: 'Патент', label: 'Патент', icon: ScrollText, color: 'bg-teal-100 text-teal-600' },
-  { value: 'Прочее', label: 'Прочее', icon: MoreHorizontal, color: 'bg-slate-100 text-slate-600' },
+  { value: 'Аренда', label: 'Аренда', icon: Home, color: 'bg-blue-100 text-blue-600', bar: '#4f46e5' },
+  { value: 'Зарплата', label: 'Зарплата', icon: Users, color: 'bg-green-100 text-green-600', bar: '#16a34a' },
+  { value: 'Транспорт', label: 'Транспорт', icon: Truck, color: 'bg-orange-100 text-orange-600', bar: '#ea580c' },
+  { value: 'Коммунальные', label: 'Коммунальные', icon: Zap, color: 'bg-yellow-100 text-yellow-600', bar: '#ca8a04' },
+  { value: 'Реклама', label: 'Реклама', icon: Megaphone, color: 'bg-purple-100 text-purple-600', bar: '#9333ea' },
+  { value: 'Еда', label: 'Еда', icon: UtensilsCrossed, color: 'bg-rose-100 text-rose-600', bar: '#06b6d4' },
+  { value: 'На дом', label: 'На дом', icon: ShoppingBasket, color: 'bg-amber-100 text-amber-600', bar: '#d97706' },
+  { value: 'Личные', label: 'Личные', icon: Heart, color: 'bg-pink-100 text-pink-600', bar: '#db2777' },
+  { value: 'Обучение', label: 'Обучение', icon: GraduationCap, color: 'bg-violet-100 text-violet-600', bar: '#7c3aed' },
+  { value: 'Налог', label: 'Налог', icon: Landmark, color: 'bg-cyan-100 text-cyan-600', bar: '#0891b2' },
+  { value: 'Патент', label: 'Патент', icon: ScrollText, color: 'bg-teal-100 text-teal-600', bar: '#0d9488' },
+  { value: 'Прочее', label: 'Прочее', icon: MoreHorizontal, color: 'bg-slate-100 text-slate-600', bar: '#64748b' },
 ];
 
 const MAX_EDITS = 5;
@@ -44,6 +48,9 @@ const DEFAULT_FORM = {
   spent_by_name: '',
   expense_date: new Date().toISOString().slice(0, 10),
 };
+const FIELD = 'mt-1.5 h-9 rounded-[11px] bg-slate-50 dark:bg-slate-800';
+const PILL_OUT = 'exp-focus rounded-full border-slate-300 bg-white px-5 py-2.5 font-bold text-slate-700 hover:bg-slate-100 active:bg-slate-200';
+const FILTER_SELECT = 'h-[34px] rounded-[11px] border-slate-200 bg-white text-xs text-slate-700 hover:border-indigo-300 hover:shadow-[0_2px_8px_rgba(79,70,229,.12)] transition';
 
 export default function Expenses() {
   const { can, isOwner, employee } = useEmployeeAccess();
@@ -255,10 +262,14 @@ export default function Expenses() {
     .map(name => ({ name, total: visible.filter(e => e.spent_by_name === name).reduce((s, e) => s + (e.amount || 0), 0) }))
     .sort((a, b) => b.total - a.total);
 
-  const byCategory = CATEGORIES.map(cat => ({
+  // Легенда диаграммы: все категории в объявленном порядке, с суммами за выбранный период
+  const legend = CATEGORIES.map(cat => ({
     ...cat,
     total: filtered.filter(e => e.category === cat.value).reduce((s, e) => s + (e.amount || 0), 0),
-  })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
+  }));
+  const spentByTotal = bySpentBy.reduce((s, item) => s + item.total, 0);
+  const topSpentBy = bySpentBy[0] || null;
+  const showSide = canViewAll && bySpentBy.length > 0;
 
   if (loading) {
     return (
@@ -286,35 +297,67 @@ export default function Expenses() {
   const getEmpByName = (nm) => employees.find(e => e.name === nm) || null;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <BackButton className="mb-2" />
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <TrendingDown className="w-6 h-6 text-red-500" />
+    <div className="-m-4 lg:-m-8 min-h-[calc(100vh-3.5rem)] bg-slate-100 dark:bg-slate-950 p-4 lg:p-8 pb-32 space-y-5">
+
+      {/* ── Hero ── */}
+      <div className="relative overflow-hidden rounded-[28px] min-h-[230px] flex items-end justify-between gap-6 px-6 py-7 lg:px-9 shadow-[0_12px_32px_rgba(15,23,42,.12)]">
+        <img src={EXPENSE_HERO_IMG} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/[.94] via-white/[.82] to-white/[.25]"></div>
+        <div className="relative">
+          <BackButton className="exp-focus mb-3.5 bg-white border border-slate-200 rounded-xl px-3.5 py-[7px] text-[13px] font-semibold text-slate-600 hover:shadow-[0_4px_12px_rgba(15,23,42,.1)] active:bg-slate-100" />
+          <h1 className="text-3xl lg:text-[40px] font-bold leading-[1.1] tracking-[-.5px] text-slate-900 flex items-center gap-2.5">
+            <TrendingDown className="w-7 h-7 lg:w-[34px] lg:h-[34px] text-red-500 flex-none" />
             Расходы
-            {!canViewAll && <span className="text-sm font-normal text-slate-400">(ваши расходы)</span>}
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">
+          <p className="text-sm text-slate-600 mt-2">
             {canViewAll ? 'Все затраты бизнеса' : 'Только ваши расходы'} — аренда, зарплата, еда, прочее
           </p>
         </div>
-        {canAdd && (
-          <Button onClick={openAddForm} className="bg-red-500 hover:bg-red-600 text-white gap-2">
-            <Plus className="w-4 h-4" />
-            Добавить расход
-          </Button>
-        )}
       </div>
 
+      {/* ── Диаграмма + плитки ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_330px] gap-5 items-stretch">
+        <ExpenseDonut categories={legend} total={totalFiltered} />
+
+        <div className="flex flex-col gap-5">
+          <div className={`${CARD} p-6 flex-1 flex flex-col justify-center gap-2`}>
+            <span className={CAP}>Расходы</span>
+            <span className="text-[30px] font-bold text-red-600 tabular-nums tracking-[-.4px]">−{fmtMoney(totalFiltered)} с.</span>
+            <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
+              <TrendingDown className="w-[15px] h-[15px] text-indigo-600 flex-none" />
+              Итого за период
+            </span>
+          </div>
+
+          {canViewAll && (
+            <div className={`${CARD} p-6 flex-1 flex flex-col justify-center gap-2`}>
+              <span className={CAP}>От имени других лиц</span>
+              <span className="text-[30px] font-bold text-indigo-600 tabular-nums tracking-[-.4px]">−{fmtMoney(spentByTotal)} с.</span>
+              <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
+                <UserCircle className="w-[15px] h-[15px] text-cyan-500 flex-none" />
+                {topSpentBy?.name || 'нет данных'}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Контроль прибыли владельца ── */}
       {hasAccess && business && (canViewAll || can('view_expense_sales_revenue') || can('view_expense_money_in_hand')) && (
         <OwnerProfitControl business={business} />
       )}
 
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-wrap items-center gap-3">
+      {/* ── Фильтры ── */}
+      <div className="sticky top-14 z-30 rounded-[22px] border border-slate-200/80 dark:border-slate-700/60 bg-white px-4 py-3.5 shadow-[0_8px_24px_rgba(15,23,42,.08)] flex items-center gap-2.5 flex-wrap">
+        <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[10px] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[12px] font-semibold text-slate-600 dark:text-slate-300">
+          <Users className="w-3.5 h-3.5" />
+          {canViewAll ? 'Все расходы' : 'Только мои'}
+        </span>
+
         <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-36 h-9 text-xs">
+          <SelectTrigger className={`${FILTER_SELECT} w-36`}>
             <SelectValue placeholder="Категория" />
           </SelectTrigger>
           <SelectContent>
@@ -322,9 +365,10 @@ export default function Expenses() {
             {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
           </SelectContent>
         </Select>
+
         {canViewAll && authors.length > 0 && (
           <Select value={filterAuthor} onValueChange={setFilterAuthor}>
-            <SelectTrigger className="w-40 h-9 text-xs">
+            <SelectTrigger className={`${FILTER_SELECT} w-40`}>
               <SelectValue placeholder="Автор" />
             </SelectTrigger>
             <SelectContent>
@@ -333,9 +377,10 @@ export default function Expenses() {
             </SelectContent>
           </Select>
         )}
+
         {canViewAll && spentByNames.length > 0 && (
           <Select value={filterSpentBy} onValueChange={setFilterSpentBy}>
-            <SelectTrigger className="w-44 h-9 text-xs">
+            <SelectTrigger className={`${FILTER_SELECT} w-44`}>
               <SelectValue placeholder="От имени" />
             </SelectTrigger>
             <SelectContent>
@@ -344,182 +389,101 @@ export default function Expenses() {
             </SelectContent>
           </Select>
         )}
+
         <SearchInput value={search} onChange={setSearch} placeholder="Поиск..." className="flex-1 min-w-32" />
+
         <div className="ml-auto text-right">
-          <p className="text-xs text-slate-400">Итого за период</p>
-          <p className="text-2xl font-bold text-red-600">−{totalFiltered.toLocaleString()} с.</p>
+          <span className={CAP}>Итого за период</span>
+          <p className="text-[26px] leading-[1.15] font-bold text-red-600 tabular-nums">−{fmtMoney(totalFiltered)} с.</p>
         </div>
       </div>
 
-      {byCategory.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-          {byCategory.map(cat => {
-            const Icon = cat.icon;
-            return (
-              <div key={cat.value} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col items-center gap-2 text-center">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${cat.color}`}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <p className="text-xs text-slate-500 font-medium">{cat.label}</p>
-                <p className="text-sm font-bold text-slate-800">{cat.total.toLocaleString()} с.</p>
+      {/* ── Стена карточек + панель лиц ── */}
+      <div className={`grid grid-cols-1 gap-5 items-start ${showSide ? 'xl:grid-cols-[1fr_340px]' : ''}`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filtered.length === 0 ? (
+            <div className={`${CARD} expense-rise col-span-full md:col-span-2 flex flex-col items-center gap-2.5 p-7 text-center`}>
+              <div className="w-[54px] h-[54px] rounded-full bg-red-100 text-red-400 flex items-center justify-center">
+                <Receipt className="w-[26px] h-[26px]" />
               </div>
-            );
-          })}
-        </div>
-      )}
-
-      {canViewAll && bySpentBy.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <div className="flex items-center gap-2 mb-3">
-            <UserCircle className="w-5 h-5 text-indigo-500" />
-            <h3 className="text-sm font-bold text-slate-800">Расходы от имени других лиц</h3>
-            <span className="text-xs text-slate-400">— за весь период бизнеса</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {bySpentBy.map(item => (
-              <div
-                key={item.name}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-xl border cursor-pointer transition-colors ${
-                  filterSpentBy === item.name
-                    ? 'border-indigo-400 bg-indigo-50'
-                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                }`}
-                onClick={() => setFilterSpentBy(prev => prev === item.name ? 'all' : item.name)}
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  {(() => { const em = getEmpByName(item.name); return em
-                    ? <EmployeeAvatar employee={em} sizeClass="w-8 h-8 rounded-2xl text-xs" />
-                    : <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                        <User className="w-4 h-4 text-indigo-600" />
-                      </div>; })()}
-                  <span className="text-sm font-medium text-slate-700 truncate">{item.name}</span>
-                </div>
-                <span className="text-sm font-bold text-red-600 flex-shrink-0">−{item.total.toLocaleString()} с.</span>
-              </div>
-            ))}
-          </div>
-          {filterSpentBy !== 'all' && (
-            <button onClick={() => setFilterSpentBy('all')} className="mt-2 text-xs text-indigo-500 hover:text-indigo-600">
-              Сбросить фильтр по лицу
-            </button>
+              <p className="font-semibold text-slate-500 text-sm">Расходов нет за выбранный период</p>
+              {canAdd && (
+                <Button onClick={openAddForm} variant="outline" className={`${PILL_OUT} gap-2`}>
+                  <Plus className="w-4 h-4" /> Добавить первый расход
+                </Button>
+              )}
+            </div>
+          ) : (
+            filtered.map((expense, i) => (
+              <ExpenseCard
+                key={expense.id}
+                expense={expense}
+                index={i}
+                maxEdits={MAX_EDITS}
+                authorEmployee={getEmpByName(expense.created_by_name)}
+                canEdit={canEdit(expense)}
+                canDelete={canDelete(expense)}
+                deleting={deleting}
+                onOpen={() => setViewingExpense(expense)}
+                onEdit={openEditForm}
+                onDelete={handleDelete}
+              />
+            ))
           )}
         </div>
-      )}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
-              <Receipt className="w-8 h-8 text-red-300" />
-            </div>
-            <p className="text-slate-500 font-medium">Расходов нет за выбранный период</p>
-            {canAdd && (
-              <Button onClick={openAddForm} variant="outline" className="gap-2">
-                <Plus className="w-4 h-4" /> Добавить первый расход
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 max-h-[60vh] overflow-y-auto custom-scroll">
-            {filtered.map(expense => {
-              const cat = getCategoryInfo(expense.category);
-              const Icon = cat.icon;
-              const editsLeft = MAX_EDITS - (expense.edit_count || 0);
-              return (
-                <div key={expense.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => setViewingExpense(expense)}>
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cat.color}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-slate-800 text-sm">{expense.category}</span>
-                      {expense.recipient && (
-                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{expense.recipient}</span>
-                      )}
-                      {expense.created_by_name && (
-                        <span className="text-xs bg-indigo-50 text-indigo-600 pl-1 pr-2 py-0.5 rounded-full flex items-center gap-1">
-                          {(() => { const em = getEmpByName(expense.created_by_name); return em
-                            ? <EmployeeAvatar employee={em} sizeClass="w-4 h-4 rounded-full text-[9px]" />
-                            : <User className="w-3 h-3" />; })()}
-                          {expense.created_by_name}
-                        </span>
-                      )}
-                      {expense.spent_by_name && (
-                        <span className="text-xs bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <UserCircle className="w-3 h-3" /> от имени: {expense.spent_by_name}
-                        </span>
-                      )}
-                      {(expense.edit_count || 0) > 0 && (
-                        <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Pencil className="w-3 h-3" /> {expense.edit_count}/{MAX_EDITS}
-                        </span>
-                      )}
-                    </div>
-                    {expense.description && (
-                      <p className="text-xs text-slate-400 mt-0.5 truncate">{expense.description}</p>
-                    )}
-                    <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                      <Calendar className="w-3 h-3" />
-                      {format(parseISO(expense.expense_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
-                    </p>
-                  </div>
-                  <div className="text-right flex-shrink-0 flex items-center gap-2">
-                    <p className="text-base font-bold text-red-600">−{expense.amount.toLocaleString()} с.</p>
-                    {canEdit(expense) && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openEditForm(expense); }}
-                        disabled={editsLeft <= 0}
-                        title={editsLeft <= 0 ? 'Лимит редактирований исчерпан' : `Осталось редактирований: ${editsLeft}`}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    )}
-                    {canDelete(expense) && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDelete(expense); }}
-                        disabled={deleting === expense.id}
-                        className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      >
-                        {deleting === expense.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        {showSide && (
+          <SpentByPanel
+            items={bySpentBy}
+            activeName={filterSpentBy}
+            onToggle={(name) => setFilterSpentBy(prev => prev === name ? 'all' : name)}
+            onReset={() => setFilterSpentBy('all')}
+            getEmployee={getEmpByName}
+          />
         )}
       </div>
 
-      {/* Add/Edit Dialog */}
+      {/* ── Плавающая кнопка добавления ── */}
+      {canAdd && (
+        <button
+          onClick={openAddForm}
+          className="exp-focus animate-float-pill fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-indigo-600 to-cyan-500 px-6 py-3.5 text-[15px] font-bold text-white shadow-[0_14px_30px_rgba(79,70,229,.4)] transition hover:shadow-[0_18px_38px_rgba(79,70,229,.5)] hover:brightness-105 active:brightness-95"
+        >
+          <Plus className="w-4 h-4" />
+          Добавить расход
+        </button>
+      )}
+
+      {/* ── Диалог добавления/редактирования ── */}
       <Dialog open={showForm} onOpenChange={v => { if (!v) { setShowForm(false); setEditingExpense(null); } }}>
-        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-3xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <TrendingDown className="w-5 h-5" />
-              {editingExpense ? 'Редактировать расход' : 'Добавить расход'}
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
+              <TrendingDown className="w-5 h-5 text-red-500" />
+              <span className="text-[17px] font-bold">{editingExpense ? 'Редактировать расход' : 'Добавить расход'}</span>
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             {editingExpense && (
-              <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-700">
                 Редактирование {(editingExpense.edit_count || 0) + 1} из {MAX_EDITS}. Каждое изменение сохраняется в историю.
-              </p>
+              </div>
             )}
+
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Категория</label>
-              <div className="grid grid-cols-3 gap-2">
+              <label className={CAP}>Категория</label>
+              <div className="grid grid-cols-3 gap-2 mt-1.5">
                 {CATEGORIES.map(cat => {
                   const Icon = cat.icon;
+                  const active = form.category === cat.value;
                   return (
                     <button
                       key={cat.value}
                       onClick={() => setForm(f => ({ ...f, category: cat.value }))}
-                      className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 text-xs font-medium transition-all ${
-                        form.category === cat.value
-                          ? 'border-red-500 bg-red-50 text-red-700'
-                          : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                      className={`exp-focus flex flex-col items-center gap-1.5 p-2.5 rounded-2xl border-2 text-xs font-semibold transition-all ${
+                        active
+                          ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                          : 'border-slate-200 text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/40'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -529,25 +493,48 @@ export default function Expenses() {
                 })}
               </div>
             </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Сумма (с.)</label>
-              <Input type="number" placeholder="0" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="text-lg font-bold" />
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label className={CAP}>Сумма (с.)</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={form.amount}
+                  onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                  className={`${FIELD} text-lg font-bold`}
+                />
+              </div>
+              <div>
+                <label className={CAP}>Дата</label>
+                <Input
+                  type="date"
+                  value={form.expense_date}
+                  onChange={e => setForm(f => ({ ...f, expense_date: e.target.value }))}
+                  className={FIELD}
+                />
+              </div>
             </div>
+
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Кому / Получатель</label>
-              <Input placeholder="Имя сотрудника, арендодатель..." value={form.recipient} onChange={e => setForm(f => ({ ...f, recipient: e.target.value }))} />
+              <label className={CAP}>Кому / Получатель</label>
+              <Input
+                placeholder="Имя сотрудника, арендодатель..."
+                value={form.recipient}
+                onChange={e => setForm(f => ({ ...f, recipient: e.target.value }))}
+                className={FIELD}
+              />
             </div>
+
             {canRecordOnBehalf && (
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block flex items-center gap-1.5">
-                  <UserCircle className="w-4 h-4 text-cyan-600" />
-                  От имени (другое лицо)
-                </label>
+                <label className={CAP}>От имени (другое лицо)</label>
                 <Input
                   list="spent-by-options"
                   placeholder="Имя незарегистрированного сотрудника / лица"
                   value={form.spent_by_name}
                   onChange={e => setForm(f => ({ ...f, spent_by_name: e.target.value }))}
+                  className={FIELD}
                 />
                 <datalist id="spent-by-options">
                   {spentByNames.map(n => <option key={n} value={n} />)}
@@ -555,22 +542,34 @@ export default function Expenses() {
                 <p className="text-xs text-slate-400 mt-1">Укажите, если фиксируете чужой расход — позже увидите сумму по этому лицу.</p>
               </div>
             )}
+
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Комментарий</label>
-              <Input placeholder="За что? (необязательно)" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+              <label className={CAP}>Комментарий</label>
+              <Input
+                placeholder="За что? (необязательно)"
+                value={form.description}
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                className={FIELD}
+              />
             </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700 mb-1.5 block">Дата</label>
-              <Input type="date" value={form.expense_date} onChange={e => setForm(f => ({ ...f, expense_date: e.target.value }))} />
-            </div>
+
             {!editingExpense && (
               <p className="text-xs text-slate-400 flex items-center gap-1">
                 <User className="w-3 h-3" /> Расход будет записан на ваше имя автоматически
               </p>
             )}
-            <div className="flex gap-3 pt-1">
-              <Button variant="outline" className="flex-1" onClick={() => { setShowForm(false); setEditingExpense(null); }}>Отмена</Button>
-              <Button onClick={handleSave} disabled={saving || !form.amount} className="flex-1 bg-red-500 hover:bg-red-600 text-white gap-2">
+
+            <div className="flex gap-2.5 justify-end pt-1">
+              <Button variant="outline" className={PILL_OUT} onClick={() => { setShowForm(false); setEditingExpense(null); }}>
+                Отмена
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={saving || !form.amount}
+                className={`exp-focus rounded-full px-5 py-2.5 gap-2 font-bold text-white transition hover:brightness-105 ${
+                  editingExpense ? 'bg-indigo-600' : 'bg-gradient-to-br from-cyan-500 to-cyan-600'
+                }`}
+              >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingExpense ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />)}
                 {editingExpense ? 'Сохранить' : 'Добавить'}
               </Button>
@@ -579,77 +578,81 @@ export default function Expenses() {
         </DialogContent>
       </Dialog>
 
-      {/* Detail View Dialog */}
+      {/* ── Диалог деталей ── */}
       {viewingExpense && (
         <Dialog open={true} onOpenChange={() => setViewingExpense(null)}>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-3xl">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-slate-900">
+              <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
                 {(() => { const Icon = getCategoryInfo(viewingExpense.category).icon; return <Icon className="w-5 h-5 text-red-500" />; })()}
-                Детали расхода
+                <span className="text-[17px] font-bold">Детали расхода</span>
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
-              <div className={`rounded-xl p-4 ${getCategoryInfo(viewingExpense.category).color}`}>
-                <p className="text-xs font-medium opacity-80">Категория</p>
+              <div className={`rounded-2xl p-4 ${getCategoryInfo(viewingExpense.category).color}`}>
+                <p className="text-[10.5px] uppercase tracking-[.12em] font-bold opacity-80">Категория</p>
                 <p className="text-lg font-bold">{viewingExpense.category}</p>
-                <p className="text-2xl font-bold mt-2">−{viewingExpense.amount?.toLocaleString()} с.</p>
+                <p className="text-[30px] font-bold mt-2 tabular-nums tracking-[-.4px]">−{fmtMoney(viewingExpense.amount)} с.</p>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-xs text-slate-400">Получатель</p>
-                  <p className="font-medium text-slate-800">{viewingExpense.recipient || '—'}</p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-0.5">
+                  <span className={CAP}>Получатель</span>
+                  <span className="text-sm font-semibold text-slate-800">{viewingExpense.recipient || '—'}</span>
                 </div>
-                <div>
-                  <p className="text-xs text-slate-400">Дата и время</p>
-                  <p className="font-medium text-slate-800">{format(parseISO(viewingExpense.expense_date), 'dd MMM yyyy, HH:mm', { locale: ru })}</p>
+                <div className="flex flex-col gap-0.5">
+                  <span className={CAP}>Дата и время</span>
+                  <span className="text-sm font-semibold text-slate-800">
+                    {format(parseISO(viewingExpense.expense_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
+                  </span>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-xs text-slate-400">Автор расхода</p>
-                  <p className="font-medium text-slate-800 flex items-center gap-1.5">
+                <div className="col-span-2 flex flex-col gap-0.5">
+                  <span className={CAP}>Автор расхода</span>
+                  <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
                     {(() => { const em = getEmpByName(viewingExpense.created_by_name); return em
                       ? <EmployeeAvatar employee={em} sizeClass="w-5 h-5 rounded-full text-[10px]" />
                       : <User className="w-4 h-4 text-indigo-500" />; })()}
                     {viewingExpense.created_by_name || '—'}
                     {viewingExpense.created_by_role && (
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs font-normal text-slate-400">
                         ({viewingExpense.created_by_role === 'owner' ? 'владелец' : viewingExpense.created_by_role === 'admin' ? 'админ' : 'сотрудник'})
                       </span>
                     )}
-                  </p>
+                  </span>
                 </div>
                 {viewingExpense.spent_by_name && (
-                  <div className="col-span-2">
-                    <p className="text-xs text-slate-400">От имени (другое лицо)</p>
-                    <p className="font-medium text-slate-800 flex items-center gap-1.5">
+                  <div className="col-span-2 flex flex-col gap-0.5">
+                    <span className={CAP}>От имени (другое лицо)</span>
+                    <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
                       <UserCircle className="w-4 h-4 text-cyan-600" />
                       {viewingExpense.spent_by_name}
-                    </p>
+                    </span>
                   </div>
                 )}
                 {viewingExpense.description && (
-                  <div className="col-span-2">
-                    <p className="text-xs text-slate-400">Комментарий</p>
-                    <p className="font-medium text-slate-800">{viewingExpense.description}</p>
+                  <div className="col-span-2 flex flex-col gap-0.5">
+                    <span className={CAP}>Комментарий</span>
+                    <span className="text-sm font-semibold text-slate-800">{viewingExpense.description}</span>
                   </div>
                 )}
               </div>
+
               {(viewingExpense.edit_count || 0) > 0 && (viewingExpense.edit_history || []).length > 0 && (
-                <div>
-                  <p className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
-                    <History className="w-4 h-4 text-amber-500" />
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+                  <p className="text-[12.5px] font-bold text-amber-800 mb-1.5 flex items-center gap-1.5">
+                    <History className="w-3.5 h-3.5 text-amber-500" />
                     История изменений ({viewingExpense.edit_count}/{MAX_EDITS})
                   </p>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
                     {(viewingExpense.edit_history || []).map((h, i) => (
-                      <div key={i} className="bg-slate-50 rounded-lg p-2.5 text-xs">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-slate-700">{h.by_name || h.by_email}</span>
-                          <span className="text-slate-400">{format(parseISO(h.edited_at), 'dd MMM yyyy, HH:mm', { locale: ru })}</span>
+                      <div key={i} className="text-[12.5px] text-amber-700">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold">{h.by_name || h.by_email}</span>
+                          <span className="text-amber-600/80">{format(parseISO(h.edited_at), 'dd MMM yyyy, HH:mm', { locale: ru })}</span>
                         </div>
                         {(h.changes || []).map((c, j) => (
-                          <div key={j} className="text-slate-500">
-                            <span className="font-medium">{c.field}:</span> {String(c.oldValue)} → <span className="text-slate-800 font-medium">{String(c.newValue)}</span>
+                          <div key={j}>
+                            <span className="font-semibold">{c.field}:</span> {String(c.oldValue)} → <span className="font-semibold">{String(c.newValue)}</span>
                           </div>
                         ))}
                       </div>
@@ -657,13 +660,14 @@ export default function Expenses() {
                   </div>
                 </div>
               )}
-              <div className="flex gap-3 pt-2">
-                <Button variant="outline" className="flex-1" onClick={() => setViewingExpense(null)}>Закрыть</Button>
+
+              <div className="flex gap-2.5 justify-end pt-1">
+                <Button variant="outline" className={PILL_OUT} onClick={() => setViewingExpense(null)}>Закрыть</Button>
                 {canEdit(viewingExpense) && (
                   <Button
                     onClick={() => { setViewingExpense(null); openEditForm(viewingExpense); }}
                     disabled={(viewingExpense.edit_count || 0) >= MAX_EDITS}
-                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white gap-2"
+                    className="exp-focus rounded-full px-5 py-2.5 gap-2 font-bold text-white bg-indigo-600 transition hover:brightness-105"
                   >
                     <Pencil className="w-4 h-4" /> Редактировать
                   </Button>

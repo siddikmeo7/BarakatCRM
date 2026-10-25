@@ -238,6 +238,65 @@
   background: hsl(0 0% 45%);
 }
 
+/* ===== Расходы («Пульс затрат»): анимации диаграммы, метров и карточек ===== */
+
+/* Фокусная рамка интерактивных элементов раздела «Расходы» */
+.exp-focus:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+
+/* Дуги кольцевой диаграммы: рисуются от заданной длины к нулю */
+@keyframes expense-draw {
+  to { stroke-dashoffset: 0; }
+}
+.expense-arc {
+  fill: none;
+  stroke-width: 30;
+  stroke-dashoffset: var(--l, 0);
+  animation: expense-draw 1.4s cubic-bezier(.2,.7,.2,1) forwards;
+  animation-delay: var(--d, 0s);
+}
+
+/* Появление суммы в центре кольца */
+@keyframes expense-pop {
+  from { opacity: 0; transform: scale(.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+.expense-pop {
+  animation: expense-pop .8s ease .6s both;
+}
+
+/* Полосы-метры в легенде: растут от левого края */
+@keyframes expense-grow {
+  from { transform: scaleX(0); }
+}
+.expense-meter {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  transform-origin: left;
+  animation: expense-grow 1.1s cubic-bezier(.2,.7,.2,1) both;
+}
+
+/* Всплытие карточек расходов волной */
+@keyframes expense-rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+.expense-rise {
+  animation: expense-rise .7s cubic-bezier(.2,.7,.2,1) both;
+}
+
+/* Плавающая кнопка «Добавить расход» */
+@keyframes expense-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.animate-float-pill {
+  animation: expense-float 3s ease-in-out infinite;
+}
+
 /* Мигание: сотруднику пора получить зарплату */
 @keyframes salary-due-blink {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
