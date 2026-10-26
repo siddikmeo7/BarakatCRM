@@ -2,14 +2,16 @@ import React from 'react';
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO, startOfDay, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
-
-// Палитра «Тёмного терминала»: янтарь — выручка, мята — прибыль, сетка — графит.
-const REVENUE_COLOR = '#f5b23e';
-const PROFIT_COLOR = '#6ee7b7';
-const GRID_COLOR = '#232a35';
-const AXIS_COLOR = '#7c8594';
+import { useAppTheme, tkColors } from '@/lib/appTheme';
 
 export default function SalesChart({ sales, days = 7, chartType = 'line', showProfit = true }) {
+  const { isDark } = useAppTheme();
+  const T = tkColors(isDark);
+
+  // Палитра графиков: выручка — акцент темы, прибыль — «прибыльный» цвет, сетка — линии темы
+  const REVENUE_COLOR = T.accent;
+  const PROFIT_COLOR = T.pos;
+
   // Группируем продажи по дням
   const chartData = [];
   for (let i = days - 1; i >= 0; i--) {
@@ -46,13 +48,13 @@ export default function SalesChart({ sales, days = 7, chartType = 'line', showPr
             <stop offset="95%" stopColor={PROFIT_COLOR} stopOpacity={0}/>
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
-        <XAxis dataKey="date" stroke={AXIS_COLOR} fontSize={11} tickLine={false} />
-        <YAxis stroke={AXIS_COLOR} fontSize={11} tickLine={false} axisLine={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke={T.line} vertical={false} />
+        <XAxis dataKey="date" stroke={T.muted} fontSize={11} tickLine={false} />
+        <YAxis stroke={T.muted} fontSize={11} tickLine={false} axisLine={false} />
         <Tooltip
-          contentStyle={{ backgroundColor: '#12161d', border: '1px solid #232a35', borderRadius: '3px', fontSize: '12px', color: '#f2f4f8' }}
-          labelStyle={{ color: '#7c8594' }}
-          itemStyle={{ color: '#f2f4f8' }}
+          contentStyle={{ backgroundColor: T.panel, border: `1px solid ${T.line}`, borderRadius: '3px', fontSize: '12px', color: T.text }}
+          labelStyle={{ color: T.muted }}
+          itemStyle={{ color: T.text }}
           formatter={(value) => value.toLocaleString() + ' с.'}
         />
         {chartType === 'bar' ? (

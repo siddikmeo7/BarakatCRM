@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { formatCompact } from '@/lib/formatCompact';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { motion } from 'framer-motion';
+import { useAppTheme, tkColors } from '@/lib/appTheme';
 
 function nameFromEmail(email) {
   if (!email) return '';
@@ -53,6 +54,8 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
   const [employees, setEmployees] = useState([]);
   const [roles, setRoles] = useState([]);
   const [owner, setOwner] = useState(null);
+  const { isDark } = useAppTheme();
+  const T = tkColors(isDark);
 
   useEffect(() => {
     const biz = window.__barakatBusiness;
@@ -204,8 +207,8 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
       {/* Employee list */}
       {employeeStats.length === 0 ? (
         <div className="text-center py-8">
-          <Users className="w-8 h-8 mx-auto mb-2" style={{ color: '#7c8594', opacity: .4 }} />
-          <p className="text-xs" style={{ color: '#7c8594' }}>Нет сотрудников и продаж за выбранный период</p>
+          <Users className="tk-muted w-8 h-8 mx-auto mb-2" style={{ opacity: .4 }} />
+          <p className="tk-muted text-xs">Нет сотрудников и продаж за выбранный период</p>
         </div>
       ) : (
         <motion.div
@@ -224,14 +227,14 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
             const isInactive = empRec?.is_active === false;
             const isAdmin = empRec?.is_admin;
             const stChip = isOwner
-              ? '#f5b23e'
+              ? T.accent
               : isAdmin
-                ? '#d7dbe2'
+                ? T.text2
                 : isFrozen
-                  ? '#7c8594'
+                  ? T.muted
                   : isInactive
-                    ? '#7c8594'
-                    : '#6ee7b7';
+                    ? T.muted
+                    : T.pos;
             const stLabel = isOwner ? 'Владелец' : isAdmin ? 'Админ' : isFrozen ? 'Заморожен' : isInactive ? 'Неактивен' : 'Активен';
             const roleLabel = roleLabelOf(isOwner ? owner : empRec, emp.name);
             const float = !isFrozen && !isInactive;
@@ -244,7 +247,7 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
                 }}
                 whileHover={{ scale: 1.01, transition: { type: 'spring', stiffness: 300, damping: 18 } }}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 border border-[#232a35] hover:bg-[#171c25] transition-colors",
+                  "tk-hover flex items-center gap-3 px-3 py-2.5 border tk-bline transition-colors",
                   (isFrozen || isInactive) && "opacity-60"
                 )}
                 style={{ borderRadius: 3 }}
@@ -259,7 +262,7 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
                       <div className="w-9 h-9 flex items-center justify-center font-bold text-sm" style={{ background: 'linear-gradient(135deg,#f5b23e,#f59e0b)', color: '#0b0e13', borderRadius: 4 }}>
                         {emp.name?.charAt(0) || 'В'}
                       </div>
-                      <Crown className="absolute -top-1 -right-1 w-3.5 h-3.5" style={{ color: '#f5b23e', fill: '#f5b23e' }} />
+                      <Crown className="absolute -top-1 -right-1 w-3.5 h-3.5" style={{ color: T.accent, fill: T.accent }} />
                     </div>
                   ) : (
                     <EmployeeAvatar employee={empRec} name={emp.name} sizeClass="w-9 h-9 rounded text-sm" />
@@ -268,25 +271,25 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
                     className="absolute -top-1 -left-1 w-4 h-4 flex items-center justify-center text-[9px] font-bold"
                     style={{
                       borderRadius: 3,
-                      background: i === 0 ? '#f5b23e' : i === 1 ? '#7c8594' : i === 2 ? '#b45309' : '#4b5563',
-                      color: '#0b0e13'
+                      background: i === 0 ? T.accent : i === 1 ? T.muted : T.dim,
+                      color: T.onAccent
                     }}
                   >{i + 1}</span>
                 </motion.div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="font-bold text-xs truncate" style={{ color: '#f2f4f8' }}>{emp.name}</p>
-                    {roleLabel && <span className="text-[10px] truncate hidden sm:inline" style={{ color: '#7c8594' }}>· {roleLabel}</span>}
+                    <p className="tk-txt font-bold text-xs truncate">{emp.name}</p>
+                    {roleLabel && <span className="tk-muted text-[10px] truncate hidden sm:inline">· {roleLabel}</span>}
                     <span className="tk-pill flex-shrink-0" style={{ color: stChip }}>{stLabel}</span>
                   </div>
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] mt-0.5" style={{ color: '#7c8594' }}>
+                  <div className="tk-muted flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] mt-0.5">
                     <span>📦 {emp.boxes} кор.</span>
                     <span>🛒 {emp.count} продаж</span>
                     <span>{share}%</span>
                   </div>
-                  <div className="mt-1.5 overflow-hidden" style={{ height: 3, background: '#232a35' }}>
+                  <div className="mt-1.5 overflow-hidden" style={{ height: 3, background: T.line }}>
                     <motion.div
-                      style={{ height: '100%', background: '#f5b23e' }}
+                      style={{ height: '100%', background: T.accent }}
                       initial={{ width: 0 }}
                       animate={{ width: `${share}%` }}
                       transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -294,9 +297,9 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-xs" style={{ color: '#f2f4f8' }}>{fmt(emp.revenue)}</p>
+                  <p className="tk-txt font-bold text-xs">{fmt(emp.revenue)}</p>
                   {canViewProfit && (
-                    <p className="text-[11px] font-bold" style={{ color: emp.profit >= 0 ? '#6ee7b7' : '#f87171' }}>
+                    <p className={cn('text-[11px] font-bold', emp.profit >= 0 ? 'tk-posc' : 'tk-negc')}>
                       {hideData ? masked : `${emp.profit >= 0 ? '+' : ''}${formatCompact(emp.profit, lang)} с.`}
                     </p>
                   )}

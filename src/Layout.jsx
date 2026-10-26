@@ -605,8 +605,7 @@ export default function Layout({ children, currentPageName }) {
         to="/Profile"
         onClick={() => setDrawerOpen(false)}
         title="Открыть профиль"
-        className="block p-3 hover:bg-[#171c25] transition-colors"
-        style={{ borderTop: '1px solid #232a35' }}
+        className="tk-dfoot block p-3 transition-colors"
       >
         <div className={cn("tk-dcard flex items-center gap-3 px-3 py-2.5", currentPageName === 'Profile' && "on")}>
           {currentEmployee ? (

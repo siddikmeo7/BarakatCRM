@@ -16,6 +16,7 @@ import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import BackButton from '@/components/ui/BackButton';
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import { formatCompact } from '@/lib/formatCompact';
+import { useAppTheme, tkColors } from '@/lib/appTheme';
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Package, Calendar } from 'lucide-react';
 
@@ -57,6 +58,8 @@ const EXPENSE_CATS = ['Аренда', 'Зарплата', 'Транспорт', 
 
 export default function Analytics() {
   const { can } = useEmployeeAccess();
+  const { isDark } = useAppTheme();
+  const T = tkColors(isDark);
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -292,9 +295,9 @@ export default function Analytics() {
     return (
       <div className="tk-console flex flex-col items-center justify-center text-center gap-3">
         <span className="tk-cap">Аналитика и статистика</span>
-        <TrendingUp className="w-8 h-8" style={{ color: '#7c8594' }} />
-        <h2 className="text-base font-bold" style={{ color: '#f2f4f8' }}>Нет доступа</h2>
-        <p className="text-xs max-w-sm" style={{ color: '#7c8594' }}>У вас нет разрешения на просмотр раздела «Аналитика». Обратитесь к владельцу бизнеса.</p>
+        <TrendingUp className="tk-muted w-8 h-8" />
+        <h2 className="tk-txt text-base font-bold">Нет доступа</h2>
+        <p className="tk-muted text-xs max-w-sm">У вас нет разрешения на просмотр раздела «Аналитика». Обратитесь к владельцу бизнеса.</p>
       </div>
     );
   }
@@ -540,8 +543,8 @@ export default function Analytics() {
           <div className="tk-sp2">
             <h3 style={{ margin: 0 }}>Графики: {t(lang, 'analytics_dynamics')}</h3>
             <div className="tk-leg">
-              <span><i style={{ background: '#f5b23e' }} />Выручка</span>
-              <span><i style={{ background: '#6ee7b7' }} />Прибыль</span>
+              <span><i style={{ background: T.accent }} />Выручка</span>
+              <span><i style={{ background: T.pos }} />Прибыль</span>
             </div>
           </div>
           <SalesChart
@@ -556,14 +559,14 @@ export default function Analytics() {
                 <span className="tk-cap">{t(lang, 'analytics_cash')}</span>
                 <span>{hideData ? masked : `${cashPercent}% · ${cashSales.length} · ${formatCompact(cashAmount, lang)} с.`}</span>
               </div>
-              <div className="tk-trk"><span style={{ width: `${cashPercent}%`, background: '#6ee7b7' }} /></div>
+              <div className="tk-trk"><span style={{ width: `${cashPercent}%`, background: T.pos }} /></div>
             </div>
             <div className="tk-mrow">
               <div className="h">
                 <span className="tk-cap">{t(lang, 'analytics_in_debt')}</span>
                 <span>{hideData ? masked : `${debtPercent}% · ${debtSales.length} · ${formatCompact(debtAmount, lang)} с.`}</span>
               </div>
-              <div className="tk-trk"><span style={{ width: `${debtPercent}%`, background: '#f5b23e' }} /></div>
+              <div className="tk-trk"><span style={{ width: `${debtPercent}%`, background: T.accent }} /></div>
             </div>
           </div>
         </div>
@@ -591,8 +594,8 @@ export default function Analytics() {
 
           {filteredSales.length === 0 ? (
             <div className="text-center py-8">
-              <Package className="w-8 h-8 mx-auto mb-2" style={{ color: '#7c8594', opacity: .4 }} />
-              <p className="text-xs" style={{ color: '#7c8594' }}>Нет продаж за выбранный период</p>
+              <Package className="tk-muted w-8 h-8 mx-auto mb-2" style={{ opacity: .4 }} />
+              <p className="tk-muted text-xs">Нет продаж за выбранный период</p>
             </div>
           ) : (
             <div className="max-h-[520px] overflow-y-auto overflow-x-auto">
@@ -625,7 +628,7 @@ export default function Analytics() {
                         {(hideData || !can('view_revenue')) ? masked : `${formatCompact(row.stats.revenue, lang)} с.`}
                       </td>
                       {can('view_profit') && (
-                        <td className="n" style={{ color: row.stats.profit >= 0 ? '#6ee7b7' : '#f87171' }}>
+                        <td className="n" style={{ color: row.stats.profit >= 0 ? T.pos : T.neg }}>
                           {hideData ? masked : `${row.stats.profit >= 0 ? '+' : ''}${formatCompact(row.stats.profit, lang)} с.`}
                         </td>
                       )}
@@ -656,7 +659,7 @@ export default function Analytics() {
                 <div key={cat.label} className="tk-exr tk-mono">
                   <span>{cat.label}</span>
                   <div className="tk-trk">
-                    <span style={{ width: `${cat.pct}%`, background: '#f5b23e' }} />
+                    <span style={{ width: `${cat.pct}%`, background: T.accent }} />
                   </div>
                   <span className="v">{hideData ? masked : `${formatCompact(cat.total, lang)} с.`} ({cat.pct}%)</span>
                 </div>
@@ -701,7 +704,7 @@ export default function Analytics() {
             {topDebtor && (
               <div className="tk-dbt tk-mono">
                 <span>{topDebtor.name}</span>
-                <b style={{ color: '#f87171' }}>{hideData ? masked : `${(topDebtor.total_debt || 0).toLocaleString()} с.`}</b>
+                <b className="tk-negc">{hideData ? masked : `${(topDebtor.total_debt || 0).toLocaleString()} с.`}</b>
               </div>
             )}
           </div>
@@ -722,9 +725,9 @@ export default function Analytics() {
 
         {/* Убыточные продажи */}
         <Dialog open={showLossModal} onOpenChange={setShowLossModal}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-[#12161d] border-[#232a35] text-[#d7dbe2]">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto tk-panel border tk-bline tk-txt2">
             <DialogHeader>
-              <DialogTitle className="tk-mono flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.14em] text-[#f87171]">
+              <DialogTitle className="tk-mono tk-negc flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.14em]">
                 <TrendingDown className="w-4 h-4" />
                 Убыточные продажи — {lossSales.length} шт.
               </DialogTitle>
@@ -732,20 +735,20 @@ export default function Analytics() {
 
             <div className="mt-2 space-y-2">
               {/* Итог */}
-              <div className="flex items-center justify-between bg-[#0f131a] border-l-2 border-[#f87171] px-3 py-2">
+              <div className="flex items-center justify-between tk-deep border-l-2 tk-bneg px-3 py-2">
                 <span className="tk-cap">Общий убыток:</span>
-                <span className="tk-mono text-base font-bold text-[#f87171]">{formatCompact(totalLoss, lang)} с.</span>
+                <span className="tk-mono tk-negc text-base font-bold">{formatCompact(totalLoss, lang)} с.</span>
               </div>
 
               {/* Список продаж */}
-              <div className="border border-[#232a35]">
+              <div className="border tk-bline">
                 {lossSales
                   .sort((a, b) => (a.profit || 0) - (b.profit || 0)) // самые большие убытки сверху
                   .map(sale => {
                     const product = resolveProductInfo(sale.product_id);
                     const lossPerBox = sale.boxes_sold ? Math.round((sale.profit || 0) / sale.boxes_sold) : 0;
                     return (
-                      <div key={sale.id} className="tk-mono flex items-center gap-3 px-3 py-2.5 border-b border-[#1b212a] last:border-b-0 hover:bg-[#171c25] transition-colors">
+                      <div key={sale.id} className="tk-mono tk-hover flex items-center gap-3 px-3 py-2.5 border-b tk-bline2 last:border-b-0 transition-colors">
                         <ProductPhoto
                           photoUrl={product?.photo_url}
                           brand={product?.brand}
@@ -753,10 +756,10 @@ export default function Analytics() {
                           textClassName="text-[8px]"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-[#f2f4f8] truncate">
+                          <p className="tk-txt text-xs font-semibold truncate">
                             {product ? `${product.brand} ${product.model}` : 'Неизвестный товар'}
                           </p>
-                          <div className="flex items-center gap-2 text-[11px] text-[#7c8594] mt-0.5 flex-wrap">
+                          <div className="tk-muted flex items-center gap-2 text-[11px] mt-0.5 flex-wrap">
                             <span>{sale.boxes_sold} кор.</span>
                             <span>·</span>
                             <span>Продажа: {(sale.sale_price || 0).toLocaleString()} с.</span>
@@ -774,8 +777,8 @@ export default function Analytics() {
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="text-sm font-bold text-[#f87171]">{formatCompact(sale.profit || 0, lang)} с.</p>
-                          <p className="text-[11px] text-[#7c8594]">{lossPerBox.toLocaleString()} с./кор.</p>
+                          <p className="tk-negc text-sm font-bold">{formatCompact(sale.profit || 0, lang)} с.</p>
+                          <p className="tk-muted text-[11px]">{lossPerBox.toLocaleString()} с./кор.</p>
                         </div>
                       </div>
                     );

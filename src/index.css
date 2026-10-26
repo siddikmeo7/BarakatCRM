@@ -730,3 +730,89 @@ button.tk-cell:focus-visible { outline: 2px solid #f5b23e; outline-offset: -2px;
   .tk-mat { grid-template-columns: repeat(2, 1fr); }
   .tk-slab { padding: 12px; }
 }
+
+/* ===== Светлый вариант терминальных элементов =====
+   Правила выше описывают тёмный «терминал»; ниже — их светлые значения,
+   чтобы «Аналитика» и общие терминальные элементы выглядели гармонично
+   и в светлой теме оформления. */
+
+html:not(.dark) .tk-console { background: #f5f6f9; color: #1e293b; }
+html:not(.dark) .tk-hero img { opacity: .07; }
+html:not(.dark) .tk-hero:after { background: linear-gradient(180deg, rgba(245, 246, 249, 0), #f5f6f9); }
+html:not(.dark) .tk-cap { color: #64748b; }
+html:not(.dark) .tk-cap.t { color: #b45309; }
+html:not(.dark) .tk-sub { color: #64748b; }
+html:not(.dark) .tk-bar { border-bottom-color: #e2e8f0; }
+html:not(.dark) .tk-btn { background: #ffffff; border-color: #cbd5e1; color: #475569; }
+html:not(.dark) .tk-btn:hover { color: #b45309; border-color: #f5b23e; }
+html:not(.dark) .tk-btn:active { background: #e2e8f0; }
+html:not(.dark) .tk-strip { background: #ffffff; border-color: #dfe5ec; }
+html:not(.dark) .tk-cell { border-color: #e2e8f0; }
+html:not(.dark) .tk-cell.g:before { background: #059669; }
+html:not(.dark) .tk-cell.r:before { background: #dc2626; }
+html:not(.dark) .tk-cell b { color: #0f172a; }
+html:not(.dark) .tk-cell small { color: #64748b; }
+html:not(.dark) .tk-cell b.tk-pulse { animation: tk-pulse-light 2.6s ease-in-out infinite; }
+html:not(.dark) button.tk-cell:hover { background: #f1f5f9; }
+html:not(.dark) .tk-slab { background: #ffffff; border-color: #e2e8f0; }
+html:not(.dark) .tk-slab h3 { color: #475569; }
+html:not(.dark) .tk-leg { color: #475569; }
+html:not(.dark) .tk-mirror { border-top-color: #e2e8f0; }
+html:not(.dark) .tk-trk { background: #f1f5f9; border-color: #dfe5ec; }
+html:not(.dark) .tk-tbl th { color: #64748b; border-bottom-color: #e2e8f0; }
+html:not(.dark) .tk-tbl td { border-bottom-color: #eef1f5; }
+html:not(.dark) .tk-tbl tr:hover td { background: #f8fafc; }
+html:not(.dark) .tk-tbl .rk { color: #b45309; }
+html:not(.dark) .tk-m { background: #e2e8f0; }
+html:not(.dark) .tk-exr .v { color: #0f172a; }
+html:not(.dark) .tk-tot { border-top-color: #e2e8f0; }
+html:not(.dark) .tk-tot b { color: #dc2626; }
+html:not(.dark) .tk-lnk { color: #b45309; }
+html:not(.dark) .tk-ph { background: #f1f5f9; border-color: #cbd5e1; color: #64748b; }
+html:not(.dark) .tk-mat { background: #e2e8f0; border-color: #e2e8f0; }
+html:not(.dark) .tk-mat > div { background: #f8fafc; }
+html:not(.dark) .tk-mat b { color: #0f172a; }
+html:not(.dark) .tk-pill { border-color: #cbd5e1; color: #475569; }
+html:not(.dark) .tk-dbt { background: #f8fafc; }
+html:not(.dark) .tk-input { background: #ffffff; border-color: #cbd5e1; color: #0f172a; }
+
+@keyframes tk-pulse-light {
+  0%, 100% { color: #0f172a; }
+  50% { color: #b45309; }
+}
+
+/* Подвал панели меню — одинаково аккуратно в обеих темах */
+.tk-dfoot { border-top: 1px solid hsl(240 15% 91%); }
+.tk-dfoot:hover { background-color: hsl(240 20% 97%); }
+.dark .tk-dfoot { border-top-color: #232a35; }
+.dark .tk-dfoot:hover { background-color: #171c25; }
+
+/* ===== Утилиты терминальной палитры (светлая и тёмная темы) ===== */
+.tk-txt { color: #0f172a; }
+.dark .tk-txt { color: #f2f4f8; }
+.tk-txt2 { color: #334155; }
+.dark .tk-txt2 { color: #d7dbe2; }
+.tk-muted { color: #64748b; }
+.dark .tk-muted { color: #7c8594; }
+.tk-dim { color: #94a3b8; }
+.dark .tk-dim { color: #4b5563; }
+.tk-posc { color: #059669; }
+.dark .tk-posc { color: #6ee7b7; }
+.tk-negc { color: #dc2626; }
+.dark .tk-negc { color: #f87171; }
+.tk-bpos { border-color: #059669; }
+.dark .tk-bpos { border-color: #6ee7b7; }
+.tk-bneg { border-color: #dc2626; }
+.dark .tk-bneg { border-color: #f87171; }
+.tk-panel { background-color: #ffffff; }
+.dark .tk-panel { background-color: #12161d; }
+.tk-deep { background-color: #f8fafc; }
+.dark .tk-deep { background-color: #0f131a; }
+.tk-bline { border-color: #e2e8f0; }
+.dark .tk-bline { border-color: #232a35; }
+.tk-bline2 { border-color: #eef1f5; }
+.dark .tk-bline2 { border-color: #1b212a; }
+.tk-hover:hover { background-color: #f1f5f9; }
+.dark .tk-hover:hover { background-color: #171c25; }
+.tk-div > * + * { border-color: #eef1f5; }
+.dark .tk-div > * + * { border-color: #1b212a; }

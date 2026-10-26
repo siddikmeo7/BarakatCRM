@@ -3,8 +3,12 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { TrendingUp } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { formatCompact } from '@/lib/formatCompact';
+import { useAppTheme, tkColors } from '@/lib/appTheme';
 
 export default function SalesForecast({ sales, days = 30 }) {
+  const { isDark } = useAppTheme();
+  const T = tkColors(isDark);
+
   const forecastData = useMemo(() => {
     // Group sales by day
     const dailySales = {};
@@ -64,30 +68,30 @@ export default function SalesForecast({ sales, days = 30 }) {
     <div style={{ marginTop: 16 }}>
       <div className="tk-sp2" style={{ marginBottom: 8 }}>
         <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <TrendingUp className="w-3.5 h-3.5" style={{ color: '#f5b23e' }} />
+          <TrendingUp className="w-3.5 h-3.5" style={{ color: T.accent }} />
           Прогноз продаж (линейный тренд)
         </h3>
         <div className="tk-leg">
-          <span><i style={{ background: '#f5b23e' }} />Факт</span>
-          <span><i style={{ background: '#6ee7b7' }} />Прогноз 7 дней</span>
+          <span><i style={{ background: T.accent }} />Факт</span>
+          <span><i style={{ background: T.pos }} />Прогноз 7 дней</span>
         </div>
       </div>
 
       <ResponsiveContainer width="100%" height={210}>
         <LineChart data={forecastData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#232a35" vertical={false} />
-          <XAxis dataKey="date" angle={-45} textAnchor="end" height={70} stroke="#7c8594" fontSize={10} tickLine={false} interval="preserveStartEnd" />
-          <YAxis stroke="#7c8594" fontSize={10} tickLine={false} axisLine={false} width={45} />
+          <CartesianGrid strokeDasharray="3 3" stroke={T.line} vertical={false} />
+          <XAxis dataKey="date" angle={-45} textAnchor="end" height={70} stroke={T.muted} fontSize={10} tickLine={false} interval="preserveStartEnd" />
+          <YAxis stroke={T.muted} fontSize={10} tickLine={false} axisLine={false} width={45} />
           <Tooltip
-            contentStyle={{ backgroundColor: '#12161d', border: '1px solid #232a35', borderRadius: '3px', fontSize: '12px', color: '#f2f4f8' }}
-            labelStyle={{ color: '#7c8594' }}
-            itemStyle={{ color: '#f2f4f8' }}
+            contentStyle={{ backgroundColor: T.panel, border: `1px solid ${T.line}`, borderRadius: '3px', fontSize: '12px', color: T.text }}
+            labelStyle={{ color: T.muted }}
+            itemStyle={{ color: T.text }}
             formatter={(v) => v ? `${v.toLocaleString()} с.` : '-'}
           />
           <Line
             type="monotone"
             dataKey="actual"
-            stroke="#f5b23e"
+            stroke={T.accent}
             strokeWidth={2.5}
             dot={false}
             name="Фактические продажи"
@@ -97,7 +101,7 @@ export default function SalesForecast({ sales, days = 30 }) {
           <Line
             type="monotone"
             dataKey="forecast"
-            stroke="#6ee7b7"
+            stroke={T.pos}
             strokeWidth={2.5}
             dot={false}
             strokeDasharray="5 5"
