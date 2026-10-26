@@ -9,13 +9,13 @@
   </head>
   <body>
     <script>
-      // По умолчанию — светлый режим. Тёмный — только если пользователь явно выбрал его ранее.
+      // Основной стиль приложения — тёмный терминал. Светлая тема — только по выбору пользователя.
       (function () {
         try {
           var t = localStorage.getItem('barakatcrm_theme');
-          if (t === 'dark') document.documentElement.classList.add('dark');
-          else { document.documentElement.classList.remove('dark'); localStorage.setItem('barakatcrm_theme', 'light'); }
-        } catch (e) { document.documentElement.classList.remove('dark'); }
+          if (t === 'light') { document.documentElement.classList.remove('dark'); }
+          else { document.documentElement.classList.add('dark'); localStorage.setItem('barakatcrm_theme', 'dark'); }
+        } catch (e) { document.documentElement.classList.add('dark'); }
       })();
     </script>
     <div id="root"></div>

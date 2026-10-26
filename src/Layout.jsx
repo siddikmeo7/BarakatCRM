@@ -33,8 +33,10 @@ import {
   Moon,
   Sun,
   Wallet,
-  UserCircle,
 } from 'lucide-react';
+
+// Фоновое изображение терминала — единый стиль всех разделов
+const HERO_IMAGE = 'https://media.base44.com/images/public/698ff18fde0fc6a87223fd69/76318279a_generated_f6b51210.jpg';
 import { cn } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
@@ -87,13 +89,14 @@ export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // По умолчанию — светлый режим (только если пользователь ранее не выбрал тёмный)
+    // Основной стиль приложения — тёмный терминал. Светлая тема включается
+    // только если пользователь сам её выбрал (переключатель в шапке).
     const savedTheme = localStorage.getItem('barakatcrm_theme');
-    if (savedTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
+    if (savedTheme === 'light') {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('barakatcrm_theme', 'light');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('barakatcrm_theme', 'dark');
     }
   }, []);
 
@@ -533,26 +536,42 @@ export default function Layout({ children, currentPageName }) {
 
   const currentMenu = isAdmin && isAdminPage ? ADMIN_MENU_ITEMS : MENU_ITEMS;
 
+  // Название текущего раздела для верхней панели (стиль терминала)
+  const currentMenuLabel = currentPageName === 'Profile'
+    ? 'Профиль'
+    : (() => {
+        const activeItem = currentMenu.find(i => i.name === currentPageName);
+        return activeItem ? t(lang, activeItem.labelKey) : '';
+      })();
+
   const DrawerContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Drawer Header */}
-      <div className="h-16 flex items-center justify-between px-5 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
-        <div className="flex-1 min-w-0">
-          <p className="font-black text-slate-900 dark:text-white text-lg uppercase tracking-tight truncate">{business?.name || 'Бизнес'}</p>
+    <div className="tk-drawer flex flex-col h-full">
+      {/* Шапка панели меню */}
+      <div className="tk-dhead h-14 flex items-center justify-between gap-2 px-4 flex-shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="tk-topbox w-7 h-7 flex items-center justify-center flex-shrink-0">
+            <Package className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="tk-cap" style={{ fontSize: 9 }}>Бизнес</p>
+            <p className="tk-dcard-name font-bold text-sm truncate">{business?.name || 'Бизнес'}</p>
+          </div>
         </div>
         <button
           onClick={() => setDrawerOpen(false)}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="tk-btn ic flex-shrink-0"
+          title="Закрыть"
         >
-          <X className="w-5 h-5 text-slate-500" />
+          <X className="w-4 h-4" />
         </button>
       </div>
 
-
-
-      {/* Menu Items */}
-      <nav className="flex-1 overflow-y-auto py-3 px-3">
-        <div className="space-y-0.5">
+      {/* Разделы */}
+      <nav className="flex-1 overflow-y-auto">
+        <div className="px-4 pt-3 pb-1">
+          <span className="tk-cap">{isAdmin && isAdminPage ? 'Платформа' : 'Разделы'}</span>
+        </div>
+        <div>
           {currentMenu.map((item) => {
             const isActive = currentPageName === item.name;
             return (
@@ -561,24 +580,16 @@ export default function Layout({ children, currentPageName }) {
                 to={createPageUrl(item.name)}
                 onClick={() => setDrawerOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
-                  isActive
-                    ? `${item.activeBg} shadow-md`
-                    : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                  "tk-dnavitem flex items-center gap-3 px-4 py-2.5",
+                  isActive && "on"
                 )}
               >
-                {/* Colored icon box when inactive, white when active */}
-                <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all",
-                  isActive ? "bg-white/20" : "bg-slate-100 dark:bg-slate-800"
-                )}>
-                  <item.icon className={cn("w-4 h-4", isActive ? "text-white" : item.color)} />
-                </div>
-                <span className={cn("text-sm font-medium", isActive ? "text-white" : "text-slate-700 dark:text-slate-300")}>
+                <item.icon className="w-4 h-4 flex-shrink-0" />
+                <span className="flex-1 text-[11px] font-bold tracking-[0.1em] uppercase truncate">
                   {t(lang, item.labelKey)}
                 </span>
                 {item.name === 'Salary' && dueSalaryCount > 0 && (
-                  <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center animate-salary-due">
+                  <span className="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center animate-salary-due">
                     {dueSalaryCount}
                   </span>
                 )}
@@ -594,50 +605,36 @@ export default function Layout({ children, currentPageName }) {
         to="/Profile"
         onClick={() => setDrawerOpen(false)}
         title="Открыть профиль"
-        className={cn(
-          "group block p-4 border-t space-y-3 transition-all duration-200 border-l-2",
-          currentPageName === 'Profile'
-            ? "border-l-indigo-500 border-slate-200 dark:border-slate-800"
-            : "border-l-transparent border-slate-200 dark:border-slate-800 hover:bg-indigo-50/70 dark:hover:bg-indigo-900/20"
-        )}
+        className="block p-3 hover:bg-[#171c25] transition-colors"
+        style={{ borderTop: '1px solid #232a35' }}
       >
-        {/* Current user status card */}
-        {currentEmployee ? (
-          <div className={`rounded-xl px-3 py-2.5 flex items-center gap-3 transition-all duration-200 group-hover:ring-1 group-hover:ring-indigo-300 dark:group-hover:ring-indigo-700 ${currentEmployee.is_admin ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border border-indigo-200 dark:border-indigo-700' : 'bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700'}`}>
+        <div className={cn("tk-dcard flex items-center gap-3 px-3 py-2.5", currentPageName === 'Profile' && "on")}>
+          {currentEmployee ? (
             <EmployeeAvatar employee={currentEmployee} size="sm" />
-            <div className="flex-1 min-w-0">
-              <p className="origin-left text-sm font-semibold text-slate-900 dark:text-white truncate transition-all duration-200 group-hover:scale-105 group-hover:text-indigo-600 dark:group-hover:text-indigo-300">{currentEmployee.name}</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${currentEmployee.is_admin ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
-                  {currentEmployee.is_admin ? '👑 Админ' : (roleName || '🛍️ Сотрудник')}
-                </span>
-                <span className="text-[10px] text-slate-400 truncate">{business?.name}</span>
-              </div>
+          ) : (
+            <EmployeeAvatar
+              avatarUrl={user?.data?.avatar_url || user?.avatar_url}
+              name={user?.full_name || user?.email}
+              isAdmin
+              profileSticker={user?.data?.profile_sticker || user?.profile_sticker}
+              profileFrame={user?.data?.profile_frame || user?.profile_frame}
+              size="sm"
+            />
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="tk-dcard-name text-xs font-bold truncate">
+              {currentEmployee ? currentEmployee.name : (user?.full_name || 'User')}
+            </p>
+            <div className="flex items-center gap-2 mt-0.5 min-w-0">
+              <span className="tk-dcard-role" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase' }}>
+                {currentEmployee
+                  ? (currentEmployee.is_admin ? 'Админ' : (roleName || 'Сотрудник'))
+                  : 'Владелец'}
+              </span>
+              {business?.name && <span className="tk-cap truncate" style={{ fontSize: 9 }}>{business.name}</span>}
             </div>
           </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <div className="transition-all duration-200 group-hover:scale-110 group-hover:ring-2 group-hover:ring-indigo-300 rounded-full">
-              <EmployeeAvatar
-                avatarUrl={user?.data?.avatar_url || user?.avatar_url}
-                name={user?.full_name || user?.email}
-                isAdmin
-                profileSticker={user?.data?.profile_sticker || user?.profile_sticker}
-                profileFrame={user?.data?.profile_frame || user?.profile_frame}
-                size="sm"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="origin-left text-sm font-semibold text-slate-900 dark:text-white truncate transition-all duration-200 group-hover:scale-105 group-hover:text-indigo-600 dark:group-hover:text-indigo-300">{user?.full_name || 'User'}</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
-                  👑 Владелец
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
+        </div>
       </Link>
     </div>
   );
@@ -679,61 +676,45 @@ export default function Layout({ children, currentPageName }) {
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="fixed left-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-900 z-50 shadow-2xl"
+            className="tk-drawer fixed left-0 top-0 bottom-0 w-72 z-50 shadow-2xl overflow-hidden"
           >
             <DrawerContent />
           </motion.aside>
         )}
       </AnimatePresence>
 
-      {/* === TOP HEADER (both mobile & desktop) === */}
-      <header className="fixed top-0 left-0 right-0 h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-40 flex items-center px-4 gap-3">
-        {/* Menu button */}
+      {/* === ВЕРХНЯЯ ПАНЕЛЬ (стиль терминала) === */}
+      <header className="tk-topbar fixed top-0 left-0 right-0 h-14 z-40 flex items-center px-3 sm:px-4 gap-2">
+        {/* Кнопка меню */}
         <button
           onClick={() => setDrawerOpen(true)}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
+          className="tk-btn ic flex-shrink-0"
+          title="Меню"
         >
-          <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          <Menu className="w-4 h-4" />
         </button>
 
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
-            <Package className="w-4 h-4 text-white" />
+        {/* Логотип */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="tk-topbox w-7 h-7 flex items-center justify-center">
+            <Package className="w-4 h-4" />
           </div>
-          <span className="font-bold text-slate-900 dark:text-white text-base">BarakatCRM</span>
+          <span className="tk-topbar-name font-bold text-sm tracking-tight">BarakatCRM</span>
         </div>
 
-        {/* Current page indicator */}
-        <div className="flex-1 flex items-center justify-center">
-          {(() => {
-            const active = currentMenu.find(i => i.name === currentPageName);
-            if (!active && currentPageName === 'Profile') {
-              return (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-500 text-white">
-                  <UserCircle className="w-3 h-3" />
-                  Профиль
-                </div>
-              );
-            }
-            if (!active) return null;
-            return (
-              <div className={cn("flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium", active.activeBg, "text-white")}>
-                <active.icon className="w-3 h-3" />
-                {t(lang, active.labelKey)}
-              </div>
-            );
-          })()}
+        {/* Текущий раздел */}
+        <div className="flex-1 flex items-center justify-center min-w-0">
+          {currentMenuLabel && <span className="tk-topbar-page truncate">{currentMenuLabel}</span>}
         </div>
 
         <button
           onClick={toggleDark}
-          className="w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="tk-btn ic flex-shrink-0"
           title={isDark ? 'Светлая тема' : 'Тёмная тема'}
         >
           {isDark
-            ? <Sun className="w-4 h-4 text-amber-400" />
-            : <Moon className="w-4 h-4 text-slate-500" />
+            ? <Sun className="w-4 h-4" />
+            : <Moon className="w-4 h-4" />
           }
         </button>
       </header>
@@ -748,7 +729,14 @@ export default function Layout({ children, currentPageName }) {
           transition={{ duration: 0.25 }}
           className="p-4 lg:p-8 min-h-screen"
         >
-          {children}
+          <div className="tk-app">
+            {isDark && currentPageName !== 'Analytics' && (
+              <div className="tk-apphero">
+                <img src={HERO_IMAGE} alt="" />
+              </div>
+            )}
+            <div className="tk-appbody">{children}</div>
+          </div>
         </motion.div>
       </main>
 
