@@ -195,77 +195,74 @@
 /* ===== ОФОРМЛЕНИЕ: ПОВЕРХНОСТИ, ТЕКСТ, ЛИНИИ ===== */
 
 /* --- Поверхности --- */
-.bg-white { background-color: var(--sf-panel); }
-.bg-slate-50, .bg-gray-50 { background-color: var(--sf-deep); }
-.bg-slate-100, .bg-gray-100 { background-color: var(--sf-deep2); }
-.bg-slate-200, .bg-gray-200 { background-color: var(--sf-soft); }
-.bg-slate-300 { background-color: var(--sf-line3); }
-
-.dark .bg-slate-500, .dark .bg-gray-500 { background-color: var(--sf-mid) !important; }
-.dark .bg-slate-600 { background-color: var(--sf-mid) !important; }
-.dark .bg-slate-700, .dark .bg-gray-700 { background-color: var(--sf-line) !important; }
-.dark .bg-slate-800, .dark .bg-gray-800 { background-color: var(--sf-panel) !important; }
-.dark .bg-slate-900, .dark .bg-gray-900 { background-color: var(--sf-bg) !important; }
-.dark .bg-slate-950, .dark .bg-gray-950 { background-color: var(--sf-bg) !important; }
+.dark .bg-white { background-color: #12161d !important; }
+.dark .bg-slate-50, .dark .bg-gray-50 { background-color: #0f131a !important; }
+.dark .bg-slate-100, .dark .bg-gray-100 { background-color: #171c25 !important; }
+.dark .bg-slate-200, .dark .bg-gray-200 { background-color: #1b212a !important; }
+.dark .bg-slate-300 { background-color: #232a35 !important; }
+.dark .bg-slate-500, .dark .bg-gray-500 { background-color: #3b4553 !important; }
+.dark .bg-slate-600 { background-color: #2c3543 !important; }
+.dark .bg-slate-700, .dark .bg-gray-700 { background-color: #232a35 !important; }
+.dark .bg-slate-800, .dark .bg-gray-800 { background-color: #12161d !important; }
+.dark .bg-slate-900, .dark .bg-gray-900 { background-color: #0b0e13 !important; }
+.dark .bg-slate-950, .dark .bg-gray-950 { background-color: #070a0e !important; }
 
 /* --- Текст --- */
-.text-slate-900, .text-slate-800, .text-gray-900, .text-gray-800, .text-black { color: var(--sf-text); }
-.text-slate-700, .text-slate-600, .text-gray-700, .text-gray-600 { color: var(--sf-text2); }
-.text-slate-500, .text-gray-500 { color: var(--sf-muted); }
-.text-slate-400, .text-gray-400 { color: var(--sf-dim); }
-
-.dark .text-slate-300, .dark .text-gray-300 { color: var(--sf-dim) !important; }
-.dark .text-slate-200, .dark .text-slate-100 { color: var(--sf-text2) !important; }
-.dark .text-black { color: var(--sf-text) !important; }
+.dark .text-slate-900, .dark .text-slate-800, .dark .text-gray-900, .dark .text-gray-800 { color: #f2f4f8 !important; }
+.dark .text-slate-700, .dark .text-slate-600, .dark .text-gray-700, .dark .text-gray-600 { color: #d7dbe2 !important; }
+.dark .text-slate-500, .dark .text-gray-500 { color: #aab2bf !important; }
+.dark .text-slate-400, .dark .text-slate-300, .dark .text-gray-400, .dark .text-gray-300 { color: #7c8594 !important; }
+.dark .text-slate-200, .dark .text-slate-100 { color: #d7dbe2 !important; }
+.dark .text-black { color: #f2f4f8 !important; }
 
 /* --- Линии и разделители --- */
-.border-slate-100, .border-slate-200, .border-gray-100, .border-gray-200 { border-color: var(--sf-line); }
-.border-slate-300, .border-gray-300 { border-color: var(--sf-line3); }
-.dark .border-slate-700, .dark .border-slate-800, .dark .border-gray-700, .dark .border-gray-800 { border-color: var(--sf-line) !important; }
-.divide-slate-100 > * + *, .divide-slate-200 > * + *, .divide-slate-800 > * + *,
-.divide-gray-100 > * + *, .divide-y > * + * { border-color: var(--sf-line2); }
+.dark .border-slate-100, .dark .border-slate-200, .dark .border-gray-100, .dark .border-gray-200 { border-color: #232a35 !important; }
+.dark .border-slate-300, .dark .border-gray-300 { border-color: #2b333f !important; }
+.dark .border-slate-700, .dark .border-slate-800, .dark .border-gray-700, .dark .border-gray-800 { border-color: #232a35 !important; }
+.dark .divide-slate-100 > * + *, .dark .divide-slate-200 > * + *, .dark .divide-slate-800 > * + *,
+.dark .divide-gray-100 > * + *, .dark .divide-y > * + * { border-color: #1b212a !important; }
 
 /* --- Акцент стиля (индиго/фиолетовые элементы) --- */
-.text-indigo-600, .text-indigo-700, .text-indigo-500, .text-indigo-400, .text-indigo-300,
-.text-purple-600, .text-purple-700, .text-violet-600, .text-fuchsia-600, .text-pink-600 { color: var(--sf-accent); }
-.bg-indigo-50, .bg-violet-50, .bg-purple-50, .bg-pink-50 { background-color: var(--sf-accent-1); }
-.bg-indigo-100, .bg-violet-100, .bg-purple-100, .bg-pink-100 { background-color: var(--sf-accent-2); }
-.border-indigo-100, .border-indigo-200, .border-indigo-300, .border-indigo-600,
-.border-purple-200, .border-violet-600 { border-color: var(--sf-accent-3); }
-.bg-indigo-500, .bg-indigo-600, .bg-indigo-700,
-.bg-purple-500, .bg-purple-600, .bg-violet-500, .bg-violet-600 { background-color: var(--sf-primary); color: var(--sf-on-primary); }
+.dark .text-indigo-600, .dark .text-indigo-700, .dark .text-indigo-500, .dark .text-indigo-400, .dark .text-indigo-300,
+.dark .text-purple-600, .dark .text-purple-700, .dark .text-violet-600, .dark .text-fuchsia-600, .dark .text-pink-600 { color: #f5b23e !important; }
+.dark .bg-indigo-50, .dark .bg-violet-50, .dark .bg-purple-50, .dark .bg-pink-50 { background-color: rgba(245, 178, 62, .08) !important; }
+.dark .bg-indigo-100, .dark .bg-violet-100, .dark .bg-purple-100, .dark .bg-pink-100 { background-color: rgba(245, 178, 62, .14) !important; }
+.dark .border-indigo-100, .dark .border-indigo-200, .dark .border-indigo-300, .dark .border-indigo-600,
+.dark .border-purple-200, .dark .border-violet-600 { border-color: rgba(245, 178, 62, .4) !important; }
+.dark .bg-indigo-500, .dark .bg-indigo-600, .dark .bg-indigo-700,
+.dark .bg-purple-500, .dark .bg-purple-600, .dark .bg-violet-500, .dark .bg-violet-600 { background-color: #2563eb !important; }
 
 /* --- Прибыль / успех --- */
-.text-emerald-600, .text-emerald-700, .text-emerald-500, .text-emerald-400, .text-emerald-300,
-.text-green-600, .text-green-700, .text-teal-600 { color: var(--sf-pos); }
-.bg-emerald-50, .bg-green-50, .bg-teal-50 { background-color: var(--sf-pos-1); }
-.bg-emerald-100, .bg-green-100, .bg-teal-100 { background-color: var(--sf-pos-2); }
-.border-emerald-100, .border-emerald-200, .border-green-200, .border-teal-200 { border-color: var(--sf-pos-3); }
-.bg-emerald-500, .bg-emerald-600, .bg-green-500, .bg-green-600, .bg-teal-600 { background-color: var(--sf-pos-solid); color: #ffffff; }
+.dark .text-emerald-600, .dark .text-emerald-700, .dark .text-emerald-500, .dark .text-emerald-400, .dark .text-emerald-300,
+.dark .text-green-600, .dark .text-green-700, .dark .text-teal-600 { color: #6ee7b7 !important; }
+.dark .bg-emerald-50, .dark .bg-green-50, .dark .bg-teal-50 { background-color: rgba(110, 231, 183, .08) !important; }
+.dark .bg-emerald-100, .dark .bg-green-100, .dark .bg-teal-100 { background-color: rgba(110, 231, 183, .14) !important; }
+.dark .border-emerald-100, .dark .border-emerald-200, .dark .border-green-200, .dark .border-teal-200 { border-color: rgba(110, 231, 183, .35) !important; }
+.dark .bg-emerald-500, .dark .bg-emerald-600, .dark .bg-green-500, .dark .bg-green-600, .dark .bg-teal-600 { background-color: #059669 !important; }
 
 /* --- Убыток / опасность --- */
-.text-red-600, .text-red-700, .text-red-500, .text-red-400,
-.text-rose-600, .text-rose-500, .text-rose-400 { color: var(--sf-neg); }
-.bg-red-50, .bg-rose-50 { background-color: var(--sf-neg-1); }
-.bg-red-100, .bg-rose-100 { background-color: var(--sf-neg-2); }
-.border-red-100, .border-red-200, .border-rose-200 { border-color: var(--sf-neg-3); }
-.bg-red-500, .bg-red-600, .bg-rose-500, .bg-rose-600 { background-color: var(--sf-neg-solid); color: #ffffff; }
+.dark .text-red-600, .dark .text-red-700, .dark .text-red-500, .dark .text-red-400,
+.dark .text-rose-600, .dark .text-rose-500, .dark .text-rose-400 { color: #f87171 !important; }
+.dark .bg-red-50, .dark .bg-rose-50 { background-color: rgba(248, 113, 113, .08) !important; }
+.dark .bg-red-100, .dark .bg-rose-100 { background-color: rgba(248, 113, 113, .14) !important; }
+.dark .border-red-100, .dark .border-red-200, .dark .border-rose-200 { border-color: rgba(248, 113, 113, .35) !important; }
+.dark .bg-red-500, .dark .bg-red-600, .dark .bg-rose-500, .dark .bg-rose-600 { background-color: #dc2626 !important; }
 
 /* --- Деньги / внимание --- */
-.text-amber-600, .text-amber-700, .text-amber-500,
-.text-orange-600, .text-orange-500, .text-yellow-600, .text-yellow-700 { color: var(--sf-warn); }
-.bg-amber-50, .bg-orange-50, .bg-yellow-50 { background-color: var(--sf-warn-1); }
-.bg-amber-100, .bg-orange-100, .bg-yellow-100 { background-color: var(--sf-warn-2); }
-.border-amber-100, .border-amber-200, .border-orange-200 { border-color: var(--sf-warn-3); }
-.bg-amber-400, .bg-amber-500, .bg-orange-400, .bg-orange-500 { background-color: var(--sf-warn); color: var(--sf-on-warn); }
+.dark .text-amber-600, .dark .text-amber-700, .dark .text-amber-500,
+.dark .text-orange-600, .dark .text-orange-500, .dark .text-yellow-600, .dark .text-yellow-700 { color: #f5b23e !important; }
+.dark .bg-amber-50, .dark .bg-orange-50, .dark .bg-yellow-50 { background-color: rgba(245, 178, 62, .08) !important; }
+.dark .bg-amber-100, .dark .bg-orange-100, .dark .bg-yellow-100 { background-color: rgba(245, 178, 62, .14) !important; }
+.dark .border-amber-100, .dark .border-amber-200, .dark .border-orange-200 { border-color: rgba(245, 178, 62, .35) !important; }
+.dark .bg-amber-400, .dark .bg-amber-500, .dark .bg-orange-400, .dark .bg-orange-500 { background-color: #f5b23e !important; color: #0b0e13 !important; }
 
 /* --- Информация --- */
-.text-blue-600, .text-blue-700, .text-blue-500,
-.text-sky-600, .text-cyan-600, .text-cyan-500 { color: var(--sf-info); }
-.bg-blue-50, .bg-sky-50, .bg-cyan-50 { background-color: var(--sf-info-1); }
-.bg-blue-100, .bg-sky-100, .bg-cyan-100 { background-color: var(--sf-info-2); }
-.border-blue-100, .border-blue-200, .border-sky-200 { border-color: var(--sf-info-3); }
-.bg-blue-500, .bg-blue-600, .bg-sky-600, .bg-cyan-600 { background-color: var(--sf-info-solid); color: #ffffff; }
+.dark .text-blue-600, .dark .text-blue-700, .dark .text-blue-500,
+.dark .text-sky-600, .dark .text-cyan-600, .dark .text-cyan-500 { color: #7dd3fc !important; }
+.dark .bg-blue-50, .dark .bg-sky-50, .dark .bg-cyan-50 { background-color: rgba(125, 211, 252, .08) !important; }
+.dark .bg-blue-100, .dark .bg-sky-100, .dark .bg-cyan-100 { background-color: rgba(125, 211, 252, .14) !important; }
+.dark .border-blue-100, .dark .border-blue-200, .dark .border-sky-200 { border-color: rgba(125, 211, 252, .35) !important; }
+.dark .bg-blue-500, .dark .bg-blue-600, .dark .bg-sky-600, .dark .bg-cyan-600 { background-color: #2563eb !important; }
 
 /* --- Градиенты → плоские панели выбранного стиля (кроме текстовых заливок) --- */
 .dark [class*="bg-gradient-to-"]:not([class*="bg-clip-text"]) { background-image: none !important; background-color: var(--sf-panel) !important; }
