@@ -1,41 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import PageHeader from '@/components/ui/PageHeader';
 import DateFilter from '@/components/filters/DateFilter';
-import StatCard from '@/components/ui/StatCard';
 import SalesChart from '@/components/charts/SalesChart';
-import SalesTypeChart from '@/components/charts/SalesTypeChart';
-import { 
-  TrendingUp, 
-  TrendingDown,
-  ShoppingCart, 
-  Box,
-  DollarSign,
-  Package,
-  PackageOpen,
-  Percent,
-  Settings2,
-  RefreshCw,
-  Eye,
-  EyeOff,
-  User,
-  Users,
-  Receipt,
-  Home,
-  Truck,
-  Zap,
-  Megaphone,
-  MoreHorizontal,
-  X,
-  Calendar,
-  ChevronRight,
-  Warehouse
-} from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
 import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format, startOfDay, endOfDay, isSameDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -47,13 +16,47 @@ import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import BackButton from '@/components/ui/BackButton';
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import { formatCompact } from '@/lib/formatCompact';
+import { cn } from '@/lib/utils';
+import { TrendingUp, TrendingDown, Package, Calendar } from 'lucide-react';
 
 const DEFAULT_RATES = { TJS: 1, USD: 0.091, RUB: 8.5, EUR: 0.084, CNY: 0.66 };
 const RATES_CACHE_KEY = 'exchange_rates_cache';
 const RATES_DATE_KEY = 'exchange_rates_date';
 
+// Текстура шапки «Тёмного терминала» — обесцвеченный штабель коробок
+const HERO_IMAGE = 'https://media.base44.com/images/public/698ff18fde0fc6a87223fd69/76318279a_generated_f6b51210.jpg';
+
+const CURRENCIES = [
+  { value: 'TJS', labelKey: 'analytics_somoni' },
+  { value: 'USD', labelKey: 'analytics_usd' },
+  { value: 'RUB', labelKey: 'analytics_rub' },
+  { value: 'EUR', labelKey: 'analytics_eur' },
+  { value: 'CNY', labelKey: 'analytics_cny' },
+];
+
+const CHART_TYPES = [
+  { value: 'line', labelKey: 'analytics_chart_line' },
+  { value: 'bar', labelKey: 'analytics_chart_bar' },
+  { value: 'area', labelKey: 'analytics_chart_area' },
+];
+
+const QUICK_LINKS = [
+  { to: 'Products', label: 'Товары' },
+  { to: 'Sales', label: 'Продажи' },
+  { to: 'Warehouses', label: 'Склады' },
+  { to: 'Customers', label: 'Клиенты' },
+];
+
+const SORT_OPTIONS = [
+  { value: 'revenue', label: 'По выручке' },
+  { value: 'profit', label: 'По прибыли' },
+  { value: 'boxes', label: 'По коробкам' },
+];
+
+const EXPENSE_CATS = ['Аренда', 'Зарплата', 'Транспорт', 'Коммунальные', 'Реклама', 'Прочее'];
+
 export default function Analytics() {
-  const { can, employee } = useEmployeeAccess();
+  const { can } = useEmployeeAccess();
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -79,8 +82,6 @@ export default function Analytics() {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [showLossModal, setShowLossModal] = useState(false);
   const [deletedProductsMap, setDeletedProductsMap] = useState({});
-
-
 
   useEffect(() => {
     loadExchangeRates(false);
@@ -141,11 +142,11 @@ export default function Analytics() {
       setCurrentUserId(user.id);
       const biz = window.__barakatBusiness;
       if (!biz) { setLoading(false); return; }
-      
+
       if (biz) {
         setBusiness(biz);
         setLang(biz.language || 'ru');
-        
+
         const [salesData, productsData, customersData, expensesData, delLogs] = await Promise.all([
           base44.entities.Sale.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
@@ -153,7 +154,7 @@ export default function Analytics() {
           base44.entities.Expense.filter({ business_id: biz.id }),
           base44.entities.ActivityLog.filter({ business_id: biz.id, action_type: 'delete' }).catch(() => []),
         ]);
-        
+
         setSales(salesData);
         setProducts(productsData);
         setCustomers(customersData);
@@ -206,17 +207,17 @@ export default function Analytics() {
   const totalBoxes = filteredSales.reduce((sum, s) => sum + (s.boxes_sold || 0), 0);
 
   // Общая стоимость товаров на складе
-  const totalStockValue = products.reduce((sum, p) => 
+  const totalStockValue = products.reduce((sum, p) =>
     sum + ((p.boxes_in_stock || 0) * (p.sale_price || 0)), 0
   );
 
   // Потенциальная прибыль от склада
-  const potentialProfit = products.reduce((sum, p) => 
+  const potentialProfit = products.reduce((sum, p) =>
     sum + ((p.boxes_in_stock || 0) * ((p.sale_price || 0) - (p.purchase_price || 0))), 0
   );
 
   // Общее количество коробок на всех складах
-  const totalBoxesInStock = products.reduce((sum, p) => 
+  const totalBoxesInStock = products.reduce((sum, p) =>
     sum + (p.boxes_in_stock || 0), 0
   );
 
@@ -289,12 +290,11 @@ export default function Analytics() {
   // Нет доступа к аналитике
   if (!can('view_analytics')) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-        <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
-          <TrendingUp className="w-10 h-10 text-slate-300" />
-        </div>
-        <h2 className="text-xl font-bold text-slate-700">Нет доступа</h2>
-        <p className="text-slate-400 max-w-sm">У вас нет разрешения на просмотр раздела «Аналитика». Обратитесь к владельцу бизнеса.</p>
+      <div className="tk-console flex flex-col items-center justify-center text-center gap-3">
+        <span className="tk-cap">Аналитика и статистика</span>
+        <TrendingUp className="w-8 h-8" style={{ color: '#7c8594' }} />
+        <h2 className="text-base font-bold" style={{ color: '#f2f4f8' }}>Нет доступа</h2>
+        <p className="text-xs max-w-sm" style={{ color: '#7c8594' }}>У вас нет разрешения на просмотр раздела «Аналитика». Обратитесь к владельцу бизнеса.</p>
       </div>
     );
   }
@@ -317,628 +317,474 @@ export default function Analytics() {
     }
   };
 
+  const symbol = getCurrencySymbol();
+
+  const periodLabel = dateRange?.from
+    ? `${format(dateRange.from, 'dd MMM yyyy', { locale: ru })}${dateRange.to && !isSameDay(dateRange.from, dateRange.to) ? ` — ${format(dateRange.to, 'dd MMM yyyy', { locale: ru })}` : ''}`
+    : '';
+
+  // Разбивка продаж по товарам за период
+  const productStats = {};
+  filteredSales.forEach(sale => {
+    const pid = sale.product_id;
+    if (!productStats[pid]) productStats[pid] = { boxes: 0, revenue: 0, profit: 0, count: 0 };
+    productStats[pid].boxes += sale.boxes_sold || 0;
+    productStats[pid].revenue += sale.total_amount || 0;
+    productStats[pid].profit += sale.profit || 0;
+    productStats[pid].count += 1;
+  });
+
+  let productRows = Object.entries(productStats).map(([pid, stats]) => ({ pid, stats, product: resolveProductInfo(pid) })).filter(r => r.product);
+  if (topProductsSort === 'profit') productRows = productRows.sort((a, b) => b.stats.profit - a.stats.profit);
+  else if (topProductsSort === 'boxes') productRows = productRows.sort((a, b) => b.stats.boxes - a.stats.boxes);
+  else productRows = productRows.sort((a, b) => b.stats.revenue - a.stats.revenue);
+
+  const showStockColumn = can('view_warehouse_quantities');
+  const maxStock = productRows.reduce((m, r) => Math.max(m, r.product.boxes_in_stock || 0), 0);
+
+  // Расходы по категориям
+  const expenseRows = EXPENSE_CATS.map(label => {
+    const total = displayedExpenses.filter(e => e.category === label).reduce((s, e) => s + (e.amount || 0), 0);
+    return { label, total, pct: totalExpenses ? ((total / totalExpenses) * 100).toFixed(0) : 0 };
+  }).filter(r => r.total);
+
+  const showExpenses = can('view_profit') && filteredExpenses.length > 0;
+
+  // Клиентская сводка для матрицы расширенной аналитики
+  const debtors = customers.filter(c => (c.total_debt || 0) > 0);
+  const totalDebt = debtors.reduce((s, c) => s + (c.total_debt || 0), 0);
+  const topDebtor = [...debtors].sort((a, b) => (b.total_debt || 0) - (a.total_debt || 0))[0];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-      </div>
-      <PageHeader 
-        title={t(lang,'analytics_title')}
-        subtitle={t(lang,'analytics_subtitle')}
-        actions={
-          <Link to={createPageUrl('ChartSettings')}>
-            <Button variant="outline" className="gap-2">
-              <Settings2 className="w-4 h-4" />
-              {t(lang,'analytics_chart_settings')}
-            </Button>
-          </Link>
-        }
-      />
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100">
-        <h3 className="text-sm font-semibold text-slate-900 mb-2">Быстрый доступ</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {[
-            { to: 'Products', icon: Package, label: 'Товары', from: 'from-indigo-50', to2: 'to-indigo-100', tc: 'text-indigo-600' },
-            { to: 'Sales', icon: ShoppingCart, label: 'Продажи', from: 'from-emerald-50', to2: 'to-emerald-100', tc: 'text-emerald-600' },
-            { to: 'Warehouses', icon: Warehouse, label: 'Склады', from: 'from-purple-50', to2: 'to-purple-100', tc: 'text-purple-600' },
-            { to: 'Customers', icon: Users, label: 'Клиенты', from: 'from-amber-50', to2: 'to-amber-100', tc: 'text-amber-600' },
-          ].map(item => (
-            <Link key={item.to} to={createPageUrl(item.to)}>
-              <div className={`flex items-center gap-2 p-2.5 bg-gradient-to-br ${item.from} ${item.to2} rounded-lg hover:shadow-sm transition-all cursor-pointer`}>
-                <item.icon className={`w-5 h-5 ${item.tc} flex-shrink-0`} />
-                <p className="text-xs font-medium text-slate-800 leading-tight">{item.label}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+    <div className="tk-console">
+      <div className="tk-hero">
+        <img src={HERO_IMAGE} alt="" />
       </div>
 
-      {/* Date Filter & Hide button */}
-       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-         {/* Top row: Hide button */}
-         <div className="flex items-center justify-end gap-2">
-           <Button
-             variant={mySalesOnly ? "default" : "default"}
-             size="sm"
-             onClick={() => setMySalesOnly(v => !v)}
-             className={`gap-2 ${mySalesOnly ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
-           >
-             {mySalesOnly ? <User className="w-4 h-4" /> : <Users className="w-4 h-4" />}
-             {mySalesOnly ? 'Мои продажи' : 'Все продажи'}
-           </Button>
-           <Button
-             variant="outline"
-             size="sm"
-             onClick={() => setHideData(h => !h)}
-             className="gap-2"
-           >
-             {hideData ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-             {hideData ? t(lang,'analytics_show') : t(lang,'analytics_hide')}
-           </Button>
-         </div>
-        {/* Bottom row: filters */}
-        <div className="flex flex-wrap items-center gap-2 md:gap-3">
-           <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
-           <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger className="w-32 md:w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="TJS">{t(lang,'analytics_somoni')}</SelectItem>
-              <SelectItem value="USD">{t(lang,'analytics_usd')}</SelectItem>
-              <SelectItem value="RUB">{t(lang,'analytics_rub')}</SelectItem>
-              <SelectItem value="EUR">{t(lang,'analytics_eur')}</SelectItem>
-              <SelectItem value="CNY">{t(lang,'analytics_cny')}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => loadExchangeRates(true)}
-            disabled={ratesLoading}
-            className="gap-1 text-xs"
-          >
-            <RefreshCw className={`w-3 h-3 ${ratesLoading ? 'animate-spin' : ''}`} />
-            {ratesLoading ? t(lang,'analytics_loading_rate') : t(lang,'analytics_refresh_rate')}
-          </Button>
-          {ratesDate && currency !== 'TJS' && (
-            <span className="text-xs text-slate-400">
-              1 с. = {exchangeRates[currency]} {currency}
-            </span>
-          )}
-          <Select value={chartType} onValueChange={setChartType}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="line">{t(lang,'analytics_chart_line')}</SelectItem>
-              <SelectItem value="bar">{t(lang,'analytics_chart_bar')}</SelectItem>
-              <SelectItem value="area">{t(lang,'analytics_chart_area')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Main Stats - Responsive sizing */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-        {can('view_revenue') ? (
-        <StatCard
-          title={t(lang,'analytics_revenue')}
-          value={convertCurrency(totalRevenue)}
-          subtitle={getCurrencySymbol()}
-          icon={ShoppingCart}
-          iconBg="bg-blue-100"
-          iconColor="text-blue-600"
-          className="text-sm md:text-base"
-        />
-        ) : (
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-              <ShoppingCart className="w-5 h-5 text-slate-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">{t(lang,'analytics_revenue')}</p>
-              <p className="text-xl font-bold text-slate-400">••••• с.</p>
-              <p className="text-xs text-slate-400">Нет доступа</p>
-            </div>
-          </div>
-        )}
-        {can('view_profit') && (
-        <StatCard
-          title={t(lang,'analytics_profit')}
-          value={convertCurrency(totalProfit)}
-          subtitle={getCurrencySymbol()}
-          icon={TrendingUp}
-          iconBg="bg-emerald-100"
-          iconColor="text-emerald-600"
-          className="text-sm md:text-base"
-        />
-        )}
-        {can('view_profit') && (
-        <StatCard
-          title={t(lang,'analytics_margin')}
-          value={hideData ? masked : `${profitMargin}%`}
-          icon={Percent}
-          iconBg="bg-purple-100"
-          iconColor="text-purple-600"
-          className="text-sm md:text-base"
-        />
-        )}
-        <StatCard
-          title={t(lang,'analytics_boxes_sold')}
-          value={totalBoxes}
-          icon={Box}
-          iconBg="bg-amber-100"
-          iconColor="text-amber-600"
-          className="text-sm md:text-base"
-        />
-      </div>
-
-      {/* Loss + Expenses + Net Profit row */}
-      {can('view_profit') && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-          {/* Убытки от продаж — кликабельная карточка */}
-          <button
-            onClick={() => lossSales.length > 0 && setShowLossModal(true)}
-            className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 text-left transition-all w-full ${totalLoss < 0 ? 'bg-red-50 border-red-200 hover:bg-red-100 cursor-pointer' : 'bg-white border-slate-100 cursor-default'}`}
-          >
-            <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-              <TrendingDown className="w-6 h-6 text-red-500" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-slate-500 font-medium">Убыток от продаж</p>
-              <p className={`text-2xl font-bold ${totalLoss < 0 ? 'text-red-600' : 'text-slate-400'}`}>
-                {hideData ? masked : `${formatCompact(totalLoss, lang)} с.`}
-              </p>
-              <p className="text-xs text-slate-400">{lossSales.length} продаж ниже себестоимости</p>
-            </div>
-            {lossSales.length > 0 && (
-              <span className="text-xs text-red-500 font-medium flex-shrink-0">Подробнее →</span>
-            )}
-          </button>
-          {/* Расходы */}
-          <div className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 ${totalExpenses > 0 ? 'bg-orange-50 border-orange-200' : 'bg-white border-slate-100'}`}>
-            <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
-              <Receipt className="w-6 h-6 text-orange-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-slate-500 font-medium">
-                {canViewAllExpenses ? 'Расходы за период' : 'Ваши расходы за период'}
-              </p>
-              <p className={`text-2xl font-bold ${totalExpenses > 0 ? 'text-orange-600' : 'text-slate-400'}`}>
-                {hideData ? masked : `−${formatCompact(totalExpenses, lang)} с.`}
-              </p>
-              <p className="text-xs text-slate-400">{displayedExpenses.length} транзакций</p>
-            </div>
-            <Link to={createPageUrl('Expenses')}>
-              <button className="text-xs text-orange-600 hover:underline flex-shrink-0">Управление →</button>
-            </Link>
-          </div>
-          {/* Чистая прибыль */}
-          <div className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 ${netProfit >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${netProfit >= 0 ? 'bg-emerald-100' : 'bg-red-100'}`}>
-              <DollarSign className={`w-6 h-6 ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`} />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500 font-medium">Чистая прибыль</p>
-              <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {hideData ? masked : `${formatCompact(netProfit, lang)} с.`}
-              </p>
-              <p className="text-xs text-slate-400">после расходов</p>
-            </div>
-          </div>
-          {/* Прибыль с реализации чужих товаров — кликабельно, ведёт к управлению выплатами владельцам */}
-          <Link
-            to={createPageUrl('OwnerPayments')}
-            className={`rounded-2xl p-4 shadow-sm border flex items-center gap-4 transition-all hover:shadow-md ${consignmentProfit > 0 ? 'bg-teal-50 border-teal-200 hover:border-teal-400' : 'bg-white border-slate-100 hover:border-teal-300'}`}
-          >
-            <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center flex-shrink-0">
-              <PackageOpen className="w-6 h-6 text-teal-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-slate-500 font-medium">Прибыль с реализации</p>
-              <p className={`text-2xl font-bold ${consignmentProfit > 0 ? 'text-teal-600' : 'text-slate-400'}`}>
-                {hideData ? masked : `${formatCompact(consignmentProfit, lang)} с.`}
-              </p>
-              <p className="text-xs text-slate-400">{consignmentBoxes} кор. · владельцам: {hideData ? masked : `${formatCompact(consignmentOwnerAmount, lang)} с.`}</p>
-            </div>
-            <span className="text-xs text-teal-600 font-medium flex-shrink-0 flex items-center gap-1">
-              Управление <ChevronRight className="w-3.5 h-3.5" />
-            </span>
-          </Link>
-        </div>
-      )}
-
-      {/* Inventory Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-        {can('view_stock_value') ? (
-          <StatCard
-            title={t(lang,'analytics_stock_value')}
-            value={convertCurrency(totalStockValue)}
-            subtitle={getCurrencySymbol()}
-            icon={Package}
-            iconBg="bg-cyan-100"
-            iconColor="text-cyan-600"
-            className="text-sm md:text-base"
-          />
-        ) : (
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-              <Package className="w-5 h-5 text-slate-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">{t(lang,'analytics_stock_value')}</p>
-              <p className="text-xl font-bold text-slate-400">••••• с.</p>
-              <p className="text-xs text-slate-400">Нет доступа</p>
-            </div>
-          </div>
-        )}
-        {can('view_profit') ? (
-          <StatCard
-            title={t(lang,'analytics_potential_profit')}
-            value={convertCurrency(potentialProfit)}
-            subtitle={t(lang,'analytics_from_stock')}
-            icon={DollarSign}
-            iconBg="bg-indigo-100"
-            iconColor="text-indigo-600"
-            className="text-sm md:text-base"
-          />
-        ) : (
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-              <DollarSign className="w-5 h-5 text-slate-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">{t(lang,'analytics_potential_profit')}</p>
-              <p className="text-xl font-bold text-slate-400">••••• с.</p>
-              <p className="text-xs text-slate-400">Нет доступа</p>
-            </div>
-          </div>
-        )}
-        <StatCard
-          title={t(lang,'analytics_total_products')}
-          value={products.length}
-          icon={Package}
-          iconBg="bg-slate-100"
-          iconColor="text-slate-600"
-          className="text-sm md:text-base"
-        />
-        <StatCard
-          title="Коробок на складе"
-          value={hideData ? masked : totalBoxesInStock}
-          icon={Box}
-          iconBg="bg-orange-100"
-          iconColor="text-orange-600"
-          className="text-sm md:text-base"
-        />
-      </div>
-
-      {/* All Charts Together */}
-      <div className="space-y-4 md:space-y-6">
-        <h2 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Графики</h2>
-        <div className="grid lg:grid-cols-2 gap-3 md:gap-6">
-          {/* Sales & Profit Chart */}
-          <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
-            <h3 className="font-semibold text-slate-900 text-sm md:text-base mb-4">{t(lang,'analytics_dynamics')}</h3>
-            {can('view_analytics') ? (
-              <SalesChart sales={filteredSales} days={14} chartType={chartType} showProfit={can('view_profit')} />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2">
-                <EyeOff className="w-8 h-8" />
-                <p className="text-sm font-medium">Нет доступа</p>
-              </div>
+      <div className="tk-in">
+        {/* Строка 1: раздел, период, валюта, курс */}
+        <div className="tk-bar">
+          <BackButton variant="terminal" />
+          <span className="tk-cap t">{t(lang, 'analytics_title')}</span>
+          <DateFilter variant="terminal" dateRange={dateRange} onDateRangeChange={setDateRange} />
+          <span className="tk-sp" />
+          <div className="tk-grp">
+            {CURRENCIES.map(c => (
+              <button
+                key={c.value}
+                className={cn('tk-btn', currency === c.value && 'on')}
+                onClick={() => setCurrency(c.value)}
+              >
+                {t(lang, c.labelKey)}
+              </button>
+            ))}
+            <button
+              className="tk-btn"
+              onClick={() => loadExchangeRates(true)}
+              disabled={ratesLoading}
+            >
+              {ratesLoading ? t(lang, 'analytics_loading_rate') : t(lang, 'analytics_refresh_rate')}
+            </button>
+            {ratesDate && currency !== 'TJS' && (
+              <span className="tk-cap">1 с. = {exchangeRates[currency]} {currency}</span>
             )}
           </div>
-
-          {/* Sales Type Chart */}
-          <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
-            <h3 className="font-semibold text-slate-900 text-sm md:text-base mb-4">{t(lang,'analytics_cash_vs_debt')}</h3>
-            <div className="h-64">
-              <SalesTypeChart sales={filteredSales} />
-            </div>
-            <div className="grid grid-cols-2 gap-3 md:gap-6 mt-6 pt-6 border-t border-slate-100">
-              <div className="text-center p-3 md:p-4 bg-emerald-50 rounded-xl">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className="w-2 md:w-3 h-2 md:h-3 rounded-full bg-emerald-500" />
-                  <p className="text-xs md:text-sm font-medium text-slate-600">{t(lang,'analytics_cash')}</p>
-                </div>
-                <p className="text-xl md:text-3xl font-bold text-emerald-600">{hideData ? masked : `${cashPercent}%`}</p>
-                <p className="text-xs md:text-sm text-slate-500 mt-1">{cashSales.length}</p>
-                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{(hideData || !can('view_revenue')) ? masked : `${formatCompact(cashAmount, lang)} с.`}</p>
-              </div>
-              <div className="text-center p-3 md:p-4 bg-amber-50 rounded-xl">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className="w-2 md:w-3 h-2 md:h-3 rounded-full bg-amber-500" />
-                  <p className="text-xs md:text-sm font-medium text-slate-600">{t(lang,'analytics_in_debt')}</p>
-                </div>
-                <p className="text-xl md:text-3xl font-bold text-amber-600">{hideData ? masked : `${debtPercent}%`}</p>
-                <p className="text-xs md:text-sm text-slate-500 mt-1">{debtSales.length}</p>
-                <p className="text-sm md:text-lg font-semibold text-slate-900 mt-1 md:mt-2">{(hideData || !can('view_revenue')) ? masked : `${formatCompact(debtAmount, lang)} с.`}</p>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
 
-      {/* Advanced Analytics Section */}
-      <div className="space-y-4 md:space-y-6">
-        <h2 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">Расширенная аналитика</h2>
-
-        <SalesForecast sales={filteredSales} days={30} />
-        <CustomerSegmentation customers={customers} sales={filteredSales} />
-      </div>
-
-      {/* Expenses breakdown */}
-      {can('view_profit') && filteredExpenses.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-900 text-sm md:text-base flex items-center gap-2">
-              <Receipt className="w-4 h-4 text-orange-500" />
-              Расходы по категориям
-            </h3>
-            <Link to={createPageUrl('Expenses')}>
-              <button className="text-xs text-orange-600 hover:underline">Все расходы →</button>
+        {/* Строка 2: подзаголовок, настройки графиков, отбор продаж, скрытие данных */}
+        <div className="tk-bar flat">
+          <span className="tk-sub">{t(lang, 'analytics_subtitle')}</span>
+          <span className="tk-sp" />
+          <div className="tk-grp">
+            <Link to={createPageUrl('ChartSettings')} className="tk-btn">
+              {t(lang, 'analytics_chart_settings')}
             </Link>
-          </div>
-          <div className="space-y-2">
-            {[
-              { label: 'Аренда', icon: Home, color: 'bg-blue-100 text-blue-600' },
-              { label: 'Зарплата', icon: Users, color: 'bg-green-100 text-green-600' },
-              { label: 'Транспорт', icon: Truck, color: 'bg-orange-100 text-orange-600' },
-              { label: 'Коммунальные', icon: Zap, color: 'bg-yellow-100 text-yellow-600' },
-              { label: 'Реклама', icon: Megaphone, color: 'bg-purple-100 text-purple-600' },
-              { label: 'Прочее', icon: MoreHorizontal, color: 'bg-slate-100 text-slate-600' },
-            ].map(cat => {
-              const total = displayedExpenses.filter(e => e.category === cat.label).reduce((s, e) => s + (e.amount || 0), 0);
-              if (!total) return null;
-              const pct = totalExpenses ? ((total / totalExpenses) * 100).toFixed(0) : 0;
-              const Icon = cat.icon;
-              return (
-                <div key={cat.label} className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cat.color}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="font-medium text-slate-700">{cat.label}</span>
-                      <span className="text-slate-500">{hideData ? masked : `${formatCompact(total, lang)} с.`} ({pct}%)</span>
-                    </div>
-                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-orange-400 rounded-full" style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                </div>
-              );
-            }).filter(Boolean)}
-          </div>
-          <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-            <span className="text-sm font-medium text-slate-600">Итого расходов:</span>
-            <span className="text-lg font-bold text-orange-600">{hideData ? masked : `−${totalExpenses.toLocaleString()} с.`}</span>
+            <button className={cn('tk-btn', !mySalesOnly && 'on')} onClick={() => setMySalesOnly(false)}>Все продажи</button>
+            <button className={cn('tk-btn', mySalesOnly && 'on')} onClick={() => setMySalesOnly(true)}>Мои продажи</button>
+            <button className={cn('tk-btn', hideData && 'on')} onClick={() => setHideData(true)}>{t(lang, 'analytics_hide')}</button>
+            <button className={cn('tk-btn', !hideData && 'on')} onClick={() => setHideData(false)}>{t(lang, 'analytics_show')}</button>
           </div>
         </div>
-      )}
 
-      {/* Детализация продаж по товарам за выбранный период */}
-      {dateRange?.from && (
-        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 text-sm md:text-base mb-1 flex items-center gap-2">
-            <Package className="w-4 h-4 text-indigo-500" />
-            Продажи по товарам за период
-          </h3>
-          <p className="text-xs text-slate-400 mb-4">
-            {format(dateRange.from, 'dd MMM yyyy', { locale: ru })}
-            {dateRange.to && !isSameDay(dateRange.from, dateRange.to) ? ` — ${format(dateRange.to, 'dd MMM yyyy', { locale: ru })}` : ''}
-            {' · '}{filteredSales.length} продаж
-          </p>
-          {filteredSales.length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
-              <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Нет продаж за выбранный период</p>
+        {/* Строка 3: быстрый доступ и тип графика */}
+        <div className="tk-bar tight">
+          <span className="tk-cap">Быстрый доступ:</span>
+          <div className="tk-grp">
+            {QUICK_LINKS.map(q => (
+              <Link key={q.to} to={createPageUrl(q.to)} className="tk-btn">{q.label}</Link>
+            ))}
+          </div>
+          <span className="tk-sp" />
+          <div className="tk-grp">
+            {CHART_TYPES.map(c => (
+              <button
+                key={c.value}
+                className={cn('tk-btn', chartType === c.value && 'on')}
+                onClick={() => setChartType(c.value)}
+              >
+                {t(lang, c.labelKey)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Приборная полоса метрик */}
+        <div className="tk-strip tk-mono">
+          {can('view_revenue') ? (
+            <div className="tk-cell">
+              <span className="tk-cap">{t(lang, 'analytics_revenue')}</span>
+              <b className="tk-pulse">{convertCurrency(totalRevenue)} {symbol}</b>
             </div>
           ) : (
-            <div className="space-y-2 max-h-[500px] overflow-y-auto">
-              {(() => {
-                const productStats = {};
-                filteredSales.forEach(sale => {
-                  const pid = sale.product_id;
-                  if (!productStats[pid]) productStats[pid] = { boxes: 0, revenue: 0, profit: 0, count: 0 };
-                  productStats[pid].boxes += sale.boxes_sold || 0;
-                  productStats[pid].revenue += sale.total_amount || 0;
-                  productStats[pid].profit += sale.profit || 0;
-                  productStats[pid].count += 1;
-                });
-                return Object.entries(productStats)
-                  .sort((a, b) => b[1].revenue - a[1].revenue)
-                  .map(([pid, stats], i) => {
-                    const product = resolveProductInfo(pid);
-                    if (!product) return null;
-                    return (
-                      <div key={pid} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-indigo-50 transition-colors">
-                        <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
+            <div className="tk-cell">
+              <span className="tk-cap">{t(lang, 'analytics_revenue')}</span>
+              <b>{masked}</b>
+              <small>Нет доступа</small>
+            </div>
+          )}
+
+          {can('view_profit') && (
+            <div className="tk-cell g">
+              <span className="tk-cap">{t(lang, 'analytics_profit')}</span>
+              <b>{hideData ? masked : `${formatCompact(totalProfit, lang)} ${symbol}`}</b>
+            </div>
+          )}
+
+          {can('view_profit') && (
+            <div className="tk-cell">
+              <span className="tk-cap">{t(lang, 'analytics_margin')}</span>
+              <b>{hideData ? masked : `${profitMargin}%`}</b>
+            </div>
+          )}
+
+          <div className="tk-cell">
+            <span className="tk-cap">{t(lang, 'analytics_boxes_sold')}</span>
+            <b>{totalBoxes}</b>
+          </div>
+
+          {can('view_profit') && (
+            <button
+              className="tk-cell r"
+              onClick={() => lossSales.length > 0 && setShowLossModal(true)}
+            >
+              <span className="tk-cap">Убыток от продаж</span>
+              <b>{hideData ? masked : `${formatCompact(totalLoss, lang)} с.`}</b>
+              <small>{lossSales.length} продаж ниже себестоимости</small>
+            </button>
+          )}
+
+          <div className="tk-cell r">
+            <span className="tk-cap">{canViewAllExpenses ? 'Расходы за период' : 'Ваши расходы за период'}</span>
+            <b>{hideData ? masked : `−${formatCompact(totalExpenses, lang)} с.`}</b>
+            <small>
+              {displayedExpenses.length} транзакций ·{' '}
+              <Link to={createPageUrl('Expenses')} className="tk-lnk">Управление →</Link>
+            </small>
+          </div>
+
+          <div className="tk-cell g">
+            <span className="tk-cap">Чистая прибыль</span>
+            <b>{hideData ? masked : `${formatCompact(netProfit, lang)} с.`}</b>
+            <small>после расходов</small>
+          </div>
+
+          <div className="tk-cell">
+            <span className="tk-cap">Прибыль с реализации</span>
+            <b>{hideData ? masked : `${formatCompact(consignmentProfit, lang)} с.`}</b>
+            <small>
+              {consignmentBoxes} кор. · владельцам: {hideData ? masked : `${formatCompact(consignmentOwnerAmount, lang)} с.`} ·{' '}
+              <Link to={createPageUrl('OwnerPayments')} className="tk-lnk">Управление →</Link>
+            </small>
+          </div>
+
+          {can('view_stock_value') ? (
+            <div className="tk-cell">
+              <span className="tk-cap">{t(lang, 'analytics_stock_value')}</span>
+              <b>{convertCurrency(totalStockValue)} {symbol}</b>
+            </div>
+          ) : (
+            <div className="tk-cell">
+              <span className="tk-cap">{t(lang, 'analytics_stock_value')}</span>
+              <b>{masked}</b>
+              <small>Нет доступа</small>
+            </div>
+          )}
+
+          {can('view_profit') ? (
+            <div className="tk-cell g">
+              <span className="tk-cap">{t(lang, 'analytics_potential_profit')}</span>
+              <b>{convertCurrency(potentialProfit)} {symbol}</b>
+              <small>{t(lang, 'analytics_from_stock')}</small>
+            </div>
+          ) : (
+            <div className="tk-cell g">
+              <span className="tk-cap">{t(lang, 'analytics_potential_profit')}</span>
+              <b>{masked}</b>
+              <small>Нет доступа</small>
+            </div>
+          )}
+
+          <div className="tk-cell">
+            <span className="tk-cap">{t(lang, 'analytics_total_products')}</span>
+            <b>{products.length}</b>
+          </div>
+
+          <div className="tk-cell">
+            <span className="tk-cap">Коробок на складе</span>
+            <b>{hideData ? masked : totalBoxesInStock}</b>
+          </div>
+        </div>
+
+        {/* Графики: динамика продаж и прибыли + наличные/долг */}
+        <div className="tk-slab">
+          <div className="tk-sp2">
+            <h3 style={{ margin: 0 }}>Графики: {t(lang, 'analytics_dynamics')}</h3>
+            <div className="tk-leg">
+              <span><i style={{ background: '#f5b23e' }} />Выручка</span>
+              <span><i style={{ background: '#6ee7b7' }} />Прибыль</span>
+            </div>
+          </div>
+          <SalesChart
+            sales={filteredSales}
+            days={14}
+            chartType={chartType}
+            showProfit={can('view_profit')}
+          />
+          <div className="tk-mirror tk-mono">
+            <div className="tk-mrow">
+              <div className="h">
+                <span className="tk-cap">{t(lang, 'analytics_cash')}</span>
+                <span>{hideData ? masked : `${cashPercent}% · ${cashSales.length} · ${formatCompact(cashAmount, lang)} с.`}</span>
+              </div>
+              <div className="tk-trk"><span style={{ width: `${cashPercent}%`, background: '#6ee7b7' }} /></div>
+            </div>
+            <div className="tk-mrow">
+              <div className="h">
+                <span className="tk-cap">{t(lang, 'analytics_in_debt')}</span>
+                <span>{hideData ? masked : `${debtPercent}% · ${debtSales.length} · ${formatCompact(debtAmount, lang)} с.`}</span>
+              </div>
+              <div className="tk-trk"><span style={{ width: `${debtPercent}%`, background: '#f5b23e' }} /></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Продажи по товарам за период с сортировкой */}
+        <div className="tk-slab">
+          <div className="tk-sp2">
+            <h3 style={{ margin: 0 }}>
+              Продажи по товарам за период, {filteredSales.length} продаж
+              {periodLabel && <span className="tk-cap" style={{ marginLeft: 10 }}>{periodLabel}</span>}
+            </h3>
+            <div className="tk-srt">
+              <span className="tk-cap" style={{ marginRight: 6 }}>{t(lang, 'analytics_top_products')}, сортировка:</span>
+              {SORT_OPTIONS.map(o => (
+                <button
+                  key={o.value}
+                  className={cn('tk-btn', topProductsSort === o.value && 'on')}
+                  onClick={() => setTopProductsSort(o.value)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filteredSales.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="w-8 h-8 mx-auto mb-2" style={{ color: '#7c8594', opacity: .4 }} />
+              <p className="text-xs" style={{ color: '#7c8594' }}>Нет продаж за выбранный период</p>
+            </div>
+          ) : (
+            <div className="max-h-[520px] overflow-y-auto overflow-x-auto">
+              <table className="tk-tbl tk-mono">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Товар</th>
+                    <th>Коробок</th>
+                    <th className="n">Выручка</th>
+                    {can('view_profit') && <th className="n">Прибыль</th>}
+                    {showStockColumn && <th className="n">Остаток</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {productRows.map((row, i) => (
+                    <tr key={row.pid}>
+                      <td className="rk">{i + 1}</td>
+                      <td>
                         <ProductPhoto
-                          photoUrl={product.photo_url}
-                          brand={product.brand}
-                          className="w-10 h-10 rounded-lg flex-shrink-0"
-                          placeholderClassName="bg-slate-200 dark:bg-slate-700"
+                          photoUrl={row.product.photo_url}
+                          brand={row.product.brand}
+                          className="tk-ph"
+                          textClassName="text-[8px]"
+                        />
+                        {row.product.brand} {row.product.model}
+                      </td>
+                      <td>{row.stats.boxes} кор. · {row.stats.count} продаж</td>
+                      <td className="n">
+                        {(hideData || !can('view_revenue')) ? masked : `${formatCompact(row.stats.revenue, lang)} с.`}
+                      </td>
+                      {can('view_profit') && (
+                        <td className="n" style={{ color: row.stats.profit >= 0 ? '#6ee7b7' : '#f87171' }}>
+                          {hideData ? masked : `${row.stats.profit >= 0 ? '+' : ''}${formatCompact(row.stats.profit, lang)} с.`}
+                        </td>
+                      )}
+                      {showStockColumn && (
+                        <td>
+                          <span className="tk-m">
+                            <i style={{ width: `${maxStock ? ((row.product.boxes_in_stock || 0) / maxStock) * 100 : 0}%` }} />
+                          </span>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Расходы по категориям и расширенная аналитика */}
+        <div className={showExpenses ? 'tk-two' : ''}>
+          {showExpenses && (
+            <div className="tk-slab">
+              <div className="tk-sp2">
+                <h3 style={{ margin: 0 }}>Расходы по категориям</h3>
+                <Link to={createPageUrl('Expenses')} className="tk-lnk">Все расходы →</Link>
+              </div>
+              {expenseRows.map(cat => (
+                <div key={cat.label} className="tk-exr tk-mono">
+                  <span>{cat.label}</span>
+                  <div className="tk-trk">
+                    <span style={{ width: `${cat.pct}%`, background: '#f5b23e' }} />
+                  </div>
+                  <span className="v">{hideData ? masked : `${formatCompact(cat.total, lang)} с.`} ({cat.pct}%)</span>
+                </div>
+              ))}
+              <div className="tk-tot tk-mono">
+                <span className="tk-cap">Итого расходов:</span>
+                <b>{hideData ? masked : `−${formatCompact(totalExpenses, lang)} с.`}</b>
+              </div>
+            </div>
+          )}
+
+          <div className="tk-slab">
+            <div className="tk-sp2">
+              <h3 style={{ margin: 0 }}>Расширенная аналитика</h3>
+            </div>
+            <div className="tk-mat tk-mono">
+              <div>
+                <span className="tk-cap">Клиентов</span>
+                <b>{customers.length}</b>
+              </div>
+              <div>
+                <span className="tk-cap">С долгом</span>
+                <b>{debtors.length}</b>
+              </div>
+              <div>
+                <span className="tk-cap">Долг клиентов</span>
+                <b>{hideData ? masked : `${formatCompact(totalDebt, lang)} с.`}</b>
+              </div>
+              <div>
+                <span className="tk-cap">Продаж за период</span>
+                <b>{filteredSales.length}</b>
+              </div>
+              <div>
+                <span className="tk-cap">Средний чек</span>
+                <b>{(hideData || !can('view_revenue')) ? masked : `${filteredSales.length ? formatCompact(totalRevenue / filteredSales.length, lang) : 0} с.`}</b>
+              </div>
+            </div>
+
+            <SalesForecast sales={filteredSales} days={30} />
+            <CustomerSegmentation customers={customers} sales={filteredSales} />
+
+            {topDebtor && (
+              <div className="tk-dbt tk-mono">
+                <span>{topDebtor.name}</span>
+                <b style={{ color: '#f87171' }}>{hideData ? masked : `${(topDebtor.total_debt || 0).toLocaleString()} с.`}</b>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Эффективность сотрудников */}
+        {can('view_employee_analytics') && (
+          <div className="tk-slab">
+            <h3>Эффективность сотрудников</h3>
+            <EmployeeEfficiency
+              sales={sales}
+              canViewProfit={can('view_profit')}
+              hideData={hideData}
+              lang={lang}
+            />
+          </div>
+        )}
+
+        {/* Убыточные продажи */}
+        <Dialog open={showLossModal} onOpenChange={setShowLossModal}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-[#12161d] border-[#232a35] text-[#d7dbe2]">
+            <DialogHeader>
+              <DialogTitle className="tk-mono flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.14em] text-[#f87171]">
+                <TrendingDown className="w-4 h-4" />
+                Убыточные продажи — {lossSales.length} шт.
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="mt-2 space-y-2">
+              {/* Итог */}
+              <div className="flex items-center justify-between bg-[#0f131a] border-l-2 border-[#f87171] px-3 py-2">
+                <span className="tk-cap">Общий убыток:</span>
+                <span className="tk-mono text-base font-bold text-[#f87171]">{formatCompact(totalLoss, lang)} с.</span>
+              </div>
+
+              {/* Список продаж */}
+              <div className="border border-[#232a35]">
+                {lossSales
+                  .sort((a, b) => (a.profit || 0) - (b.profit || 0)) // самые большие убытки сверху
+                  .map(sale => {
+                    const product = resolveProductInfo(sale.product_id);
+                    const lossPerBox = sale.boxes_sold ? Math.round((sale.profit || 0) / sale.boxes_sold) : 0;
+                    return (
+                      <div key={sale.id} className="tk-mono flex items-center gap-3 px-3 py-2.5 border-b border-[#1b212a] last:border-b-0 hover:bg-[#171c25] transition-colors">
+                        <ProductPhoto
+                          photoUrl={product?.photo_url}
+                          brand={product?.brand}
+                          className="tk-ph"
                           textClassName="text-[8px]"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-slate-900 text-sm truncate">{product.brand} {product.model}</p>
-                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500 mt-0.5">
-                            <span>📦 {stats.boxes} кор.</span>
-                            <span>🛒 {stats.count} продаж</span>
-                            {product.color && <span>🎨 {product.color}</span>}
+                          <p className="text-xs font-semibold text-[#f2f4f8] truncate">
+                            {product ? `${product.brand} ${product.model}` : 'Неизвестный товар'}
+                          </p>
+                          <div className="flex items-center gap-2 text-[11px] text-[#7c8594] mt-0.5 flex-wrap">
+                            <span>{sale.boxes_sold} кор.</span>
+                            <span>·</span>
+                            <span>Продажа: {(sale.sale_price || 0).toLocaleString()} с.</span>
+                            <span>·</span>
+                            <span>Закупка: {(sale.purchase_price || 0).toLocaleString()} с.</span>
+                            {sale.sale_date && (
+                              <>
+                                <span>·</span>
+                                <span className="flex items-center gap-0.5">
+                                  <Calendar className="w-3 h-3" />
+                                  {format(parseISO(sale.sale_date), 'dd.MM.yyyy', { locale: ru })}
+                                </span>
+                              </>
+                            )}
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="font-bold text-slate-900 text-sm">{(hideData || !can('view_revenue')) ? masked : `${formatCompact(stats.revenue, lang)} с.`}</p>
-                          {can('view_profit') && (
-                            <p className={`text-xs font-medium ${stats.profit >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                              {hideData ? masked : `${stats.profit >= 0 ? '+' : ''}${formatCompact(stats.profit, lang)} с.`}
-                            </p>
-                          )}
+                          <p className="text-sm font-bold text-[#f87171]">{formatCompact(sale.profit || 0, lang)} с.</p>
+                          <p className="text-[11px] text-[#7c8594]">{lossPerBox.toLocaleString()} с./кор.</p>
                         </div>
                       </div>
                     );
-                  }).filter(Boolean);
-              })()}
+                  })}
+              </div>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Employee Efficiency with day filters */}
-      {can('view_employee_analytics') && (
-        <EmployeeEfficiency
-          sales={sales}
-          canViewProfit={can('view_profit')}
-          hideData={hideData}
-          lang={lang}
-        />
-      )}
-
-      {/* Top Products by Revenue - Moved to End */}
-      <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <h3 className="font-semibold text-slate-900 text-sm md:text-base">{t(lang,'analytics_top_products')}</h3>
-          <Select value={topProductsSort} onValueChange={setTopProductsSort}>
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder="Сортировка" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="revenue">По выручке</SelectItem>
-              <SelectItem value="profit">По прибыли</SelectItem>
-              <SelectItem value="boxes">По коробкам</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2 md:space-y-3 max-h-96 overflow-y-auto">
-          {(() => {
-            const productStats = {};
-            filteredSales.forEach(sale => {
-              if (!productStats[sale.product_id]) {
-                productStats[sale.product_id] = { boxes: 0, revenue: 0, profit: 0 };
-              }
-              productStats[sale.product_id].boxes += sale.boxes_sold || 0;
-              productStats[sale.product_id].revenue += sale.total_amount || 0;
-              productStats[sale.product_id].profit += sale.profit || 0;
-            });
-
-            let sorted = Object.entries(productStats);
-            switch(topProductsSort) {
-              case 'profit':
-                sorted = sorted.sort((a, b) => b[1].profit - a[1].profit);
-                break;
-              case 'boxes':
-                sorted = sorted.sort((a, b) => b[1].boxes - a[1].boxes);
-                break;
-              case 'revenue':
-              default:
-                sorted = sorted.sort((a, b) => b[1].revenue - a[1].revenue);
-            }
-
-            return sorted.slice(0, 10).map(([productId, stats], index) => {
-              const product = resolveProductInfo(productId);
-              if (!product) return null;
-
-              return (
-                <div key={productId} className="flex items-center gap-2 md:gap-4 p-2 md:p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
-                  <div className="w-5 md:w-8 h-5 md:h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-xs md:text-sm flex-shrink-0">
-                    {index + 1}
-                  </div>
-                  <ProductPhoto
-                    photoUrl={product.photo_url}
-                    brand={product.brand}
-                    className="w-7 md:w-12 h-7 md:h-12 rounded-lg flex-shrink-0"
-                    placeholderClassName="bg-slate-200 dark:bg-slate-700"
-                    textClassName="text-[7px] md:text-[10px]"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-900 text-xs md:text-sm truncate">{product.brand} {product.model}</p>
-                    <p className="text-xs text-slate-500">{stats.boxes} кор.</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="font-semibold text-slate-900 text-xs md:text-sm">{(hideData || !can('view_revenue')) ? masked : `${formatCompact(stats.revenue, lang)} с.`}</p>
-                    {can('view_profit') && (
-                      <p className={`text-xs md:text-sm font-medium ${stats.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                        {hideData ? masked : `${stats.profit >= 0 ? '+' : ''}${formatCompact(stats.profit, lang)} с.`}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-            .filter(Boolean);
-          })()}
-        </div>
+          </DialogContent>
+        </Dialog>
       </div>
-      {/* Loss Sales Modal */}
-      <Dialog open={showLossModal} onOpenChange={setShowLossModal}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <TrendingDown className="w-5 h-5" />
-              Убыточные продажи — {lossSales.length} шт.
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="mt-2 space-y-2">
-            {/* Итог */}
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center justify-between">
-              <span className="text-sm font-medium text-red-700">Общий убыток:</span>
-              <span className="text-lg font-bold text-red-600">{formatCompact(totalLoss, lang)} с.</span>
-            </div>
-
-            {/* Список продаж */}
-            <div className="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
-              {lossSales
-                .sort((a, b) => (a.profit || 0) - (b.profit || 0)) // самые большие убытки сверху
-                .map(sale => {
-                  const product = resolveProductInfo(sale.product_id);
-                  const lossPerBox = sale.boxes_sold ? Math.round((sale.profit || 0) / sale.boxes_sold) : 0;
-                  return (
-                    <div key={sale.id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-red-50 transition-colors">
-                      <ProductPhoto
-                        photoUrl={product?.photo_url}
-                        brand={product?.brand}
-                        className="w-10 h-10 rounded-lg flex-shrink-0"
-                        textClassName="text-[8px]"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-800 text-sm truncate">
-                          {product ? `${product.brand} ${product.model}` : 'Неизвестный товар'}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5 flex-wrap">
-                          <span>{sale.boxes_sold} кор.</span>
-                          <span>·</span>
-                          <span>Продажа: {(sale.sale_price || 0).toLocaleString()} с.</span>
-                          <span>·</span>
-                          <span>Закупка: {(sale.purchase_price || 0).toLocaleString()} с.</span>
-                          {sale.sale_date && (
-                            <>
-                              <span>·</span>
-                              <span className="flex items-center gap-0.5">
-                                <Calendar className="w-3 h-3" />
-                                {format(parseISO(sale.sale_date), 'dd.MM.yyyy', { locale: ru })}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-base font-bold text-red-600">{formatCompact(sale.profit || 0, lang)} с.</p>
-                        <p className="text-xs text-red-400">{lossPerBox.toLocaleString()} с./кор.</p>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
     </div>
   );
 }

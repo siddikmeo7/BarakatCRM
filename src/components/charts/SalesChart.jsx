@@ -1,7 +1,13 @@
 import React from 'react';
-import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO, startOfDay, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
+
+// Палитра «Тёмного терминала»: янтарь — выручка, мята — прибыль, сетка — графит.
+const REVENUE_COLOR = '#f5b23e';
+const PROFIT_COLOR = '#6ee7b7';
+const GRID_COLOR = '#232a35';
+const AXIS_COLOR = '#7c8594';
 
 export default function SalesChart({ sales, days = 7, chartType = 'line', showProfit = true }) {
   // Группируем продажи по дням
@@ -25,42 +31,44 @@ export default function SalesChart({ sales, days = 7, chartType = 'line', showPr
   }
 
   const ChartComponent = chartType === 'bar' ? BarChart : chartType === 'area' ? AreaChart : LineChart;
+  const anim = { animationDuration: 2200, animationBegin: 400, animationEasing: 'ease' };
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width="100%" height={210}>
       <ChartComponent data={chartData}>
         <defs>
-          <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+          <linearGradient id="tkColorRevenue" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={REVENUE_COLOR} stopOpacity={0.3}/>
+            <stop offset="95%" stopColor={REVENUE_COLOR} stopOpacity={0}/>
           </linearGradient>
-          <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+          <linearGradient id="tkColorProfit" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={PROFIT_COLOR} stopOpacity={0.3}/>
+            <stop offset="95%" stopColor={PROFIT_COLOR} stopOpacity={0}/>
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-        <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-        <YAxis stroke="#64748b" fontSize={12} />
-        <Tooltip 
-          contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}
+        <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
+        <XAxis dataKey="date" stroke={AXIS_COLOR} fontSize={11} tickLine={false} />
+        <YAxis stroke={AXIS_COLOR} fontSize={11} tickLine={false} axisLine={false} />
+        <Tooltip
+          contentStyle={{ backgroundColor: '#12161d', border: '1px solid #232a35', borderRadius: '3px', fontSize: '12px', color: '#f2f4f8' }}
+          labelStyle={{ color: '#7c8594' }}
+          itemStyle={{ color: '#f2f4f8' }}
           formatter={(value) => value.toLocaleString() + ' с.'}
         />
-        <Legend />
         {chartType === 'bar' ? (
           <>
-            <Bar dataKey="revenue" fill="#3b82f6" name="Выручка" />
-            {showProfit && <Bar dataKey="profit" fill="#10b981" name="Прибыль" />}
+            <Bar dataKey="revenue" fill={REVENUE_COLOR} name="Выручка" {...anim} />
+            {showProfit && <Bar dataKey="profit" fill={PROFIT_COLOR} name="Прибыль" {...anim} />}
           </>
         ) : chartType === 'area' ? (
           <>
-            <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRevenue)" name="Выручка" />
-            {showProfit && <Area type="monotone" dataKey="profit" stroke="#10b981" fillOpacity={1} fill="url(#colorProfit)" name="Прибыль" />}
+            <Area type="monotone" dataKey="revenue" stroke={REVENUE_COLOR} fillOpacity={1} fill="url(#tkColorRevenue)" name="Выручка" {...anim} />
+            {showProfit && <Area type="monotone" dataKey="profit" stroke={PROFIT_COLOR} fillOpacity={1} fill="url(#tkColorProfit)" name="Прибыль" {...anim} />}
           </>
         ) : (
           <>
-            <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} name="Выручка" />
-            {showProfit && <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2} name="Прибыль" />}
+            <Line type="monotone" dataKey="revenue" stroke={REVENUE_COLOR} strokeWidth={2.5} dot={false} name="Выручка" {...anim} />
+            {showProfit && <Line type="monotone" dataKey="profit" stroke={PROFIT_COLOR} strokeWidth={2.5} dot={false} name="Прибыль" {...anim} />}
           </>
         )}
       </ChartComponent>

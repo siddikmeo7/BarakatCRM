@@ -26,9 +26,10 @@ function getActivePreset(range) {
   return null;
 }
 
-export default function DateFilter({ value, onChange, dateRange, onDateRangeChange }) {
+export default function DateFilter({ value, onChange, dateRange, onDateRangeChange, variant }) {
   const [isOpen, setIsOpen] = React.useState(false);
-  
+  const terminal = variant === 'terminal';
+
   const range = value || dateRange;
   const handleChange = onChange || onDateRangeChange;
   const activePreset = getActivePreset(range);
@@ -39,38 +40,57 @@ export default function DateFilter({ value, onChange, dateRange, onDateRangeChan
     return `${format(range.from, 'dd MMM', { locale: ru })} — ${format(range.to, 'dd MMM yyyy', { locale: ru })}`;
   };
 
+  const customActive = !activePreset && !!range?.from;
+
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className={terminal ? 'tk-grp' : 'flex flex-wrap items-center gap-1.5'}>
       {presets.map((preset) => (
-        <Button
-          key={preset.key}
-          variant="outline"
-          size="sm"
-          onClick={() => handleChange?.(preset.getValue())}
-          className={cn(
-            "text-xs h-7 px-2.5 rounded-lg font-medium transition-all",
-            activePreset === preset.key
-              ? "bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
-              : "hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700"
-          )}
-        >
-          {preset.label}
-        </Button>
-      ))}
-      
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
+        terminal ? (
+          <button
+            key={preset.key}
+            onClick={() => handleChange?.(preset.getValue())}
+            className={cn('tk-btn', activePreset === preset.key && 'on')}
+          >
+            {preset.label}
+          </button>
+        ) : (
           <Button
+            key={preset.key}
             variant="outline"
             size="sm"
+            onClick={() => handleChange?.(preset.getValue())}
             className={cn(
-              "gap-1.5 h-7 px-2.5 text-xs rounded-lg",
-              !activePreset && range?.from ? "bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700" : ""
+              "text-xs h-7 px-2.5 rounded-lg font-medium transition-all",
+              activePreset === preset.key
+                ? "bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
+                : "hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700"
             )}
           >
-            <CalendarIcon className="w-3.5 h-3.5" />
-            {!activePreset && range?.from ? formatDateRange() : 'Свой'}
+            {preset.label}
           </Button>
+        )
+      ))}
+
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          {terminal ? (
+            <button className={cn('tk-btn', customActive && 'on')}>
+              <CalendarIcon className="w-3.5 h-3.5" />
+              {customActive ? formatDateRange() : 'Свой'}
+            </button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "gap-1.5 h-7 px-2.5 text-xs rounded-lg",
+                customActive ? "bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700" : ""
+              )}
+            >
+              <CalendarIcon className="w-3.5 h-3.5" />
+              {customActive ? formatDateRange() : 'Свой'}
+            </Button>
+          )}
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
@@ -87,13 +107,23 @@ export default function DateFilter({ value, onChange, dateRange, onDateRangeChan
       </Popover>
 
       {range?.from && (
-        <button
-          onClick={() => handleChange?.(null)}
-          className="flex items-center gap-1 h-7 px-2 text-xs text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
-        >
-          <X className="w-3.5 h-3.5" />
-          Сброс
-        </button>
+        terminal ? (
+          <button
+            onClick={() => handleChange?.(null)}
+            className="tk-btn"
+          >
+            <X className="w-3.5 h-3.5" />
+            Сброс
+          </button>
+        ) : (
+          <button
+            onClick={() => handleChange?.(null)}
+            className="flex items-center gap-1 h-7 px-2 text-xs text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+            Сброс
+          </button>
+        )
       )}
     </div>
   );

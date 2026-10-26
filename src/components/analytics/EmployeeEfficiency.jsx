@@ -6,7 +6,7 @@ import {
   startOfYear, endOfYear, subWeeks, subMonths
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Users, TrendingUp, ShoppingCart, Calendar, Package, Crown } from 'lucide-react';
+import { Users, Calendar, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatCompact } from '@/lib/formatCompact';
@@ -141,30 +141,21 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
       : `${format(period.from, 'dd MMM', { locale: ru })} — ${format(period.to, 'dd MMM yyyy', { locale: ru })}`;
 
   return (
-    <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-slate-100">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h3 className="font-semibold text-slate-900 text-sm md:text-base flex items-center gap-2">
-          <Users className="w-4 h-4 text-rose-500" />
-          Эффективность сотрудников
-        </h3>
-        <span className="text-xs text-slate-400 flex items-center gap-1">
+    <div className="tk-mono">
+      <div className="tk-sp2" style={{ marginBottom: 10 }}>
+        <span className="tk-cap flex items-center gap-1.5">
           <Calendar className="w-3 h-3" />
           {periodLabel} · {periodSales.length} продаж · {totalBoxes} кор.
         </span>
       </div>
 
       {/* Quick period filters */}
-      <div className="flex flex-wrap items-center gap-1.5 mb-3">
+      <div className="tk-grp" style={{ marginBottom: 10 }}>
         {PERIODS.map(p => (
           <button
             key={p.key}
             onClick={() => { setPeriodKey(p.key); setUseCustom(false); }}
-            className={cn(
-              "px-2.5 py-1 rounded-lg text-xs font-medium border transition-all",
-              !useCustom && periodKey === p.key
-                ? "bg-rose-500 text-white border-rose-500"
-                : "bg-white text-slate-600 border-slate-200 hover:border-rose-300"
-            )}
+            className={cn('tk-btn', !useCustom && periodKey === p.key && 'on')}
           >
             {p.label}
           </button>
@@ -172,64 +163,49 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
       </div>
 
       {/* Custom date range */}
-      <div className="flex flex-wrap items-center gap-1.5 mb-4">
-        <span className="text-xs text-slate-400">Кастомный период:</span>
+      <div className="flex flex-wrap items-center gap-2" style={{ marginBottom: 12 }}>
+        <span className="tk-cap">Кастомный период:</span>
         <input
           type="date"
           value={customFrom}
           onChange={e => { setCustomFrom(e.target.value); setUseCustom(true); }}
-          className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+          className="tk-input"
         />
-        <span className="text-xs text-slate-400">—</span>
+        <span className="tk-cap">—</span>
         <input
           type="date"
           value={customTo}
           onChange={e => { setCustomTo(e.target.value); setUseCustom(true); }}
-          className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+          className="tk-input"
         />
         {useCustom && (
-          <button onClick={() => setUseCustom(false)} className="text-xs text-slate-400 hover:text-slate-600 underline">сбросить</button>
+          <button onClick={() => setUseCustom(false)} className="tk-lnk">сбросить</button>
         )}
       </div>
 
       {/* Totals row */}
-      <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4">
-        <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <ShoppingCart className="w-5 h-5 text-blue-600" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] text-slate-500 font-medium leading-tight">Выручка</p>
-            <p className="text-sm md:text-lg font-bold text-blue-600 truncate">{fmt(totalRevenue)}</p>
-          </div>
+      <div className="tk-mat" style={{ gridTemplateColumns: canViewProfit ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', marginBottom: 14 }}>
+        <div>
+          <span className="tk-cap">Выручка</span>
+          <b>{fmt(totalRevenue)}</b>
         </div>
         {canViewProfit && (
-          <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3 flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] text-slate-500 font-medium leading-tight">Прибыль</p>
-              <p className="text-sm md:text-lg font-bold text-emerald-600 truncate">{fmt(totalProfit)}</p>
-            </div>
+          <div>
+            <span className="tk-cap">Прибыль</span>
+            <b>{fmt(totalProfit)}</b>
           </div>
         )}
-        <div className="rounded-xl bg-amber-50 border border-amber-100 p-3 flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-            <Package className="w-5 h-5 text-amber-600" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] text-slate-500 font-medium leading-tight">Коробок</p>
-            <p className="text-sm md:text-lg font-bold text-amber-600 truncate">{totalBoxes}</p>
-          </div>
+        <div>
+          <span className="tk-cap">Коробок</span>
+          <b>{totalBoxes}</b>
         </div>
       </div>
 
       {/* Employee list */}
       {employeeStats.length === 0 ? (
-        <div className="text-center py-8 text-slate-400">
-          <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">Нет сотрудников и продаж за выбранный период</p>
+        <div className="text-center py-8">
+          <Users className="w-8 h-8 mx-auto mb-2" style={{ color: '#7c8594', opacity: .4 }} />
+          <p className="text-xs" style={{ color: '#7c8594' }}>Нет сотрудников и продаж за выбранный период</p>
         </div>
       ) : (
         <motion.div
@@ -248,14 +224,14 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
             const isInactive = empRec?.is_active === false;
             const isAdmin = empRec?.is_admin;
             const stChip = isOwner
-              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
+              ? '#f5b23e'
               : isAdmin
-                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
+                ? '#d7dbe2'
                 : isFrozen
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                  ? '#7c8594'
                   : isInactive
-                    ? 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
-                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300';
+                    ? '#7c8594'
+                    : '#6ee7b7';
             const stLabel = isOwner ? 'Владелец' : isAdmin ? 'Админ' : isFrozen ? 'Заморожен' : isInactive ? 'Неактивен' : 'Активен';
             const roleLabel = roleLabelOf(isOwner ? owner : empRec, emp.name);
             const float = !isFrozen && !isInactive;
@@ -268,9 +244,10 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
                 }}
                 whileHover={{ scale: 1.01, transition: { type: 'spring', stiffness: 300, damping: 18 } }}
                 className={cn(
-                  "flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-rose-50 transition-colors",
-                  (isFrozen || isInactive) && "opacity-70"
+                  "flex items-center gap-3 px-3 py-2.5 border border-[#232a35] hover:bg-[#171c25] transition-colors",
+                  (isFrozen || isInactive) && "opacity-60"
                 )}
+                style={{ borderRadius: 3 }}
               >
                 <motion.div
                   className="relative flex-shrink-0"
@@ -279,33 +256,37 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
                 >
                   {isOwner ? (
                     <div className="relative">
-                      <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                      <div className="w-9 h-9 flex items-center justify-center font-bold text-sm" style={{ background: 'linear-gradient(135deg,#f5b23e,#f59e0b)', color: '#0b0e13', borderRadius: 4 }}>
                         {emp.name?.charAt(0) || 'В'}
                       </div>
-                      <Crown className="absolute -top-1 -right-1 w-3.5 h-3.5 text-amber-500 fill-amber-300" />
+                      <Crown className="absolute -top-1 -right-1 w-3.5 h-3.5" style={{ color: '#f5b23e', fill: '#f5b23e' }} />
                     </div>
                   ) : (
-                    <EmployeeAvatar employee={empRec} name={emp.name} sizeClass="w-9 h-9 rounded-2xl text-sm" />
+                    <EmployeeAvatar employee={empRec} name={emp.name} sizeClass="w-9 h-9 rounded text-sm" />
                   )}
-                  <span className={cn(
-                    "absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold",
-                    i === 0 ? "bg-amber-500" : i === 1 ? "bg-slate-500" : i === 2 ? "bg-orange-500" : "bg-slate-400"
-                  )}>{i + 1}</span>
+                  <span
+                    className="absolute -top-1 -left-1 w-4 h-4 flex items-center justify-center text-[9px] font-bold"
+                    style={{
+                      borderRadius: 3,
+                      background: i === 0 ? '#f5b23e' : i === 1 ? '#7c8594' : i === 2 ? '#b45309' : '#4b5563',
+                      color: '#0b0e13'
+                    }}
+                  >{i + 1}</span>
                 </motion.div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="font-semibold text-slate-900 text-sm truncate">{emp.name}</p>
-                    {roleLabel && <span className="text-[10px] text-slate-400 truncate hidden sm:inline">· {roleLabel}</span>}
-                    <span className={cn("inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0", stChip)}>{stLabel}</span>
+                    <p className="font-bold text-xs truncate" style={{ color: '#f2f4f8' }}>{emp.name}</p>
+                    {roleLabel && <span className="text-[10px] truncate hidden sm:inline" style={{ color: '#7c8594' }}>· {roleLabel}</span>}
+                    <span className="tk-pill flex-shrink-0" style={{ color: stChip }}>{stLabel}</span>
                   </div>
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500 mt-0.5">
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] mt-0.5" style={{ color: '#7c8594' }}>
                     <span>📦 {emp.boxes} кор.</span>
                     <span>🛒 {emp.count} продаж</span>
-                    <span className="text-slate-400">{share}%</span>
+                    <span>{share}%</span>
                   </div>
-                  <div className="mt-1.5 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="mt-1.5 overflow-hidden" style={{ height: 3, background: '#232a35' }}>
                     <motion.div
-                      className="h-full bg-rose-400 rounded-full"
+                      style={{ height: '100%', background: '#f5b23e' }}
                       initial={{ width: 0 }}
                       animate={{ width: `${share}%` }}
                       transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -313,9 +294,9 @@ export default function EmployeeEfficiency({ sales, canViewProfit = true, hideDa
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-slate-900 text-sm">{fmt(emp.revenue)}</p>
+                  <p className="font-bold text-xs" style={{ color: '#f2f4f8' }}>{fmt(emp.revenue)}</p>
                   {canViewProfit && (
-                    <p className={cn("text-xs font-medium", emp.profit >= 0 ? "text-emerald-600" : "text-red-500")}>
+                    <p className="text-[11px] font-bold" style={{ color: emp.profit >= 0 ? '#6ee7b7' : '#f87171' }}>
                       {hideData ? masked : `${emp.profit >= 0 ? '+' : ''}${formatCompact(emp.profit, lang)} с.`}
                     </p>
                   )}

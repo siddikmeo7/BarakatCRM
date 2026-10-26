@@ -2,8 +2,19 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
-export default function BackButton({ className = '' }) {
+export default function BackButton({ className = '', variant }) {
   const navigate = useNavigate();
+  if (variant === 'terminal') {
+    return (
+      <button
+        onClick={() => navigate(-1)}
+        className={`tk-btn ${className}`}
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Назад
+      </button>
+    );
+  }
   return (
     <button
       onClick={() => navigate(-1)}
