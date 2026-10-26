@@ -8,6 +8,7 @@ import ProfileSubscriptionCard from '@/components/profile/ProfileSubscriptionCar
 import PaymentHistoryCard from '@/components/profile/PaymentHistoryCard';
 import ProfileNavCard from '@/components/profile/ProfileNavCard';
 import MyProfileSection from '@/components/profile/MyProfileSection';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ADMIN_EMAIL = 'siddikme2007@gmail.com';
 
@@ -18,6 +19,8 @@ export default function Profile() {
   const [roleName, setRoleName] = useState('');
   const [loading, setLoading] = useState(true);
   const [subOpen, setSubOpen] = useState(false);
+  // Личные данные скрыты по умолчанию и открываются нажатием на карточку профиля
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -72,16 +75,34 @@ export default function Profile() {
     <div className="w-full space-y-4 pb-24">
       <h1 className="text-2xl font-black text-slate-900 dark:text-white">Профиль</h1>
 
-      <ProfileIdentityCard user={user} employee={employee} business={business} roleName={roleName} />
-
-      {/* Данные идут одним списком сверху вниз — прокручиваешь и просматриваешь по порядку */}
-      <MyProfileSection
+      <ProfileIdentityCard
         user={user}
         employee={employee}
         business={business}
         roleName={roleName}
-        onSaved={load}
+        expanded={detailsOpen}
+        onToggle={() => setDetailsOpen(v => !v)}
       />
+
+      {/* Данные идут одним списком сверху вниз — прокручиваешь и просматриваешь по порядку */}
+      <AnimatePresence initial={false}>
+        {detailsOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            <MyProfileSection
+              user={user}
+              employee={employee}
+              business={business}
+              roleName={roleName}
+              onSaved={load}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ProfileBusinessCard business={business} showCodes={isOwner || !!employee?.is_admin} />
 
