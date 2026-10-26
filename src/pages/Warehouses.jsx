@@ -5,11 +5,12 @@ import { createPageUrl } from '@/utils';
 import PageHeader from '@/components/ui/PageHeader';
 import SearchInput from '@/components/filters/SearchInput';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import WarehouseFormDialog from '@/components/warehouses/WarehouseFormDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MoveProductsDialog from '@/components/warehouses/MoveProductsDialog';
+import BulkEditProductsDialog from '@/components/warehouses/BulkEditProductsDialog';
+import WarehouseBulkActionBar from '@/components/warehouses/WarehouseBulkActionBar';
 import DeleteWarehouseDialog from '@/components/warehouses/DeleteWarehouseDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
 import DuplicateProductsDialog from '@/components/products/DuplicateProductsDialog';
@@ -77,7 +78,6 @@ export default function Warehouses() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingWarehouse, setEditingWarehouse] = useState(null);
-  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
   const [view, setView] = useState('grid');
@@ -99,16 +99,12 @@ export default function Warehouses() {
   const [globalSearchFullscreen, setGlobalSearchFullscreen] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [selectMode, setSelectMode] = useState(false);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [moveSelectedOpen, setMoveSelectedOpen] = useState(false);
   const [deletingProducts, setDeletingProducts] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(null); // { type: 'one'|'selected'|'warehouse'|'all', productId?, label }
   const [deleteWarehouseDialog, setDeleteWarehouseDialog] = useState(null); // warehouse object
   const [deletingWarehouse, setDeletingWarehouse] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    address: '',
-    manager_email: '',
-    icon: 'Warehouse'
-  });
 
   useEffect(() => {
     if (window.__barakatAccessReady) {
@@ -161,39 +157,8 @@ export default function Warehouses() {
   };
 
   const handleOpenDialog = (warehouse = null) => {
-    if (warehouse) {
-      setEditingWarehouse(warehouse);
-      setFormData({
-        name: warehouse.name || '',
-        address: warehouse.address || '',
-        manager_email: warehouse.manager_email || '',
-        icon: warehouse.icon || 'Warehouse'
-      });
-    } else {
-      setEditingWarehouse(null);
-      setFormData({ name: '', address: '', manager_email: '', icon: 'Warehouse' });
-    }
+    setEditingWarehouse(warehouse);
     setDialogOpen(true);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const data = { ...formData, business_id: business.id };
-      
-      if (editingWarehouse) {
-        await base44.entities.Warehouse.update(editingWarehouse.id, data);
-      } else {
-        await base44.entities.Warehouse.create(data);
-      }
-      
-      await loadData();
-      setDialogOpen(false);
-    } catch (error) {
-      console.error('Error saving warehouse:', error);
-    } finally {
-      setSaving(false);
-    }
   };
 
   const handleDeleteWarehouse = async () => {
@@ -440,6 +405,10 @@ export default function Warehouses() {
   if (loading) {
     return <BrandedLoader fullScreen message="Загрузка складов..." />;
   }
+
+  // Массовые действия доступны, если есть право менять, перемещать или удалять товары
+  const canBulk = can('edit_products') || can('move_products') || can('delete_products');
+  const selectedProducts = warehouseProducts.filter(p => selectedProductIds.includes(p.id));
 
   return (
     <div className="space-y-6">
@@ -954,7 +923,7 @@ export default function Warehouses() {
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <h3 className="font-semibold text-slate-900">Товары на складе</h3>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {can('delete_products') && (
+                  {canBulk && (
                     <>
                       <Button
                         size="sm"
@@ -965,17 +934,6 @@ export default function Warehouses() {
                         <CheckSquare className="w-3.5 h-3.5" />
                         {selectMode ? 'Отмена выбора' : 'Выбрать'}
                       </Button>
-                      {selectMode && selectedProductIds.length > 0 && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setDeleteConfirmDialog({ type: 'selected', label: `${selectedProductIds.length} выбранных товаров` })}
-                          className="gap-1.5 text-xs text-red-600 border-red-200 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          Удалить выбранные ({selectedProductIds.length})
-                        </Button>
-                      )}
                       <Button
                         size="sm"
                         variant="outline"
@@ -1153,6 +1111,20 @@ export default function Warehouses() {
               </div>
             )}
           </div>
+
+          {/* Массовые действия для выбранных товаров склада */}
+          {selectMode && (
+            <WarehouseBulkActionBar
+              count={selectedProductIds.length}
+              canEdit={can('edit_products')}
+              canMove={can('move_products')}
+              canDelete={can('delete_products')}
+              onEdit={() => setBulkEditOpen(true)}
+              onMove={() => setMoveSelectedOpen(true)}
+              onDelete={() => setDeleteConfirmDialog({ type: 'selected', label: `${selectedProductIds.length} выбранных товаров` })}
+              onClear={() => setSelectedProductIds([])}
+            />
+          )}
         </div>
       )}
 
@@ -1164,6 +1136,29 @@ export default function Warehouses() {
           currentWarehouse={selectedWarehouse}
           onClose={() => setMoveDialogOpen(false)}
           onMoved={loadData}
+        />
+      )}
+
+      {/* Массовое изменение данных выбранных товаров */}
+      {bulkEditOpen && (
+        <BulkEditProductsDialog
+          open={bulkEditOpen}
+          onClose={() => setBulkEditOpen(false)}
+          products={selectedProducts}
+          business={business}
+          warehouses={warehouses}
+          onSaved={() => { loadData(); setSelectedProductIds([]); }}
+        />
+      )}
+
+      {/* Перемещение только выбранных товаров */}
+      {moveSelectedOpen && selectedWarehouse && (
+        <MoveProductsDialog
+          products={selectedProducts}
+          warehouses={warehouses}
+          currentWarehouse={selectedWarehouse}
+          onClose={() => setMoveSelectedOpen(false)}
+          onMoved={() => { loadData(); setSelectedProductIds([]); }}
         />
       )}
 
@@ -1237,73 +1232,14 @@ export default function Warehouses() {
       )}
 
       {/* Add/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingWarehouse ? 'Редактировать склад' : 'Добавить склад'}</DialogTitle>
-          </DialogHeader>
-
-          <div className="grid gap-4 py-4">
-            <div>
-              <Label>Название склада *</Label>
-              <Input 
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Основной склад"
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label>Адрес</Label>
-              <Input 
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Город, улица, дом"
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label>Email ответственного</Label>
-              <Input 
-                type="email"
-                value={formData.manager_email}
-                onChange={(e) => setFormData({ ...formData, manager_email: e.target.value })}
-                placeholder="manager@example.com"
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label>Значок склада</Label>
-              <div className="flex gap-2 mt-1.5">
-                {WAREHOUSE_ICONS.map(({ key, icon: Icon, label }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, icon: key })}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all flex-1 ${formData.icon === key ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300'}`}
-                  >
-                    <Icon className={`w-5 h-5 ${formData.icon === key ? 'text-indigo-600' : 'text-slate-500'}`} />
-                    <span className="text-xs text-slate-500">{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Отмена
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              disabled={saving || !formData.name}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingWarehouse ? 'Сохранить' : 'Добавить'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <WarehouseFormDialog
+        open={dialogOpen}
+        warehouse={editingWarehouse}
+        business={business}
+        icons={WAREHOUSE_ICONS}
+        onClose={() => setDialogOpen(false)}
+        onSaved={loadData}
+      />
     </div>
   );
 }
