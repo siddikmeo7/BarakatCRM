@@ -25,6 +25,11 @@ export default function ProfileSubscriptionCard({ business, canPay, isPlatformAd
 
   const state = getSubscriptionState(business, { isPlatformAdmin });
 
+  // Успешные оплаты показываем полностью, а неудачные попытки — отдельным списком «Не оплачено»
+  const ATTEMPTS_LIMIT = 5;
+  const paidPayments = payments.filter(p => p.status === 'ok');
+  const unpaidPayments = payments.filter(p => p.status !== 'ok');
+
   // Проверка оплаты: после проверки показываем результат, чтобы было понятно, нашлась оплата или нет
   const refresh = async () => {
     setChecking(true);
@@ -115,20 +120,41 @@ export default function ProfileSubscriptionCard({ business, canPay, isPlatformAd
         </p>
       )}
 
-      {payments.length > 0 && (
+      {(paidPayments.length > 0 || unpaidPayments.length > 0) && (
         <div className="px-4 pb-3 space-y-1.5">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">История оплат</p>
-          {payments.slice(0, 5).map((p, index) => (
-            <div key={`${p.date}-${index}`} className="flex items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-300">
-              <span>
+
+          {paidPayments.map((p, index) => (
+            <div key={`paid-${p.date}-${index}`} className="flex items-center justify-between gap-3 text-xs">
+              <span className="text-slate-600 dark:text-slate-300">
                 {p.date ? format(new Date(p.date), 'dd.MM.yyyy') : '—'} · {p.type === 'subscription' ? 'автопродление' : 'оплата за месяц'}
               </span>
-              <span className="font-medium tabular-nums">
-                {p.amount}
-                {p.status === 'ok' ? '' : p.status === 'failed' ? ' (не прошло)' : ' (ожидает)'}
+              <span className="flex items-center gap-2">
+                <span className="font-medium tabular-nums text-slate-700 dark:text-slate-200">{p.amount}</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">Оплачено</span>
               </span>
             </div>
           ))}
+
+          {unpaidPayments.length > 0 && (
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 pt-1.5">
+              Не оплачено · {unpaidPayments.length} попытк(и) оплаты
+            </p>
+          )}
+          {unpaidPayments.slice(0, ATTEMPTS_LIMIT).map((p, index) => (
+            <div key={`unpaid-${p.date}-${index}`} className="flex items-center justify-between gap-3 text-xs">
+              <span className="text-slate-500 dark:text-slate-400">
+                {p.date ? format(new Date(p.date), 'dd.MM.yyyy') : '—'} · попытка оплаты
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="font-medium tabular-nums text-slate-500 dark:text-slate-400">{p.amount}</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300">Не оплачено</span>
+              </span>
+            </div>
+          ))}
+          {unpaidPayments.length > ATTEMPTS_LIMIT && (
+            <p className="text-[11px] text-slate-400">и ещё {unpaidPayments.length - ATTEMPTS_LIMIT} попыток оплаты</p>
+          )}
         </div>
       )}
 

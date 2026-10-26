@@ -4,6 +4,9 @@ import { Receipt, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import PaymentRow from './PaymentRow';
 
+// Сколько неудачных попыток оплаты показываем построчно
+const ATTEMPTS_LIMIT = 5;
+
 const PERIODS = [
   { key: 'all', label: 'Всё время', days: null },
   { key: 'month', label: 'Месяц', days: 30 },
@@ -36,6 +39,8 @@ export default function PaymentHistoryCard({ ownerEmail }) {
   const from = days ? Date.now() - days * 24 * 60 * 60 * 1000 : null;
   const rows = purchases.filter(p => !from || new Date(p.paidAt || p.created_date).getTime() >= from);
   const paidRows = rows.filter(p => p.status === 'paid');
+  // Неудачные попытки оплаты: перешёл по ссылке, но не оплатил
+  const attemptRows = rows.filter(p => p.status !== 'paid');
   const total = paidRows.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
   const currency = paidRows[0]?.currency || '';
 
@@ -75,11 +80,31 @@ export default function PaymentHistoryCard({ ownerEmail }) {
         <div className="p-6 flex items-center justify-center gap-2 text-sm text-slate-400">
           <Loader2 className="w-4 h-4 animate-spin" /> Загрузка…
         </div>
-      ) : rows.length === 0 ? (
+      ) : paidRows.length === 0 && attemptRows.length === 0 ? (
         <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Платежей за этот период нет.</p>
       ) : (
-        <div className="divide-y divide-slate-100 dark:divide-slate-800 mt-2">
-          {rows.map(p => <PaymentRow key={p.id} purchase={p} />)}
+        <div className="mt-2">
+          {paidRows.length > 0 && (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {paidRows.map(p => <PaymentRow key={p.id} purchase={p} />)}
+            </div>
+          )}
+
+          {attemptRows.length > 0 && (
+            <>
+              <p className="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Не оплачено · {attemptRows.length} попытк(и) оплаты
+              </p>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {attemptRows.slice(0, ATTEMPTS_LIMIT).map(p => <PaymentRow key={p.id} purchase={p} />)}
+              </div>
+              {attemptRows.length > ATTEMPTS_LIMIT && (
+                <p className="px-4 py-3 text-xs text-slate-400">
+                  и ещё {attemptRows.length - ATTEMPTS_LIMIT} попыток оплаты
+                </p>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>
