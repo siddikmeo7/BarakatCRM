@@ -7,7 +7,7 @@ import ProfileBusinessCard from '@/components/profile/ProfileBusinessCard';
 import ProfileSubscriptionCard from '@/components/profile/ProfileSubscriptionCard';
 import PaymentHistoryCard from '@/components/profile/PaymentHistoryCard';
 import ProfileNavCard from '@/components/profile/ProfileNavCard';
-import StyleStudio from '@/components/profile/StyleStudio';
+import DarkModeToggle from '@/components/settings/DarkModeToggle';
 import MyProfileSection from '@/components/profile/MyProfileSection';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -117,9 +117,13 @@ export default function Profile() {
 
       <PaymentHistoryCard ownerEmail={business?.owner_email} />
 
-      <StyleStudio />
+      {/* Смена интерфейса системы: тёмное ↔ светлое оформление */}
+      <div className="space-y-2">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Интерфейс системы</p>
+        <DarkModeToggle />
+      </div>
 
-      <ProfileNavCard showServerPlan={isOwner || isPlatformAdmin || !!employee?.is_admin} />
+      <ProfileNavCard />
 
       <SubscriptionDialog
         business={business}

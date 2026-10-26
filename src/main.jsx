@@ -2,10 +2,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
-import { initAppStyle } from '@/lib/appStyles'
+import { initAppTheme } from '@/lib/appTheme'
 
-// Оформление (стиль) применяется до первой отрисовки — без «мигания»
-initAppStyle();
+// Оформление (тёмное или светлое) применяется до первой отрисовки — без «мигания»
+initAppTheme();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <App />

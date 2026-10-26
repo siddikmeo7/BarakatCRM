@@ -1,40 +1,34 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
 import { Moon, Sun } from 'lucide-react';
-import { switchStyleMode, initAppStyle } from '@/lib/appStyles';
-import { useAppTheme } from '@/lib/appTheme';
-
-/** Совместимость: применяет сохранённое оформление */
-export function applyTheme() {
-  initAppStyle();
-}
+import { useAppTheme, applyThemeMode } from '@/lib/appTheme';
 
 /**
- * Быстрое переключение тёмного и светлого оформления.
- * Полный выбор стиля — в профиле, раздел «Стили оформления».
+ * Кнопка смены интерфейса системы: тёмное ↔ светлое оформление.
+ * Выбор применяется сразу ко всем разделам и сохраняется в браузере.
  */
 export default function DarkModeToggle({ className = '' }) {
-  const { isDark, styleName } = useAppTheme();
+  const { isDark } = useAppTheme();
 
   const toggle = () => {
-    const next = switchStyleMode(isDark ? 'light' : 'dark');
-    base44.auth.updateMe({ app_style: next.id }).catch(() => {});
+    applyThemeMode(isDark ? 'light' : 'dark');
   };
 
   return (
     <button
       onClick={toggle}
-      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 ${className}`}
+      className={`w-full bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 flex items-center gap-3 text-left transition-colors hover:border-indigo-300 dark:hover:border-indigo-700 ${className}`}
     >
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
         {isDark
-          ? <Moon className="w-5 h-5 text-indigo-500 flex-shrink-0" />
-          : <Sun className="w-5 h-5 text-amber-500 flex-shrink-0" />
+          ? <Moon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          : <Sun className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
         }
-        <span className="font-medium text-sm truncate">
-          {isDark ? 'Тёмное оформление' : 'Светлое оформление'}
-        </span>
-        <span className="text-xs text-slate-400 truncate hidden sm:inline">· {styleName}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-slate-900 dark:text-white">Изменить интерфейс системы</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Сейчас: {isDark ? 'тёмное оформление' : 'светлое оформление'} · нажмите, чтобы поменять
+        </p>
       </div>
       <div className={`w-11 h-6 rounded-full transition-all flex items-center px-0.5 flex-shrink-0 ${isDark ? 'bg-indigo-600' : 'bg-slate-300'}`}>
         <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${isDark ? 'translate-x-5' : 'translate-x-0'}`} />

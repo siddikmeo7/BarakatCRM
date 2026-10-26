@@ -2,15 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================================
-   СТИЛИ ОФОРМЛЕНИЯ
-   Пользователь выбирает оформление в профиле. Все разделы, меню,
-   кнопки, таблицы и графики берут цвета из переменных --sf-*,
-   поэтому смена стиля сразу меняет облик всего приложения.
-   Значения по умолчанию ниже совпадают со стилями
-   «Светлый классик» (:root) и «Тёмный терминал» (.dark).
-   ============================================================ */
-
 @layer base {
   :root {
     --background: 240 20% 98%;
@@ -46,55 +37,6 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 240 15% 91%;
     --sidebar-ring: 243 75% 59%;
-
-    /* Палитра стиля «Светлый классик» */
-    --sf-bg: #f9f9fb;
-    --sf-panel: #ffffff;
-    --sf-deep: #f8fafc;
-    --sf-deep2: #f1f5f9;
-    --sf-soft: #e2e8f0;
-    --sf-line: #e2e8f0;
-    --sf-line2: #f1f5f9;
-    --sf-line3: #cbd5e1;
-    --sf-mid: #94a3b8;
-    --sf-text: #0f172a;
-    --sf-text2: #334155;
-    --sf-muted: #64748b;
-    --sf-dim: #94a3b8;
-    --sf-accent: #4f46e5;
-    --sf-on-accent: #ffffff;
-    --sf-primary: #4f46e5;
-    --sf-on-primary: #ffffff;
-    --sf-pos: #059669;
-    --sf-pos-solid: #059669;
-    --sf-neg: #dc2626;
-    --sf-neg-solid: #dc2626;
-    --sf-info: #2563eb;
-    --sf-info-solid: #2563eb;
-    --sf-warn: #b45309;
-    --sf-on-warn: #ffffff;
-    --sf-invert: #0f172a;
-    --sf-on-invert: #ffffff;
-    --sf-accent-1: rgba(79, 70, 229, .08);
-    --sf-accent-2: rgba(79, 70, 229, .14);
-    --sf-accent-3: rgba(79, 70, 229, .35);
-    --sf-accent-4: rgba(79, 70, 229, .55);
-    --sf-pos-1: rgba(5, 150, 105, .08);
-    --sf-pos-2: rgba(5, 150, 105, .14);
-    --sf-pos-3: rgba(5, 150, 105, .35);
-    --sf-pos-4: rgba(5, 150, 105, .55);
-    --sf-neg-1: rgba(220, 38, 38, .08);
-    --sf-neg-2: rgba(220, 38, 38, .14);
-    --sf-neg-3: rgba(220, 38, 38, .35);
-    --sf-neg-4: rgba(220, 38, 38, .55);
-    --sf-info-1: rgba(37, 99, 235, .08);
-    --sf-info-2: rgba(37, 99, 235, .14);
-    --sf-info-3: rgba(37, 99, 235, .35);
-    --sf-info-4: rgba(37, 99, 235, .55);
-    --sf-warn-1: rgba(180, 83, 9, .08);
-    --sf-warn-2: rgba(180, 83, 9, .14);
-    --sf-warn-3: rgba(180, 83, 9, .35);
-    --sf-warn-4: rgba(180, 83, 9, .55);
   }
 
   .dark {
@@ -130,57 +72,10 @@
     --sidebar-accent-foreground: 220 30% 96%;
     --sidebar-border: 217 21% 17%;
     --sidebar-ring: 38 90% 60%;
-
-    /* Палитра стиля «Тёмный терминал» */
-    --sf-bg: #0b0e13;
-    --sf-panel: #12161d;
-    --sf-deep: #0f131a;
-    --sf-deep2: #171c25;
-    --sf-soft: #1b212a;
-    --sf-line: #232a35;
-    --sf-line2: #1b212a;
-    --sf-line3: #2b333f;
-    --sf-mid: #3b4553;
-    --sf-text: #f2f4f8;
-    --sf-text2: #d7dbe2;
-    --sf-muted: #aab2bf;
-    --sf-dim: #7c8594;
-    --sf-accent: #f5b23e;
-    --sf-on-accent: #0b0e13;
-    --sf-primary: #2563eb;
-    --sf-on-primary: #ffffff;
-    --sf-pos: #6ee7b7;
-    --sf-pos-solid: #059669;
-    --sf-neg: #f87171;
-    --sf-neg-solid: #dc2626;
-    --sf-info: #7dd3fc;
-    --sf-info-solid: #2563eb;
-    --sf-warn: #f5b23e;
-    --sf-on-warn: #0b0e13;
-    --sf-invert: #05070b;
-    --sf-on-invert: #f2f4f8;
-    --sf-accent-1: rgba(245, 178, 62, .08);
-    --sf-accent-2: rgba(245, 178, 62, .14);
-    --sf-accent-3: rgba(245, 178, 62, .35);
-    --sf-accent-4: rgba(245, 178, 62, .55);
-    --sf-pos-1: rgba(110, 231, 183, .08);
-    --sf-pos-2: rgba(110, 231, 183, .14);
-    --sf-pos-3: rgba(110, 231, 183, .35);
-    --sf-pos-4: rgba(110, 231, 183, .55);
-    --sf-neg-1: rgba(248, 113, 113, .08);
-    --sf-neg-2: rgba(248, 113, 113, .14);
-    --sf-neg-3: rgba(248, 113, 113, .35);
-    --sf-neg-4: rgba(248, 113, 113, .55);
-    --sf-info-1: rgba(125, 211, 252, .08);
-    --sf-info-2: rgba(125, 211, 252, .14);
-    --sf-info-3: rgba(125, 211, 252, .35);
-    --sf-info-4: rgba(125, 211, 252, .55);
-    --sf-warn-1: rgba(245, 178, 62, .08);
-    --sf-warn-2: rgba(245, 178, 62, .14);
-    --sf-warn-3: rgba(245, 178, 62, .35);
-    --sf-warn-4: rgba(245, 178, 62, .55);
   }
 }
+
+
 
 @layer base {
   * {
@@ -192,7 +87,10 @@
   }
 }
 
-/* ===== ОФОРМЛЕНИЕ: ПОВЕРХНОСТИ, ТЕКСТ, ЛИНИИ ===== */
+/* ===== ТЁМНЫЙ ТЕРМИНАЛ — единая тема всех разделов =====
+   Фон #0b0e13 · панели #12161d · линии #232a35 · текст #d7dbe2
+   Вторичный текст #aab2bf / #7c8594 · акцент #f5b23e
+   Прибыль #6ee7b7 · убыток #f87171 */
 
 /* --- Поверхности --- */
 .dark .bg-white { background-color: #12161d !important; }
@@ -222,7 +120,7 @@
 .dark .divide-slate-100 > * + *, .dark .divide-slate-200 > * + *, .dark .divide-slate-800 > * + *,
 .dark .divide-gray-100 > * + *, .dark .divide-y > * + * { border-color: #1b212a !important; }
 
-/* --- Акцент стиля (индиго/фиолетовые элементы) --- */
+/* --- Акцент (амбер): индиго/фиолетовый в терминале = акцент --- */
 .dark .text-indigo-600, .dark .text-indigo-700, .dark .text-indigo-500, .dark .text-indigo-400, .dark .text-indigo-300,
 .dark .text-purple-600, .dark .text-purple-700, .dark .text-violet-600, .dark .text-fuchsia-600, .dark .text-pink-600 { color: #f5b23e !important; }
 .dark .bg-indigo-50, .dark .bg-violet-50, .dark .bg-purple-50, .dark .bg-pink-50 { background-color: rgba(245, 178, 62, .08) !important; }
@@ -232,7 +130,7 @@
 .dark .bg-indigo-500, .dark .bg-indigo-600, .dark .bg-indigo-700,
 .dark .bg-purple-500, .dark .bg-purple-600, .dark .bg-violet-500, .dark .bg-violet-600 { background-color: #2563eb !important; }
 
-/* --- Прибыль / успех --- */
+/* --- Прибыль / успех (мята) --- */
 .dark .text-emerald-600, .dark .text-emerald-700, .dark .text-emerald-500, .dark .text-emerald-400, .dark .text-emerald-300,
 .dark .text-green-600, .dark .text-green-700, .dark .text-teal-600 { color: #6ee7b7 !important; }
 .dark .bg-emerald-50, .dark .bg-green-50, .dark .bg-teal-50 { background-color: rgba(110, 231, 183, .08) !important; }
@@ -240,7 +138,7 @@
 .dark .border-emerald-100, .dark .border-emerald-200, .dark .border-green-200, .dark .border-teal-200 { border-color: rgba(110, 231, 183, .35) !important; }
 .dark .bg-emerald-500, .dark .bg-emerald-600, .dark .bg-green-500, .dark .bg-green-600, .dark .bg-teal-600 { background-color: #059669 !important; }
 
-/* --- Убыток / опасность --- */
+/* --- Убыток / опасность (красный) --- */
 .dark .text-red-600, .dark .text-red-700, .dark .text-red-500, .dark .text-red-400,
 .dark .text-rose-600, .dark .text-rose-500, .dark .text-rose-400 { color: #f87171 !important; }
 .dark .bg-red-50, .dark .bg-rose-50 { background-color: rgba(248, 113, 113, .08) !important; }
@@ -248,7 +146,7 @@
 .dark .border-red-100, .dark .border-red-200, .dark .border-rose-200 { border-color: rgba(248, 113, 113, .35) !important; }
 .dark .bg-red-500, .dark .bg-red-600, .dark .bg-rose-500, .dark .bg-rose-600 { background-color: #dc2626 !important; }
 
-/* --- Деньги / внимание --- */
+/* --- Деньги / внимание (амбер) --- */
 .dark .text-amber-600, .dark .text-amber-700, .dark .text-amber-500,
 .dark .text-orange-600, .dark .text-orange-500, .dark .text-yellow-600, .dark .text-yellow-700 { color: #f5b23e !important; }
 .dark .bg-amber-50, .dark .bg-orange-50, .dark .bg-yellow-50 { background-color: rgba(245, 178, 62, .08) !important; }
@@ -256,7 +154,7 @@
 .dark .border-amber-100, .dark .border-amber-200, .dark .border-orange-200 { border-color: rgba(245, 178, 62, .35) !important; }
 .dark .bg-amber-400, .dark .bg-amber-500, .dark .bg-orange-400, .dark .bg-orange-500 { background-color: #f5b23e !important; color: #0b0e13 !important; }
 
-/* --- Информация --- */
+/* --- Информация (голубой) --- */
 .dark .text-blue-600, .dark .text-blue-700, .dark .text-blue-500,
 .dark .text-sky-600, .dark .text-cyan-600, .dark .text-cyan-500 { color: #7dd3fc !important; }
 .dark .bg-blue-50, .dark .bg-sky-50, .dark .bg-cyan-50 { background-color: rgba(125, 211, 252, .08) !important; }
@@ -264,92 +162,92 @@
 .dark .border-blue-100, .dark .border-blue-200, .dark .border-sky-200 { border-color: rgba(125, 211, 252, .35) !important; }
 .dark .bg-blue-500, .dark .bg-blue-600, .dark .bg-sky-600, .dark .bg-cyan-600 { background-color: #2563eb !important; }
 
-/* --- Градиенты → плоские панели выбранного стиля (кроме текстовых заливок) --- */
-.dark [class*="bg-gradient-to-"]:not([class*="bg-clip-text"]) { background-image: none !important; background-color: var(--sf-panel) !important; }
+/* --- Градиенты → плоские панели терминала (кроме текстовых заливок) --- */
+.dark [class*="bg-gradient-to-"]:not([class*="bg-clip-text"]) { background-image: none !important; background-color: #12161d !important; }
 
 /* --- Шапка, таблицы, формы --- */
-header { background-color: var(--sf-panel); border-color: var(--sf-line); }
-main { background-color: var(--sf-bg); color: var(--sf-text2); font-variant-numeric: tabular-nums; }
-.dark header { background-color: var(--sf-bg) !important; border-color: var(--sf-line) !important; }
-.dark main thead { background-color: var(--sf-deep) !important; }
-.dark main th { color: var(--sf-muted) !important; border-color: var(--sf-line) !important; text-transform: uppercase; font-size: 10px; letter-spacing: .12em; font-weight: 700; }
-.dark main td { color: var(--sf-text2) !important; border-color: var(--sf-line2) !important; }
-.dark main tbody tr { border-color: var(--sf-line2) !important; }
-.dark main tbody tr:nth-child(even):not([class^="bg-"]):not([class*=" bg-"]) { background-color: var(--sf-deep); }
-.dark main tbody tr:hover:not([class^="bg-"]):not([class*=" bg-"]) { background-color: var(--sf-deep2); }
-.dark main h3:not(.tk-console *):not(.wh-console *) { color: var(--sf-muted) !important; text-transform: uppercase; font-size: 11px; letter-spacing: .14em; font-weight: 700; }
-.dark main h1 { font-size: 30px; line-height: 1.1; letter-spacing: -.01em; color: var(--sf-text) !important; }
-.dark main h1 + p { text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: var(--sf-muted) !important; }
+.dark header { background-color: #0b0e13 !important; border-color: #232a35 !important; }
+.dark main { background-color: #0b0e13; color: #d7dbe2; font-variant-numeric: tabular-nums; }
+.dark main thead { background-color: #0f131a !important; }
+.dark main th { color: #7c8594 !important; border-color: #232a35 !important; text-transform: uppercase; font-size: 10px; letter-spacing: .12em; font-weight: 700; }
+.dark main td { color: #d7dbe2 !important; border-color: #1b212a !important; }
+.dark main tbody tr { border-color: #1b212a !important; }
+.dark main tbody tr:nth-child(even):not([class^="bg-"]):not([class*=" bg-"]) { background-color: #0f131a; }
+.dark main tbody tr:hover:not([class^="bg-"]):not([class*=" bg-"]) { background-color: #171c25; }
+.dark main h3:not(.tk-console *):not(.wh-console *) { color: #aab2bf !important; text-transform: uppercase; font-size: 11px; letter-spacing: .14em; font-weight: 700; }
+.dark main h1 { font-size: 30px; line-height: 1.1; letter-spacing: -.01em; color: #f2f4f8 !important; }
+.dark main h1 + p { text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: #7c8594 !important; }
 @media (max-width: 640px) {
   .dark main h1 { font-size: 22px; }
   .dark main h1 + p { font-size: 10px; }
 }
 .dark input, .dark textarea, .dark select, .dark [cmdk-input] {
-  background-color: var(--sf-deep) !important; color: var(--sf-text2) !important; border-color: var(--sf-line) !important;
+  background-color: #0f131a !important; color: #d7dbe2 !important; border-color: #232a35 !important;
 }
-.dark input::placeholder, .dark textarea::placeholder { color: var(--sf-dim) !important; }
+.dark input::placeholder, .dark textarea::placeholder { color: #7c8594 !important; }
 .dark .hover\:bg-slate-50:hover, .dark .hover\:bg-slate-100:hover,
-.dark .hover\:bg-gray-50:hover, .dark .hover\:bg-gray-100:hover { background-color: var(--sf-deep2) !important; }
+.dark .hover\:bg-gray-50:hover, .dark .hover\:bg-gray-100:hover { background-color: #171c25 !important; }
 
-/* ===== Каркас приложения (все разделы) ===== */
+/* ===== Терминальный каркас приложения (все разделы) ===== */
 .tk-app { position: relative; }
 .tk-apphero { position: absolute; top: -1rem; left: -1rem; right: -1rem; height: 320px; z-index: 0; overflow: hidden; pointer-events: none; }
 @media (min-width: 1024px) { .tk-apphero { top: -2rem; left: -2rem; right: -2rem; } }
 .tk-apphero img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); opacity: .1; }
-.tk-apphero:after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent, var(--sf-bg)); }
+.tk-apphero:after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 14, 19, .2), #0b0e13); }
 .tk-appbody { position: relative; z-index: 1; }
 
-/* Заголовок раздела */
-.tk-pagehead { padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--sf-line); animation: tk-rise .5s ease both; }
-.tk-pagehead-title { margin: 0; font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -.01em; color: var(--sf-text); }
+/* Заголовок раздела в стиле терминала */
+.tk-pagehead { padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid hsl(240 15% 91%); animation: tk-rise .5s ease both; }
+.dark .tk-pagehead { border-bottom-color: #232a35; }
+.tk-pagehead-title { margin: 0; font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -.01em; color: hsl(240 10% 10%); }
+.dark .tk-pagehead-title { color: #f2f4f8; }
 @media (max-width: 640px) { .tk-pagehead-title { font-size: 22px; } }
-.tk-pagehead-sub { margin: 6px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--sf-muted); }
+.tk-pagehead-sub { margin: 6px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: hsl(240 8% 46%); }
+.dark .tk-pagehead-sub { color: #7c8594; }
 
-/* Верхняя панель */
-.tk-topbar { background-color: var(--sf-chrome); border-bottom: 1px solid var(--sf-line); }
-.tk-topbox { background-color: var(--sf-deep2); border: 1px solid var(--sf-line); border-radius: 3px; color: var(--sf-nav); }
-.tk-topbar-name { color: var(--sf-text); }
-.tk-topbar-page { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--sf-nav); }
+/* Верхняя панель приложения */
+.tk-topbar { background-color: hsl(0 0% 100%); border-bottom: 1px solid hsl(240 15% 91%); }
+.dark .tk-topbar { background-color: #0b0e13; border-bottom-color: #232a35; }
+.tk-topbox { background-color: hsl(240 20% 96%); border: 1px solid hsl(240 15% 91%); border-radius: 3px; color: hsl(243 75% 45%); }
+.dark .tk-topbox { background-color: #12161d; border-color: #232a35; color: #f5b23e; }
+.tk-topbar-name { color: hsl(240 10% 10%); }
+.dark .tk-topbar-name { color: #f2f4f8; }
+.tk-topbar-page { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: hsl(243 75% 45%); }
+.dark .tk-topbar-page { color: #f5b23e; }
 
-/* Панель меню */
-.tk-drawer { background-color: var(--sf-chrome); border-right: 1px solid var(--sf-line); }
-.tk-dhead { border-bottom: 1px solid var(--sf-line); }
+/* Панель меню (меню всех разделов) */
+.tk-drawer { background-color: hsl(0 0% 100%); border-right: 1px solid hsl(240 15% 91%); }
+.dark .tk-drawer { background-color: #0b0e13; border-right-color: #232a35; }
+.tk-dhead { border-bottom: 1px solid hsl(240 15% 91%); }
+.dark .tk-dhead { border-bottom-color: #232a35; }
 .tk-dnavitem {
-  border-bottom: 1px solid var(--sf-line2); border-left: 2px solid transparent;
-  color: var(--sf-text2); transition: background .15s, color .15s, border-color .15s;
+  border-bottom: 1px solid hsl(240 15% 93%); border-left: 2px solid transparent;
+  color: hsl(240 8% 30%); transition: background .15s, color .15s, border-color .15s;
 }
-.tk-dnavitem:hover { background-color: var(--sf-deep2); }
-.tk-dnavitem.on { background-color: var(--sf-nav-1); border-left-color: var(--sf-nav); color: var(--sf-nav); }
-.tk-dnavitem:focus-visible { outline: 2px solid var(--sf-accent); outline-offset: -2px; }
-.tk-dcard { background-color: var(--sf-panel); border: 1px solid var(--sf-line); border-radius: 4px; }
-.tk-dcard.on { border-color: var(--sf-nav); }
-.tk-dcard-name { color: var(--sf-text); }
-.tk-dcard-role { color: var(--sf-nav); }
-.tk-dfoot { border-top: 1px solid var(--sf-line); }
-.tk-dfoot:hover { background-color: var(--sf-deep2); }
+.dark .tk-dnavitem { border-bottom-color: #1b212a; color: #aab2bf; }
+.tk-dnavitem:hover { background-color: hsl(240 20% 97%); }
+.dark .tk-dnavitem:hover { background-color: #171c25; }
+.tk-dnavitem.on { background-color: hsl(243 75% 97%); border-left-color: hsl(243 75% 59%); color: hsl(243 75% 45%); }
+.dark .tk-dnavitem.on { background-color: #12161d; border-left-color: #f5b23e; color: #f5b23e; }
+.tk-dnavitem:focus-visible { outline: 2px solid #f5b23e; outline-offset: -2px; }
+.tk-dcard { background-color: hsl(240 20% 97%); border: 1px solid hsl(240 15% 91%); border-radius: 4px; }
+.dark .tk-dcard { background-color: #12161d; border-color: #232a35; }
+.tk-dcard.on { border-color: hsl(243 75% 59%); }
+.dark .tk-dcard.on { border-color: #f5b23e; }
+.tk-dcard-name { color: hsl(240 10% 10%); }
+.dark .tk-dcard-name { color: #f2f4f8; }
+.tk-dcard-role { color: hsl(243 75% 45%); }
+.dark .tk-dcard-role { color: #f5b23e; }
 .tk-btn.ic { width: 34px; height: 34px; padding: 0; justify-content: center; }
 
-/* ===== Утилиты оформления (работают в любом стиле) ===== */
-.tk-txt { color: var(--sf-text); }
-.tk-txt2 { color: var(--sf-text2); }
-.tk-muted { color: var(--sf-muted); }
-.tk-dim { color: var(--sf-dim); }
-.tk-posc { color: var(--sf-pos); }
-.tk-negc { color: var(--sf-neg); }
-.tk-bpos { border-color: var(--sf-pos); }
-.tk-bneg { border-color: var(--sf-neg); }
-.tk-panel { background-color: var(--sf-panel); }
-.tk-deep { background-color: var(--sf-deep); }
-.tk-bline { border-color: var(--sf-line); }
-.tk-bline2 { border-color: var(--sf-line2); }
-.tk-hover:hover { background-color: var(--sf-deep2); }
-.tk-div > * + * { border-color: var(--sf-line2); }
+/* Main background */
+.dark main { background-color: #0b0e13; }
 
 /* Scrollbars */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--sf-deep); }
-::-webkit-scrollbar-thumb { background: var(--sf-mid); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--sf-line3); }
+.dark ::-webkit-scrollbar { width: 6px; height: 6px; }
+.dark ::-webkit-scrollbar-track { background: #0f131a; }
+.dark ::-webkit-scrollbar-thumb { background: #2c3543; border-radius: 3px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #3b4553; }
 
 /* Low stock pulsing border */
 @keyframes pulse-border {
@@ -371,22 +269,31 @@ main { background-color: var(--sf-bg); color: var(--sf-text2); font-variant-nume
   height: 8px;
 }
 .custom-scroll::-webkit-scrollbar-track {
-  background: var(--sf-deep2);
+  background: hsl(0 0% 95%);
   border-radius: 4px;
 }
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: var(--sf-mid);
+  background: hsl(0 0% 70%);
   border-radius: 4px;
 }
 .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--sf-line3);
+  background: hsl(0 0% 50%);
+}
+.dark .custom-scroll::-webkit-scrollbar-track {
+  background: hsl(0 0% 15%);
+}
+.dark .custom-scroll::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 35%);
+}
+.dark .custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 45%);
 }
 
 /* ===== Расходы («Пульс затрат»): анимации диаграммы, метров и карточек ===== */
 
 /* Фокусная рамка интерактивных элементов раздела «Расходы» */
 .exp-focus:focus-visible {
-  outline: 2px solid var(--sf-primary);
+  outline: 2px solid #4f46e5;
   outline-offset: 2px;
 }
 
@@ -453,42 +360,42 @@ main { background-color: var(--sf-bg); color: var(--sf-text2); font-variant-nume
 /* ===== Раздел «Склады»: стиль «Пульт склада» ===== */
 
 .wh-console {
-  color: var(--sf-text2);
+  color: #0f172a;
   font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   font-variant-numeric: tabular-nums;
 }
-.wh-cap { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--sf-muted); font-weight: 700; }
+.wh-cap { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #64748b; font-weight: 700; }
 .wh-sp { flex: 1; }
 
 /* Верхняя панель */
 .wh-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .wh-top h1 { font-size: 30px; line-height: 1.1; margin: 0; font-weight: 700; letter-spacing: -.01em; }
-.wh-top .sub { font-size: 13px; color: var(--sf-muted); }
+.wh-top .sub { font-size: 13px; color: #64748b; }
 
 /* Кнопки */
 .wh-btn {
-  font: inherit; font-size: 12px; font-weight: 700; border: 1px solid var(--sf-line); background: var(--sf-panel); color: var(--sf-text2);
+  font: inherit; font-size: 12px; font-weight: 700; border: 1px solid #cbd5e1; background: #fff; color: #0f172a;
   padding: 8px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
   white-space: nowrap; transition: background .15s, box-shadow .15s, color .15s;
 }
-.wh-btn:hover { background: var(--sf-deep2); box-shadow: 0 1px 3px rgba(15, 23, 42, .12); }
-.wh-btn:active { background: var(--sf-soft); }
-.wh-btn:focus-visible { outline: 2px solid var(--sf-primary); outline-offset: 2px; }
+.wh-btn:hover { background: #f8fafc; box-shadow: 0 1px 3px rgba(15, 23, 42, .12); }
+.wh-btn:active { background: #e2e8f0; }
+.wh-btn:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
 .wh-btn:disabled { opacity: .4; cursor: not-allowed; }
-.wh-btn.pr { background: var(--sf-primary); border-color: var(--sf-primary); color: var(--sf-on-primary); }
-.wh-btn.pr:hover { background: var(--sf-primary); filter: brightness(.92); }
-.wh-btn.dg { color: var(--sf-neg); border-color: var(--sf-neg-3); }
-.wh-btn.dg:hover { background: var(--sf-neg-1); }
+.wh-btn.pr { background: #2563eb; border-color: #2563eb; color: #fff; }
+.wh-btn.pr:hover { background: #1d4ed8; }
+.wh-btn.dg { color: #dc2626; border-color: #fecaca; }
+.wh-btn.dg:hover { background: #fef2f2; }
 
 /* Переключатель вида */
-.wh-seg { display: inline-flex; border: 1px solid var(--sf-line); border-radius: 6px; overflow: hidden; background: var(--sf-panel); }
-.wh-seg button { padding: 8px 12px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--sf-muted); background: transparent; border: 0; }
-.wh-seg button.on { background: var(--sf-invert); color: var(--sf-on-invert); }
+.wh-seg { display: inline-flex; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; background: #fff; }
+.wh-seg button { padding: 8px 12px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; color: #475569; background: transparent; border: 0; }
+.wh-seg button.on { background: #0f172a; color: #fff; }
 
 /* Поля поиска */
 .wh-srch {
-  display: flex; align-items: center; gap: 8px; background: var(--sf-panel); border: 1px solid var(--sf-line); border-radius: 6px;
-  padding: 8px 10px; font: inherit; font-size: 12px; color: var(--sf-muted); cursor: pointer;
+  display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px;
+  padding: 8px 10px; font: inherit; font-size: 12px; color: #64748b; cursor: pointer;
 }
 .wh-srch input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 12px; color: inherit; cursor: text; }
 .wh-srch.full { width: 100%; cursor: default; }
@@ -497,147 +404,168 @@ main { background-color: var(--sf-bg); color: var(--sf-text2); font-variant-nume
 /* KPI-строка */
 .wh-kpi { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 14px; }
 .wh-k {
-  background: var(--sf-panel); border: 1px solid var(--sf-line); border-radius: 6px; padding: 12px 12px 10px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 12px 10px;
   position: relative; overflow: hidden; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); animation: wh-rise .5s ease both;
 }
 .wh-k:before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--c); }
-.wh-k b { display: block; font-size: 22px; margin-top: 6px; line-height: 1.1; color: var(--sf-text); }
+.wh-k b { display: block; font-size: 22px; margin-top: 6px; line-height: 1.1; }
 
 /* Реестр складов + рабочая область */
 .wh-main { display: grid; grid-template-columns: 280px 1fr; gap: 14px; align-items: start; }
-.wh-reg { background: var(--sf-panel); border: 1px solid var(--sf-line); border-radius: 6px; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); }
-.wh-reg .h { padding: 12px 14px; border-bottom: 1px solid var(--sf-line); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.wh-reg .search { padding: 10px 14px; border-bottom: 1px solid var(--sf-line2); }
-.wh-reg-empty { padding: 24px 14px; text-align: center; font-size: 12px; color: var(--sf-muted); display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.wh-reg { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); }
+.wh-reg .h { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.wh-reg .search { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+.wh-reg-empty { padding: 24px 14px; text-align: center; font-size: 12px; color: #64748b; display: flex; flex-direction: column; gap: 10px; align-items: center; }
 
 .wh-wh {
   display: block; width: 100%; text-align: left; padding: 12px 14px 12px 17px; border: 0;
-  border-bottom: 1px solid var(--sf-line2); position: relative; cursor: pointer; background: transparent;
+  border-bottom: 1px solid #f1f5f9; position: relative; cursor: pointer; background: transparent;
   transition: background .15s; animation: wh-rise .5s ease both;
 }
-.wh-wh:hover { background: var(--sf-deep2); }
-.wh-wh.on { background: var(--sf-deep2); }
-.wh-wh.on:before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--sf-primary); }
-.wh-wh strong { font-size: 14px; display: block; font-weight: 700; color: var(--sf-text); }
-.wh-wh small { font-size: 11px; color: var(--sf-muted); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-.wh-wh .r { display: flex; justify-content: space-between; font-size: 11px; color: var(--sf-muted); margin-top: 8px; }
-.wh-wh .edit { position: absolute; right: 6px; top: 6px; padding: 6px; border: 0; border-radius: 6px; background: transparent; color: var(--sf-dim); cursor: pointer; }
-.wh-wh .edit:hover { background: var(--sf-soft); }
-.wh-bar { height: 4px; background: var(--sf-line); border-radius: 2px; margin-top: 5px; overflow: hidden; }
-.wh-bar span { display: block; height: 100%; background: var(--sf-primary); border-radius: 2px; transform-origin: left; animation: wh-grow 1s ease both; }
+.wh-wh:hover { background: #f8fafc; }
+.wh-wh.on { background: #eff6ff; }
+.wh-wh.on:before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #2563eb; }
+.wh-wh strong { font-size: 14px; display: block; font-weight: 700; }
+.wh-wh small { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.wh-wh .r { display: flex; justify-content: space-between; font-size: 11px; color: #475569; margin-top: 8px; }
+.wh-wh .edit { position: absolute; right: 6px; top: 6px; padding: 6px; border: 0; border-radius: 6px; background: transparent; color: #94a3b8; cursor: pointer; }
+.wh-wh .edit:hover { background: #e2e8f0; }
+.wh-bar { height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 5px; overflow: hidden; }
+.wh-bar span { display: block; height: 100%; background: #2563eb; border-radius: 2px; transform-origin: left; animation: wh-grow 1s ease both; }
 
 .wh-list { padding: 10px 14px; }
-.wh-list .row { display: grid; grid-template-columns: 1fr 40px 44px 66px 48px; gap: 6px; font-size: 11px; color: var(--sf-muted); padding: 6px 0; border-bottom: 1px solid var(--sf-line2); }
+.wh-list .row { display: grid; grid-template-columns: 1fr 40px 44px 66px 48px; gap: 6px; font-size: 11px; color: #64748b; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
 .wh-list .row > *:not(:first-child) { text-align: right; }
 .wh-entry {
   display: grid; grid-template-columns: 1fr 40px 44px 66px 48px; gap: 6px; align-items: center;
-  padding: 7px 0; border-bottom: 1px solid var(--sf-line2); font-size: 11px; color: var(--sf-muted); cursor: pointer;
+  padding: 7px 0; border-bottom: 1px solid #f1f5f9; font-size: 11px; color: #64748b; cursor: pointer;
   animation: wh-rise .5s ease both; transition: background .15s;
 }
-.wh-entry:hover { background: var(--sf-deep2); }
-.wh-entry strong { font-size: 12px; color: var(--sf-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.wh-entry:hover { background: #f8fafc; }
+.wh-entry strong { font-size: 12px; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
 .wh-entry > *:not(:first-child) { text-align: right; }
 
 /* Паспорт склада */
-.wh-pass { background: var(--sf-panel); border: 1px solid var(--sf-line); border-radius: 6px; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); overflow: hidden; margin-bottom: 12px; }
+.wh-pass { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); overflow: hidden; margin-bottom: 12px; }
 .wh-hero { position: relative; display: flex; gap: 16px; padding: 16px 18px; overflow: hidden; flex-wrap: wrap; }
 .wh-hero img.bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); opacity: .18; }
-.wh-hero:after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--sf-panel) 30%, transparent); }
+.wh-hero:after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #fff 30%, rgba(255, 255, 255, .6)); }
 .wh-hero > * { position: relative; z-index: 1; }
-.wh-hero h2 { margin: 0; font-size: 26px; line-height: 1.1; font-weight: 700; color: var(--sf-text); }
-.wh-ib { width: 48px; height: 48px; border-radius: 8px; background: var(--sf-primary); color: var(--sf-on-primary); display: flex; align-items: center; justify-content: center; flex: none; }
+.wh-hero h2 { margin: 0; font-size: 26px; line-height: 1.1; font-weight: 700; }
+.wh-ib { width: 48px; height: 48px; border-radius: 8px; background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
 .wh-acts { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; align-items: flex-start; max-width: 520px; justify-content: flex-end; }
-.wh-stats { display: grid; grid-template-columns: repeat(6, 1fr); border-top: 1px solid var(--sf-line); }
-.wh-st { padding: 12px 14px; border-right: 1px solid var(--sf-line); }
+.wh-stats { display: grid; grid-template-columns: repeat(6, 1fr); border-top: 1px solid #e2e8f0; }
+.wh-st { padding: 12px 14px; border-right: 1px solid #e2e8f0; }
 .wh-st:last-child { border-right: 0; }
-.wh-st b { display: block; font-size: 19px; margin-top: 4px; font-weight: 700; color: var(--sf-text); }
-.wh-alerts { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 14px; border-top: 1px solid var(--sf-line); }
+.wh-st b { display: block; font-size: 19px; margin-top: 4px; font-weight: 700; }
+.wh-alerts { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 14px; border-top: 1px solid #e2e8f0; }
 .wh-alert { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
-.wh-alert.a { background: var(--sf-warn-2); color: var(--sf-warn); }
-.wh-alert.rd { background: var(--sf-neg-2); color: var(--sf-neg); }
+.wh-alert.a { background: #fef3c7; color: #b45309; }
+.wh-alert.rd { background: #fee2e2; color: #b91c1c; }
 
 /* Панель фильтров */
 .wh-filt {
-  background: var(--sf-panel); border: 1px solid var(--sf-line); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;
   display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px;
 }
 .wh-chip {
-  padding: 5px 10px; border: 1px solid var(--sf-line); border-radius: 999px; font: inherit; font-size: 11px;
-  font-weight: 700; color: var(--sf-muted); background: var(--sf-panel); cursor: pointer; transition: background .15s, border-color .15s;
+  padding: 5px 10px; border: 1px solid #cbd5e1; border-radius: 999px; font: inherit; font-size: 11px;
+  font-weight: 700; color: #475569; background: #fff; cursor: pointer; transition: background .15s, border-color .15s;
 }
-.wh-chip:hover { border-color: var(--sf-primary); }
-.wh-chip.on { background: var(--sf-primary); border-color: var(--sf-primary); color: var(--sf-on-primary); }
-.wh-fld { border: 1px solid var(--sf-line); border-radius: 6px; padding: 5px 9px; font: inherit; font-size: 11px; color: var(--sf-muted); background: var(--sf-panel); }
+.wh-chip:hover { border-color: #2563eb; }
+.wh-chip.on { background: #2563eb; border-color: #2563eb; color: #fff; }
+.wh-fld { border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px 9px; font: inherit; font-size: 11px; color: #64748b; background: #fff; }
 
 /* Таблица товаров */
-.wh-tbl { background: var(--sf-panel); border: 1px solid var(--sf-line); border-radius: 6px; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); overflow: hidden; }
-.wh-tbl .tt { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--sf-line); flex-wrap: wrap; }
-.wh-tbl .tt h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--sf-text); }
+.wh-tbl { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); overflow: hidden; }
+.wh-tbl .tt { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+.wh-tbl .tt h3 { margin: 0; font-size: 16px; font-weight: 700; }
 .wh-tbl table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .wh-tbl th {
-  position: sticky; top: 0; background: var(--sf-deep); text-align: right; font-size: 10px; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--sf-muted); padding: 10px 12px; border-bottom: 1px solid var(--sf-line);
+  position: sticky; top: 0; background: #f8fafc; text-align: right; font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; color: #64748b; padding: 10px 12px; border-bottom: 1px solid #e2e8f0;
 }
 .wh-tbl th:nth-child(2), .wh-tbl th:nth-child(3) { text-align: left; }
-.wh-tbl td { padding: 10px 12px; text-align: right; border-bottom: 1px solid var(--sf-line2); }
+.wh-tbl td { padding: 10px 12px; text-align: right; border-bottom: 1px solid #f1f5f9; }
 .wh-tbl tbody tr { animation: wh-rise .5s ease both; position: relative; }
-.wh-tbl tbody tr:nth-child(even) { background: var(--sf-deep); }
+.wh-tbl tbody tr:nth-child(even) { background: #f8fafc; }
 .wh-tbl td:nth-child(2), .wh-tbl td:nth-child(3) { text-align: left; }
 .wh-tbl td.wh-ind { padding: 0; width: 4px; background: var(--c); }
 .wh-tbl th.wh-ind { padding: 0; width: 4px; }
-.wh-th { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--sf-line3); box-shadow: 0 2px 4px rgba(15, 23, 42, .1); display: block; }
-.wh-pn { font-weight: 700; display: block; color: var(--sf-text); }
+.wh-th { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(15, 23, 42, .1); display: block; }
+.wh-pn { font-weight: 700; display: block; }
 .wh-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; margin-top: 3px; }
-.wh-tag.g { background: var(--sf-pos-2); color: var(--sf-pos-solid); }
-.wh-tag.a { background: var(--sf-warn-2); color: var(--sf-warn); }
-.wh-tag.rd { background: var(--sf-neg-2); color: var(--sf-neg); }
-.wh-pos { color: var(--sf-pos); font-weight: 700; }
-.wh-tbl tfoot td { position: sticky; bottom: 0; background: var(--sf-invert); color: var(--sf-on-invert); font-weight: 700; font-size: 12px; }
+.wh-tag.g { background: #dcfce7; color: #15803d; }
+.wh-tag.a { background: #fef3c7; color: #b45309; }
+.wh-tag.rd { background: #fee2e2; color: #b91c1c; }
+.wh-pos { color: #16a34a; font-weight: 700; }
+.wh-tbl tfoot td { position: sticky; bottom: 0; background: #0f172a; color: #fff; font-weight: 700; font-size: 12px; }
 .wh-tbl.all th:nth-child(1), .wh-tbl.all td:nth-child(1) { text-align: left; }
 .wh-tbl.all th:nth-child(6), .wh-tbl.all td:nth-child(6) { text-align: left; }
 .wh-tbl.all th:nth-child(7), .wh-tbl.all td:nth-child(7) { text-align: left; }
 
 /* Массовые действия */
 .wh-bulk {
-  margin-top: 12px; border-radius: 12px; background: var(--sf-invert); color: var(--sf-on-invert); padding: 12px 16px;
+  margin-top: 12px; border-radius: 12px; background: #0f172a; color: #fff; padding: 12px 16px;
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   box-shadow: 0 10px 24px rgba(15, 23, 42, .3); animation: wh-slide .6s ease both;
 }
-.wh-bulk .wh-btn { background: transparent; border-color: var(--sf-mid); color: var(--sf-on-invert); }
-.wh-bulk .wh-btn:hover { background: rgba(255, 255, 255, .12); }
-.wh-bulk .wh-btn.pr { background: var(--sf-primary); border-color: var(--sf-primary); color: var(--sf-on-primary); }
-.wh-bulk .wh-btn.dg { color: var(--sf-neg); border-color: var(--sf-neg-3); }
+.wh-bulk .wh-btn { background: transparent; border-color: #475569; color: #fff; }
+.wh-bulk .wh-btn:hover { background: #1e293b; }
+.wh-bulk .wh-btn.pr { background: #2563eb; border-color: #2563eb; }
+.wh-bulk .wh-btn.dg { color: #fca5a5; border-color: rgba(239, 68, 68, .5); }
 
 /* Уведомления раздела */
 .wh-banner {
-  display: flex; align-items: center; gap: 10px; background: var(--sf-panel); border: 1px solid var(--sf-line);
-  border-left: 3px solid var(--sf-warn); border-radius: 6px; padding: 12px 14px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e2e8f0;
+  border-left: 3px solid #f59e0b; border-radius: 6px; padding: 12px 14px; margin-bottom: 12px;
 }
-.wh-banner.rd { border-left-color: var(--sf-neg); }
+.wh-banner.rd { border-left-color: #dc2626; }
 .wh-banner p { margin: 0; }
-.wh-banner .t { font-weight: 700; font-size: 12px; color: var(--sf-text); }
-.wh-banner .d { font-size: 11px; color: var(--sf-muted); margin-top: 2px; }
+.wh-banner .t { font-weight: 700; font-size: 12px; color: #0f172a; }
+.wh-banner .d { font-size: 11px; color: #64748b; margin-top: 2px; }
+.dark .wh-banner { background: #111827; border-color: #1f2937; }
+.dark .wh-banner .t { color: #f1f5f9; }
 
 /* Форма склада */
-.wh-lbl { font-size: 12px; color: var(--sf-text2); margin: 12px 0 4px; display: block; font-weight: 700; }
-.wh-email { border: 1px solid var(--sf-line); border-radius: 6px; background: var(--sf-panel); padding: 9px 11px; font: inherit; font-size: 13px; color: var(--sf-text); width: 100%; }
-.wh-email::placeholder { color: var(--sf-dim); }
+.wh-lbl { font-size: 12px; color: #334155; margin: 12px 0 4px; display: block; font-weight: 700; }
+.wh-email { border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; padding: 9px 11px; font: inherit; font-size: 13px; color: #0f172a; width: 100%; }
+.wh-email::placeholder { color: #94a3b8; }
 .wh-icon-pick {
   display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; flex: 1;
-  border: 2px solid var(--sf-line); border-radius: 6px; background: var(--sf-panel); cursor: pointer; transition: border-color .15s, background .15s;
+  border: 2px solid #e2e8f0; border-radius: 6px; background: #fff; cursor: pointer; transition: border-color .15s, background .15s;
 }
-.wh-icon-pick:hover { border-color: var(--sf-line3); }
-.wh-icon-pick.on { border-color: var(--sf-primary); background: var(--sf-info-1); }
+.wh-icon-pick:hover { border-color: #cbd5e1; }
+.wh-icon-pick.on { border-color: #2563eb; background: #eff6ff; }
 
 @keyframes wh-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes wh-grow { from { transform: scaleX(0); } }
 @keyframes wh-slide { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 
-/* ===== Раздел «Аналитика»: терминальная панель ===== */
+/* Тёмная тема раздела «Склады» */
+.dark .wh-console { color: #e2e8f0; }
+.dark .wh-cap, .dark .wh-top .sub, .dark .wh-wh small, .dark .wh-wh .r, .dark .wh-entry { color: #94a3b8; }
+.dark .wh-top h1, .dark .wh-k b, .dark .wh-wh strong, .dark .wh-hero h2, .dark .wh-tbl .tt h3, .dark .wh-pn, .dark .wh-entry strong { color: #f1f5f9; }
+.dark .wh-btn, .dark .wh-seg, .dark .wh-seg button, .dark .wh-srch, .dark .wh-chip, .dark .wh-fld, .dark .wh-icon-pick, .dark .wh-email {
+  background: #0f172a; border-color: #334155; color: #e2e8f0;
+}
+.dark .wh-btn:hover, .dark .wh-wh:hover, .dark .wh-entry:hover { background: #1e293b; }
+.dark .wh-chip.on, .dark .wh-btn.pr, .dark .wh-seg button.on { background: #2563eb; border-color: #2563eb; color: #fff; }
+.dark .wh-k, .dark .wh-reg, .dark .wh-pass, .dark .wh-tbl, .dark .wh-filt { background: #111827; border-color: #1f2937; }
+.dark .wh-wh, .dark .wh-reg .h, .dark .wh-reg .search, .dark .wh-list .row, .dark .wh-entry, .dark .wh-stats, .dark .wh-st, .dark .wh-alerts, .dark .wh-tbl .tt { border-color: #1f2937; }
+.dark .wh-wh.on { background: #1e293b; }
+.dark .wh-bar { background: #334155; }
+.dark .wh-hero:after { background: linear-gradient(90deg, #111827 30%, rgba(17, 24, 39, .6)); }
+.dark .wh-tbl tbody tr:nth-child(even) { background: #0f172a; }
+.dark .wh-tbl th { background: #0f172a; color: #94a3b8; border-color: #1f2937; }
+.dark .wh-tbl td { border-color: #1f2937; }
+.dark .wh-tbl tfoot td { background: #020617; color: #fff; }
+
+/* ===== Раздел «Аналитика»: стиль «Тёмный терминал» ===== */
 
 .tk-console {
-  background: var(--sf-bg);
-  color: var(--sf-text2);
+  background: #0b0e13;
+  color: #d7dbe2;
   font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   position: relative;
   overflow: hidden;
@@ -648,19 +576,19 @@ main { background-color: var(--sf-bg); color: var(--sf-text2); font-variant-nume
 @media (min-width: 1024px) { .tk-console { margin: -2rem; } }
 
 .tk-hero { position: absolute; left: 0; top: 0; width: 100%; height: 260px; z-index: 0; }
-.tk-hero img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); opacity: .1; }
-.tk-hero:after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent, var(--sf-bg)); }
+.tk-hero img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); opacity: .12; }
+.tk-hero:after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,14,19,0), #0b0e13); }
 .tk-in { position: relative; z-index: 1; padding: 0 20px; }
 
 .tk-mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
-.tk-cap { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--sf-muted); font-weight: 700; }
-.tk-cap.t { color: var(--sf-accent); margin-right: 8px; }
-.tk-sub { font-size: 12px; color: var(--sf-muted); }
+.tk-cap { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #7c8594; font-weight: 700; }
+.tk-cap.t { color: #f5b23e; margin-right: 8px; }
+.tk-sub { font-size: 12px; color: #7c8594; }
 .tk-sp { flex: 1; }
 
 /* Строки управления */
 .tk-bar {
-  display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--sf-line);
+  display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #232a35;
   flex-wrap: wrap; animation: tk-rise .6s ease both;
 }
 .tk-bar.flat { border: 0; padding: 8px 0 0; }
@@ -669,123 +597,123 @@ main { background-color: var(--sf-bg); color: var(--sf-text2); font-variant-nume
 
 /* Кнопка-чип */
 .tk-btn {
-  font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--sf-muted);
-  background: var(--sf-panel); border: 1px solid var(--sf-line); padding: 6px 10px; border-radius: 3px; cursor: pointer;
+  font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .06em; color: #aab2bf;
+  background: #12161d; border: 1px solid #232a35; padding: 6px 10px; border-radius: 3px; cursor: pointer;
   display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; text-decoration: none;
   transition: color .15s, border-color .15s, background .15s;
 }
-.tk-btn:hover { color: var(--sf-accent); border-color: var(--sf-accent); }
-.tk-btn:active { background: var(--sf-deep2); }
-.tk-btn:focus-visible { outline: 2px solid var(--sf-accent); outline-offset: 2px; }
-.tk-btn.on { background: var(--sf-accent); color: var(--sf-on-accent); border-color: var(--sf-accent); }
+.tk-btn:hover { color: #f5b23e; border-color: #f5b23e; }
+.tk-btn:active { background: #1a202a; }
+.tk-btn:focus-visible { outline: 2px solid #f5b23e; outline-offset: 2px; }
+.tk-btn.on { background: #f5b23e; color: #0b0e13; border-color: #f5b23e; }
 .tk-btn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* Приборная полоса метрик */
 .tk-strip {
-  display: grid; grid-template-columns: repeat(5, 1fr); background: var(--sf-panel); border: 1px solid var(--sf-line);
+  display: grid; grid-template-columns: repeat(5, 1fr); background: #12161d; border: 1px solid #232a35;
   margin-top: 14px; animation: tk-rise .6s .06s ease both;
 }
 .tk-cell {
-  padding: 14px 14px 12px; border-right: 1px solid var(--sf-line); border-bottom: 1px solid var(--sf-line);
+  padding: 14px 14px 12px; border-right: 1px solid #232a35; border-bottom: 1px solid #232a35;
   position: relative; min-height: 96px;
 }
 .tk-cell:nth-child(5n) { border-right: 0; }
 .tk-cell:nth-last-child(-n+5) { border-bottom: 0; }
-.tk-cell:before { content: ""; position: absolute; left: 14px; top: 0; width: 18px; height: 2px; background: var(--sf-accent); }
-.tk-cell.g:before { background: var(--sf-pos); }
-.tk-cell.r:before { background: var(--sf-neg); }
-.tk-cell b { display: block; font-size: 23px; margin-top: 8px; color: var(--sf-text); font-weight: 600; }
-.tk-cell small { display: block; font-size: 11px; color: var(--sf-muted); margin-top: 4px; }
+.tk-cell:before { content: ""; position: absolute; left: 14px; top: 0; width: 18px; height: 2px; background: #f5b23e; }
+.tk-cell.g:before { background: #6ee7b7; }
+.tk-cell.r:before { background: #f87171; }
+.tk-cell b { display: block; font-size: 23px; margin-top: 8px; color: #f2f4f8; font-weight: 600; }
+.tk-cell small { display: block; font-size: 11px; color: #7c8594; margin-top: 4px; }
 .tk-cell b.tk-pulse { animation: tk-pulse 2.6s ease-in-out infinite; }
 button.tk-cell {
   text-align: left; font: inherit; background: transparent; border-top: 0; border-left: 0; width: 100%;
   cursor: pointer; transition: background .15s;
 }
-button.tk-cell:hover { background: var(--sf-deep2); }
-button.tk-cell:focus-visible { outline: 2px solid var(--sf-accent); outline-offset: -2px; }
+button.tk-cell:hover { background: #171c25; }
+button.tk-cell:focus-visible { outline: 2px solid #f5b23e; outline-offset: -2px; }
 
 /* Плита */
 .tk-slab {
-  background: var(--sf-panel); border: 1px solid var(--sf-line); margin-top: 14px; padding: 16px 18px;
+  background: #12161d; border: 1px solid #232a35; margin-top: 14px; padding: 16px 18px;
   animation: tk-rise .6s .12s ease both;
 }
-.tk-slab h3 { margin: 0 0 12px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--sf-text2); }
+.tk-slab h3 { margin: 0 0 12px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #aab2bf; }
 .tk-sp2 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
-.tk-leg { display: flex; gap: 14px; font-size: 11px; color: var(--sf-muted); }
+.tk-leg { display: flex; gap: 14px; font-size: 11px; color: #aab2bf; }
 .tk-leg i { display: inline-block; width: 10px; height: 3px; margin-right: 6px; vertical-align: middle; }
 
 /* Зеркальные полосы «Наличные / В долг» */
-.tk-mirror { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 16px; border-top: 1px solid var(--sf-line); padding-top: 14px; }
+.tk-mirror { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 16px; border-top: 1px solid #232a35; padding-top: 14px; }
 .tk-mrow .h { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; gap: 8px; }
-.tk-trk { height: 8px; background: var(--sf-bg); border: 1px solid var(--sf-line); position: relative; }
+.tk-trk { height: 8px; background: #0b0e13; border: 1px solid #232a35; position: relative; }
 .tk-trk span { display: block; height: 100%; transform-origin: left; animation: tk-grow 1.1s .5s ease both; }
 
 /* Таблица реестра */
 .tk-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
 .tk-tbl th {
-  text-align: left; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--sf-muted);
-  padding: 6px 8px; border-bottom: 1px solid var(--sf-line); font-weight: 700;
+  text-align: left; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #7c8594;
+  padding: 6px 8px; border-bottom: 1px solid #232a35; font-weight: 700;
 }
-.tk-tbl td { padding: 9px 8px; border-bottom: 1px solid var(--sf-line2); color: var(--sf-text2); }
-.tk-tbl tr:hover td { background: var(--sf-deep2); }
+.tk-tbl td { padding: 9px 8px; border-bottom: 1px solid #1b212a; color: #d7dbe2; }
+.tk-tbl tr:hover td { background: #171c25; }
 .tk-tbl .n { text-align: right; }
-.tk-tbl .rk { color: var(--sf-accent); width: 28px; }
-.tk-m { display: block; height: 3px; background: var(--sf-line); width: 90px; margin-left: auto; }
-.tk-m i { display: block; height: 100%; background: var(--sf-accent); transform-origin: left; animation: tk-grow 1s .6s ease both; }
+.tk-tbl .rk { color: #f5b23e; width: 28px; }
+.tk-m { display: block; height: 3px; background: #232a35; width: 90px; margin-left: auto; }
+.tk-m i { display: block; height: 100%; background: #f5b23e; transform-origin: left; animation: tk-grow 1s .6s ease both; }
 
 /* Две плиты в ряд */
 .tk-two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
 
 /* Расходы по категориям */
 .tk-exr { display: grid; grid-template-columns: 90px 1fr 110px; gap: 12px; align-items: center; margin-bottom: 12px; font-size: 12px; }
-.tk-exr .v { text-align: right; color: var(--sf-text); }
-.tk-tot { display: flex; justify-content: space-between; border-top: 1px solid var(--sf-line); padding-top: 10px; font-size: 12px; }
-.tk-tot b { color: var(--sf-neg); }
+.tk-exr .v { text-align: right; color: #f2f4f8; }
+.tk-tot { display: flex; justify-content: space-between; border-top: 1px solid #232a35; padding-top: 10px; font-size: 12px; }
+.tk-tot b { color: #f87171; }
 
 /* Ссылка-действие */
 .tk-lnk {
-  color: var(--sf-accent); text-decoration: none; font-size: 11px; letter-spacing: .1em; cursor: pointer;
+  color: #f5b23e; text-decoration: none; font-size: 11px; letter-spacing: .1em; cursor: pointer;
   background: none; border: 0; padding: 0; font-family: inherit; white-space: nowrap;
 }
 .tk-lnk:hover { text-decoration: underline; }
 
 /* Фото товара и матрица сводки */
 .tk-ph {
-  width: 34px; height: 34px; background: var(--sf-soft); border: 1px solid var(--sf-line); display: inline-flex;
-  align-items: center; justify-content: center; font-size: 8px; color: var(--sf-muted); text-align: center;
+  width: 34px; height: 34px; background: #1b212a; border: 1px solid #232a35; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 8px; color: #7c8594; text-align: center;
   vertical-align: middle; margin-right: 10px; line-height: 1.1;
 }
 .tk-srt { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
-.tk-mat { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--sf-line); border: 1px solid var(--sf-line); margin-top: 6px; }
-.tk-mat > div { background: var(--sf-deep); padding: 10px 12px 12px; font-size: 12px; }
-.tk-mat b { display: block; font-size: 16px; margin-top: 4px; color: var(--sf-text); font-weight: 600; }
+.tk-mat { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: #232a35; border: 1px solid #232a35; margin-top: 6px; }
+.tk-mat > div { background: #0f131a; padding: 10px 12px 12px; font-size: 12px; }
+.tk-mat b { display: block; font-size: 16px; margin-top: 4px; color: #f2f4f8; font-weight: 600; }
 
 /* Метка статуса и строка должника */
-.tk-pill { display: inline-block; padding: 2px 7px; border: 1px solid var(--sf-line); font-size: 10px; letter-spacing: .1em; color: var(--sf-muted); margin-right: 6px; }
+.tk-pill { display: inline-block; padding: 2px 7px; border: 1px solid #232a35; font-size: 10px; letter-spacing: .1em; color: #aab2bf; margin-right: 6px; }
 .tk-dbt {
-  display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-left: 2px solid var(--sf-neg);
-  padding: 8px 12px; background: var(--sf-deep); font-size: 12px; gap: 10px;
+  display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-left: 2px solid #f87171;
+  padding: 8px 12px; background: #0f131a; font-size: 12px; gap: 10px;
 }
 
-/* Форма внутри терминала */
+/* Тёмная форма внутри терминала */
 .tk-input {
-  background: var(--sf-deep); border: 1px solid var(--sf-line); border-radius: 3px; color: var(--sf-text2);
+  background: #0f131a; border: 1px solid #232a35; border-radius: 3px; color: #d7dbe2;
   font: inherit; font-size: 11px; padding: 5px 8px;
 }
-.tk-input:focus-visible { outline: 2px solid var(--sf-accent); outline-offset: 1px; }
+.tk-input:focus-visible { outline: 2px solid #f5b23e; outline-offset: 1px; }
 
 @keyframes tk-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes tk-grow { from { transform: scaleX(0); } }
 @keyframes tk-draw { to { stroke-dashoffset: 0; } }
-@keyframes tk-pulse { 0%, 100% { color: var(--sf-text); } 50% { color: var(--sf-accent); } }
+@keyframes tk-pulse { 0%, 100% { color: #f2f4f8; } 50% { color: #f5b23e; } }
 .tk-draw { stroke-dasharray: 1400; stroke-dashoffset: 1400; animation: tk-draw 2.2s .4s ease forwards; }
 
 /* Адаптив терминала */
 @media (max-width: 1024px) {
   .tk-strip { grid-template-columns: repeat(3, 1fr); }
-  .tk-cell:nth-child(5n) { border-right: 1px solid var(--sf-line); }
+  .tk-cell:nth-child(5n) { border-right: 1px solid #232a35; }
   .tk-cell:nth-child(3n) { border-right: 0; }
-  .tk-cell:nth-last-child(-n+5) { border-bottom: 1px solid var(--sf-line); }
+  .tk-cell:nth-last-child(-n+5) { border-bottom: 1px solid #232a35; }
   .tk-cell:nth-last-child(-n+3) { border-bottom: 0; }
   .tk-mat { grid-template-columns: repeat(3, 1fr); }
 }
@@ -794,11 +722,97 @@ button.tk-cell:focus-visible { outline: 2px solid var(--sf-accent); outline-offs
   .tk-strip { grid-template-columns: repeat(2, 1fr); }
   .tk-cell { min-height: 84px; padding: 12px 12px 10px; }
   .tk-cell b { font-size: 19px; }
-  .tk-cell:nth-child(3n) { border-right: 1px solid var(--sf-line); }
+  .tk-cell:nth-child(3n) { border-right: 1px solid #232a35; }
   .tk-cell:nth-child(2n) { border-right: 0; }
-  .tk-cell:nth-last-child(-n+3) { border-bottom: 1px solid var(--sf-line); }
+  .tk-cell:nth-last-child(-n+3) { border-bottom: 1px solid #232a35; }
   .tk-cell:nth-last-child(-n+2) { border-bottom: 0; }
   .tk-two, .tk-mirror { grid-template-columns: 1fr; }
   .tk-mat { grid-template-columns: repeat(2, 1fr); }
   .tk-slab { padding: 12px; }
 }
+
+/* ===== Светлый вариант терминальных элементов =====
+   Правила выше описывают тёмный «терминал»; ниже — их светлые значения,
+   чтобы «Аналитика» и общие терминальные элементы выглядели гармонично
+   и в светлой теме оформления. */
+
+html:not(.dark) .tk-console { background: #f5f6f9; color: #1e293b; }
+html:not(.dark) .tk-hero img { opacity: .07; }
+html:not(.dark) .tk-hero:after { background: linear-gradient(180deg, rgba(245, 246, 249, 0), #f5f6f9); }
+html:not(.dark) .tk-cap { color: #64748b; }
+html:not(.dark) .tk-cap.t { color: #b45309; }
+html:not(.dark) .tk-sub { color: #64748b; }
+html:not(.dark) .tk-bar { border-bottom-color: #e2e8f0; }
+html:not(.dark) .tk-btn { background: #ffffff; border-color: #cbd5e1; color: #475569; }
+html:not(.dark) .tk-btn:hover { color: #b45309; border-color: #f5b23e; }
+html:not(.dark) .tk-btn:active { background: #e2e8f0; }
+html:not(.dark) .tk-strip { background: #ffffff; border-color: #dfe5ec; }
+html:not(.dark) .tk-cell { border-color: #e2e8f0; }
+html:not(.dark) .tk-cell.g:before { background: #059669; }
+html:not(.dark) .tk-cell.r:before { background: #dc2626; }
+html:not(.dark) .tk-cell b { color: #0f172a; }
+html:not(.dark) .tk-cell small { color: #64748b; }
+html:not(.dark) .tk-cell b.tk-pulse { animation: tk-pulse-light 2.6s ease-in-out infinite; }
+html:not(.dark) button.tk-cell:hover { background: #f1f5f9; }
+html:not(.dark) .tk-slab { background: #ffffff; border-color: #e2e8f0; }
+html:not(.dark) .tk-slab h3 { color: #475569; }
+html:not(.dark) .tk-leg { color: #475569; }
+html:not(.dark) .tk-mirror { border-top-color: #e2e8f0; }
+html:not(.dark) .tk-trk { background: #f1f5f9; border-color: #dfe5ec; }
+html:not(.dark) .tk-tbl th { color: #64748b; border-bottom-color: #e2e8f0; }
+html:not(.dark) .tk-tbl td { border-bottom-color: #eef1f5; }
+html:not(.dark) .tk-tbl tr:hover td { background: #f8fafc; }
+html:not(.dark) .tk-tbl .rk { color: #b45309; }
+html:not(.dark) .tk-m { background: #e2e8f0; }
+html:not(.dark) .tk-exr .v { color: #0f172a; }
+html:not(.dark) .tk-tot { border-top-color: #e2e8f0; }
+html:not(.dark) .tk-tot b { color: #dc2626; }
+html:not(.dark) .tk-lnk { color: #b45309; }
+html:not(.dark) .tk-ph { background: #f1f5f9; border-color: #cbd5e1; color: #64748b; }
+html:not(.dark) .tk-mat { background: #e2e8f0; border-color: #e2e8f0; }
+html:not(.dark) .tk-mat > div { background: #f8fafc; }
+html:not(.dark) .tk-mat b { color: #0f172a; }
+html:not(.dark) .tk-pill { border-color: #cbd5e1; color: #475569; }
+html:not(.dark) .tk-dbt { background: #f8fafc; }
+html:not(.dark) .tk-input { background: #ffffff; border-color: #cbd5e1; color: #0f172a; }
+
+@keyframes tk-pulse-light {
+  0%, 100% { color: #0f172a; }
+  50% { color: #b45309; }
+}
+
+/* Подвал панели меню — одинаково аккуратно в обеих темах */
+.tk-dfoot { border-top: 1px solid hsl(240 15% 91%); }
+.tk-dfoot:hover { background-color: hsl(240 20% 97%); }
+.dark .tk-dfoot { border-top-color: #232a35; }
+.dark .tk-dfoot:hover { background-color: #171c25; }
+
+/* ===== Утилиты терминальной палитры (светлая и тёмная темы) ===== */
+.tk-txt { color: #0f172a; }
+.dark .tk-txt { color: #f2f4f8; }
+.tk-txt2 { color: #334155; }
+.dark .tk-txt2 { color: #d7dbe2; }
+.tk-muted { color: #64748b; }
+.dark .tk-muted { color: #7c8594; }
+.tk-dim { color: #94a3b8; }
+.dark .tk-dim { color: #4b5563; }
+.tk-posc { color: #059669; }
+.dark .tk-posc { color: #6ee7b7; }
+.tk-negc { color: #dc2626; }
+.dark .tk-negc { color: #f87171; }
+.tk-bpos { border-color: #059669; }
+.dark .tk-bpos { border-color: #6ee7b7; }
+.tk-bneg { border-color: #dc2626; }
+.dark .tk-bneg { border-color: #f87171; }
+.tk-panel { background-color: #ffffff; }
+.dark .tk-panel { background-color: #12161d; }
+.tk-deep { background-color: #f8fafc; }
+.dark .tk-deep { background-color: #0f131a; }
+.tk-bline { border-color: #e2e8f0; }
+.dark .tk-bline { border-color: #232a35; }
+.tk-bline2 { border-color: #eef1f5; }
+.dark .tk-bline2 { border-color: #1b212a; }
+.tk-hover:hover { background-color: #f1f5f9; }
+.dark .tk-hover:hover { background-color: #171c25; }
+.tk-div > * + * { border-color: #eef1f5; }
+.dark .tk-div > * + * { border-color: #1b212a; }

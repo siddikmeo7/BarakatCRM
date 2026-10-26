@@ -7,8 +7,7 @@ import { mergePermissions } from '@/components/permissions/permissionsHelper';
 import { countDueSalaries } from '@/lib/salaryPeriod';
 import SubscriptionGate from '@/components/subscription/SubscriptionGate';
 import { getSubscriptionState, fetchAccessState } from '@/lib/subscription';
-import { applyAppStyle, switchStyleMode } from '@/lib/appStyles';
-import { useAppTheme } from '@/lib/appTheme';
+import { useAppTheme, applyThemeMode } from '@/lib/appTheme';
 
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
@@ -62,17 +61,16 @@ const ADMIN_MENU_ITEMS = [
   { name: 'AdminBusinesses', icon: Building2,       labelKey: 'nav_businesses', color: 'text-blue-500',   activeBg: 'bg-blue-500' },
 ];
 
-/* Оформление приложения задаётся в src/lib/appStyles.js и хранится в аккаунте пользователя. */
+/* Оформление интерфейса — тёмное или светлое; переключается в шапке и в профиле. */
 
 export default function Layout({ children, currentPageName }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { isDark } = useAppTheme();
 
-  // Быстрое переключение тёмное ↔ светлое: берём оформление, выбранное для этого режима,
-  // и сохраняем выбор в аккаунте — при следующем входе включится тот же стиль.
+  // Переключение тёмного и светлого оформления: применяется сразу ко всем разделам
+  // и сохраняется в браузере — при следующем входе включится тот же режим.
   const toggleStyleMode = () => {
-    const next = switchStyleMode(isDark ? 'light' : 'dark');
-    base44.auth.updateMe({ app_style: next.id }).catch(() => {});
+    applyThemeMode(isDark ? 'light' : 'dark');
   };
 
   const [user, setUser] = useState(null);
@@ -88,8 +86,7 @@ export default function Layout({ children, currentPageName }) {
   const [dueSalaryCount, setDueSalaryCount] = useState(0);
   const navigate = useNavigate();
 
-  // Оформление применяется до первой отрисовки (src/lib/appStyles.js),
-  // а стиль, сохранённый в аккаунте пользователя, подхватывается при входе — см. loadUserAndBusiness.
+  // Оформление применяется до первой отрисовки (src/lib/appTheme.js).
 
   useEffect(() => {
     loadUserAndBusiness();
@@ -219,13 +216,6 @@ export default function Layout({ children, currentPageName }) {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
-      // Оформление хранится в аккаунте пользователя — включаем его при каждом входе.
-      // Если сохранённое оформление больше не существует, аккуратно приводим выбор к действующему.
-      const savedStyle = currentUser.data?.app_style;
-      if (savedStyle) {
-        const applied = applyAppStyle(savedStyle);
-        if (applied.id !== savedStyle) base44.auth.updateMe({ app_style: applied.id }).catch(() => {});
-      }
       recordLogin(currentUser.email);
 
       // При входе в приложение сразу открываем раздел «Профиль» (один раз за сессию вкладки)

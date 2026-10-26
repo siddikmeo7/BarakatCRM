@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Settings, Info, Mail, ChevronRight, Server } from 'lucide-react';
+import { Settings, Info, Mail, ChevronRight } from 'lucide-react';
 
 // Переходы из профиля: настройки бизнеса, о системе, контакты
-export default function ProfileNavCard({ showServerPlan = false }) {
+export default function ProfileNavCard() {
   const navigate = useNavigate();
 
   return (
@@ -22,22 +22,6 @@ export default function ProfileNavCard({ showServerPlan = false }) {
         </div>
         <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
       </button>
-
-      {showServerPlan && (
-      <Link
-        to="/MigrationPlan"
-        className="w-full bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 flex items-center gap-3 transition-colors hover:border-indigo-300 dark:hover:border-indigo-700"
-      >
-        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-          <Server className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 dark:text-white">Свой сервер и независимость</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">План переноса приложения на свои серверы</p>
-        </div>
-        <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
-      </Link>
-      )}
 
       <div className="grid grid-cols-2 gap-2">
         <Link
