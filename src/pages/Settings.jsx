@@ -45,20 +45,10 @@ const LANGUAGES = [
 const PRODUCT_TYPES = ['Туфли', 'Спортивная обувь', 'Сапоги', 'Другое'];
 const COLORS = ['Чёрный', 'Белый', 'Коричневый', 'Синий', 'Красный', 'Серый', 'Бежевый'];
 
-function useDarkMode() {
-  const [isDark, setIsDark] = React.useState(() => document.documentElement.classList.contains('dark'));
-  const toggle = () => {
-    const next = !document.documentElement.classList.contains('dark');
-    document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem('barakatcrm_theme', next ? 'dark' : 'light');
-    setIsDark(next);
-  };
-  return [isDark, toggle];
-}
+/* Оформление приложения задаётся в src/lib/appStyles.js — раздел «Стили» в профиле. */
 
 export default function Settings() {
   const navigate = useNavigate();
-  const [isDark, toggleDark] = useDarkMode();
   const savedMode = sessionStorage.getItem('barakatcrm_mode') || localStorage.getItem('barakatcrm_mode');
   const isEmployeeMode = savedMode && savedMode.startsWith('employee_');
   const [currentEmployee, setCurrentEmployee] = useState(() => window.__barakatEmployee || null);

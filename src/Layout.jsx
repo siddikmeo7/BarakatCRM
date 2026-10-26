@@ -7,6 +7,8 @@ import { mergePermissions } from '@/components/permissions/permissionsHelper';
 import { countDueSalaries } from '@/lib/salaryPeriod';
 import SubscriptionGate from '@/components/subscription/SubscriptionGate';
 import { getSubscriptionState, fetchAccessState } from '@/lib/subscription';
+import { applyAppStyle, switchStyleMode } from '@/lib/appStyles';
+import { useAppTheme } from '@/lib/appTheme';
 
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
@@ -60,20 +62,18 @@ const ADMIN_MENU_ITEMS = [
   { name: 'AdminBusinesses', icon: Building2,       labelKey: 'nav_businesses', color: 'text-blue-500',   activeBg: 'bg-blue-500' },
 ];
 
-function useDarkMode() {
-  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
-  const toggle = () => {
-    const next = !document.documentElement.classList.contains('dark');
-    document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem('barakatcrm_theme', next ? 'dark' : 'light');
-    setIsDark(next);
-  };
-  return [isDark, toggle];
-}
+/* Оформление приложения задаётся в src/lib/appStyles.js и хранится в аккаунте пользователя. */
 
 export default function Layout({ children, currentPageName }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [isDark, toggleDark] = useDarkMode();
+  const { isDark } = useAppTheme();
+
+  // Быстрое переключение тёмное ↔ светлое: берём оформление, выбранное для этого режима,
+  // и сохраняем выбор в аккаунте — при следующем входе включится тот же стиль.
+  const toggleStyleMode = () => {
+    const next = switchStyleMode(isDark ? 'light' : 'dark');
+    base44.auth.updateMe({ app_style: next.id }).catch(() => {});
+  };
 
   const [user, setUser] = useState(null);
   const [business, setBusiness] = useState(null);
@@ -88,17 +88,8 @@ export default function Layout({ children, currentPageName }) {
   const [dueSalaryCount, setDueSalaryCount] = useState(0);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Основной стиль приложения — тёмный терминал. Светлая тема включается
-    // только если пользователь сам её выбрал (переключатель в шапке).
-    const savedTheme = localStorage.getItem('barakatcrm_theme');
-    if (savedTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('barakatcrm_theme', 'dark');
-    }
-  }, []);
+  // Оформление применяется до первой отрисовки (src/lib/appStyles.js),
+  // а стиль, сохранённый в аккаунте пользователя, подхватывается при входе — см. loadUserAndBusiness.
 
   useEffect(() => {
     loadUserAndBusiness();
@@ -228,6 +219,8 @@ export default function Layout({ children, currentPageName }) {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+      // Оформление хранится в аккаунте пользователя — включаем его при каждом входе
+      if (currentUser.data?.app_style) applyAppStyle(currentUser.data.app_style);
       recordLogin(currentUser.email);
 
       // При входе в приложение сразу открываем раздел «Профиль» (один раз за сессию вкладки)
@@ -707,9 +700,9 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         <button
-          onClick={toggleDark}
+          onClick={toggleStyleMode}
           className="tk-btn ic flex-shrink-0"
-          title={isDark ? 'Светлая тема' : 'Тёмная тема'}
+          title={isDark ? 'Светлое оформление' : 'Тёмное оформление'}
         >
           {isDark
             ? <Sun className="w-4 h-4" />

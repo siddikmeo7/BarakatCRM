@@ -7,6 +7,7 @@ import ProfileBusinessCard from '@/components/profile/ProfileBusinessCard';
 import ProfileSubscriptionCard from '@/components/profile/ProfileSubscriptionCard';
 import PaymentHistoryCard from '@/components/profile/PaymentHistoryCard';
 import ProfileNavCard from '@/components/profile/ProfileNavCard';
+import StyleStudio from '@/components/profile/StyleStudio';
 import MyProfileSection from '@/components/profile/MyProfileSection';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -115,6 +116,8 @@ export default function Profile() {
       />
 
       <PaymentHistoryCard ownerEmail={business?.owner_email} />
+
+      <StyleStudio />
 
       <ProfileNavCard showServerPlan={isOwner || isPlatformAdmin || !!employee?.is_admin} />
 

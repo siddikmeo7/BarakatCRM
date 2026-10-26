@@ -437,7 +437,7 @@ export default function Warehouses() {
   };
 
   return (
-    <div className="wh-console rounded-[6px] bg-[#f1f5f9] dark:bg-[#0b1120] p-4 lg:p-5">
+    <div className="wh-console rounded-[6px] bg-slate-100 dark:bg-slate-950 p-4 lg:p-5">
       {/* Верхняя панель: название, поиск, вид, добавление склада */}
       <div className="wh-top">
         <div>
