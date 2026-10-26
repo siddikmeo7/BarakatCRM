@@ -1,5 +1,4 @@
 import React from 'react';
-import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -32,68 +31,87 @@ export default function WarehouseProductFilters({
   };
 
   return (
-    <div className="space-y-2.5">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-xs font-medium text-slate-500 mr-1">Дата:</span>
-        {DATE_TABS.map(f => (
-          <button
-            key={f.key}
-            onClick={() => setDateFilter(f.key)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${dateFilter === f.key ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
-          >
-            {f.label}
-          </button>
-        ))}
-        {dateFilter === 'custom' && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Input type="date" value={customDateFrom} onChange={e => setCustomDateFrom(e.target.value)} className="h-7 text-xs w-36" />
-            <span className="text-xs text-slate-400">—</span>
-            <Input type="date" value={customDateTo} onChange={e => setCustomDateTo(e.target.value)} className="h-7 text-xs w-36" />
-          </div>
-        )}
-      </div>
+    <div className="flex flex-wrap items-center gap-2">
+      {DATE_TABS.map(f => (
+        <button
+          key={f.key}
+          onClick={() => setDateFilter(f.key)}
+          className={`wh-chip ${dateFilter === f.key ? 'on' : ''}`}
+        >
+          {f.label}
+        </button>
+      ))}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-          <SelectTrigger className="h-8 w-44 text-xs">
-            <SelectValue placeholder="Сотрудник" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Все сотрудники</SelectItem>
-            {creators.map(c => (
-              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {dateFilter === 'custom' && (
+        <span className="flex items-center gap-1.5">
+          <input
+            type="date"
+            value={customDateFrom}
+            onChange={e => setCustomDateFrom(e.target.value)}
+            className="wh-fld"
+          />
+          <span className="text-slate-400 text-[11px]">—</span>
+          <input
+            type="date"
+            value={customDateTo}
+            onChange={e => setCustomDateTo(e.target.value)}
+            className="wh-fld"
+          />
+        </span>
+      )}
 
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="h-8 w-40 text-xs">
-            <SelectValue placeholder="Тип товара" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Все типы</SelectItem>
-            {productTypes.map(tp => (
-              <SelectItem key={tp} value={tp}>{tp}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+        <SelectTrigger className="wh-fld h-auto w-[150px]">
+          <SelectValue placeholder="Сотрудник" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Все сотрудники</SelectItem>
+          {creators.map(c => (
+            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-slate-500">Цена:</span>
-          <Input type="number" min="0" placeholder="от" value={priceMin} onChange={e => setPriceMin(e.target.value)} className="h-8 w-20 text-xs" />
-          <span className="text-xs text-slate-400">—</span>
-          <Input type="number" min="0" placeholder="до" value={priceMax} onChange={e => setPriceMax(e.target.value)} className="h-8 w-20 text-xs" />
-        </div>
+      <Select value={typeFilter} onValueChange={setTypeFilter}>
+        <SelectTrigger className="wh-fld h-auto w-[130px]">
+          <SelectValue placeholder="Тип товара" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Все типы</SelectItem>
+          {productTypes.map(tp => (
+            <SelectItem key={tp} value={tp}>{tp}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-        {hasActive && (
-          <button
-            onClick={resetAll}
-            className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium"
-          >
+      <span className="flex items-center gap-1.5">
+        <span className="text-[11px] font-bold text-slate-500">Цена:</span>
+        <input
+          type="number"
+          min="0"
+          placeholder="от"
+          value={priceMin}
+          onChange={e => setPriceMin(e.target.value)}
+          className="wh-fld w-[70px]"
+        />
+        <span className="text-[11px] text-slate-400">—</span>
+        <input
+          type="number"
+          min="0"
+          placeholder="до"
+          value={priceMax}
+          onChange={e => setPriceMax(e.target.value)}
+          className="wh-fld w-[70px]"
+        />
+      </span>
+
+      {hasActive && (
+        <button onClick={resetAll} className="wh-chip">
+          <span className="flex items-center gap-1">
             <XIcon className="w-3 h-3" /> Сбросить
-          </button>
-        )}
-      </div>
+          </span>
+        </button>
+      )}
     </div>
   );
 }

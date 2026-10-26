@@ -6,6 +6,10 @@ import PageHeader from '@/components/ui/PageHeader';
 import SearchInput from '@/components/filters/SearchInput';
 import { Button } from '@/components/ui/button';
 import WarehouseFormDialog from '@/components/warehouses/WarehouseFormDialog';
+import WarehouseRegistry from '@/components/warehouses/WarehouseRegistry';
+import WarehouseKpiRow from '@/components/warehouses/WarehouseKpiRow';
+import WarehouseDetailPanel from '@/components/warehouses/WarehouseDetailPanel';
+import AllWarehouseProductsTable from '@/components/warehouses/AllWarehouseProductsTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MoveProductsDialog from '@/components/warehouses/MoveProductsDialog';
@@ -105,6 +109,13 @@ export default function Warehouses() {
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(null); // { type: 'one'|'selected'|'warehouse'|'all', productId?, label }
   const [deleteWarehouseDialog, setDeleteWarehouseDialog] = useState(null); // warehouse object
   const [deletingWarehouse, setDeletingWarehouse] = useState(false);
+
+  // Открываем первый склад: рабочая область всегда показывает конкретный склад
+  useEffect(() => {
+    if (!loading && !selectedWarehouse && warehouses.length > 0) {
+      setSelectedWarehouse(warehouses[0]);
+    }
+  }, [loading, warehouses]);
 
   useEffect(() => {
     if (window.__barakatAccessReady) {
@@ -410,147 +421,79 @@ export default function Warehouses() {
   const canBulk = can('edit_products') || can('move_products') || can('delete_products');
   const selectedProducts = warehouseProducts.filter(p => selectedProductIds.includes(p.id));
 
+  // Итоги по всем складам для верхней KPI-строки
+  const kpiValues = {
+    products: can('view_warehouse_quantities') ? products.length : '•••',
+    boxes: can('view_warehouse_quantities') ? products.reduce((s, p) => s + (p.boxes_in_stock || 0), 0).toLocaleString() : '•••',
+    wholesale: can('view_warehouse_value') ? products.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.purchase_price || 0), 0).toLocaleString() : '•••••',
+    retail: can('view_warehouse_value') ? products.reduce((s, p) => s + (p.boxes_in_stock || 0) * (p.sale_price || 0), 0).toLocaleString() : '•••••',
+    profit: can('view_warehouse_cost') ? `+${products.reduce((s, p) => s + (p.boxes_in_stock || 0) * ((p.sale_price || 0) - (p.purchase_price || 0)), 0).toLocaleString()}` : '•••••',
+    revenue: can('view_warehouse_revenue') ? sales.filter(s => !s.is_cancelled).reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString() : '•••••',
+  };
+
+  const resetFilters = () => {
+    setDateFilter('all'); setCustomDateFrom(''); setCustomDateTo('');
+    setEmployeeFilter('all'); setTypeFilter('all'); setPriceMin(''); setPriceMax('');
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Заголовок раздела и уведомления — только в общем виде (не внутри конкретного склада) */}
-      {!selectedWarehouse && (
-        <PageHeader 
-          title="Склады"
-          subtitle={`${warehouses.length} складов`}
-          actions={
-            can('manage_warehouses') && (
-              <Button onClick={() => handleOpenDialog()} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-                <Plus className="w-4 h-4" />
-                Добавить склад
-              </Button>
-            )
-          }
-        />
-      )}
-
-      {/* Orphaned products banner — только в общем виде */}
-      {!selectedWarehouse && orphanedProducts.length > 0 && (
-        <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-amber-800">
-              ⚠️ {orphanedProducts.length} товаров без склада
-            </p>
-            <p className="text-xs text-amber-600 mt-0.5">
-              Склад был удалён. Переместите эти товары в другой склад или удалите их.
-            </p>
-          </div>
-          <Button size="sm"
-            className="bg-amber-500 hover:bg-amber-600 text-white gap-1.5 flex-shrink-0"
-            onClick={() => setOrphanedDialogOpen(true)}>
-            <ArrowRightLeft className="w-3.5 h-3.5" />
-            Переместить
-          </Button>
+    <div className="wh-console rounded-[6px] bg-[#f1f5f9] dark:bg-[#0b1120] p-4 lg:p-5">
+      {/* Верхняя панель: название, поиск, вид, добавление склада */}
+      <div className="wh-top">
+        <div>
+          <h1>Склады</h1>
+          <div className="sub">{filteredWarehouses.length} складов</div>
         </div>
-      )}
-
-      {/* Duplicate products banner — только в общем виде */}
-      {!selectedWarehouse && duplicateGroups.length > 0 && (
-        <div className="bg-red-50 border border-red-300 rounded-2xl p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-red-800">
-              ⚠️ Найдены дубликаты: {duplicateGroups.length} групп товаров с одинаковым брендом, моделью, типом и цветом в одном складе
-            </p>
-            <p className="text-xs text-red-600 mt-0.5">
-              В системе есть товары с одинаковым названием. Рекомендуется удалить лишние записи.
-            </p>
-          </div>
-          <Button size="sm"
-            className="bg-red-500 hover:bg-red-600 text-white gap-1.5 flex-shrink-0"
-            onClick={() => setDuplicateDialogOpen(true)}>
-            <Trash2 className="w-3.5 h-3.5" />
-            Исправить
-          </Button>
+        <div className="wh-sp" />
+        <button
+          className="wh-srch"
+          onClick={() => { setGlobalSearchOpen(true); setGlobalSearch(''); }}
+        >
+          <Search className="w-3.5 h-3.5" />
+          Поиск товара
+        </button>
+        <div className="wh-seg">
+          <button className={view === 'grid' ? 'on' : ''} onClick={() => setView('grid')}>Сетка</button>
+          <button className={view === 'list' ? 'on' : ''} onClick={() => setView('list')}>Список</button>
         </div>
-      )}
-
-      {/* Search */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          {!selectedWarehouse && (
-            <SearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Поиск склада..."
-              className="max-w-md"
-            />
-          )}
-          <div className={`flex items-center gap-2 ${selectedWarehouse ? 'w-full' : ''}`}>
-            <Button
-              variant="outline"
-              className={`gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 ${selectedWarehouse ? 'flex-1 h-10 justify-start' : ''}`}
-              onClick={() => { setGlobalSearchOpen(true); setGlobalSearch(''); }}
-            >
-              <Search className="w-4 h-4" />
-              {selectedWarehouse ? `Поиск товара на складе «${selectedWarehouse.name}»` : 'Поиск товара'}
-            </Button>
-            {!selectedWarehouse && <ViewToggle view={view} onChange={setView} />}
-          </div>
-        </div>
-        {!selectedWarehouse && (
-          <div className="mt-3 pt-3 border-t border-slate-100">
-            <WarehouseProductFilters
-              dateFilter={dateFilter} setDateFilter={setDateFilter}
-              customDateFrom={customDateFrom} setCustomDateFrom={setCustomDateFrom}
-              customDateTo={customDateTo} setCustomDateTo={setCustomDateTo}
-              employeeFilter={employeeFilter} setEmployeeFilter={setEmployeeFilter}
-              creators={creators}
-              typeFilter={typeFilter} setTypeFilter={setTypeFilter}
-              productTypes={productTypes}
-              priceMin={priceMin} setPriceMin={setPriceMin}
-              priceMax={priceMax} setPriceMax={setPriceMax}
-            />
-          </div>
+        {can('manage_warehouses') && (
+          <button className="wh-btn pr" onClick={() => handleOpenDialog()}>
+            <Plus className="w-3 h-3" />
+            Добавить склад
+          </button>
         )}
       </div>
 
-      {/* Summary banner — totals across all warehouses */}
-      {!selectedWarehouse && (
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 md:p-6 shadow-lg shadow-indigo-500/20">
-          <div className="flex items-center gap-2 mb-3">
-            <BarChart2 className="w-5 h-5 text-white" />
-            <h3 className="text-sm md:text-base font-bold text-white">Сводка по всем складам</h3>
+      {/* Итоги по всем складам */}
+      <WarehouseKpiRow values={kpiValues} />
+
+      {/* Товары без склада */}
+      {orphanedProducts.length > 0 && (
+        <div className="wh-banner">
+          <AlertCircle className="w-4 h-4" style={{ color: '#f59e0b', flex: 'none' }} />
+          <div className="flex-1">
+            <p className="t">{orphanedProducts.length} товаров без склада</p>
+            <p className="d">Склад был удалён. Переместите эти товары в другой склад или удалите их.</p>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="bg-white/15 backdrop-blur rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Package className="w-4 h-4 text-white/80" />
-                <p className="text-xs text-white/80 font-medium">Товаров</p>
-              </div>
-              <p className="text-2xl font-bold text-white">{can('view_warehouse_quantities') ? products.length : '•••'}</p>
-            </div>
-            <div className="bg-white/15 backdrop-blur rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Box className="w-4 h-4 text-white/80" />
-                <p className="text-xs text-white/80 font-medium">Коробок всего</p>
-              </div>
-              <p className="text-2xl font-bold text-white">{can('view_warehouse_quantities') ? products.reduce((s, p) => s + (p.boxes_in_stock || 0), 0) : '•••'}</p>
-            </div>
-            <div className="bg-white/15 backdrop-blur rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <TrendingUp className="w-4 h-4 text-white/80" />
-                <p className="text-xs text-white/80 font-medium">Выручка</p>
-              </div>
-              <p className="text-xl font-bold text-white">
-                {can('view_warehouse_revenue') ? `${sales.filter(s => !s.is_cancelled).reduce((sum, s) => sum + (s.total_amount || 0), 0).toLocaleString()} с.` : '•••••'}
-              </p>
-            </div>
-            <div className="bg-white/15 backdrop-blur rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <DollarSign className="w-4 h-4 text-white/80" />
-                <p className="text-xs text-white/80 font-medium">Ожид. прибыль</p>
-              </div>
-              <p className="text-xl font-bold text-white">
-                {can('view_warehouse_cost') ? `+${products.reduce((s, p) => s + ((p.boxes_in_stock || 0) * ((p.sale_price || 0) - (p.purchase_price || 0))), 0).toLocaleString()} с.` : '•••••'}
-              </p>
-            </div>
+          <button className="wh-btn" onClick={() => setOrphanedDialogOpen(true)}>
+            <ArrowRightLeft className="w-3 h-3" />
+            Переместить
+          </button>
+        </div>
+      )}
+
+      {/* Дубликаты товаров */}
+      {duplicateGroups.length > 0 && (
+        <div className="wh-banner rd">
+          <AlertCircle className="w-4 h-4" style={{ color: '#dc2626', flex: 'none' }} />
+          <div className="flex-1">
+            <p className="t">Найдены дубликаты: {duplicateGroups.length} групп товаров с одинаковым брендом, моделью, типом и цветом в одном складе</p>
+            <p className="d">В системе есть товары с одинаковым названием. Рекомендуется удалить лишние записи.</p>
           </div>
+          <button className="wh-btn dg" onClick={() => setDuplicateDialogOpen(true)}>
+            <Trash2 className="w-3 h-3" />
+            Исправить
+          </button>
         </div>
       )}
 
@@ -558,7 +501,7 @@ export default function Warehouses() {
       {globalSearchOpen && (
         <div className={globalSearchFullscreen
           ? "fixed inset-0 z-[60] bg-slate-50 dark:bg-slate-950 p-3 lg:p-6 overflow-auto"
-          : "bg-white rounded-2xl shadow-sm border border-indigo-200 p-4 space-y-4"}>
+          : "wh-reg p-4 space-y-4"}>
           <div className={`flex items-center gap-3 ${globalSearchFullscreen ? 'bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 shadow-sm sticky top-0 z-10' : ''}`}>
             <Search className="w-5 h-5 text-indigo-500 flex-shrink-0" />
             <input
@@ -600,533 +543,99 @@ export default function Warehouses() {
         </div>
       )}
 
-      {/* Filtered products across all warehouses (when any filter active) */}
-      {!selectedWarehouse && anyFilterActive ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-slate-900">Товары по фильтру ({allFilteredProducts.length})</h3>
-            <button
-              onClick={() => { setDateFilter('all'); setCustomDateFrom(''); setCustomDateTo(''); setEmployeeFilter('all'); setTypeFilter('all'); setPriceMin(''); setPriceMax(''); }}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium"
-            >
-              <XIcon className="w-3.5 h-3.5" /> Сбросить фильтры
-            </button>
-          </div>
-          <div className="overflow-x-auto overflow-y-auto max-h-[65vh]">
-            <table className="w-full">
-              <thead className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10 shadow-sm">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Склад</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Тип</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Коробок</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Цена</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Добавил</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Дата</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {allFilteredProducts.map(p => {
-                  const wh = warehouses.find(w => w.id === p.warehouse_id);
-                  const creator = creators.find(c => c.id === p.created_by_id);
-                  const boxes = p.boxes_in_stock || 0;
-                  return (
-                    <tr key={p.id} className="hover:bg-slate-50 cursor-pointer"
-                      onClick={() => window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id}>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <ProductPhoto photoUrl={p.photo_url} brand={p.brand} className="w-9 h-9 rounded-lg" />
-                          <div>
-                            <p className="font-medium text-slate-900">{p.brand}</p>
-                            <p className="text-xs text-slate-500">{p.model}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{wh?.name || '—'}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{p.product_type || '—'}</td>
-                      <td className="px-4 py-3 text-center font-semibold text-indigo-600">{boxes}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-blue-600">{can('view_stock_value') ? `${(p.sale_price || 0).toLocaleString()} с.` : '•••••'}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{creator?.name || '—'}</td>
-                      <td className="px-4 py-3 text-xs text-slate-500">{p.created_date ? format(parseISO(p.created_date), 'dd.MM.yyyy') : ''}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          {allFilteredProducts.length === 0 && (
-            <div className="text-center py-8 text-slate-500">Нет товаров по выбранному фильтру</div>
-          )}
-        </div>
-      ) : !selectedWarehouse && view === 'grid' ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredWarehouses.map(warehouse => {
-            const stats = getWarehouseStats(warehouse.id);
-            
-            return (
-              <div 
-                key={warehouse.id} 
-                className={`bg-white rounded-2xl shadow-sm border-2 overflow-hidden hover:shadow-md transition-shadow cursor-pointer ${
-                  stats.totalBoxes >= 50 || stats.productsCount >= 10
-                    ? 'border-red-300 animate-pulse-border'
-                    : 'border-slate-100'
-                }`}
-                onClick={() => setSelectedWarehouse(warehouse)}
-              >
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 bg-purple-100 rounded-xl">
-                      <WarehouseIconComp iconKey={warehouse.icon} className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div className="flex gap-1">
-                      {can('manage_warehouses') && (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleOpenDialog(warehouse); }}
-                          className="p-2 hover:bg-slate-100 rounded-lg"
-                        >
-                          <Edit2 className="w-4 h-4 text-slate-500" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+      {/* Реестр складов слева + рабочая область справа */}
+      <div className="wh-main">
+        <WarehouseRegistry
+          warehouses={filteredWarehouses}
+          getStats={getWarehouseStats}
+          selectedId={selectedWarehouse?.id}
+          onSelect={setSelectedWarehouse}
+          onEdit={handleOpenDialog}
+          canEdit={can('manage_warehouses')}
+          can={can}
+          IconComponent={WarehouseIconComp}
+          search={search}
+          setSearch={setSearch}
+          view={view}
+          onCreate={() => handleOpenDialog()}
+          canCreate={can('manage_warehouses')}
+        />
 
-                  <h3 className="text-lg font-semibold text-slate-900 mb-1">{warehouse.name}</h3>
-                   {warehouse.address && (
-                     <p className="text-sm text-slate-500 flex items-center gap-1 mb-2">
-                       <MapPin className="w-4 h-4" />
-                       {warehouse.address}
-                     </p>
-                   )}
-                   <p className="text-xs text-slate-400 flex items-center gap-1 mb-4">
-                     <Calendar className="w-3 h-3" />
-                     {warehouse.created_date ? format(parseISO(warehouse.created_date), 'dd MMM yyyy') : ''}
-                   </p>
-
-                  <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
-                    <div>
-                      <p className="text-2xl font-bold text-slate-900">{can('view_warehouse_quantities') ? stats.totalBoxes : '•••••'}</p>
-                      <p className="text-xs text-slate-500">коробок</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-orange-600">{can('view_warehouse_value') ? stats.totalWholesaleValue.toLocaleString() : '•••••'}</p>
-                      <p className="text-xs text-slate-500">опт. стоимость</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-emerald-600">{can('view_warehouse_value') ? stats.totalValue.toLocaleString() : '•••••'}</p>
-                      <p className="text-xs text-slate-500">розн. стоимость</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-semibold text-slate-700">{can('view_warehouse_quantities') ? stats.productsCount : '•••••'}</p>
-                      <p className="text-xs text-slate-500">товаров</p>
-                    </div>
-                    <div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.location.href = createPageUrl('WarehouseSalesHistory') + '?id=' + warehouse.id;
-                        }}
-                        className="text-left p-2 hover:bg-blue-50 rounded-lg transition-colors -m-2"
-                      >
-                        <p className="text-lg font-semibold text-blue-600">{stats.soldBoxes}</p>
-                        <p className="text-xs text-blue-500 underline">продано →</p>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                    <span className="text-sm text-indigo-600 font-medium">Открыть склад</span>
-                    <ChevronRight className="w-5 h-5 text-indigo-600" />
-                  </div>
-                </div>
+        <div>
+          {selectedWarehouse ? (
+            <WarehouseDetailPanel
+              warehouse={selectedWarehouse}
+              stats={getWarehouseStats(selectedWarehouse.id)}
+              rows={warehouseProducts}
+              warehouseAll={products.filter(p => p.warehouse_id === selectedWarehouse.id)}
+              sales={sales}
+              business={business}
+              can={can}
+              canBulk={canBulk}
+              IconComponent={WarehouseIconComp}
+              filters={{
+                dateFilter, setDateFilter, customDateFrom, setCustomDateFrom, customDateTo, setCustomDateTo,
+                employeeFilter, setEmployeeFilter, creators,
+                typeFilter, setTypeFilter, productTypes,
+                priceMin, setPriceMin, priceMax, setPriceMax,
+              }}
+              search={productSearch}
+              setSearch={setProductSearch}
+              hideSoldOut={hideSoldOut}
+              setHideSoldOut={setHideSoldOut}
+              selectMode={selectMode}
+              setSelectMode={setSelectMode}
+              selectedIds={selectedProductIds}
+              toggleSelect={toggleSelectProduct}
+              toggleAll={toggleSelectAll}
+              unsoldIds={getUnsoldProductIds}
+              onOpenProduct={(p) => {
+                window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id + '&from=' + encodeURIComponent(createPageUrl('Warehouses') + '?warehouseId=' + selectedWarehouse.id);
+              }}
+              onBack={() => setSelectedWarehouse(null)}
+              onMove={() => setMoveDialogOpen(true)}
+              onDeleteWarehouse={() => setDeleteWarehouseDialog(selectedWarehouse)}
+              onDeleteProduct={(p) => setDeleteConfirmDialog({ type: 'one', productId: p.id, label: `«${p.brand} ${p.model}»` })}
+              onDeleteUnsoldWarehouse={() => {
+                const unsold = getUnsoldProductIds(products.filter(p => p.warehouse_id === selectedWarehouse.id));
+                setDeleteConfirmDialog({ type: 'warehouse', label: `${unsold.length} непроданных товаров этого склада` });
+              }}
+              onDeleteUnsoldAll={() => {
+                const unsold = getUnsoldProductIds(products);
+                setDeleteConfirmDialog({ type: 'all', label: `${unsold.length} непроданных товаров всех складов` });
+              }}
+              onCreateBulkEdit={() => setBulkEditOpen(true)}
+              onMoveSelected={() => setMoveSelectedOpen(true)}
+              onDeleteSelected={() => setDeleteConfirmDialog({ type: 'selected', label: `${selectedProductIds.length} выбранных товаров` })}
+              onClearSelection={() => setSelectedProductIds([])}
+            />
+          ) : (
+            <div>
+              <div className="wh-filt">
+                <WarehouseProductFilters
+                  dateFilter={dateFilter} setDateFilter={setDateFilter}
+                  customDateFrom={customDateFrom} setCustomDateFrom={setCustomDateFrom}
+                  customDateTo={customDateTo} setCustomDateTo={setCustomDateTo}
+                  employeeFilter={employeeFilter} setEmployeeFilter={setEmployeeFilter}
+                  creators={creators}
+                  typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+                  productTypes={productTypes}
+                  priceMin={priceMin} setPriceMin={setPriceMin}
+                  priceMax={priceMax} setPriceMax={setPriceMax}
+                />
               </div>
-            );
-          })}
-          </div>
-          ) : !selectedWarehouse && view === 'list' ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="overflow-x-auto overflow-y-auto max-h-96">
-          <table className="w-full">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Склад</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Товаров</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Коробок</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Стоимость</th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Продано</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredWarehouses.map(warehouse => {
-                const stats = getWarehouseStats(warehouse.id);
-                return (
-                  <tr key={warehouse.id} className={`hover:bg-slate-50 cursor-pointer ${stats.totalBoxes >= 50 || stats.productsCount >= 10 ? 'border-l-4 border-l-red-400' : ''}`} onClick={() => setSelectedWarehouse(warehouse)}>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                          <WarehouseIconComp iconKey={warehouse.icon} className="w-4 h-4 text-purple-600" />
-                        </div>
-                        <div>
-                           <p className="font-medium text-slate-900">{warehouse.name}</p>
-                           {warehouse.address && <p className="text-xs text-slate-500">{warehouse.address}</p>}
-                           <p className="text-[11px] text-slate-400 mt-0.5">
-                             {warehouse.created_date ? format(parseISO(warehouse.created_date), 'dd MMM yyyy') : ''}
-                           </p>
-                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">{can('view_warehouse_quantities') ? stats.productsCount : '•••'}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-purple-600">{can('view_warehouse_quantities') ? stats.totalBoxes : '•••'}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">{can('view_warehouse_value') ? `${stats.totalValue.toLocaleString()} с.` : '••••• с.'}</td>
-                    <td className="px-4 py-3 text-center text-blue-600 font-semibold">{stats.soldBoxes}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1 justify-end">
-                       {can('manage_warehouses') && (
-                           <button 
-                             onClick={(e) => { e.stopPropagation(); handleOpenDialog(warehouse); }}
-                             className="p-1.5 hover:bg-slate-100 rounded-lg"
-                           >
-                             <Edit2 className="w-4 h-4 text-slate-500" />
-                           </button>
-                       )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            </table>
-            </div>
-            </div>
-            ) : (
-          /* Warehouse Details */
-        <div className="space-y-6">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={() => setSelectedWarehouse(null)}>← Назад</Button>
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <WarehouseIconComp iconKey={selectedWarehouse.icon} className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                   <h2 className="text-xl font-bold text-slate-900">{selectedWarehouse.name}</h2>
-                   {selectedWarehouse.address && <p className="text-sm text-slate-500">{selectedWarehouse.address}</p>}
-                   <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
-                     <Calendar className="w-3 h-3" />
-                     {selectedWarehouse.created_date ? format(parseISO(selectedWarehouse.created_date), 'dd MMM yyyy') : ''}
-                   </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {can('move_products') && (
-                <Button
-                  onClick={() => setMoveDialogOpen(true)}
-                  variant="outline"
-                  className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-                >
-                  <ArrowRightLeft className="w-4 h-4" />
-                  Переместить товары
-                </Button>
-              )}
-              <Button
-                onClick={() => window.location.href = createPageUrl('WarehouseSalesHistory') + '?id=' + selectedWarehouse.id}
-                variant="outline"
-                className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                История продаж
-              </Button>
-              <Button
-                onClick={() => window.location.href = createPageUrl('Products') + '?warehouse=' + selectedWarehouse.id}
-                variant="outline"
-                className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-              >
-                <Package className="w-4 h-4" />
-                Все товары
-              </Button>
-              {can('manage_warehouses') && (
-                <Button
-                  onClick={() => setDeleteWarehouseDialog(selectedWarehouse)}
-                  variant="outline"
-                  className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Удалить склад
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Stats */}
-          {(() => {
-            const stats = getWarehouseStats(selectedWarehouse.id);
-            const whProds = products.filter(p => p.warehouse_id === selectedWarehouse.id);
-            const lowStockCount = whProds.filter(p => (p.boxes_in_stock || 0) <= (business?.low_stock_limit ?? 2) && (p.boxes_in_stock || 0) > 0).length;
-            const emptyCount = whProds.filter(p => (p.boxes_in_stock || 0) === 0).length;
-            const potentialProfit = stats.totalValue - stats.totalWholesaleValue;
-            const whSales = sales.filter(s => s.warehouse_id === selectedWarehouse.id && !s.is_cancelled);
-            const revenue = whSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-            return (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                  <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Товаров</p>
-                    <p className="text-2xl font-bold text-slate-900">{can('view_warehouse_quantities') ? stats.productsCount : '•••'}</p>
-                  </div>
-                  <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Коробок</p>
-                    <p className="text-2xl font-bold text-purple-600">{can('view_warehouse_quantities') ? stats.totalBoxes : '•••'}</p>
-                  </div>
-                  <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Опт. стоимость</p>
-                    <p className="text-lg font-bold text-orange-600">{can('view_warehouse_value') ? `${stats.totalWholesaleValue.toLocaleString()} с.` : '•••••'}</p>
-                  </div>
-                  <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Розн. стоимость</p>
-                    <p className="text-lg font-bold text-emerald-600">{can('view_warehouse_value') ? `${stats.totalValue.toLocaleString()} с.` : '•••••'}</p>
-                  </div>
-                  <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Потенц. прибыль</p>
-                    <p className="text-lg font-bold text-indigo-600">{can('view_warehouse_cost') ? `+${potentialProfit.toLocaleString()} с.` : '•••••'}</p>
-                  </div>
-                  <div className="bg-white rounded-xl p-3 shadow-sm border border-blue-100 border text-center cursor-pointer hover:bg-blue-50 transition-colors"
-                    onClick={() => window.location.href = createPageUrl('WarehouseSalesHistory') + '?id=' + selectedWarehouse.id}>
-                    <p className="text-xs text-blue-500 mb-1">Выручка</p>
-                    <p className="text-lg font-bold text-blue-600">{can('view_warehouse_revenue') ? `${revenue.toLocaleString()} с.` : '•••••'}</p>
-                  </div>
-                </div>
-                {/* Alerts row */}
-                {(lowStockCount > 0 || emptyCount > 0) && (
-                  <div className="flex gap-2 flex-wrap">
-                    {lowStockCount > 0 && (
-                      <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 text-sm">
-                        <AlertTriangle className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                        <span className="text-orange-700 font-medium">⚠️ Мало остатков: <strong>{lowStockCount}</strong> товаров</span>
-                      </div>
-                    )}
-                    {emptyCount > 0 && (
-                      <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-sm">
-                        <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                        <span className="text-red-700 font-medium">❌ Нет в наличии: <strong>{emptyCount}</strong> товаров</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* Products Table */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="p-4 border-b border-slate-100 space-y-3">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <h3 className="font-semibold text-slate-900">Товары на складе</h3>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {canBulk && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => { setSelectMode(v => !v); setSelectedProductIds([]); }}
-                        className={`gap-1.5 text-xs ${selectMode ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : ''}`}
-                      >
-                        <CheckSquare className="w-3.5 h-3.5" />
-                        {selectMode ? 'Отмена выбора' : 'Выбрать'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          const whProds = products.filter(p => p.warehouse_id === selectedWarehouse?.id);
-                          const unsold = getUnsoldProductIds(whProds);
-                          setDeleteConfirmDialog({ type: 'warehouse', label: `${unsold.length} непроданных товаров этого склада` });
-                        }}
-                        className="gap-1.5 text-xs text-orange-600 border-orange-200 hover:bg-orange-50"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Удалить непроданные склада
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          const unsold = getUnsoldProductIds(products);
-                          setDeleteConfirmDialog({ type: 'all', label: `${unsold.length} непроданных товаров всех складов` });
-                        }}
-                        className="gap-1.5 text-xs text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Удалить все непроданные
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="relative max-w-xs w-full">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    value={productSearch}
-                    onChange={e => setProductSearch(e.target.value)}
-                    placeholder="Фильтр по модели..."
-                    className="w-full pl-9 pr-8 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-indigo-400"
-                  />
-                  {productSearch && (
-                    <button onClick={() => setProductSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2">
-                      <XIcon className="w-4 h-4 text-slate-400 hover:text-slate-600" />
-                    </button>
-                  )}
-                </div>
-                <button
-                  onClick={() => setHideSoldOut(v => !v)}
-                  className={`px-3 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${hideSoldOut ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}
-                  title="Скрывать товары с 0 коробок на складе"
-                >
-                  {hideSoldOut ? '✓ Скрыть распроданные' : 'Показать распроданные'}
-                </button>
-              </div>
-              {/* Фильтры: дата, сотрудник, тип, цена */}
-              <WarehouseProductFilters
-                dateFilter={dateFilter} setDateFilter={setDateFilter}
-                customDateFrom={customDateFrom} setCustomDateFrom={setCustomDateFrom}
-                customDateTo={customDateTo} setCustomDateTo={setCustomDateTo}
-                employeeFilter={employeeFilter} setEmployeeFilter={setEmployeeFilter}
+              <AllWarehouseProductsTable
+                products={allFilteredProducts}
+                warehouses={warehouses}
                 creators={creators}
-                typeFilter={typeFilter} setTypeFilter={setTypeFilter}
-                productTypes={productTypes}
-                priceMin={priceMin} setPriceMin={setPriceMin}
-                priceMax={priceMax} setPriceMax={setPriceMax}
+                can={can}
+                onOpen={(p) => { window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id; }}
+                onReset={resetFilters}
               />
             </div>
-            <div className="overflow-x-auto overflow-y-auto max-h-96">
-              <table className="w-full">
-                <thead className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10 shadow-sm">
-                  <tr>
-                    {selectMode && (
-                      <th className="px-3 py-3 w-10 sticky top-0">
-                        <button onClick={toggleSelectAll}>
-                          {getUnsoldProductIds(warehouseProducts).every(id => selectedProductIds.includes(id)) && getUnsoldProductIds(warehouseProducts).length > 0
-                            ? <CheckSquare className="w-4 h-4 text-indigo-600" />
-                            : <Square className="w-4 h-4 text-slate-400" />}
-                        </button>
-                      </th>
-                    )}
-                    <th className="px-3 py-3 text-center text-sm font-medium text-slate-600 w-10">№</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Товар</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Коробок</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Пар</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Штук</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Опт.</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Прибыль</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Продажа</th>
-                    {can('delete_products') && <th className="px-3 py-3 w-10"></th>}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {warehouseProducts.map((product, index) => {
-                   const orderNum = index + 1;
-                   const boxes = product.boxes_in_stock || 0;
-                   const pairs = boxes * (product.pairs_per_box || 6);
-                   const items = pairs * 2;
-                   const wholesaleValue = boxes * (product.purchase_price || 0);
-                   const saleValue = boxes * (product.sale_price || 0);
-                   const potentialProfit = saleValue - wholesaleValue;
-                   const lowStock = boxes > 0 && boxes <= (business?.low_stock_limit || 2);
-                   const noStock = boxes === 0;
-
-                   const isSold = sales.some(s => s.product_id === product.id);
-                   const isSelected = selectedProductIds.includes(product.id);
-                   return (
-                     <tr 
-                       key={product.id} 
-                       className={`transition-colors ${isSelected ? 'bg-indigo-50' : noStock ? 'bg-red-50 hover:bg-red-100' : lowStock ? 'bg-orange-50 hover:bg-orange-100' : 'hover:bg-slate-50'} ${!selectMode ? 'cursor-pointer' : ''}`}
-                       onClick={() => selectMode && !isSold ? toggleSelectProduct(product.id) : (!selectMode && (window.location.href = createPageUrl('ProductDetail') + '?id=' + product.id + '&from=' + encodeURIComponent(createPageUrl('Warehouses') + '?warehouseId=' + selectedWarehouse.id)))}
-                     >
-                       {selectMode && (
-                         <td className="px-3 py-3" onClick={e => { e.stopPropagation(); if (!isSold) toggleSelectProduct(product.id); }}>
-                           {isSold
-                             ? <span title="Нельзя удалить — товар был продан"><Square className="w-4 h-4 text-slate-200" /></span>
-                             : isSelected
-                               ? <CheckSquare className="w-4 h-4 text-indigo-600" />
-                               : <Square className="w-4 h-4 text-slate-400" />}
-                         </td>
-                       )}
-                       <td className="px-3 py-3 text-center">
-                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-bold text-slate-500 dark:text-slate-300">{orderNum}</span>
-                       </td>
-                       <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <ProductPhoto
-                              photoUrl={product.photo_url}
-                              brand={product.brand}
-                              className="w-10 h-10 rounded-lg"
-                              placeholderClassName={noStock ? 'bg-red-100' : lowStock ? 'bg-orange-100' : 'bg-slate-100 dark:bg-slate-800'}
-                              textClassName={noStock ? 'text-red-500 text-[8px]' : lowStock ? 'text-orange-500 text-[8px]' : 'text-slate-500 text-[8px]'}
-                            />
-                            <div>
-                              <p className="font-medium text-slate-900">{product.brand}</p>
-                              <p className="text-sm text-slate-500">{product.model}</p>
-                              {isSold && <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">продавался</span>}
-                              {lowStock && !isSold && <span className="text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">⚠️ Мало</span>}
-                              {noStock && <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">❌ Нет</span>}
-                            </div>
-                          </div>
-                        </td>
-                       <td className="px-4 py-3 text-center font-semibold">
-                         <span className={`px-2 py-1 rounded-full text-sm font-bold ${noStock ? 'bg-red-100 text-red-600' : lowStock ? 'bg-orange-100 text-orange-600' : 'text-indigo-600'}`}>{boxes}</span>
-                       </td>
-                       <td className="px-4 py-3 text-center text-slate-600">{pairs}</td>
-                       <td className="px-4 py-3 text-center text-slate-600">{items}</td>
-                       <td className="px-4 py-3 text-right font-semibold text-slate-700">
-                          {can('view_stock_value') ? `${wholesaleValue.toLocaleString()} с.` : '•••••'}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold text-emerald-600">
-                          {can('view_profit') ? `+${potentialProfit.toLocaleString()} с.` : '•••••'}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold text-blue-600">
-                          {can('view_stock_value') ? `${saleValue.toLocaleString()} с.` : '•••••'}
-                        </td>
-                        {can('delete_products') && (
-                          <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
-                            {!isSold && (
-                              <button
-                                onClick={() => setDeleteConfirmDialog({ type: 'one', productId: product.id, label: `«${product.brand} ${product.model}»` })}
-                                className="p-1.5 hover:bg-red-50 rounded-lg"
-                              >
-                                <Trash2 className="w-4 h-4 text-red-400 hover:text-red-600" />
-                              </button>
-                            )}
-                          </td>
-                        )}
-                     </tr>
-                   );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {warehouseProducts.length === 0 && (
-              <div className="text-center py-8 text-slate-500">
-                {dateFilter !== 'all' ? 'Нет товаров за выбранный период' : 'На этом складе пока нет товаров'}
-              </div>
-            )}
-          </div>
-
-          {/* Массовые действия для выбранных товаров склада */}
-          {selectMode && (
-            <WarehouseBulkActionBar
-              count={selectedProductIds.length}
-              canEdit={can('edit_products')}
-              canMove={can('move_products')}
-              canDelete={can('delete_products')}
-              onEdit={() => setBulkEditOpen(true)}
-              onMove={() => setMoveSelectedOpen(true)}
-              onDelete={() => setDeleteConfirmDialog({ type: 'selected', label: `${selectedProductIds.length} выбранных товаров` })}
-              onClear={() => setSelectedProductIds([])}
-            />
           )}
         </div>
-      )}
+      </div>
 
       {/* Move Products Dialog */}
       {moveDialogOpen && selectedWarehouse && (
@@ -1160,16 +669,6 @@ export default function Warehouses() {
           onClose={() => setMoveSelectedOpen(false)}
           onMoved={() => { loadData(); setSelectedProductIds([]); }}
         />
-      )}
-
-      {filteredWarehouses.length === 0 && !selectedWarehouse && (
-        <div className="text-center py-12">
-          <WarehouseIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500">Склады не найдены</p>
-          <Button onClick={() => handleOpenDialog()} variant="outline" className="mt-4">
-            Добавить первый склад
-          </Button>
-        </div>
       )}
 
       {/* Delete Products Confirm Dialog */}
