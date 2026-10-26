@@ -309,25 +309,25 @@ main { background-color: var(--sf-bg); color: var(--sf-text2); font-variant-nume
 .tk-pagehead-sub { margin: 6px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--sf-muted); }
 
 /* Верхняя панель */
-.tk-topbar { background-color: var(--sf-panel); border-bottom: 1px solid var(--sf-line); }
-.tk-topbox { background-color: var(--sf-deep2); border: 1px solid var(--sf-line); border-radius: 3px; color: var(--sf-accent); }
+.tk-topbar { background-color: var(--sf-chrome); border-bottom: 1px solid var(--sf-line); }
+.tk-topbox { background-color: var(--sf-deep2); border: 1px solid var(--sf-line); border-radius: 3px; color: var(--sf-nav); }
 .tk-topbar-name { color: var(--sf-text); }
-.tk-topbar-page { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--sf-accent); }
+.tk-topbar-page { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--sf-nav); }
 
 /* Панель меню */
-.tk-drawer { background-color: var(--sf-panel); border-right: 1px solid var(--sf-line); }
+.tk-drawer { background-color: var(--sf-chrome); border-right: 1px solid var(--sf-line); }
 .tk-dhead { border-bottom: 1px solid var(--sf-line); }
 .tk-dnavitem {
   border-bottom: 1px solid var(--sf-line2); border-left: 2px solid transparent;
   color: var(--sf-text2); transition: background .15s, color .15s, border-color .15s;
 }
 .tk-dnavitem:hover { background-color: var(--sf-deep2); }
-.tk-dnavitem.on { background-color: var(--sf-accent-1); border-left-color: var(--sf-accent); color: var(--sf-accent); }
+.tk-dnavitem.on { background-color: var(--sf-nav-1); border-left-color: var(--sf-nav); color: var(--sf-nav); }
 .tk-dnavitem:focus-visible { outline: 2px solid var(--sf-accent); outline-offset: -2px; }
-.tk-dcard { background-color: var(--sf-deep); border: 1px solid var(--sf-line); border-radius: 4px; }
-.tk-dcard.on { border-color: var(--sf-accent); }
+.tk-dcard { background-color: var(--sf-panel); border: 1px solid var(--sf-line); border-radius: 4px; }
+.tk-dcard.on { border-color: var(--sf-nav); }
 .tk-dcard-name { color: var(--sf-text); }
-.tk-dcard-role { color: var(--sf-accent); }
+.tk-dcard-role { color: var(--sf-nav); }
 .tk-dfoot { border-top: 1px solid var(--sf-line); }
 .tk-dfoot:hover { background-color: var(--sf-deep2); }
 .tk-btn.ic { width: 34px; height: 34px; padding: 0; justify-content: center; }
@@ -519,8 +519,8 @@ main { background-color: var(--sf-bg); color: var(--sf-text2); font-variant-nume
   transition: background .15s; animation: wh-rise .5s ease both;
 }
 .wh-wh:hover { background: var(--sf-deep2); }
-.wh-wh.on { background: var(--sf-accent-1); }
-.wh-wh.on:before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--sf-accent); }
+.wh-wh.on { background: var(--sf-deep2); }
+.wh-wh.on:before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--sf-primary); }
 .wh-wh strong { font-size: 14px; display: block; font-weight: 700; color: var(--sf-text); }
 .wh-wh small { font-size: 11px; color: var(--sf-muted); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
 .wh-wh .r { display: flex; justify-content: space-between; font-size: 11px; color: var(--sf-muted); margin-top: 8px; }

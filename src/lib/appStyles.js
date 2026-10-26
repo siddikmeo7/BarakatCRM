@@ -25,13 +25,13 @@ export const APP_STYLES = [
   {
     id: 'terminal',
     name: 'Тёмный терминал',
-    hint: 'Прежний стиль: графит и янтарь',
+    hint: 'Прежнее оформление: графит и янтарь',
     mode: 'dark',
     colors: {
-      bg: '#0b0e13', panel: '#12161d', deep: '#0f131a', deep2: '#171c25', soft: '#1b212a',
+      bg: '#0b0e13', chrome: '#0b0e13', panel: '#12161d', deep: '#0f131a', deep2: '#171c25', soft: '#1b212a',
       line: '#232a35', line2: '#1b212a', line3: '#2b333f', mid: '#3b4553',
       text: '#f2f4f8', text2: '#d7dbe2', muted: '#aab2bf', dim: '#7c8594',
-      accent: '#f5b23e', onAccent: '#0b0e13',
+      accent: '#f5b23e', onAccent: '#0b0e13', nav: '#f5b23e',
       primary: '#2563eb', onPrimary: '#ffffff',
       pos: '#6ee7b7', posSolid: '#059669',
       neg: '#f87171', negSolid: '#dc2626',
@@ -41,93 +41,21 @@ export const APP_STYLES = [
     },
   },
   {
-    id: 'indigo',
-    name: 'Индиго ночь',
-    hint: 'Тёмный синий с фиолетовым светом',
-    mode: 'dark',
-    colors: {
-      bg: '#0a0b16', panel: '#131627', deep: '#0e1120', deep2: '#181d33', soft: '#1e2440',
-      line: '#262c4a', line2: '#1b2038', line3: '#333a5e', mid: '#3f477a',
-      text: '#f2f4ff', text2: '#dbe0f5', muted: '#aab2d8', dim: '#8b93b8',
-      accent: '#818cf8', onAccent: '#0a0b16',
-      primary: '#6366f1', onPrimary: '#ffffff',
-      pos: '#6ee7b7', posSolid: '#059669',
-      neg: '#fb7185', negSolid: '#e11d48',
-      info: '#7dd3fc', infoSolid: '#4f46e5',
-      warn: '#fbbf24', onWarn: '#0a0b16',
-      charts: ['#818cf8', '#6ee7b7', '#fbbf24', '#f472b6', '#7dd3fc'],
-    },
-  },
-  {
-    id: 'emerald',
-    name: 'Изумрудная ночь',
-    hint: 'Тёмный графит с зелёным акцентом',
-    mode: 'dark',
-    colors: {
-      bg: '#06120f', panel: '#0d1c18', deep: '#091713', deep2: '#12261f', soft: '#17302a',
-      line: '#1f3a32', line2: '#152a23', line3: '#2b4c42', mid: '#3b6156',
-      text: '#f0fdf9', text2: '#d3e8e2', muted: '#a8c2bb', dim: '#7e9c94',
-      accent: '#34d399', onAccent: '#06120f',
-      primary: '#059669', onPrimary: '#ffffff',
-      pos: '#6ee7b7', posSolid: '#059669',
-      neg: '#f87171', negSolid: '#dc2626',
-      info: '#7dd3fc', infoSolid: '#0d9488',
-      warn: '#fbbf24', onWarn: '#06120f',
-      charts: ['#34d399', '#6ee7b7', '#fbbf24', '#60a5fa', '#f87171'],
-    },
-  },
-  {
     id: 'light',
-    name: 'Светлый классик',
-    hint: 'Светлый интерфейс с индиго',
+    name: 'Светлый терминал',
+    hint: 'Прежнее оформление в светлых тонах',
     mode: 'light',
     colors: {
-      bg: '#f9f9fb', panel: '#ffffff', deep: '#f8fafc', deep2: '#f1f5f9', soft: '#e2e8f0',
-      line: '#e2e8f0', line2: '#f1f5f9', line3: '#cbd5e1', mid: '#94a3b8',
+      bg: '#f9f9fb', chrome: '#ffffff', panel: '#ffffff', deep: '#f8fafc', deep2: '#f1f5f9', soft: '#e2e8f0',
+      line: '#e2e8f0', line2: '#eef1f5', line3: '#cbd5e1', mid: '#94a3b8',
       text: '#0f172a', text2: '#334155', muted: '#64748b', dim: '#94a3b8',
-      accent: '#4f46e5', onAccent: '#ffffff',
+      accent: '#b45309', onAccent: '#ffffff', nav: '#4f46e5',
       primary: '#4f46e5', onPrimary: '#ffffff',
       pos: '#059669', posSolid: '#059669',
       neg: '#dc2626', negSolid: '#dc2626',
       info: '#2563eb', infoSolid: '#2563eb',
       warn: '#b45309', onWarn: '#ffffff',
       charts: ['#4f46e5', '#059669', '#d97706', '#8b5cf6', '#e11d48'],
-    },
-  },
-  {
-    id: 'warm',
-    name: 'Тёплый янтарь',
-    hint: 'Светлый интерфейс с медовым оттенком',
-    mode: 'light',
-    colors: {
-      bg: '#fbf7f0', panel: '#fffdf7', deep: '#f7f1e6', deep2: '#f2ebdd', soft: '#e9e0ce',
-      line: '#e6dcc8', line2: '#f0e9da', line3: '#d5c7ac', mid: '#b5a68e',
-      text: '#221c12', text2: '#4a3f2c', muted: '#7a6a4f', dim: '#a3937a',
-      accent: '#b45309', onAccent: '#ffffff',
-      primary: '#d97706', onPrimary: '#ffffff',
-      pos: '#15803d', posSolid: '#15803d',
-      neg: '#b91c1c', negSolid: '#b91c1c',
-      info: '#0369a1', infoSolid: '#0369a1',
-      warn: '#b45309', onWarn: '#ffffff',
-      charts: ['#b45309', '#15803d', '#0369a1', '#7c3aed', '#b91c1c'],
-    },
-  },
-  {
-    id: 'ocean',
-    name: 'Морская прохлада',
-    hint: 'Светлый интерфейс с бирюзовым',
-    mode: 'light',
-    colors: {
-      bg: '#f3f9fb', panel: '#fdfeff', deep: '#eef6f9', deep2: '#e4f0f5', soft: '#d6e7ee',
-      line: '#d5e5ec', line2: '#e7f1f5', line3: '#b9d3dd', mid: '#9bb3c0',
-      text: '#0b2230', text2: '#2b4659', muted: '#5c7789', dim: '#8aa3b2',
-      accent: '#0d9488', onAccent: '#ffffff',
-      primary: '#0284c7', onPrimary: '#ffffff',
-      pos: '#059669', posSolid: '#059669',
-      neg: '#e11d48', negSolid: '#e11d48',
-      info: '#0369a1', infoSolid: '#0284c7',
-      warn: '#b45309', onWarn: '#ffffff',
-      charts: ['#0d9488', '#0284c7', '#059669', '#8b5cf6', '#e11d48'],
     },
   },
 ];
@@ -237,6 +165,8 @@ export function applyAppStyle(id) {
 
   // Поверхности, линии, текст
   set('--sf-bg', c.bg);
+  // Шапка и панель меню: в прежнем тёмном оформлении — в цвет холста, в светлом — белые
+  set('--sf-chrome', c.chrome || c.panel);
   set('--sf-panel', c.panel);
   set('--sf-deep', c.deep);
   set('--sf-deep2', c.deep2);
@@ -253,6 +183,9 @@ export function applyAppStyle(id) {
   // Акцент и смысловые цвета
   set('--sf-accent', c.accent);
   set('--sf-on-accent', c.onAccent);
+  // Акцент меню: янтарь в тёмном оформлении, индиго в светлом — как было раньше
+  set('--sf-nav', c.nav || c.accent);
+  set('--sf-nav-1', rgba(c.nav || c.accent, 0.08));
   set('--sf-primary', c.primary);
   set('--sf-on-primary', c.onPrimary);
   set('--sf-pos', c.pos);
@@ -291,15 +224,15 @@ export function applyAppStyle(id) {
   set('--destructive-foreground', hexToHsl('#ffffff'));
   set('--border', hexToHsl(c.line));
   set('--input', hexToHsl(c.line));
-  set('--ring', hexToHsl(c.accent));
+  set('--ring', hexToHsl(c.nav || c.accent));
   set('--sidebar-background', hexToHsl(c.bg));
   set('--sidebar-foreground', hexToHsl(c.text2));
-  set('--sidebar-primary', hexToHsl(c.accent));
+  set('--sidebar-primary', hexToHsl(c.nav || c.accent));
   set('--sidebar-primary-foreground', hexToHsl(c.onAccent));
   set('--sidebar-accent', hexToHsl(c.deep2));
   set('--sidebar-accent-foreground', hexToHsl(c.text));
   set('--sidebar-border', hexToHsl(c.line));
-  set('--sidebar-ring', hexToHsl(c.accent));
+  set('--sidebar-ring', hexToHsl(c.nav || c.accent));
   (c.charts || []).forEach((hex, i) => set(`--chart-${i + 1}`, hexToHsl(hex)));
 
   try {

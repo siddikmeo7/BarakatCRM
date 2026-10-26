@@ -219,8 +219,13 @@ export default function Layout({ children, currentPageName }) {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
-      // Оформление хранится в аккаунте пользователя — включаем его при каждом входе
-      if (currentUser.data?.app_style) applyAppStyle(currentUser.data.app_style);
+      // Оформление хранится в аккаунте пользователя — включаем его при каждом входе.
+      // Если сохранённое оформление больше не существует, аккуратно приводим выбор к действующему.
+      const savedStyle = currentUser.data?.app_style;
+      if (savedStyle) {
+        const applied = applyAppStyle(savedStyle);
+        if (applied.id !== savedStyle) base44.auth.updateMe({ app_style: applied.id }).catch(() => {});
+      }
       recordLogin(currentUser.email);
 
       // При входе в приложение сразу открываем раздел «Профиль» (один раз за сессию вкладки)
