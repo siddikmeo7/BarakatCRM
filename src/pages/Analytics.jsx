@@ -382,15 +382,18 @@ export default function Analytics() {
               </button>
             ))}
             <button
-              className="tk-btn"
+              className="tk-btn tk-ref"
               onClick={() => loadExchangeRates(true)}
               disabled={ratesLoading}
             >
               {ratesLoading ? t(lang, 'analytics_loading_rate') : t(lang, 'analytics_refresh_rate')}
             </button>
-            {ratesDate && currency !== 'TJS' && (
-              <span className="tk-cap">1 с. = {exchangeRates[currency]} {currency}</span>
-            )}
+            {/* Место под курс всегда одного размера — при смене валюты кнопки не сдвигаются */}
+            <span className="tk-cap tk-rate">
+              {ratesDate && currency !== 'TJS' && exchangeRates[currency]
+                ? `1 с. = ${exchangeRates[currency]} ${currency}`
+                : ''}
+            </span>
           </div>
         </div>
 
