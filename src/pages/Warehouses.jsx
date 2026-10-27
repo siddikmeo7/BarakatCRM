@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import PageHeader from '@/components/ui/PageHeader';
-import SearchInput from '@/components/filters/SearchInput';
 import { Button } from '@/components/ui/button';
 import WarehouseFormDialog from '@/components/warehouses/WarehouseFormDialog';
 import WarehouseRegistry from '@/components/warehouses/WarehouseRegistry';
@@ -11,51 +8,32 @@ import WarehouseKpiRow from '@/components/warehouses/WarehouseKpiRow';
 import WarehouseDetailPanel from '@/components/warehouses/WarehouseDetailPanel';
 import AllWarehouseProductsTable from '@/components/warehouses/AllWarehouseProductsTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MoveProductsDialog from '@/components/warehouses/MoveProductsDialog';
 import BulkEditProductsDialog from '@/components/warehouses/BulkEditProductsDialog';
-import WarehouseBulkActionBar from '@/components/warehouses/WarehouseBulkActionBar';
 import DeleteWarehouseDialog from '@/components/warehouses/DeleteWarehouseDialog';
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
 import DuplicateProductsDialog from '@/components/products/DuplicateProductsDialog';
+import ProductSearchSummary from '@/components/warehouses/ProductSearchSummary';
+import WarehouseProductFilters from '@/components/warehouses/WarehouseProductFilters';
 import { duplicateKey } from '@/lib/productDuplicate';
-import { 
-  Plus, 
-  Warehouse as WarehouseIcon, 
-  Edit2, 
-  Trash2, 
-  MapPin,
-  Package,
-  Box,
+import { WAREHOUSE_HERO, warehousePhoto } from '@/lib/warehousePhotos';
+import {
+  Plus,
+  Warehouse as WarehouseIcon,
+  Trash2,
   Home,
   Building,
   Store,
+  Package,
   Loader2,
-  ChevronRight,
   ArrowRightLeft,
-  Grid3x3,
-  List,
-  Calendar,
   Search,
   X as XIcon,
-  CheckSquare,
-  Square,
   AlertTriangle,
-  AlertCircle,
-  TrendingUp,
-  DollarSign,
-  BarChart2,
-  RefreshCw,
-  ShoppingCart,
-  Eye,
   Maximize2,
-  Minimize2
+  Minimize2,
 } from 'lucide-react';
-import ProductPhoto from '@/components/products/ProductPhoto';
-import ProductSearchSummary from '@/components/warehouses/ProductSearchSummary';
-import WarehouseProductFilters from '@/components/warehouses/WarehouseProductFilters';
-import { format, parseISO, isToday, isYesterday, isThisWeek, isThisMonth, isThisYear, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
-import ViewToggle from '@/components/ui/ViewToggle';
+import { parseISO, isToday, isYesterday, isThisWeek, isThisMonth, isThisYear, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import BrandedLoader from '@/components/ui/BrandedLoader';
 
@@ -85,10 +63,11 @@ export default function Warehouses() {
   const [search, setSearch] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
   const [view, setView] = useState('grid');
-  
+  const detailRef = useRef(null);
+
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
-  const [mainSearch, setMainSearch] = useState(''); // поиск товара по всем складам (главный склад)
+  const [mainSearch, setMainSearch] = useState(''); // поиск товара по всем складам
   const [hideSoldOut, setHideSoldOut] = useState(true);
   const [dateFilter, setDateFilter] = useState('all');
   const [customDateFrom, setCustomDateFrom] = useState('');
@@ -111,8 +90,8 @@ export default function Warehouses() {
   const [deleteWarehouseDialog, setDeleteWarehouseDialog] = useState(null); // warehouse object
   const [deletingWarehouse, setDeletingWarehouse] = useState(false);
 
-  // При входе в раздел открыт главный склад — видны все склады, поиск идёт по всем складам.
-  // Конкретный склад открывается нажатием в реестре: тогда и данные, и поиск — только по нему.
+  // При входе в раздел открыта витрина всех складов.
+  // Конкретный склад раскрывается ниже витрины — нажатием на его карточку.
 
   useEffect(() => {
     if (window.__barakatAccessReady) {
@@ -136,20 +115,27 @@ export default function Warehouses() {
     if (found) setSelectedWarehouse(found);
   }, [warehouses]);
 
+  // Выбранный склад раскрывается ниже витрины — мягко прокручиваем к нему
+  useEffect(() => {
+    if (selectedWarehouse && detailRef.current) {
+      detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedWarehouse?.id]);
+
   const loadData = async () => {
     try {
       const biz = window.__barakatBusiness;
       if (!biz) { setLoading(false); return; }
-      
+
       if (biz) {
         setBusiness(biz);
-        
+
         const [warehousesData, productsData, salesData] = await Promise.all([
           base44.entities.Warehouse.filter({ business_id: biz.id }),
           base44.entities.Product.filter({ business_id: biz.id }),
           base44.entities.Sale.filter({ business_id: biz.id })
         ]);
-        
+
         setWarehouses(warehousesData);
         setProducts(productsData);
         setSales(salesData);
@@ -271,7 +257,6 @@ export default function Warehouses() {
   };
 
   const toggleSelectAll = () => {
-    const visibleIds = warehouseProducts.map(p => p.id);
     const unsoldIds = getUnsoldProductIds(warehouseProducts);
     const allSelected = unsoldIds.every(id => selectedProductIds.includes(id));
     if (allSelected) {
@@ -285,13 +270,13 @@ export default function Warehouses() {
   const getWarehouseStats = (warehouseId) => {
     const warehouseProducts = products.filter(p => p.warehouse_id === warehouseId);
     const warehouseSales = sales.filter(s => s.warehouse_id === warehouseId);
-    
+
     const totalBoxes = warehouseProducts.reduce((sum, p) => sum + (p.boxes_in_stock || 0), 0);
     const totalValue = warehouseProducts.reduce((sum, p) => sum + ((p.boxes_in_stock || 0) * (p.sale_price || 0)), 0);
     const totalWholesaleValue = warehouseProducts.reduce((sum, p) => sum + ((p.boxes_in_stock || 0) * (p.purchase_price || 0)), 0);
     const soldBoxes = warehouseSales.reduce((sum, s) => sum + (s.boxes_sold || 0), 0);
     const revenue = warehouseSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
-    
+
     return { totalBoxes, totalValue, totalWholesaleValue, soldBoxes, revenue, productsCount: warehouseProducts.length };
   };
 
@@ -363,7 +348,7 @@ export default function Warehouses() {
       })
      : [];
 
-  // Главный склад: товары всех складов — поиск здесь всегда идёт по всем складам сразу
+  // Витрина всех складов: товары всех складов — поиск здесь идёт по всем складам сразу
   const allFilteredProducts = products.filter(p => {
     if (!matchesAllFilters(p)) return false;
     if (!mainSearch) return true;
@@ -375,15 +360,7 @@ export default function Warehouses() {
     );
   });
 
-  // Итоги по всем складам — для строки «Все склады» в реестре
-  const mainStats = {
-    productsCount: products.length,
-    totalBoxes: products.reduce((sum, p) => sum + (p.boxes_in_stock || 0), 0),
-    totalValue: products.reduce((sum, p) => sum + (p.boxes_in_stock || 0) * (p.sale_price || 0), 0),
-    soldBoxes: sales.reduce((sum, s) => sum + (s.boxes_sold || 0), 0),
-  };
-
-  // Область поиска товара: в главном складе — все склады, внутри склада — только он
+  // Область поиска товара: на витрине — все склады, внутри склада — только он
   const searchScopeProducts = selectedWarehouse
     ? products.filter(p => p.warehouse_id === selectedWarehouse.id)
     : products;
@@ -424,7 +401,7 @@ export default function Warehouses() {
   const canBulk = can('edit_products') || can('move_products') || can('delete_products');
   const selectedProducts = warehouseProducts.filter(p => selectedProductIds.includes(p.id));
 
-  // Итоги по всем складам для верхней KPI-строки
+  // Итоги по всем складам для приборной полосы
   const kpiValues = {
     products: can('view_warehouse_quantities') ? products.length : '•••',
     boxes: can('view_warehouse_quantities') ? products.reduce((s, p) => s + (p.boxes_in_stock || 0), 0).toLocaleString() : '•••',
@@ -439,144 +416,207 @@ export default function Warehouses() {
     setEmployeeFilter('all'); setTypeFilter('all'); setPriceMin(''); setPriceMax('');
   };
 
+  // Фото склада для его экрана: тот же снимок, что и на карточке витрины
+  const selectedIndex = warehouses.findIndex(w => w.id === selectedWarehouse?.id);
+
   return (
-    <div className="wh-console rounded-[6px] bg-slate-100 dark:bg-slate-950 p-4 lg:p-5">
-      {/* Верхняя панель: название, поиск, вид, добавление склада */}
-      <div className="wh-top">
-        <div>
-          <h1>Склады</h1>
-          <div className="sub">{filteredWarehouses.length} складов</div>
+    <div className="sh-page">
+      {/* Шапка раздела */}
+      <div className="sh-hero">
+        <img className="bg" src={WAREHOUSE_HERO} alt="" />
+        <div className="sc" />
+        <div className="in">
+          <div>
+            <h1>Склады</h1>
+            <p className="sub sh-sub">{filteredWarehouses.length} склада</p>
+          </div>
+          <div className="acts">
+            <button
+              className="sh-btn"
+              onClick={() => { setGlobalSearchOpen(true); setGlobalSearch(''); }}
+            >
+              <Search className="w-3.5 h-3.5" />
+              {selectedWarehouse ? 'Поиск по складу' : 'Поиск по всем складам'}
+            </button>
+            <button className="sh-btn" onClick={() => setView('grid')}>Сетка</button>
+            <button className="sh-btn" onClick={() => setView('list')}>Список</button>
+            {can('manage_warehouses') && (
+              <button className="sh-btn pri" onClick={() => handleOpenDialog()}>
+                <Plus className="w-3.5 h-3.5" />
+                Добавить склад
+              </button>
+            )}
+          </div>
         </div>
-        <div className="wh-sp" />
-        <button
-          className="wh-srch"
-          onClick={() => { setGlobalSearchOpen(true); setGlobalSearch(''); }}
-        >
-          <Search className="w-3.5 h-3.5" />
-          {selectedWarehouse ? 'Поиск по складу' : 'Поиск по всем складам'}
-        </button>
-        <div className="wh-seg">
-          <button className={view === 'grid' ? 'on' : ''} onClick={() => setView('grid')}>Сетка</button>
-          <button className={view === 'list' ? 'on' : ''} onClick={() => setView('list')}>Список</button>
-        </div>
-        {can('manage_warehouses') && (
-          <button className="wh-btn pr" onClick={() => handleOpenDialog()}>
-            <Plus className="w-3 h-3" />
-            Добавить склад
-          </button>
-        )}
       </div>
 
-      {/* Итоги по всем складам — показываем на экране «Все склады» */}
-      {!selectedWarehouse && <WarehouseKpiRow values={kpiValues} />}
+      {/* Приборная полоса: итоги по всем складам */}
+      <WarehouseKpiRow values={kpiValues} />
 
-      {/* Товары без склада */}
-      {orphanedProducts.length > 0 && (
-        <div className="wh-banner">
-          <AlertCircle className="w-4 h-4" style={{ color: '#f59e0b', flex: 'none' }} />
-          <div className="flex-1">
-            <p className="t">{orphanedProducts.length} товаров без склада</p>
-            <p className="d">Склад был удалён. Переместите эти товары в другой склад или удалите их.</p>
-          </div>
-          <button className="wh-btn" onClick={() => setOrphanedDialogOpen(true)}>
-            <ArrowRightLeft className="w-3 h-3" />
-            Переместить
-          </button>
-        </div>
-      )}
-
-      {/* Дубликаты товаров */}
-      {duplicateGroups.length > 0 && (
-        <div className="wh-banner rd">
-          <AlertCircle className="w-4 h-4" style={{ color: '#dc2626', flex: 'none' }} />
-          <div className="flex-1">
-            <p className="t">Найдены дубликаты: {duplicateGroups.length} групп товаров с одинаковым брендом, моделью, типом и цветом в одном складе</p>
-            <p className="d">В системе есть товары с одинаковым названием. Рекомендуется удалить лишние записи.</p>
-          </div>
-          <button className="wh-btn dg" onClick={() => setDuplicateDialogOpen(true)}>
-            <Trash2 className="w-3 h-3" />
-            Исправить
-          </button>
-        </div>
-      )}
-
-      {/* Глобальный поиск товара по складам */}
-      {globalSearchOpen && (
-        <div className={globalSearchFullscreen
-          ? "fixed inset-0 z-[60] bg-slate-50 dark:bg-slate-950 p-3 lg:p-6 overflow-auto"
-          : "wh-reg p-4 space-y-4"}>
-          <div className={`flex items-center gap-3 ${globalSearchFullscreen ? 'bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 shadow-sm sticky top-0 z-10' : ''}`}>
-            <Search className="w-5 h-5 text-indigo-500 flex-shrink-0" />
-            <input
-              autoFocus
-              value={globalSearch}
-              onChange={e => setGlobalSearch(e.target.value)}
-              placeholder="Введите модель, бренд или тип товара..."
-              className="flex-1 outline-none text-slate-800 placeholder-slate-400 text-sm bg-transparent"
-            />
-            <button
-              onClick={() => setGlobalSearchFullscreen(v => !v)}
-              title={globalSearchFullscreen ? 'Свернуть' : 'Во весь экран'}
-              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
-            >
-              {globalSearchFullscreen
-                ? <Minimize2 className="w-4 h-4 text-slate-500" />
-                : <Maximize2 className="w-4 h-4 text-indigo-500" />}
-            </button>
-            <button onClick={() => { setGlobalSearchOpen(false); setGlobalSearchFullscreen(false); }} className="flex-shrink-0">
-              <XIcon className="w-5 h-5 text-slate-400 hover:text-slate-600" />
-            </button>
-          </div>
-          {/* Область поиска: главный склад — все склады, внутри склада — только он */}
-          <p className="wh-cap" style={{ marginTop: 8 }}>
-            {selectedWarehouse
-              ? `Поиск только по складу «${selectedWarehouse.name}»`
-              : 'Поиск по всем складам'}
-          </p>
-
-          {globalSearch.trim().length > 0 && (
-            searchScopeMatches.length === 0 ? (
-              <p className="text-slate-500 text-sm text-center py-4">Товары не найдены</p>
-            ) : (
-              <div className={`space-y-4 pr-1 ${globalSearchFullscreen ? '' : 'max-h-[65vh] overflow-y-auto'}`}>
-                {/* Расширенная сводка: всего было, продано, осталось + по складам + по моделям */}
-                <ProductSearchSummary
-                  query={globalSearch}
-                  products={searchScopeProducts}
-                  sales={sales}
-                  warehouses={warehouses}
-                  can={can}
-                />
+      <div className="sh-wrap">
+        {/* Плашки-предупреждения */}
+        {(orphanedProducts.length > 0 || duplicateGroups.length > 0) && (
+          <div className="sh-bands">
+            {orphanedProducts.length > 0 && (
+              <div className="sh-band a">
+                <div>
+                  <p><strong>{orphanedProducts.length} товаров без склада</strong></p>
+                  <p className="d">Склад был удалён. Переместите эти товары в другой склад или удалите их.</p>
+                </div>
+                <button className="sh-btn" onClick={() => setOrphanedDialogOpen(true)}>
+                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                  Переместить
+                </button>
               </div>
-            )
-          )}
-        </div>
-      )}
+            )}
+            {duplicateGroups.length > 0 && (
+              <div className="sh-band b">
+                <div>
+                  <p><strong>Найдены дубликаты: {duplicateGroups.length} групп товаров с одинаковым брендом, моделью, типом и цветом в одном складе</strong></p>
+                  <p className="d">В системе есть товары с одинаковым названием. Рекомендуется удалить лишние записи.</p>
+                </div>
+                <button className="sh-btn dg" onClick={() => setDuplicateDialogOpen(true)}>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Исправить
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* Экран «Все склады»: реестр слева + товары всех складов справа.
-          Открытый склад показывается отдельным экраном — только его данные. */}
-      <div className={`wh-main ${selectedWarehouse ? 'single' : ''}`}>
+        {/* Глобальный поиск товара по складам */}
+        {globalSearchOpen && (
+          <div className={globalSearchFullscreen ? 'sh-fs fixed inset-0 z-[60] overflow-auto p-3 lg:p-6' : 'sh-block'}>
+            <div className="sh-tbl">
+              <div className="sh-tt">
+                <div className="sh-srch" style={{ width: 'min(520px, 100%)' }}>
+                  <Search className="w-4 h-4" />
+                  <input
+                    autoFocus
+                    value={globalSearch}
+                    onChange={e => setGlobalSearch(e.target.value)}
+                    placeholder="Введите модель, бренд или тип товара..."
+                  />
+                </div>
+                <span className="sh-sp" />
+                <button
+                  className="sh-btn"
+                  onClick={() => setGlobalSearchFullscreen(v => !v)}
+                  title={globalSearchFullscreen ? 'Свернуть' : 'Во весь экран'}
+                >
+                  {globalSearchFullscreen
+                    ? <Minimize2 className="w-3.5 h-3.5" />
+                    : <Maximize2 className="w-3.5 h-3.5" />}
+                  {globalSearchFullscreen ? 'Свернуть' : 'Во весь экран'}
+                </button>
+                <button
+                  className="sh-btn"
+                  onClick={() => { setGlobalSearchOpen(false); setGlobalSearchFullscreen(false); }}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                  Закрыть
+                </button>
+              </div>
+
+              {/* Область поиска: витрина — все склады, внутри склада — только он */}
+              <div className="sh-fl">
+                <span className="sh-cap">
+                  {selectedWarehouse
+                    ? `Поиск только по складу «${selectedWarehouse.name}»`
+                    : 'Поиск по всем складам'}
+                </span>
+              </div>
+
+              {globalSearch.trim().length > 0 && (
+                searchScopeMatches.length === 0 ? (
+                  <div className="sh-empty">Товары не найдены</div>
+                ) : (
+                  <div style={{ padding: '16px 20px' }}>
+                    <ProductSearchSummary
+                      query={globalSearch}
+                      products={searchScopeProducts}
+                      sales={sales}
+                      warehouses={warehouses}
+                      can={can}
+                    />
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Склады */}
+        <div className="sh-sec">
+          <h2>Склады</h2>
+          <div className="sh-srch">
+            <Search className="w-4 h-4" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Поиск склада"
+            />
+          </div>
+        </div>
+
         <WarehouseRegistry
           warehouses={filteredWarehouses}
           getStats={getWarehouseStats}
-          mainStats={mainStats}
-          mainSelected={!selectedWarehouse}
-          onSelectMain={() => setSelectedWarehouse(null)}
           selectedId={selectedWarehouse?.id}
           onSelect={setSelectedWarehouse}
           onEdit={handleOpenDialog}
           canEdit={can('manage_warehouses')}
           can={can}
-          IconComponent={WarehouseIconComp}
-          search={search}
-          setSearch={setSearch}
           view={view}
           onCreate={() => handleOpenDialog()}
           canCreate={can('manage_warehouses')}
         />
 
-        <div className="wh-detail">
-          {selectedWarehouse ? (
+        {/* Товары всех складов */}
+        <div className="sh-block">
+          <AllWarehouseProductsTable
+            products={allFilteredProducts}
+            warehouses={warehouses}
+            creators={creators}
+            can={can}
+            onOpen={(p) => { window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id; }}
+            onReset={() => { resetFilters(); setMainSearch(''); }}
+            filtersRow={
+              <>
+                <div className="sh-srch" style={{ width: 260 }}>
+                  <Search className="w-4 h-4" />
+                  <input
+                    value={mainSearch}
+                    onChange={e => setMainSearch(e.target.value)}
+                    placeholder="Поиск товара по всем складам"
+                  />
+                  {mainSearch && (
+                    <button onClick={() => setMainSearch('')} title="Очистить">
+                      <XIcon className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <WarehouseProductFilters
+                  dateFilter={dateFilter} setDateFilter={setDateFilter}
+                  customDateFrom={customDateFrom} setCustomDateFrom={setCustomDateFrom}
+                  customDateTo={customDateTo} setCustomDateTo={setCustomDateTo}
+                  employeeFilter={employeeFilter} setEmployeeFilter={setEmployeeFilter}
+                  creators={creators}
+                  typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+                  productTypes={productTypes}
+                  priceMin={priceMin} setPriceMin={setPriceMin}
+                  priceMax={priceMax} setPriceMax={setPriceMax}
+                />
+              </>
+            }
+          />
+        </div>
+
+        {/* Экран выбранного склада */}
+        {selectedWarehouse && (
+          <div ref={detailRef}>
+            <div className="sh-sep" />
+            <div className="sh-cn">Открыт склад</div>
             <WarehouseDetailPanel
               warehouse={selectedWarehouse}
               stats={getWarehouseStats(selectedWarehouse.id)}
@@ -587,6 +627,7 @@ export default function Warehouses() {
               can={can}
               canBulk={canBulk}
               IconComponent={WarehouseIconComp}
+              photo={warehousePhoto(selectedIndex < 0 ? 0 : selectedIndex)}
               filters={{
                 dateFilter, setDateFilter, customDateFrom, setCustomDateFrom, customDateTo, setCustomDateTo,
                 employeeFilter, setEmployeeFilter, creators,
@@ -625,46 +666,8 @@ export default function Warehouses() {
               onDeleteSelected={() => setDeleteConfirmDialog({ type: 'selected', label: `${selectedProductIds.length} выбранных товаров` })}
               onClearSelection={() => setSelectedProductIds([])}
             />
-          ) : (
-            <div>
-              {/* Фильтры главного склада: поиск товара идёт по всем складам */}
-              <div className="wh-filt">
-                <div className="wh-srch wide">
-                  <Search className="w-3.5 h-3.5" />
-                  <input
-                    value={mainSearch}
-                    onChange={e => setMainSearch(e.target.value)}
-                    placeholder="Поиск товара по всем складам"
-                  />
-                  {mainSearch && (
-                    <button onClick={() => setMainSearch('')} title="Очистить">
-                      <XIcon className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-                <WarehouseProductFilters
-                  dateFilter={dateFilter} setDateFilter={setDateFilter}
-                  customDateFrom={customDateFrom} setCustomDateFrom={setCustomDateFrom}
-                  customDateTo={customDateTo} setCustomDateTo={setCustomDateTo}
-                  employeeFilter={employeeFilter} setEmployeeFilter={setEmployeeFilter}
-                  creators={creators}
-                  typeFilter={typeFilter} setTypeFilter={setTypeFilter}
-                  productTypes={productTypes}
-                  priceMin={priceMin} setPriceMin={setPriceMin}
-                  priceMax={priceMax} setPriceMax={setPriceMax}
-                />
-              </div>
-              <AllWarehouseProductsTable
-                products={allFilteredProducts}
-                warehouses={warehouses}
-                creators={creators}
-                can={can}
-                onOpen={(p) => { window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id; }}
-                onReset={() => { resetFilters(); setMainSearch(''); }}
-              />
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Move Products Dialog */}

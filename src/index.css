@@ -174,12 +174,12 @@
 .dark main tbody tr { border-color: #1b212a !important; }
 .dark main tbody tr:nth-child(even):not([class^="bg-"]):not([class*=" bg-"]) { background-color: #0f131a; }
 .dark main tbody tr:hover:not([class^="bg-"]):not([class*=" bg-"]) { background-color: #171c25; }
-.dark main h3:not(.tk-console *):not(.wh-console *) { color: #aab2bf !important; text-transform: uppercase; font-size: 11px; letter-spacing: .14em; font-weight: 700; }
-.dark main h1 { font-size: 30px; line-height: 1.1; letter-spacing: -.01em; color: #f2f4f8 !important; }
-.dark main h1 + p { text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: #7c8594 !important; }
+.dark main h3:not(.tk-console *):not(.wh-console *):not(.sh-page *) { color: #aab2bf !important; text-transform: uppercase; font-size: 11px; letter-spacing: .14em; font-weight: 700; }
+.dark main h1:not(.sh-page *) { font-size: 30px; line-height: 1.1; letter-spacing: -.01em; color: #f2f4f8 !important; }
+.dark main h1 + p:not(.sh-page *) { text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: #7c8594 !important; }
 @media (max-width: 640px) {
-  .dark main h1 { font-size: 22px; }
-  .dark main h1 + p { font-size: 10px; }
+  .dark main h1:not(.sh-page *) { font-size: 22px; }
+  .dark main h1 + p:not(.sh-page *) { font-size: 10px; }
 }
 .dark input, .dark textarea, .dark select, .dark [cmdk-input] {
   background-color: #0f131a !important; color: #d7dbe2 !important; border-color: #232a35 !important;
@@ -971,3 +971,272 @@ html:not(.dark) .tk-input { background: #ffffff; border-color: #cbd5e1; color: #
   .bl-glow, .bl-plate img { animation: none; }
   .bl-run { animation: bl-run 2.6s linear infinite; }
 }
+
+/* ===== Раздел «Склады»: «Витрина складов» =====
+   Светлая витрина: холст #f7f8fa, поверхность #fff, акцент #0f766e, линии #e2e8f0.
+   Шапка с фото, приборная полоса итогов, карточки складов, таблицы товаров
+   и раскрытый экран склада ниже витрины. */
+
+.sh-page {
+  position: relative;
+  margin: -1rem;
+  padding: 0 0 60px;
+  background: #f7f8fa;
+  color: #111827;
+  font-family: "Avenir Next", "Century Gothic", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+}
+@media (min-width: 1024px) { .sh-page { margin: -2rem; } }
+.sh-page h1, .sh-page h2, .sh-page h3, .sh-page p { margin: 0; }
+
+.sh-cap { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #64748b; }
+.sh-sp { flex: 1; }
+.sh-block { margin-top: 34px; }
+.sh-pos { color: #0f766e; font-weight: 600; }
+
+/* Кнопки */
+.sh-btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px;
+  border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; color: #111827;
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background .15s, box-shadow .15s, border-color .15s, color .15s;
+}
+.sh-btn:hover { background: #f0fdfa; border-color: #0f766e; box-shadow: 0 2px 8px rgba(15,118,110,.15); }
+.sh-btn:active { background: #ccfbf1; }
+.sh-btn:disabled { opacity: .5; cursor: not-allowed; }
+.sh-btn.pri { background: #0f766e; border-color: #0f766e; color: #fff; }
+.sh-btn.pri:hover { background: #115e59; }
+.sh-btn.dg { color: #b91c1c; }
+.sh-btn.dg:hover { background: #fef2f2; border-color: #fca5a5; }
+.sh-page .sh-btn:focus-visible,
+.sh-page .sh-chip:focus-visible,
+.sh-page .sh-fld:focus-visible,
+.sh-page .sh-card:focus-visible,
+.sh-page .sh-tr:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
+
+/* Шапка раздела */
+.sh-page .sh-hero { position: relative; padding: 44px 48px 40px; border-bottom: 1px solid #e2e8f0; background: #fff; animation: sh-rise .7s ease both; }
+.sh-page .sh-hero .bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .55; }
+.sh-page .sh-hero .sc { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,.96) 35%, rgba(255,255,255,.55)); }
+.sh-page .sh-hero .in { position: relative; display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+.sh-page .sh-hero h1 { font-size: 54px; font-weight: 300; line-height: 1.15; letter-spacing: -.02em; }
+.sh-page .sh-hero .sub { margin-top: 6px; font-size: 14px; color: #475569; font-weight: 500; }
+.sh-page .sh-hero .acts { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; max-width: 460px; }
+
+/* Приборная полоса итогов */
+.sh-report { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin: 20px 48px 0; padding: 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 16px rgba(15,23,42,.05); animation: sh-rise .6s .08s ease both; }
+.sh-report .sh-item { padding: 12px 16px; border-left: 2px solid #0f766e; }
+.sh-report .sh-item:first-child { border-left: 0; }
+.sh-report b { display: block; margin-top: 6px; font-size: 24px; font-weight: 600; line-height: 1.2; color: #0f766e; }
+
+.sh-wrap { padding: 0 48px; }
+
+/* Плашки-предупреждения */
+.sh-bands { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.sh-band { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 14px 20px; border-radius: 12px; font-size: 14px; line-height: 1.4; }
+.sh-band.a { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
+.sh-band.b { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+.sh-band strong { font-weight: 600; }
+.sh-band .d { margin-top: 3px; font-size: 12.5px; opacity: .85; }
+
+/* Раздел «Склады» */
+.sh-sec { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 34px 0 14px; flex-wrap: wrap; }
+.sh-page .sh-sec h2 { font-size: 22px; font-weight: 400; line-height: 1.3; }
+.sh-srch { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; width: 260px; max-width: 100%; color: #94a3b8; font-size: 13px; }
+.sh-srch input { border: 0; outline: 0; background: transparent; font: inherit; font-size: 13px; color: #111827; width: 100%; }
+.sh-srch input::placeholder { color: #94a3b8; }
+
+/* Витрина карточек складов */
+.sh-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.sh-card { position: relative; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(15,23,42,.05); cursor: pointer; transition: box-shadow .2s, border-color .2s; animation: sh-pop .7s ease both; }
+.sh-card:hover { box-shadow: 0 10px 28px rgba(15,118,110,.16); border-color: #99d5cf; }
+.sh-card:nth-child(1) { animation-delay: .3s; }
+.sh-card:nth-child(2) { animation-delay: .4s; }
+.sh-card:nth-child(3) { animation-delay: .5s; }
+.sh-card:nth-child(4) { animation-delay: .6s; }
+.sh-card:nth-child(5) { animation-delay: .7s; }
+.sh-card.on:before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; z-index: 3; background: linear-gradient(90deg, transparent, #0f766e, transparent); background-size: 200% 100%; animation: sh-glow 4s linear infinite; }
+.sh-ph { position: relative; aspect-ratio: 3/2; overflow: hidden; }
+.sh-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sh-ph:after { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(255,255,255,.85); border-radius: 10px; pointer-events: none; }
+.sh-ph .sh-ed { position: absolute; top: 14px; right: 14px; z-index: 2; height: 30px; padding: 0 12px; font-size: 12px; background: rgba(255,255,255,.94); }
+.sh-cb { padding: 16px 18px 18px; }
+.sh-page .sh-cb h3 { font-size: 18px; font-weight: 500; line-height: 1.3; }
+.sh-cb .ad { margin-top: 4px; font-size: 12.5px; color: #64748b; display: flex; align-items: center; gap: 5px; line-height: 1.4; }
+.sh-cb .r { display: flex; gap: 18px; margin-top: 12px; font-size: 13px; font-weight: 500; color: #334155; }
+.sh-bar { margin-top: 12px; height: 6px; border-radius: 4px; background: #e2e8f0; overflow: hidden; }
+.sh-bar span { display: block; height: 100%; background: #0f766e; border-radius: 4px; }
+
+/* Реестр складов списком */
+.sh-reg { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(15,23,42,.05); }
+.sh-reg .h { display: flex; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; background: #fbfdfd; }
+.sh-lr { display: grid; grid-template-columns: 2.2fr 1fr 1fr 1.2fr 1fr; gap: 12px; align-items: center; padding: 13px 20px; border-bottom: 1px solid #eef2f6; font-size: 13.5px; line-height: 1.4; cursor: pointer; transition: background .15s; }
+.sh-lr:hover { background: #f0fdfa; }
+.sh-lr.hd { cursor: default; background: #fff; }
+.sh-lr.hd:hover { background: #fff; }
+.sh-lr.on { background: #f0fdfa; }
+.sh-lr:last-child { border-bottom: 0; }
+.sh-lr-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.sh-lr-name strong { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-lr-edit { border: 0; background: transparent; color: #94a3b8; cursor: pointer; padding: 4px; border-radius: 6px; display: inline-flex; flex: none; }
+.sh-lr-edit:hover { background: #f0fdfa; color: #0f766e; }
+
+/* Таблицы товаров */
+.sh-tbl { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(15,23,42,.05); }
+.sh-tt { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+.sh-page .sh-tt h3 { font-size: 18px; font-weight: 500; line-height: 1.3; }
+.sh-fl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; background: #fbfdfd; }
+.sh-chip { height: 32px; padding: 0 13px; border-radius: 16px; border: 1px solid #e2e8f0; background: #fff; font-family: inherit; font-size: 12.5px; font-weight: 600; color: #334155; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+.sh-chip:hover { border-color: #0f766e; color: #0f766e; }
+.sh-chip:active { background: #ccfbf1; }
+.sh-chip.on { background: #0f766e; border-color: #0f766e; color: #fff; }
+.sh-fld { height: 32px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; font-family: inherit; font-size: 12.5px; font-weight: 500; color: #111827; display: inline-flex; align-items: center; }
+.sh-fld.w { width: 150px; }
+.sh-fld.s { width: 70px; }
+.sh-th { display: grid; grid-template-columns: 2.6fr 1.6fr 1fr 1fr 1fr 1.3fr 1.2fr; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; }
+.sh-tr { display: grid; grid-template-columns: 2.6fr 1.6fr 1fr 1fr 1fr 1.3fr 1.2fr; gap: 12px; align-items: center; padding: 14px 20px; border-bottom: 1px solid #eef2f6; font-size: 14px; font-weight: 500; line-height: 1.4; cursor: pointer; transition: background .15s; }
+.sh-tr:hover { background: #f0fdfa; }
+.sh-tr:last-child { border-bottom: 0; }
+.sh-pn { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.sh-pn-name { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-pn .sh-tag { margin-top: 3px; }
+.sh-sw { width: 40px; height: 40px; border-radius: 10px; border: 1px solid #e2e8f0; background: linear-gradient(135deg, #ccfbf1, #e0f2fe); flex: none; display: flex; align-items: center; justify-content: center; object-fit: cover; }
+.sh-dt { font-size: 12.5px; color: #64748b; }
+.sh-scroll { overflow: auto; max-height: 62vh; }
+.sh-scroll-in { min-width: 900px; }
+.sh-empty { padding: 28px; text-align: center; font-size: 13.5px; color: #64748b; border-bottom: 1px solid #eef2f6; }
+
+/* Раскрытый склад */
+.sh-sep { height: 1px; background: #e2e8f0; margin: 46px 0 6px; }
+.sh-cn { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #0f766e; margin-bottom: 6px; }
+.sh-dh { position: relative; border-radius: 18px; overflow: hidden; border: 1px solid #e2e8f0; background: #fff; box-shadow: 0 8px 28px rgba(15,23,42,.06); }
+.sh-dh .sh-ph { aspect-ratio: auto; height: 230px; }
+.sh-ov { position: absolute; inset: 0; z-index: 1; padding: 34px 40px; display: flex; align-items: center; gap: 20px; background: linear-gradient(90deg, rgba(255,255,255,.96) 30%, rgba(255,255,255,.35)); }
+.sh-ib { width: 60px; height: 60px; border-radius: 16px; background: #0f766e; display: flex; align-items: center; justify-content: center; flex: none; box-shadow: 0 6px 16px rgba(15,118,110,.3); }
+.sh-page .sh-ov h2 { font-size: 36px; font-weight: 300; line-height: 1.2; margin-top: 4px; }
+.sh-ov .adr { font-size: 14px; color: #475569; margin-top: 4px; }
+.sh-dacts { display: flex; gap: 10px; flex-wrap: wrap; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; background: #fff; }
+.sh-dst { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-top: 18px; }
+.sh-dst .sh-k { border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; background: #fbfdfd; min-height: 78px; animation: sh-rise .6s ease both; }
+.sh-dst .sh-k b { display: block; margin-top: 8px; font-size: 24px; font-weight: 500; line-height: 1.2; }
+.sh-dst .sh-k:nth-child(1) { animation-delay: .2s; }
+.sh-dst .sh-k:nth-child(2) { animation-delay: .25s; }
+.sh-dst .sh-k:nth-child(3) { animation-delay: .3s; }
+.sh-dst .sh-k:nth-child(4) { animation-delay: .35s; }
+.sh-dst .sh-k:nth-child(5) { animation-delay: .4s; }
+.sh-dst .sh-k:nth-child(6) { animation-delay: .45s; }
+.sh-warn { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+.sh-wc { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 12px; font-size: 13.5px; font-weight: 600; line-height: 1.4; }
+.sh-wc.y { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+.sh-wc.r { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.sh-tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11.5px; font-weight: 600; line-height: 1.5; }
+.sh-tag.g { background: #dcfce7; color: #166534; }
+.sh-tag.y { background: #fef3c7; color: #92400e; }
+.sh-tag.r { background: #fee2e2; color: #991b1b; }
+
+/* Строки товаров склада */
+.sh-dtr { display: grid; grid-template-columns: 5px 36px 2.6fr 1fr 1fr 1fr 1.2fr 1.2fr 1.2fr 40px; gap: 12px; align-items: center; padding: 14px 20px 14px 0; border-bottom: 1px solid #eef2f6; font-size: 14px; font-weight: 500; line-height: 1.4; transition: background .15s; }
+.sh-dtr.h { padding-top: 12px; padding-bottom: 12px; background: #fbfdfd; }
+.sh-dtr .ind { height: 100%; min-height: 44px; border-radius: 0 3px 3px 0; }
+.sh-dtr:nth-child(even):not(.h) { background: #fafcfc; }
+.sh-tot { display: flex; gap: 28px; padding: 14px 20px; background: #f0fdfa; border-top: 1px solid #99d5cf; font-size: 13.5px; font-weight: 600; color: #0f766e; flex-wrap: wrap; }
+
+/* Панель массовых действий */
+.sh-bulk { display: flex; align-items: center; gap: 12px; margin-top: 20px; padding: 14px 20px; background: #fff; border: 1px solid #99d5cf; border-radius: 14px; box-shadow: 0 -6px 24px rgba(15,118,110,.12); flex-wrap: wrap; }
+.sh-bulk b { font-size: 14px; font-weight: 600; margin-right: auto; }
+
+/* Полноэкранный поиск */
+.sh-fs { background: #f7f8fa; }
+
+@keyframes sh-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes sh-pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes sh-glow { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+@media (max-width: 1024px) {
+  .sh-page .sh-hero { padding: 32px 28px 28px; }
+  .sh-page .sh-hero h1 { font-size: 40px; }
+  .sh-report { grid-template-columns: repeat(3, 1fr); margin: 16px 28px 0; }
+  .sh-wrap { padding: 0 28px; }
+  .sh-grid { grid-template-columns: repeat(2, 1fr); }
+  .sh-dst { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .sh-page .sh-hero { padding: 24px 18px 22px; }
+  .sh-page .sh-hero h1 { font-size: 30px; }
+  .sh-page .sh-hero .in { align-items: flex-start; }
+  .sh-page .sh-hero .acts { justify-content: flex-start; max-width: none; }
+  .sh-report { grid-template-columns: repeat(2, 1fr); margin: 14px 18px 0; padding: 12px; }
+  .sh-report b { font-size: 20px; }
+  .sh-wrap { padding: 0 18px; }
+  .sh-grid { grid-template-columns: 1fr; gap: 14px; }
+  .sh-sec { margin: 24px 0 12px; }
+  .sh-page .sh-sec h2 { font-size: 19px; }
+  .sh-srch { width: 100%; }
+  .sh-dst { grid-template-columns: repeat(2, 1fr); }
+  .sh-ov { padding: 20px; }
+  .sh-page .sh-ov h2 { font-size: 24px; }
+  .sh-dh .sh-ph { height: 180px; }
+  .sh-band { flex-direction: column; align-items: flex-start; }
+  .sh-scroll { max-height: none; }
+}
+
+/* «Витрина складов» в тёмном оформлении */
+.dark .sh-page { background: #0b0e13; color: #d7dbe2; }
+.dark .sh-page .sh-hero { background: #12161d; border-bottom-color: #232a35; }
+.dark .sh-page .sh-hero .bg { opacity: .3; }
+.dark .sh-page .sh-hero .sc { background: linear-gradient(90deg, rgba(18,22,29,.96) 35%, rgba(18,22,29,.55)); }
+.dark .sh-page .sh-hero h1 { color: #f2f4f8; }
+.dark .sh-page .sh-hero .sub { color: #aab2bf; }
+.dark .sh-cap { color: #94a3b8; }
+.dark .sh-report, .dark .sh-reg, .dark .sh-tbl, .dark .sh-card, .dark .sh-dh, .dark .sh-bulk { background: #12161d; border-color: #232a35; }
+.dark .sh-report b { color: #6ee7b7; }
+.dark .sh-report .sh-item { border-left-color: #2dd4bf; }
+.dark .sh-btn { background: #171c25; border-color: #232a35; color: #d7dbe2; }
+.dark .sh-btn:hover { background: #1b212a; border-color: #2dd4bf; box-shadow: 0 2px 8px rgba(45,212,191,.15); }
+.dark .sh-btn:active { background: #232a35; }
+.dark .sh-btn.pri { background: #0f766e; border-color: #0f766e; color: #fff; }
+.dark .sh-btn.pri:hover { background: #0d9488; }
+.dark .sh-btn.dg { color: #f87171; }
+.dark .sh-btn.dg:hover { background: rgba(248,113,113,.12); border-color: rgba(248,113,113,.4); }
+.dark .sh-srch, .dark .sh-fld { background: #0f131a; border-color: #232a35; color: #d7dbe2; }
+.dark .sh-srch { color: #7c8594; }
+.dark .sh-srch input { color: #d7dbe2; }
+.dark .sh-srch input::placeholder { color: #7c8594; }
+.dark .sh-chip { background: #0f131a; border-color: #232a35; color: #d7dbe2; }
+.dark .sh-chip:hover { border-color: #2dd4bf; color: #2dd4bf; }
+.dark .sh-chip:active { background: #232a35; }
+.dark .sh-chip.on { background: #0f766e; border-color: #0f766e; color: #fff; }
+.dark .sh-page .sh-sec h2, .dark .sh-page .sh-tt h3, .dark .sh-page .sh-cb h3 { color: #f2f4f8; }
+.dark .sh-card:hover { border-color: #2dd4bf; box-shadow: 0 10px 28px rgba(45,212,191,.14); }
+.dark .sh-card.on:before { background: linear-gradient(90deg, transparent, #2dd4bf, transparent); background-size: 200% 100%; }
+.dark .sh-ph .sh-ed { background: rgba(18,22,29,.9); }
+.dark .sh-ph:after { border-color: rgba(215,219,226,.25); }
+.dark .sh-cb .ad, .dark .sh-dt { color: #94a3b8; }
+.dark .sh-cb .r { color: #d7dbe2; }
+.dark .sh-bar { background: #232a35; }
+.dark .sh-bar span { background: #2dd4bf; }
+.dark .sh-sw { background: #171c25; border-color: #232a35; }
+.dark .sh-reg .h, .dark .sh-fl, .dark .sh-dtr.h { background: #0f131a; }
+.dark .sh-lr, .dark .sh-tr, .dark .sh-dtr, .dark .sh-empty, .dark .sh-tt, .dark .sh-th, .dark .sh-fl, .dark .sh-reg .h { border-color: #232a35; }
+.dark .sh-lr, .dark .sh-tr, .dark .sh-dtr { color: #d7dbe2; }
+.dark .sh-lr:hover, .dark .sh-tr:hover { background: #171c25; }
+.dark .sh-lr.hd, .dark .sh-lr.hd:hover { background: transparent; }
+.dark .sh-dtr:nth-child(even):not(.h) { background: #0f131a; }
+.dark .sh-ov { background: linear-gradient(90deg, rgba(18,22,29,.96) 30%, rgba(18,22,29,.4)); }
+.dark .sh-page .sh-ov h2 { color: #f2f4f8; }
+.dark .sh-ov .adr { color: #94a3b8; }
+.dark .sh-dacts { background: #12161d; border-color: #232a35; }
+.dark .sh-dst .sh-k { background: #0f131a; border-color: #232a35; }
+.dark .sh-dst .sh-k b { color: #f2f4f8; }
+.dark .sh-wc.y { background: rgba(245,178,62,.12); border-color: rgba(245,178,62,.35); color: #f5b23e; }
+.dark .sh-wc.r { background: rgba(248,113,113,.12); border-color: rgba(248,113,113,.35); color: #f87171; }
+.dark .sh-tag.g { background: rgba(110,231,183,.16); color: #6ee7b7; }
+.dark .sh-tag.y { background: rgba(245,178,62,.16); color: #f5b23e; }
+.dark .sh-tag.r { background: rgba(248,113,113,.16); color: #f87171; }
+.dark .sh-tot { background: rgba(15,118,110,.16); border-top-color: #134e4a; color: #6ee7b7; }
+.dark .sh-band.a { background: rgba(245,178,62,.1); border-color: rgba(245,178,62,.3); color: #f5b23e; }
+.dark .sh-band.b { background: rgba(125,211,252,.1); border-color: rgba(125,211,252,.3); color: #7dd3fc; }
+.dark .sh-fs { background: #0b0e13; }
+.dark .sh-pos { color: #6ee7b7; }

@@ -36,7 +36,7 @@ export default function WarehouseProductFilters({
         <button
           key={f.key}
           onClick={() => setDateFilter(f.key)}
-          className={`wh-chip ${dateFilter === f.key ? 'on' : ''}`}
+          className={`sh-chip ${dateFilter === f.key ? 'on' : ''}`}
         >
           {f.label}
         </button>
@@ -48,20 +48,20 @@ export default function WarehouseProductFilters({
             type="date"
             value={customDateFrom}
             onChange={e => setCustomDateFrom(e.target.value)}
-            className="wh-fld"
+            className="sh-fld"
           />
-          <span className="text-slate-400 text-[11px]">—</span>
+          <span className="sh-dt">—</span>
           <input
             type="date"
             value={customDateTo}
             onChange={e => setCustomDateTo(e.target.value)}
-            className="wh-fld"
+            className="sh-fld"
           />
         </span>
       )}
 
       <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-        <SelectTrigger className="wh-fld h-auto w-[150px]">
+        <SelectTrigger className="sh-fld w justify-between">
           <SelectValue placeholder="Сотрудник" />
         </SelectTrigger>
         <SelectContent>
@@ -73,7 +73,7 @@ export default function WarehouseProductFilters({
       </Select>
 
       <Select value={typeFilter} onValueChange={setTypeFilter}>
-        <SelectTrigger className="wh-fld h-auto w-[130px]">
+        <SelectTrigger className="sh-fld justify-between" style={{ width: 130 }}>
           <SelectValue placeholder="Тип товара" />
         </SelectTrigger>
         <SelectContent>
@@ -85,28 +85,28 @@ export default function WarehouseProductFilters({
       </Select>
 
       <span className="flex items-center gap-1.5">
-        <span className="text-[11px] font-bold text-slate-500">Цена:</span>
+        <span className="sh-cap">Цена</span>
         <input
           type="number"
           min="0"
           placeholder="от"
           value={priceMin}
           onChange={e => setPriceMin(e.target.value)}
-          className="wh-fld w-[70px]"
+          className="sh-fld s"
         />
-        <span className="text-[11px] text-slate-400">—</span>
+        <span className="sh-dt">—</span>
         <input
           type="number"
           min="0"
           placeholder="до"
           value={priceMax}
           onChange={e => setPriceMax(e.target.value)}
-          className="wh-fld w-[70px]"
+          className="sh-fld s"
         />
       </span>
 
       {hasActive && (
-        <button onClick={resetAll} className="wh-chip">
+        <button onClick={resetAll} className="sh-chip">
           <span className="flex items-center gap-1">
             <XIcon className="w-3 h-3" /> Сбросить
           </span>

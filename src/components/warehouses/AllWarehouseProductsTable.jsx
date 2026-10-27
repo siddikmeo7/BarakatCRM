@@ -3,63 +3,64 @@ import ProductPhoto from '@/components/products/ProductPhoto';
 import { X as XIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
-// Главный склад — товары всех складов (когда конкретный склад не выбран)
-export default function AllWarehouseProductsTable({ products = [], warehouses = [], creators = [], can, onOpen, onReset }) {
+// Товары всех складов (главный экран раздела)
+export default function AllWarehouseProductsTable({
+  products = [],
+  warehouses = [],
+  creators = [],
+  can,
+  onOpen,
+  onReset,
+  filtersRow,
+}) {
   return (
-    <div className="wh-tbl all">
-      <div className="tt">
+    <div className="sh-tbl">
+      <div className="sh-tt">
         <h3>Товары всех складов ({products.length})</h3>
-        <span className="wh-sp" />
-        <button className="wh-btn dg" onClick={onReset}>
+        <span className="sh-sp" />
+        <button className="sh-btn dg" onClick={onReset}>
           <XIcon className="w-3.5 h-3.5" />
           Сбросить фильтры
         </button>
       </div>
 
-      <div className="overflow-x-auto overflow-y-auto max-h-[62vh]">
-        <table>
-          <thead>
-            <tr>
-              <th>Товар</th>
-              <th>Склад</th>
-              <th>Тип</th>
-              <th>Коробок</th>
-              <th>Цена</th>
-              <th>Добавил</th>
-              <th>Дата</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p, index) => {
-              const wh = warehouses.find(w => w.id === p.warehouse_id);
-              const creator = creators.find(c => c.id === p.created_by_id);
-              return (
-                <tr
-                  key={p.id}
-                  style={{ animationDelay: `${Math.min(index, 10) * 0.02}s`, cursor: 'pointer' }}
-                  onClick={() => onOpen(p)}
-                >
-                  <td>
-                    <div className="flex items-center gap-2.5">
-                      <ProductPhoto photoUrl={p.photo_url} brand={p.brand} className="wh-th" textClassName="text-[8px]" />
-                      <span className="wh-pn">{p.brand} {p.model}</span>
-                    </div>
-                  </td>
-                  <td>{wh?.name || '—'}</td>
-                  <td>{p.product_type || '—'}</td>
-                  <td>{p.boxes_in_stock || 0}</td>
-                  <td>{can('view_stock_value') ? (p.sale_price || 0).toLocaleString() : '•••••'}</td>
-                  <td>{creator?.name || '—'}</td>
-                  <td>{p.created_date ? format(parseISO(p.created_date), 'dd.MM.yyyy') : ''}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      {filtersRow && <div className="sh-fl">{filtersRow}</div>}
+
+      <div className="sh-scroll">
+        <div className="sh-scroll-in">
+          <div className="sh-th">
+            <span className="sh-cap">Товар</span>
+            <span className="sh-cap">Склад</span>
+            <span className="sh-cap">Тип</span>
+            <span className="sh-cap">Коробок</span>
+            <span className="sh-cap">Цена</span>
+            <span className="sh-cap">Добавил</span>
+            <span className="sh-cap">Дата</span>
+          </div>
+
+          {products.map(p => {
+            const wh = warehouses.find(w => w.id === p.warehouse_id);
+            const creator = creators.find(c => c.id === p.created_by_id);
+            return (
+              <div key={p.id} className="sh-tr" onClick={() => onOpen(p)}>
+                <div className="sh-pn">
+                  <ProductPhoto photoUrl={p.photo_url} brand={p.brand} className="sh-sw" textClassName="text-[8px]" />
+                  <span className="sh-pn-name">{p.brand} {p.model}</span>
+                </div>
+                <span>{wh?.name || '—'}</span>
+                <span>{p.product_type || '—'}</span>
+                <span>{p.boxes_in_stock || 0}</span>
+                <span>{can('view_stock_value') ? (p.sale_price || 0).toLocaleString() : '•••••'}</span>
+                <span>{creator?.name || '—'}</span>
+                <span className="sh-dt">{p.created_date ? format(parseISO(p.created_date), 'dd.MM.yyyy') : ''}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {products.length === 0 && (
-        <div className="text-center py-8 text-[12px] text-slate-500">Товары не найдены</div>
+        <div className="sh-empty">Товары не найдены</div>
       )}
     </div>
   );
