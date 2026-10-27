@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import SubscriptionStatusBadge from '@/components/subscription/SubscriptionStatusBadge';
-import { getSubscriptionState, loadPlan, formatPrice, fetchAccessState, providerLabel, fetchPaymentHistory } from '@/lib/subscription';
+import { getSubscriptionState, loadPlan, formatPrice, fetchAccessState, providerLabel } from '@/lib/subscription';
 import { CreditCard, RefreshCw, Loader2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 // Подписка бизнеса: статус, сроки, стоимость и оплата — всё внутри профиля
 export default function ProfileSubscriptionCard({ business, canPay, isPlatformAdmin, onPay, onRefresh }) {
@@ -20,7 +21,15 @@ export default function ProfileSubscriptionCard({ business, canPay, isPlatformAd
   useEffect(() => {
     if (!business?.id) return;
     fetchAccessState(business.id).then(setAccess).catch(() => setAccess(null));
-    fetchPaymentHistory(business.id).then(setPayments).catch(() => setPayments([]));
+    // История оплат — из записей Base44 Payments (владелец видит свои оплаты)
+    base44.entities.Base44Purchase.filter({ status: 'paid' }, { sort: '-paid_at', limit: 20 })
+      .then((page) => setPayments((page?.items || []).map(p => ({
+        status: 'ok',
+        date: p.paidAt || p.created_date,
+        amount: p.amount ? `${p.amount} ${p.currency || ''}`.trim() : '',
+        type: 'subscription',
+      }))))
+      .catch(() => setPayments([]));
   }, [business?.id, business?.subscription_status]);
 
   const state = getSubscriptionState(business, { isPlatformAdmin });

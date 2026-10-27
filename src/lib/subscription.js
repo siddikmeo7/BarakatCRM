@@ -73,21 +73,8 @@ export async function fetchAccessState(businessId) {
   return res?.data || null;
 }
 
-// Ежемесячная подписка через Alif Bank: start | cancel | check
-export async function alifSubscriptionAction(action, payload = {}) {
-  const res = await base44.functions.invoke('alifSubscription', { action, ...payload });
-  return res?.data || {};
-}
-
-// История платежей по подписке (Alif Bank)
-export async function fetchPaymentHistory(businessId) {
-  const res = await base44.functions.invoke('alifPaymentStatus', { business_id: businessId, action: 'status' });
-  return res?.data?.payments || [];
-}
-
 export function providerLabel(access) {
   if (access?.exempt) return 'Бесплатный доступ';
-  if (access?.provider === 'alif') return 'Alif Bank';
   if (access?.provider === 'base44') return 'Base44 Payments';
   return '—';
 }

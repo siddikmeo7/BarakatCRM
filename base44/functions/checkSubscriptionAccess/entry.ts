@@ -5,7 +5,6 @@ import {
   PLAN_PRICE_DEFAULT,
   PLAN_CURRENCY_DEFAULT,
 } from '../../shared/subscriptionAccess.ts';
-import { isAlifConfigured } from '../../shared/alif.ts';
 
 /**
  * Серверная проверка доступа к приложению.
@@ -38,7 +37,6 @@ export default async function (req) {
     }
 
     const isPlatformAdmin = user.role === 'admin';
-    const alifConfigured = isAlifConfigured();
 
     if (!business) {
       return Response.json({
@@ -49,7 +47,6 @@ export default async function (req) {
         isOwner: false,
         price: PLAN_PRICE_DEFAULT,
         currency: PLAN_CURRENCY_DEFAULT,
-        alifConfigured,
       });
     }
 
@@ -57,14 +54,11 @@ export default async function (req) {
       isPlatformAdmin ||
       String(business.owner_email || '').toLowerCase() === String(user.email || '').toLowerCase();
 
-    const [subRows, grantRows, alifRows, planRows] = await Promise.all([
+    const [subRows, grantRows, planRows] = await Promise.all([
       base44.asServiceRole.entities.BusinessSubscription.filter({ business_id: business.id }),
       base44.asServiceRole.entities.AccessGrant.filter({
         $or: [{ business_id: business.id }, { user_email: user.email }],
       }),
-      isOwner
-        ? base44.asServiceRole.entities.AlifSubscription.filter({ business_id: business.id })
-        : Promise.resolve([]),
       base44.asServiceRole.entities.SubscriptionPlan.filter({ is_active: true }),
     ]);
 
@@ -72,7 +66,6 @@ export default async function (req) {
     const plan = planRows?.[0] || null;
     const grant = findActiveGrant(grantRows, { businessId: business.id, userEmail: user.email });
     const access = computeAccess({ business, subscription, grant, isPlatformAdmin });
-    const alifRow = alifRows?.[0] || null;
 
     return Response.json({
       ...access,
@@ -85,11 +78,6 @@ export default async function (req) {
       planName: plan?.name || 'BarakatCRM — подписка',
       note: subscription?.note || business.subscription_note || '',
       lastPaymentAt: subscription?.last_payment_at || null,
-      hasAlifSubscription: !!alifRow?.subscription_id,
-      alifStatus: alifRow?.status || 'none',
-      alifAccount: alifRow?.account_masked || '',
-      alifError: alifRow?.last_error || '',
-      alifConfigured,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

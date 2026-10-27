@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { CreditCard, Loader2, RefreshCw, ShieldCheck, CalendarClock, Info } from 'lucide-react';
 import { getSubscriptionState, loadPlan, formatPrice, startSubscriptionCheckout, fetchAccessState, TRIAL_DAYS } from '@/lib/subscription';
 import SubscriptionStatusBadge from './SubscriptionStatusBadge';
-import AlifPayPanel from './AlifPayPanel';
 
 export default function SubscriptionDialog({ business, open, onOpenChange, onRefresh, canPay = false }) {
   const [plan, setPlan] = useState(null);
@@ -103,11 +102,9 @@ export default function SubscriptionDialog({ business, open, onOpenChange, onRef
             </li>
             <li className="flex items-start gap-2">
               <Info className="w-4 h-4 text-slate-400 mt-0.5 flex-none" />
-              Оплата проходит на защищённой странице банка или платёжного сервиса
+              Оплата проходит на защищённой странице платёжного сервиса
             </li>
           </ul>
-
-          <AlifPayPanel business={business} canPay={canPay} onRefresh={onRefresh} />
 
           {error && <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>}
 
