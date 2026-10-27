@@ -708,9 +708,12 @@ button.tk-cell:focus-visible { outline: 2px solid #f5b23e; outline-offset: -2px;
 
 /* Таблица реестра */
 .tk-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+/* Шапка реестра закреплена по высоте: длинный список прокручивается внутри таблицы,
+   строки не перекрывают заголовки */
 .tk-tbl th {
   text-align: left; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #7c8594;
-  padding: 6px 8px; border-bottom: 1px solid #232a35; font-weight: 700;
+  padding: 0 8px; height: 34px; border-bottom: 1px solid #232a35; font-weight: 700;
+  position: sticky; top: 0; z-index: 3; background-color: #12161d;
 }
 .tk-tbl td { padding: 9px 8px; border-bottom: 1px solid #1b212a; color: #d7dbe2; }
 .tk-tbl tr:hover td { background: #171c25; }
@@ -822,7 +825,7 @@ html:not(.dark) .tk-slab h3 { color: #475569; }
 html:not(.dark) .tk-leg { color: #475569; }
 html:not(.dark) .tk-mirror { border-top-color: #e2e8f0; }
 html:not(.dark) .tk-trk { background: #f1f5f9; border-color: #dfe5ec; }
-html:not(.dark) .tk-tbl th { color: #64748b; border-bottom-color: #e2e8f0; }
+html:not(.dark) .tk-tbl th { color: #64748b; border-bottom-color: #e2e8f0; background-color: #ffffff; }
 html:not(.dark) .tk-tbl td { border-bottom-color: #eef1f5; }
 html:not(.dark) .tk-tbl tr:hover td { background: #f8fafc; }
 html:not(.dark) .tk-tbl .rk { color: #b45309; }
@@ -1099,7 +1102,14 @@ html:not(.dark) .tk-input { background: #ffffff; border-color: #cbd5e1; color: #
 .sh-fld { height: 32px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; font-family: inherit; font-size: 12.5px; font-weight: 500; color: #111827; display: inline-flex; align-items: center; }
 .sh-fld.w { width: 150px; }
 .sh-fld.s { width: 70px; }
-.sh-th { display: grid; grid-template-columns: 2.6fr 1.6fr 1fr 1fr 1fr 1.3fr 1.2fr; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; }
+/* Шапка таблицы закреплена: фиксированная высота и непрозрачный фон, чтобы при
+   прокрутке длинного списка строки уходили под шапку, а не перекрывали её. */
+.sh-th {
+  display: grid; grid-template-columns: 2.6fr 1.6fr 1fr 1fr 1fr 1.3fr 1.2fr; gap: 12px;
+  padding: 0 20px; height: 44px; align-items: center;
+  border-bottom: 1px solid #e2e8f0; background-color: #ffffff;
+  position: sticky; top: 0; z-index: 3;
+}
 .sh-tr { display: grid; grid-template-columns: 2.6fr 1.6fr 1fr 1fr 1fr 1.3fr 1.2fr; gap: 12px; align-items: center; padding: 14px 20px; border-bottom: 1px solid #eef2f6; font-size: 14px; font-weight: 500; line-height: 1.4; cursor: pointer; transition: background .15s; }
 .sh-tr:hover { background: #f0fdfa; }
 .sh-tr:last-child { border-bottom: 0; }
@@ -1142,7 +1152,7 @@ html:not(.dark) .tk-input { background: #ffffff; border-color: #cbd5e1; color: #
 
 /* Строки товаров склада */
 .sh-dtr { display: grid; grid-template-columns: 5px 36px 2.6fr 1fr 1fr 1fr 1.2fr 1.2fr 1.2fr 40px; gap: 12px; align-items: center; padding: 14px 20px 14px 0; border-bottom: 1px solid #eef2f6; font-size: 14px; font-weight: 500; line-height: 1.4; transition: background .15s; }
-.sh-dtr.h { padding-top: 12px; padding-bottom: 12px; background: #fbfdfd; }
+.sh-dtr.h { height: 44px; align-items: center; background: #fbfdfd; position: sticky; top: 0; z-index: 3; }
 .sh-dtr .ind { height: 100%; min-height: 44px; border-radius: 0 3px 3px 0; }
 .sh-dtr:nth-child(even):not(.h) { background: #fafcfc; }
 .sh-tot { display: flex; gap: 28px; padding: 14px 20px; background: #f0fdfa; border-top: 1px solid #99d5cf; font-size: 13.5px; font-weight: 600; color: #0f766e; flex-wrap: wrap; }
@@ -1243,7 +1253,7 @@ html:not(.dark) .tk-input { background: #ffffff; border-color: #cbd5e1; color: #
 .dark .sh-bar { background: #232a35; }
 .dark .sh-bar span { background: #2dd4bf; }
 .dark .sh-sw { background: #171c25; border-color: #232a35; }
-.dark .sh-reg .h, .dark .sh-fl, .dark .sh-dtr.h { background: #0f131a; }
+.dark .sh-reg .h, .dark .sh-fl, .dark .sh-dtr.h, .dark .sh-th { background: #0f131a; }
 .dark .sh-lr, .dark .sh-tr, .dark .sh-dtr, .dark .sh-empty, .dark .sh-tt, .dark .sh-th, .dark .sh-fl, .dark .sh-reg .h { border-color: #232a35; }
 .dark .sh-lr, .dark .sh-tr, .dark .sh-dtr { color: #d7dbe2; }
 .dark .sh-lr:hover, .dark .sh-tr:hover { background: #171c25; }

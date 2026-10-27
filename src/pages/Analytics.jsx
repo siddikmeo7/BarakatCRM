@@ -601,7 +601,7 @@ export default function Analytics() {
               <p className="tk-muted text-xs">Нет продаж за выбранный период</p>
             </div>
           ) : (
-            <div className="max-h-[520px] overflow-y-auto overflow-x-auto">
+            <div className="max-h-[60vh] min-h-[240px] overflow-y-auto overflow-x-auto custom-scroll">
               <table className="tk-tbl tk-mono">
                 <thead>
                   <tr>
