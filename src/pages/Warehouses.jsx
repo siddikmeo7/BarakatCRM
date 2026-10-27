@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
@@ -63,7 +63,6 @@ export default function Warehouses() {
   const [search, setSearch] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
   const [view, setView] = useState('grid');
-  const detailRef = useRef(null);
 
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
@@ -115,12 +114,7 @@ export default function Warehouses() {
     if (found) setSelectedWarehouse(found);
   }, [warehouses]);
 
-  // Выбранный склад раскрывается ниже витрины — мягко прокручиваем к нему
-  useEffect(() => {
-    if (selectedWarehouse && detailRef.current) {
-      detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [selectedWarehouse?.id]);
+  // Данные выбранного склада открываются в отдельном окне поверх витрины.
 
   const loadData = async () => {
     try {
@@ -612,11 +606,10 @@ export default function Warehouses() {
           />
         </div>
 
-        {/* Экран выбранного склада */}
-        {selectedWarehouse && (
-          <div ref={detailRef}>
-            <div className="sh-sep" />
-            <div className="sh-cn">Открыт склад</div>
+        {/* Данные выбранного склада — в отдельном окне поверх витрины */}
+        <Dialog open={!!selectedWarehouse} onOpenChange={(open) => !open && setSelectedWarehouse(null)}>
+          <DialogContent className="sh-win tk-panel border tk-bline p-0 w-[96vw] max-w-6xl max-h-[92vh] overflow-y-auto">
+            {selectedWarehouse && (
             <WarehouseDetailPanel
               warehouse={selectedWarehouse}
               stats={getWarehouseStats(selectedWarehouse.id)}
@@ -666,8 +659,9 @@ export default function Warehouses() {
               onDeleteSelected={() => setDeleteConfirmDialog({ type: 'selected', label: `${selectedProductIds.length} выбранных товаров` })}
               onClearSelection={() => setSelectedProductIds([])}
             />
-          </div>
-        )}
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Move Products Dialog */}
