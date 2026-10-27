@@ -60,24 +60,24 @@
         },
         {
           "user_condition": {
-            "role": "admin"
+            "data.is_platform_admin": true
           }
         }
       ]
     },
     "create": {
       "user_condition": {
-        "role": "admin"
+        "data.is_platform_admin": true
       }
     },
     "update": {
       "user_condition": {
-        "role": "admin"
+        "data.is_platform_admin": true
       }
     },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "data.is_platform_admin": true
       }
     }
   }
