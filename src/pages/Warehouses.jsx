@@ -124,15 +124,16 @@ export default function Warehouses() {
     }
   }, []);
 
-  // При возврате с страницы товара — восстановить выбранный склад
+  // При входе в раздел сначала всегда показываются все склады.
+  // Конкретный склад восстанавливаем только при возврате из карточки товара.
   useEffect(() => {
     if (warehouses.length === 0) return;
-    const urlParams = new URLSearchParams(window.location.search);
-    const warehouseId = urlParams.get('warehouseId');
-    if (warehouseId) {
-      const found = warehouses.find(w => w.id === warehouseId);
-      if (found) setSelectedWarehouse(found);
-    }
+    if (sessionStorage.getItem('wh_back') !== '1') return;
+    sessionStorage.removeItem('wh_back');
+    const warehouseId = new URLSearchParams(window.location.search).get('warehouseId');
+    if (!warehouseId) return;
+    const found = warehouses.find(w => w.id === warehouseId);
+    if (found) setSelectedWarehouse(found);
   }, [warehouses]);
 
   const loadData = async () => {
@@ -466,8 +467,8 @@ export default function Warehouses() {
         )}
       </div>
 
-      {/* Итоги по всем складам */}
-      <WarehouseKpiRow values={kpiValues} />
+      {/* Итоги по всем складам — показываем на экране «Все склады» */}
+      {!selectedWarehouse && <WarehouseKpiRow values={kpiValues} />}
 
       {/* Товары без склада */}
       {orphanedProducts.length > 0 && (
@@ -552,8 +553,9 @@ export default function Warehouses() {
         </div>
       )}
 
-      {/* Реестр складов слева + рабочая область справа (на телефоне — одна колонка) */}
-      <div className={`wh-main ${selectedWarehouse ? 'detail-open' : ''}`}>
+      {/* Экран «Все склады»: реестр слева + товары всех складов справа.
+          Открытый склад показывается отдельным экраном — только его данные. */}
+      <div className={`wh-main ${selectedWarehouse ? 'single' : ''}`}>
         <WarehouseRegistry
           warehouses={filteredWarehouses}
           getStats={getWarehouseStats}
@@ -602,6 +604,8 @@ export default function Warehouses() {
               toggleAll={toggleSelectAll}
               unsoldIds={getUnsoldProductIds}
               onOpenProduct={(p) => {
+                // Возврат из карточки товара вернёт в этот же склад
+                sessionStorage.setItem('wh_back', '1');
                 window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id + '&from=' + encodeURIComponent(createPageUrl('Warehouses') + '?warehouseId=' + selectedWarehouse.id);
               }}
               onBack={() => setSelectedWarehouse(null)}

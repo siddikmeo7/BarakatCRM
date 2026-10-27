@@ -577,11 +577,12 @@
   .dark .wh-st { border-bottom-color: #1f2937; }
 }
 
+/* Открыт конкретный склад — показываем только его: отдельный экран, реестр скрыт */
+.wh-main.single { grid-template-columns: 1fr; }
+.wh-main.single .wh-reg { display: none; }
+
 @media (max-width: 900px) {
   .wh-main { grid-template-columns: 1fr; }
-  /* Открыт конкретный склад — его данные показываем первыми, реестр уходит вниз */
-  .wh-main.detail-open .wh-reg { order: 2; }
-  .wh-main.detail-open .wh-detail { order: 1; }
   .wh-top h1 { font-size: 22px; }
   .wh-hero { flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px; }
   .wh-hero h2 { font-size: 22px; }
