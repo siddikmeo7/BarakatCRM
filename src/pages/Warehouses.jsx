@@ -88,6 +88,7 @@ export default function Warehouses() {
   
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
+  const [mainSearch, setMainSearch] = useState(''); // поиск товара по всем складам (главный склад)
   const [hideSoldOut, setHideSoldOut] = useState(true);
   const [dateFilter, setDateFilter] = useState('all');
   const [customDateFrom, setCustomDateFrom] = useState('');
@@ -110,12 +111,8 @@ export default function Warehouses() {
   const [deleteWarehouseDialog, setDeleteWarehouseDialog] = useState(null); // warehouse object
   const [deletingWarehouse, setDeletingWarehouse] = useState(false);
 
-  // Открываем первый склад: рабочая область всегда показывает конкретный склад
-  useEffect(() => {
-    if (!loading && !selectedWarehouse && warehouses.length > 0) {
-      setSelectedWarehouse(warehouses[0]);
-    }
-  }, [loading, warehouses]);
+  // При входе в раздел открыт главный склад — видны все склады, поиск идёт по всем складам.
+  // Конкретный склад открывается нажатием в реестре: тогда и данные, и поиск — только по нему.
 
   useEffect(() => {
     if (window.__barakatAccessReady) {
@@ -365,35 +362,40 @@ export default function Warehouses() {
       })
      : [];
 
-  // Активен ли хоть один фильтр (для показа плоского списка товаров в разделе склада)
-  const anyFilterActive =
-    dateFilter !== 'all' || employeeFilter !== 'all' || typeFilter !== 'all' || !!priceMin || !!priceMax;
+  // Главный склад: товары всех складов — поиск здесь всегда идёт по всем складам сразу
+  const allFilteredProducts = products.filter(p => {
+    if (!matchesAllFilters(p)) return false;
+    if (!mainSearch) return true;
+    const q = mainSearch.toLowerCase();
+    return (
+      p.model?.toLowerCase().includes(q) ||
+      p.brand?.toLowerCase().includes(q) ||
+      p.product_type?.toLowerCase().includes(q)
+    );
+  });
 
-  // Товары по всем складам, подходящие под фильтры (для главного вида раздела)
-  const allFilteredProducts = anyFilterActive
-    ? products.filter(p => matchesAllFilters(p))
-    : [];
+  // Итоги по всем складам — для строки «Все склады» в реестре
+  const mainStats = {
+    productsCount: products.length,
+    totalBoxes: products.reduce((sum, p) => sum + (p.boxes_in_stock || 0), 0),
+    totalValue: products.reduce((sum, p) => sum + (p.boxes_in_stock || 0) * (p.sale_price || 0), 0),
+    soldBoxes: sales.reduce((sum, s) => sum + (s.boxes_sold || 0), 0),
+  };
 
-  // Глобальный поиск: найти товар по всем складам
-  const globalSearchResults = globalSearch.trim().length > 0
+  // Область поиска товара: в главном складе — все склады, внутри склада — только он
+  const searchScopeProducts = selectedWarehouse
+    ? products.filter(p => p.warehouse_id === selectedWarehouse.id)
+    : products;
+
+  // Найденные товары в текущей области поиска (для сообщения «Товары не найдены»)
+  const searchScopeMatches = globalSearch.trim().length > 0
     ? (() => {
         const q = globalSearch.toLowerCase();
-        const matched = products.filter(p =>
-          (selectedWarehouse ? p.warehouse_id === selectedWarehouse.id : true) &&
-          (hideSoldOut ? (p.boxes_in_stock || 0) > 0 : true) &&
-          (p.model?.toLowerCase().includes(q) ||
-           p.brand?.toLowerCase().includes(q) ||
-           p.product_type?.toLowerCase().includes(q))
+        return searchScopeProducts.filter(p =>
+          p.model?.toLowerCase().includes(q) ||
+          p.brand?.toLowerCase().includes(q) ||
+          p.product_type?.toLowerCase().includes(q)
         );
-        // Группируем по складу
-        const byWarehouse = {};
-        matched.forEach(p => {
-          const wh = warehouses.find(w => w.id === p.warehouse_id);
-          const key = wh?.id || 'unknown';
-          if (!byWarehouse[key]) byWarehouse[key] = { warehouse: wh, products: [] };
-          byWarehouse[key].products.push(p);
-        });
-        return Object.values(byWarehouse);
       })()
     : [];
 
@@ -450,7 +452,7 @@ export default function Warehouses() {
           onClick={() => { setGlobalSearchOpen(true); setGlobalSearch(''); }}
         >
           <Search className="w-3.5 h-3.5" />
-          Поиск товара
+          {selectedWarehouse ? 'Поиск по складу' : 'Поиск по всем складам'}
         </button>
         <div className="wh-seg">
           <button className={view === 'grid' ? 'on' : ''} onClick={() => setView('grid')}>Сетка</button>
@@ -524,15 +526,22 @@ export default function Warehouses() {
               <XIcon className="w-5 h-5 text-slate-400 hover:text-slate-600" />
             </button>
           </div>
+          {/* Область поиска: главный склад — все склады, внутри склада — только он */}
+          <p className="wh-cap" style={{ marginTop: 8 }}>
+            {selectedWarehouse
+              ? `Поиск только по складу «${selectedWarehouse.name}»`
+              : 'Поиск по всем складам'}
+          </p>
+
           {globalSearch.trim().length > 0 && (
-            globalSearchResults.length === 0 ? (
+            searchScopeMatches.length === 0 ? (
               <p className="text-slate-500 text-sm text-center py-4">Товары не найдены</p>
             ) : (
               <div className={`space-y-4 pr-1 ${globalSearchFullscreen ? '' : 'max-h-[65vh] overflow-y-auto'}`}>
                 {/* Расширенная сводка: всего было, продано, осталось + по складам + по моделям */}
                 <ProductSearchSummary
                   query={globalSearch}
-                  products={products}
+                  products={searchScopeProducts}
                   sales={sales}
                   warehouses={warehouses}
                   can={can}
@@ -543,11 +552,14 @@ export default function Warehouses() {
         </div>
       )}
 
-      {/* Реестр складов слева + рабочая область справа */}
-      <div className="wh-main">
+      {/* Реестр складов слева + рабочая область справа (на телефоне — одна колонка) */}
+      <div className={`wh-main ${selectedWarehouse ? 'detail-open' : ''}`}>
         <WarehouseRegistry
           warehouses={filteredWarehouses}
           getStats={getWarehouseStats}
+          mainStats={mainStats}
+          mainSelected={!selectedWarehouse}
+          onSelectMain={() => setSelectedWarehouse(null)}
           selectedId={selectedWarehouse?.id}
           onSelect={setSelectedWarehouse}
           onEdit={handleOpenDialog}
@@ -561,7 +573,7 @@ export default function Warehouses() {
           canCreate={can('manage_warehouses')}
         />
 
-        <div>
+        <div className="wh-detail">
           {selectedWarehouse ? (
             <WarehouseDetailPanel
               warehouse={selectedWarehouse}
@@ -611,7 +623,21 @@ export default function Warehouses() {
             />
           ) : (
             <div>
+              {/* Фильтры главного склада: поиск товара идёт по всем складам */}
               <div className="wh-filt">
+                <div className="wh-srch wide">
+                  <Search className="w-3.5 h-3.5" />
+                  <input
+                    value={mainSearch}
+                    onChange={e => setMainSearch(e.target.value)}
+                    placeholder="Поиск товара по всем складам"
+                  />
+                  {mainSearch && (
+                    <button onClick={() => setMainSearch('')} title="Очистить">
+                      <XIcon className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
                 <WarehouseProductFilters
                   dateFilter={dateFilter} setDateFilter={setDateFilter}
                   customDateFrom={customDateFrom} setCustomDateFrom={setCustomDateFrom}
@@ -630,7 +656,7 @@ export default function Warehouses() {
                 creators={creators}
                 can={can}
                 onOpen={(p) => { window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id; }}
-                onReset={resetFilters}
+                onReset={() => { resetFilters(); setMainSearch(''); }}
               />
             </div>
           )}

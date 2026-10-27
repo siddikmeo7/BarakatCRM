@@ -3,12 +3,12 @@ import ProductPhoto from '@/components/products/ProductPhoto';
 import { X as XIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
-// Товары по фильтру — общий вид раздела (когда конкретный склад не выбран)
+// Главный склад — товары всех складов (когда конкретный склад не выбран)
 export default function AllWarehouseProductsTable({ products = [], warehouses = [], creators = [], can, onOpen, onReset }) {
   return (
     <div className="wh-tbl all">
       <div className="tt">
-        <h3>Товары по фильтру ({products.length})</h3>
+        <h3>Товары всех складов ({products.length})</h3>
         <span className="wh-sp" />
         <button className="wh-btn dg" onClick={onReset}>
           <XIcon className="w-3.5 h-3.5" />
@@ -59,7 +59,7 @@ export default function AllWarehouseProductsTable({ products = [], warehouses = 
       </div>
 
       {products.length === 0 && (
-        <div className="text-center py-8 text-[12px] text-slate-500">Нет товаров по выбранному фильтру</div>
+        <div className="text-center py-8 text-[12px] text-slate-500">Товары не найдены</div>
       )}
     </div>
   );

@@ -681,14 +681,6 @@ export default function Layout({ children, currentPageName }) {
           <Menu className="w-4 h-4" />
         </button>
 
-        {/* Логотип */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div className="tk-topbox w-7 h-7 flex items-center justify-center">
-            <Package className="w-4 h-4" />
-          </div>
-          <span className="tk-topbar-name font-bold text-sm tracking-tight">BarakatCRM</span>
-        </div>
-
         {/* Текущий раздел */}
         <div className="flex-1 flex items-center justify-center min-w-0">
           {currentMenuLabel && <span className="tk-topbar-page truncate">{currentMenuLabel}</span>}

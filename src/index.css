@@ -561,6 +561,63 @@
 .dark .wh-tbl td { border-color: #1f2937; }
 .dark .wh-tbl tfoot td { background: #020617; color: #fff; }
 
+/* Главный склад («Все склады») в реестре */
+.wh-entry.main { background: #eff6ff; }
+.dark .wh-entry.main { background: #1b2733; }
+.wh-wh.main strong { color: #1d4ed8; }
+.dark .wh-wh.main strong { color: #93c5fd; }
+
+/* Мобильная раскладка раздела «Склады»: всё помещается в одно окно */
+@media (max-width: 1024px) {
+  .wh-kpi { grid-template-columns: repeat(3, 1fr); }
+  .wh-stats { grid-template-columns: repeat(3, 1fr); }
+  .wh-st { border-bottom: 1px solid #e2e8f0; }
+  .wh-st:nth-child(3n) { border-right: 0; }
+  .wh-st:nth-last-child(-n+3) { border-bottom: 0; }
+  .dark .wh-st { border-bottom-color: #1f2937; }
+}
+
+@media (max-width: 900px) {
+  .wh-main { grid-template-columns: 1fr; }
+  /* Открыт конкретный склад — его данные показываем первыми, реестр уходит вниз */
+  .wh-main.detail-open .wh-reg { order: 2; }
+  .wh-main.detail-open .wh-detail { order: 1; }
+  .wh-top h1 { font-size: 22px; }
+  .wh-hero { flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px; }
+  .wh-hero h2 { font-size: 22px; }
+  .wh-hero:after { background: linear-gradient(180deg, #fff 22%, rgba(255, 255, 255, .55)); }
+  .dark .wh-hero:after { background: linear-gradient(180deg, #111827 22%, rgba(17, 24, 39, .55)); }
+  .wh-acts { margin-left: 0; max-width: none; justify-content: flex-start; }
+  .wh-srch.wide { width: 100%; }
+  .wh-list .row, .wh-entry { grid-template-columns: 1fr 34px 38px 60px 44px; }
+}
+
+@media (max-width: 560px) {
+  .wh-console { padding: 12px; }
+  .wh-kpi { grid-template-columns: repeat(2, 1fr); }
+  .wh-k { padding: 10px; }
+  .wh-k b { font-size: 18px; }
+  .wh-stats { grid-template-columns: repeat(2, 1fr); }
+  .wh-st { padding: 10px; border-right: 0; border-bottom: 1px solid #e2e8f0; }
+  .wh-st:nth-child(odd) { border-right: 1px solid #e2e8f0; }
+  .wh-st:nth-last-child(-n+2) { border-bottom: 0; }
+  .dark .wh-st { border-bottom-color: #1f2937; border-right-color: #1f2937; }
+  .wh-st b { font-size: 16px; }
+  .wh-tbl .tt { padding: 10px 12px; }
+  .wh-tbl table { font-size: 11px; }
+  .wh-tbl th { padding: 6px 5px; letter-spacing: .06em; }
+  .wh-tbl td { padding: 6px 5px; }
+  .wh-th { width: 30px; height: 30px; }
+  /* В товарах склада на телефоне оставляем коробки, цены и прибыль */
+  .wh-tbl:not(.all) th:nth-child(5), .wh-tbl:not(.all) td:nth-child(5),
+  .wh-tbl:not(.all) th:nth-child(6), .wh-tbl:not(.all) td:nth-child(6) { display: none; }
+  /* В товарах всех складов оставляем склад, коробки, цену и дату */
+  .wh-tbl.all th:nth-child(3), .wh-tbl.all td:nth-child(3),
+  .wh-tbl.all th:nth-child(6), .wh-tbl.all td:nth-child(6) { display: none; }
+  .wh-filt { padding: 8px; gap: 6px; }
+  .wh-bulk { padding: 10px; }
+}
+
 /* ===== Раздел «Аналитика»: стиль «Тёмный терминал» ===== */
 
 .tk-console {
