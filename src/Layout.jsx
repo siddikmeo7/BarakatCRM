@@ -225,11 +225,10 @@ export default function Layout({ children, currentPageName }) {
         window.__redirectToProfile = true;
       }
 
-      // Платформенный админ (siddikme2007@gmail.com) тоже может войти в бизнес как сотрудник
-      // по кодам — в этом случае у него есть savedMode, и ветка ниже должна отработать.
-      // Без savedMode админ остаётся в режиме AdminDashboard (бизнес не грузится).
-      const hasSavedMode = !!(sessionStorage.getItem('barakatcrm_mode') || localStorage.getItem('barakatcrm_mode'));
-      if (currentUser.email !== ADMIN_EMAIL || hasSavedMode) {
+      // Владелец платформы входит в приложение так же, как остальные: если у него есть
+      // свой бизнес или запись сотрудника — грузим их, иначе показываем вход в бизнес.
+      // Раньше такой пользователь оставался вовсе без бизнеса, и разделы были пустыми.
+      {
             // Проверяем: есть ли выбранный режим (сотрудник или владелец).
             // Читаем из sessionStorage ИЛИ localStorage — Settings пишет в оба,
             // sessionStorage переживает перезагрузку в той же вкладке и страхует,
@@ -457,6 +456,12 @@ export default function Layout({ children, currentPageName }) {
     } catch (error) {
       console.error('Error loading user:', error);
     } finally {
+      // Готовность доступа публикуется всегда: разделы не должны ждать сигнал,
+      // который может не прийти (например, когда бизнес не выбран).
+      if (!window.__barakatAccessReady) {
+        window.__barakatAccessReady = true;
+        window.dispatchEvent(new Event('barakatAccessReady'));
+      }
       setLoading(false);
     }
   };

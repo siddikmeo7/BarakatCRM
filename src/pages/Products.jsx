@@ -161,7 +161,7 @@ export default function Products() {
   const loadData = async () => {
     try {
       const cachedBiz = window.__barakatBusiness;
-      if (!cachedBiz) return;
+      if (!cachedBiz) { setLoading(false); return; }
 
       // Загружаем свежие данные бизнеса из БД, чтобы custom_pairs_per_box и другие поля были актуальны
       const [bizList, productsData, warehousesData, employeesData, createLogs] = await Promise.all([
