@@ -14,6 +14,7 @@ import DeleteWarehouseDialog from '@/components/warehouses/DeleteWarehouseDialog
 import OrphanedProductsDialog from '@/components/products/OrphanedProductsDialog';
 import DuplicateProductsDialog from '@/components/products/DuplicateProductsDialog';
 import ProductSearchSummary from '@/components/warehouses/ProductSearchSummary';
+import ProductStockBreakdown from '@/components/warehouses/ProductStockBreakdown';
 import WarehouseProductFilters from '@/components/warehouses/WarehouseProductFilters';
 import { duplicateKey } from '@/lib/productDuplicate';
 import { WAREHOUSE_HERO, warehousePhoto } from '@/lib/warehousePhotos';
@@ -575,6 +576,15 @@ export default function Warehouses() {
             can={can}
             onOpen={(p) => { window.location.href = createPageUrl('ProductDetail') + '?id=' + p.id; }}
             onReset={() => { resetFilters(); setMainSearch(''); }}
+            breakdown={mainSearch.trim() ? (
+              <ProductStockBreakdown
+                query={mainSearch}
+                products={products}
+                warehouses={warehouses}
+                sales={sales}
+                can={can}
+              />
+            ) : null}
             filtersRow={
               <>
                 <div className="sh-srch" style={{ width: 260 }}>

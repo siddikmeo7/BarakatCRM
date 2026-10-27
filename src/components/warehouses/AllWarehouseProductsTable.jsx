@@ -12,6 +12,7 @@ export default function AllWarehouseProductsTable({
   onOpen,
   onReset,
   filtersRow,
+  breakdown,
 }) {
   return (
     <div className="sh-tbl">
@@ -25,6 +26,8 @@ export default function AllWarehouseProductsTable({
       </div>
 
       {filtersRow && <div className="sh-fl">{filtersRow}</div>}
+
+      {breakdown}
 
       <div className="sh-scroll">
         <div className="sh-scroll-in">
