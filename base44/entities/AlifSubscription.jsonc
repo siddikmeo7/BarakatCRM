@@ -81,21 +81,30 @@
   ],
   "rls": {
     "read": {
-      "created_by_id": "{{user.id}}"
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "data.is_platform_admin": true
+          }
+        }
+      ]
     },
     "create": {
       "user_condition": {
-        "role": "admin"
+        "data.is_platform_admin": true
       }
     },
     "update": {
       "user_condition": {
-        "role": "admin"
+        "data.is_platform_admin": true
       }
     },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "data.is_platform_admin": true
       }
     }
   }
