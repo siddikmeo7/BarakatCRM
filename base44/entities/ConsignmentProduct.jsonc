@@ -100,7 +100,7 @@
         },
         {
           "user_condition": {
-            "role": "admin"
+            "data.is_platform_admin": true
           }
         }
       ]
@@ -112,7 +112,7 @@
         },
         {
           "user_condition": {
-            "role": "admin"
+            "data.is_platform_admin": true
           }
         }
       ]
@@ -124,7 +124,7 @@
         },
         {
           "user_condition": {
-            "role": "admin"
+            "data.is_platform_admin": true
           }
         }
       ]
@@ -136,7 +136,7 @@
         },
         {
           "user_condition": {
-            "role": "admin"
+            "data.is_platform_admin": true
           }
         }
       ]
