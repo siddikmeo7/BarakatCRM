@@ -292,7 +292,12 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
             )}
           </div>
 
-          <SalaryPaymentHistory payments={payments} loading={loading} />
+          <SalaryPaymentHistory
+            payments={payments}
+            loading={loading}
+            canEdit={canManage}
+            onChanged={async () => { await load(); onChanged?.(); }}
+          />
         </div>
       </DialogContent>
     </Dialog>
