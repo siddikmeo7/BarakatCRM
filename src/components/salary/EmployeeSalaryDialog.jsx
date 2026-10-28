@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import SalaryPaymentHistory from './SalaryPaymentHistory';
+import SalaryRateEditor from './SalaryRateEditor';
 import SalaryScheduleEditor from './SalaryScheduleEditor';
 import SalaryDueBadge from './SalaryDueBadge';
 import { getSalaryMethod } from '@/lib/salary';
@@ -29,14 +30,18 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
   const [paidFlash, setPaidFlash] = useState('');
+  const [empPatch, setEmpPatch] = useState({});
   const period = getSalaryPeriod();
 
+  // После изменения суммы зарплаты в профиле сразу показываем новые значения
+  const liveEmployee = { ...employee, ...empPatch };
+
   const isReal = !!employee?.id && !employee._unknown;
-  const method = getSalaryMethod(employee?.salary_method || 'per_box');
-  const isMonthly = employee?.salary_method === 'fixed_monthly';
-  const rate = employee?.salary_method === 'per_box'
-    ? Number(employee?.salary_per_box || 0)
-    : Number(employee?.salary_rate || 0);
+  const method = getSalaryMethod(liveEmployee?.salary_method || 'per_box');
+  const isMonthly = liveEmployee?.salary_method === 'fixed_monthly';
+  const rate = liveEmployee?.salary_method === 'per_box'
+    ? Number(liveEmployee?.salary_per_box || 0)
+    : Number(liveEmployee?.salary_rate || 0);
   const suggested = isMonthly ? rate : Number(stat?.salary || 0);
 
   const load = async () => {
@@ -71,7 +76,7 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
         employee_name: employee.name,
         employee_email: employee.user_email,
         amount: value,
-        method: employee.salary_method || 'per_box',
+        method: liveEmployee.salary_method || 'per_box',
         period_key: period.periodKey,
         period_label: period.monthLabel,
         paid_at: new Date().toISOString(),
@@ -211,6 +216,17 @@ export default function EmployeeSalaryDialog({ employee, stat, business, canMana
             </div>
             <SalaryDueBadge state={dueState} />
           </div>
+
+          {/* Изменение суммы зарплаты */}
+          <SalaryRateEditor
+            employee={liveEmployee}
+            canManage={canManage && isReal}
+            onSaved={async (update) => {
+              setEmpPatch(p => ({ ...p, ...update }));
+              await load();
+              onChanged?.();
+            }}
+          />
 
           {/* Продажи за выбранный период */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">

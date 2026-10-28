@@ -15,6 +15,7 @@ import { ru } from 'date-fns/locale';
 import DateFilter from '@/components/filters/DateFilter';
 import SearchInput from '@/components/filters/SearchInput';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import EmployeeExpensesProfile from '@/components/expenses/EmployeeExpensesProfile';
 import BackButton from '@/components/ui/BackButton';
 import OwnerProfitControl from '@/components/expenses/OwnerProfitControl';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
@@ -317,6 +318,16 @@ export default function Expenses() {
           </p>
         </div>
       </div>
+
+      {/* ── Профиль сотрудника ── */}
+      {employee && !isOwner && (
+        <EmployeeExpensesProfile
+          employee={employee}
+          total={totalFiltered}
+          count={filtered.length}
+          businessName={business?.name}
+        />
+      )}
 
       {/* ── Диаграмма + плитки ── */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_330px] gap-5 items-stretch">

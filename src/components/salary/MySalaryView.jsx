@@ -9,6 +9,7 @@ import BackButton from '@/components/ui/BackButton';
 import PageHeader from '@/components/ui/PageHeader';
 import DateFilter from '@/components/filters/DateFilter';
 import PaymentReceiptDialog from '@/components/salary/PaymentReceiptDialog';
+import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { getSalaryMethod, computeSalary } from '@/lib/salary';
 import { formatPaidAt, formatPayDay, formatDueMoment, getUpcomingMoment } from '@/lib/salaryPeriod';
 
@@ -114,6 +115,23 @@ export default function MySalaryView({ employee, sales = [], payments = [], sche
     <div className="space-y-5">
       <BackButton className="mb-2" />
       <PageHeader title="Моя зарплата" subtitle={`${employee?.name || ''} · ${business?.name || ''}`} />
+
+      {/* Профиль сотрудника */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-3">
+        <EmployeeAvatar employee={employee} size="md" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-[.14em] font-bold text-slate-400">Мой профиль</p>
+          <p className="font-bold text-slate-900 dark:text-white truncate">{employee?.name || 'Сотрудник'}</p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+            {business?.name ? `${business.name} · ` : ''}сотрудник
+          </p>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-[10px] uppercase tracking-[.12em] font-bold text-slate-400">Ставка</p>
+          <p className="text-sm font-bold text-slate-900 dark:text-white">{fmtMoney(rate)}{method.key === 'percent_revenue' ? '%' : ' с.'}</p>
+          <p className="text-[10px] text-slate-400">{method.icon} {method.label}</p>
+        </div>
+      </div>
 
       {/* Фильтры периода */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-3 shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
