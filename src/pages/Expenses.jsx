@@ -17,7 +17,6 @@ import SearchInput from '@/components/filters/SearchInput';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import EmployeeExpensesProfile from '@/components/expenses/EmployeeExpensesProfile';
 import BackButton from '@/components/ui/BackButton';
-import OwnerProfitControl from '@/components/expenses/OwnerProfitControl';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import ExpenseDonut from '@/components/expenses/ExpenseDonut';
 import ExpenseCard from '@/components/expenses/ExpenseCard';
@@ -355,11 +354,6 @@ export default function Expenses() {
           )}
         </div>
       </div>
-
-      {/* ── Контроль прибыли владельца ── */}
-      {hasAccess && business && (canViewAll || can('view_expense_sales_revenue') || can('view_expense_money_in_hand')) && (
-        <OwnerProfitControl business={business} />
-      )}
 
       {/* ── Фильтры ── */}
       <div className="sticky top-14 z-30 rounded-[22px] border border-slate-200/80 dark:border-slate-700/60 bg-white px-4 py-3.5 shadow-[0_8px_24px_rgba(15,23,42,.08)] flex items-center gap-2.5 flex-wrap">
