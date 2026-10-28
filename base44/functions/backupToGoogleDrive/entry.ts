@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const backupType = body.type || 'full'; // 'full' | 'sales' | 'inventory'
 
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection('googledrive');
 
     const businesses = await base44.entities.Business.filter({ owner_email: user.email });
     if (!businesses.length) return Response.json({ error: 'No business found' }, { status: 404 });
