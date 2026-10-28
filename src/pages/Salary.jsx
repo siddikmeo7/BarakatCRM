@@ -81,9 +81,10 @@ export default function Salary() {
   const emp = window.__barakatEmployee;
   const isOwner = !emp;
   const isAdminEmp = emp?.is_admin === true;
+  const ownOnly = !isOwner && !isAdminEmp && can('view_own_salary_only');
   const canManage = isOwner || isAdminEmp || can('manage_salary');
-  const canViewAll = isOwner || isAdminEmp || can('view_all_salaries') || can('manage_salary');
-  const canView = canViewAll || can('view_salary');
+  const canViewAll = !ownOnly && (isOwner || isAdminEmp || can('view_all_salaries') || can('manage_salary'));
+  const canView = canViewAll || can('view_salary') || can('view_own_salary_only');
 
   // Unified non-cancelled sales
   const unifiedSales = useMemo(() => [

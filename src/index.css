@@ -1329,3 +1329,17 @@ html:not(.dark) .tk-input { background: #ffffff; border-color: #cbd5e1; color: #
   .sh-bd-head { padding: 10px 14px; }
   .sh-bd-row { grid-template-columns: 1.6fr 1fr; padding: 10px 14px; }
 }
+
+/* ===== Чек о выплате зарплаты: на печать выводится только сам чек ===== */
+@media print {
+  body * { visibility: hidden !important; }
+  .pay-receipt, .pay-receipt * { visibility: visible !important; }
+  .pay-receipt {
+    position: absolute !important;
+    left: 0; top: 0; width: 100%;
+    padding: 24px;
+    background: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+  }
+}

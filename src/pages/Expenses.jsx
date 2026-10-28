@@ -72,8 +72,11 @@ export default function Expenses() {
   const [form, setForm] = useState(DEFAULT_FORM);
 
   // Permissions
-  const hasAccess = isOwner || employee?.is_admin || can('view_expenses');
-  const canViewAll = isOwner || employee?.is_admin || can('view_all_expenses');
+  // Сотрудник с правом «только свои расходы» видит исключительно свои записи,
+  // даже если у него есть право видеть все расходы.
+  const ownOnly = !isOwner && !employee?.is_admin && can('view_own_expenses_only');
+  const hasAccess = isOwner || employee?.is_admin || can('view_expenses') || can('view_own_expenses_only');
+  const canViewAll = !ownOnly && (isOwner || employee?.is_admin || can('view_all_expenses'));
   const canManageAny = isOwner || employee?.is_admin || can('manage_expenses');
   const canRecordOnBehalf = isOwner || employee?.is_admin || can('record_expenses_on_behalf');
   const canAdd = hasAccess;

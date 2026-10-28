@@ -525,9 +525,16 @@ export default function Layout({ children, currentPageName }) {
 
   // Раздел «Зарплата» открыт и тем, кому разрешены только свои выплаты,
   // и тем, кому разрешены зарплаты всех сотрудников.
-  const canAccessItem = (item) => item.name === 'Salary'
-    ? (canAccess('view_salary') || canAccess('view_all_salaries'))
-    : canAccess(item.permKey);
+  const canAccessItem = (item) => {
+    if (item.name === 'Salary') {
+      return canAccess('view_salary') || canAccess('view_own_salary_only') || canAccess('view_all_salaries');
+    }
+    // «Расходы» доступны и тем, кому разрешены только свои расходы
+    if (item.name === 'Expenses') {
+      return canAccess('view_expenses') || canAccess('view_own_expenses_only');
+    }
+    return canAccess(item.permKey);
+  };
 
   // Все разделы меню регулируются единообразно через canAccess:
   // владелец видит всё, админ — всё кроме явно отключённого, обычный сотрудник — по разрешениям.

@@ -62,6 +62,25 @@ export function getDueMoment(schedule, now = new Date()) {
   return new Date(now.getFullYear(), now.getMonth(), Math.min(day, lastDay), hh || 0, mm || 0, 0, 0);
 }
 
+// Ближайшая будущая выплата: точная дата, если она ещё впереди, иначе —
+// ближайший день месяца из графика (текущий или следующий месяц).
+export function getUpcomingMoment(schedule, now = new Date()) {
+  const exact = getNextPayDate(schedule);
+  if (exact && exact.getTime() >= now.getTime()) return exact;
+  const day = getPayDay(schedule);
+  if (!day) return exact || null;
+  const [hh, mm] = getPayTime(schedule).split(':').map(Number);
+  const build = (year, month) => {
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, Math.min(day, lastDay), hh || 0, mm || 0, 0, 0);
+  };
+  let candidate = build(now.getFullYear(), now.getMonth());
+  if (candidate.getTime() < now.getTime()) {
+    candidate = build(now.getFullYear(), now.getMonth() + 1);
+  }
+  return candidate;
+}
+
 export function formatDueMoment(date) {
   if (!date) return '—';
   try {

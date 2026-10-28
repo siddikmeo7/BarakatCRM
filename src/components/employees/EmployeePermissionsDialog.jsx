@@ -91,6 +91,7 @@ const PERMISSION_GROUPS = [
   {
     label: '💰 Расходы — действия',
     permissions: [
+      { key: 'view_own_expenses_only', label: 'Видеть только свои расходы' },
       { key: 'view_all_expenses', label: 'Видеть все расходы (включая чужие)' },
       { key: 'manage_expenses',   label: 'Управлять всеми расходами' },
       { key: 'record_expenses_on_behalf', label: 'Фиксировать расходы от имени других лиц' },
@@ -142,6 +143,7 @@ const PERMISSION_GROUPS = [
   {
     label: '💼 Зарплата',
     permissions: [
+      { key: 'view_own_salary_only', label: 'Видеть только свою зарплату' },
       { key: 'view_all_salaries',   label: 'Видеть зарплаты всех сотрудников' },
       { key: 'manage_salary',       label: 'Управлять методами и ставками зарплаты' },
     ]

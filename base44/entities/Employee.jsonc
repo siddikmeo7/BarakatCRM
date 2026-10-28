@@ -246,6 +246,9 @@
         "view_expenses": {
           "type": "boolean"
         },
+        "view_own_expenses_only": {
+          "type": "boolean"
+        },
         "view_all_expenses": {
           "type": "boolean"
         },
@@ -337,6 +340,9 @@
           "type": "boolean"
         },
         "view_salary": {
+          "type": "boolean"
+        },
+        "view_own_salary_only": {
           "type": "boolean"
         },
         "view_all_salaries": {
