@@ -204,8 +204,8 @@ export default function Layout({ children, currentPageName }) {
     if (!activeItem) return;
     // Единая проверка: если у сотрудника (админа или обычного) нет доступа к текущему
     // разделу — перенаправляем на первый доступный раздел.
-    if (!canAccess(activeItem.permKey)) {
-      const firstAvailable = ALL_MENU_ITEMS.find(item => canAccess(item.permKey));
+    if (!canAccessItem(activeItem)) {
+      const firstAvailable = ALL_MENU_ITEMS.find(canAccessItem);
       if (firstAvailable && firstAvailable.name !== currentPageName) {
         navigate(createPageUrl(firstAvailable.name));
       }
@@ -523,9 +523,15 @@ export default function Layout({ children, currentPageName }) {
     return employeePermissions?.[permKey] === true;
   };
 
+  // Раздел «Зарплата» открыт и тем, кому разрешены только свои выплаты,
+  // и тем, кому разрешены зарплаты всех сотрудников.
+  const canAccessItem = (item) => item.name === 'Salary'
+    ? (canAccess('view_salary') || canAccess('view_all_salaries'))
+    : canAccess(item.permKey);
+
   // Все разделы меню регулируются единообразно через canAccess:
   // владелец видит всё, админ — всё кроме явно отключённого, обычный сотрудник — по разрешениям.
-  const MENU_ITEMS = ALL_MENU_ITEMS.filter(item => canAccess(item.permKey));
+  const MENU_ITEMS = ALL_MENU_ITEMS.filter(canAccessItem);
 
   const currentMenu = isAdmin && isAdminPage ? ADMIN_MENU_ITEMS : MENU_ITEMS;
 

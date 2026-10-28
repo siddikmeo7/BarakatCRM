@@ -116,5 +116,6 @@ export const PERMISSIONS = {
 
   // Зарплата
   VIEW_SALARY: 'view_salary',
+  VIEW_ALL_SALARIES: 'view_all_salaries',
   MANAGE_SALARY: 'manage_salary',
 };

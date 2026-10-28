@@ -18,6 +18,7 @@ import { getSalaryPeriod, getSalaryDueState } from '@/lib/salaryPeriod';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import SalaryDueBadge from '@/components/salary/SalaryDueBadge';
 import EmployeeSalaryDialog from '@/components/salary/EmployeeSalaryDialog';
+import MySalaryView from '@/components/salary/MySalaryView';
 
 export default function Salary() {
   const [business, setBusiness] = useState(null);
@@ -75,13 +76,14 @@ export default function Salary() {
     }
   };
 
-  // Access: owner or admin employee only
+  // Доступ: владелец и админ видят всё. Сотруднику с разрешением view_salary
+  // открывается только его личная зарплата, view_all_salaries — зарплаты всех.
   const emp = window.__barakatEmployee;
   const isOwner = !emp;
   const isAdminEmp = emp?.is_admin === true;
   const canManage = isOwner || isAdminEmp || can('manage_salary');
-  const canView = isOwner || isAdminEmp || can('view_salary');
-  const isOwnView = !canManage;
+  const canViewAll = isOwner || isAdminEmp || can('view_all_salaries') || can('manage_salary');
+  const canView = canViewAll || can('view_salary');
 
   // Unified non-cancelled sales
   const unifiedSales = useMemo(() => [
@@ -315,8 +317,21 @@ export default function Salary() {
     );
   }
 
-  if (!isOwner && !isAdminEmp) {
-    return <NoAccess message="Раздел «Зарплата» доступен только владельцу и администраторам." />;
+  if (!canView) {
+    return <NoAccess message="Раздел «Зарплата» доступен сотрудникам с разрешением на просмотр зарплаты." />;
+  }
+
+  // Сотрудник без права видеть всех: только своя зарплата, свой способ расчёта и история выплат
+  if (!canViewAll && emp) {
+    return (
+      <MySalaryView
+        employee={emp}
+        sales={unifiedSales}
+        payments={paymentsByEmployee[emp.id] || []}
+        schedule={scheduleByEmployee[emp.id]}
+        business={business}
+      />
+    );
   }
 
   // Кнопки «Метод» и «Изменить ставку» доступны только владельцу

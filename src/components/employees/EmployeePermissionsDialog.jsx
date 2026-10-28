@@ -21,7 +21,7 @@ const PERMISSION_GROUPS = [
       { key: 'view_ai_assistant',       label: 'Видеть раздел «AI Ассистент»' },
       { key: 'view_employee_analytics', label: 'Видеть раздел «Эффективность сотрудников»' },
       { key: 'view_settings',           label: 'Видеть раздел «Настройки»' },
-      { key: 'view_salary',             label: 'Видеть раздел «Зарплата»' },
+      { key: 'view_salary',             label: 'Видеть раздел «Зарплата» (свои выплаты)' },
     ]
   },
   {
@@ -140,9 +140,10 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    label: '💼 Зарплата — управление',
+    label: '💼 Зарплата',
     permissions: [
-      { key: 'manage_salary', label: 'Управлять методами и ставками зарплаты' },
+      { key: 'view_all_salaries',   label: 'Видеть зарплаты всех сотрудников' },
+      { key: 'manage_salary',       label: 'Управлять методами и ставками зарплаты' },
     ]
   },
 ];

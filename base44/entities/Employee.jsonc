@@ -339,6 +339,9 @@
         "view_salary": {
           "type": "boolean"
         },
+        "view_all_salaries": {
+          "type": "boolean"
+        },
         "manage_salary": {
           "type": "boolean"
         }
