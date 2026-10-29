@@ -10,6 +10,7 @@ import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import BackButton from '@/components/ui/BackButton';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
+import { useToast } from '@/components/ui/use-toast';
 
 const SORT_OPTIONS = [
   { value: 'name', label: 'По имени (А→Я)' },
@@ -22,9 +23,11 @@ export default function OwnerPayments() {
   const { isOwner, employee } = useEmployeeAccess();
   const canManage = isOwner || employee?.is_admin;
 
+  const { toast } = useToast();
   const [business, setBusiness] = useState(null);
   const [sales, setSales] = useState([]);
   const [payouts, setPayouts] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [payoutOpen, setPayoutOpen] = useState(false);
   const [payoutOwner, setPayoutOwner] = useState('');
@@ -58,12 +61,14 @@ export default function OwnerPayments() {
       const biz = window.__barakatBusiness;
       if (!biz) { setLoading(false); return; }
       setBusiness(biz);
-      const [saleData, payoutData] = await Promise.all([
+      const [saleData, payoutData, productData] = await Promise.all([
         base44.entities.ConsignmentSale.filter({ business_id: biz.id }),
-        base44.entities.ConsignmentPayout.filter({ business_id: biz.id })
+        base44.entities.ConsignmentPayout.filter({ business_id: biz.id }),
+        base44.entities.ConsignmentProduct.filter({ business_id: biz.id })
       ]);
       setSales(saleData.filter(s => !s.is_cancelled).sort((a, b) => new Date(b.sale_date || b.created_date) - new Date(a.sale_date || a.created_date)));
       setPayouts(payoutData.sort((a, b) => new Date(b.payout_date || b.created_date) - new Date(a.payout_date || a.created_date)));
+      setProducts(productData);
     } catch (e) {
       console.error('Error:', e);
     } finally {
@@ -104,6 +109,22 @@ export default function OwnerPayments() {
     });
     return list;
   }, [sales, payouts, sortBy, query]);
+
+  // Владельцы для объединения: все, у кого есть продажи, выплаты ИЛИ товары на
+  // реализации — иначе владельца, у которого остались только товары, нельзя слить.
+  const mergeOwners = useMemo(() => {
+    const known = new Set(owners.map(o => o.name));
+    const extra = {};
+    products.forEach(p => {
+      const key = p.owner_name || 'Неизвестный владелец';
+      if (known.has(key)) return;
+      if (!extra[key]) {
+        extra[key] = { name: key, email: p.owner_email || '', salesCount: 0, owed: 0, paid: 0, boxes: 0, boxesInStock: 0 };
+      }
+      extra[key].boxesInStock += p.boxes_in_stock || 0;
+    });
+    return [...owners, ...Object.values(extra)].sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+  }, [owners, products]);
 
   const totalOwed = owners.reduce((sum, o) => sum + o.owed, 0);
   const totalPaid = owners.reduce((sum, o) => sum + o.paid, 0);
@@ -158,26 +179,33 @@ export default function OwnerPayments() {
     }
   };
 
-  // Объединить нескольких владельцев в одного: все продажи и выплаты источников
-  // переносятся на выбранного владельца, после чего источники исчезают из списка.
+  // Объединить владельцев: продажи, выплаты И товары на реализации источников
+  // переносятся на целевого владельца, после чего источники исчезают из списка.
   const handleMerge = async () => {
-    if (!mergeTarget || mergeSources.length === 0) return;
-    const target = owners.find(o => o.name === mergeTarget);
-    if (!target) return;
-    if (mergeSources.includes(mergeTarget)) return;
+    const sources = mergeSources.filter(n => n !== mergeTarget);
+    if (!mergeTarget) {
+      toast({ title: 'Выберите владельца', description: 'Укажите, кому перенести записи.', variant: 'destructive' });
+      return;
+    }
+    if (sources.length === 0) {
+      toast({ title: 'Нечего объединять', description: 'Отметьте хотя бы одного владельца, кроме целевого.', variant: 'destructive' });
+      return;
+    }
+    const target = mergeOwners.find(o => o.name === mergeTarget);
     setBusy(true);
     try {
-      for (const srcName of mergeSources) {
-        await base44.entities.ConsignmentSale.updateMany(
-          { business_id: business.id, owner_name: srcName },
-          { $set: { owner_name: mergeTarget, owner_email: target.email || '' } }
-        );
-        await base44.entities.ConsignmentPayout.updateMany(
-          { business_id: business.id, owner_name: srcName },
-          { $set: { owner_name: mergeTarget, owner_email: target.email || '' } }
-        );
+      const patch = { $set: { owner_name: mergeTarget, owner_email: target?.email || '' } };
+      for (const srcName of sources) {
+        const filter = { business_id: business.id, owner_name: srcName };
+        await base44.entities.ConsignmentSale.updateMany(filter, patch);
+        await base44.entities.ConsignmentPayout.updateMany(filter, patch);
+        await base44.entities.ConsignmentProduct.updateMany(filter, patch);
       }
-      await logActivity('update', `Объединение владельцев: ${mergeSources.join(', ')} → ${mergeTarget}`, { target: mergeTarget, sources: mergeSources });
+      await logActivity('update', `Объединение владельцев: ${sources.join(', ')} → ${mergeTarget}`, { target: mergeTarget, sources });
+      toast({
+        title: 'Владельцы объединены',
+        description: `Записи ${sources.length === 1 ? `«${sources[0]}»` : `${sources.length} владельцев`} перенесены на «${mergeTarget}»: продажи, выплаты и товары.`
+      });
       setMergeOpen(false);
       setMergeTarget('');
       setMergeSources([]);
@@ -186,6 +214,7 @@ export default function OwnerPayments() {
       await loadData();
     } catch (e) {
       console.error('Merge error:', e);
+      toast({ title: 'Ошибка объединения', description: e?.message || 'Не удалось перенести записи', variant: 'destructive' });
     } finally {
       setBusy(false);
     }
@@ -347,7 +376,7 @@ export default function OwnerPayments() {
                     )}
                     {canManage && (
                       <>
-                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setMergeTarget(''); setMergeSources([owner.name]); setMergeOpen(true); }} className="text-xs h-8 border-blue-300 text-blue-700 hover:bg-blue-50">
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setMergeTarget(owner.name); setMergeSources([]); setMergeOpen(true); }} className="text-xs h-8 border-blue-300 text-blue-700 hover:bg-blue-50">
                           <Merge className="w-3.5 h-3.5" /> Объединить
                         </Button>
                         <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setDeleteTarget(owner.name); setDeleteOpen(true); }} className="text-xs h-8 border-red-300 text-red-700 hover:bg-red-50">
@@ -431,7 +460,7 @@ export default function OwnerPayments() {
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 <Merge className="w-4 h-4 text-blue-600" /> Объединить владельцев
               </div>
-              <p className="text-xs text-slate-500">Перенести все продажи и выплаты нескольких владельцев на одного. Суммы автоматически сложатся.</p>
+              <p className="text-xs text-slate-500">Перенести продажи, выплаты и товары на реализации нескольких владельцев на одного. Суммы автоматически сложатся.</p>
               <Button size="sm" variant="outline" className="w-full" onClick={() => { setManageOpen(false); setMergeOpen(true); }}>
                 Открыть объединение
               </Button>
@@ -459,18 +488,21 @@ export default function OwnerPayments() {
               <Label>Кому перенести (целевой владелец)</Label>
               <select value={mergeTarget} onChange={e => setMergeTarget(e.target.value)} className="w-full mt-1 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white">
                 <option value="">Выберите владельца</option>
-                {owners.map(o => <option key={o.name} value={o.name}>{o.name}</option>)}
+                {mergeOwners.map(o => <option key={o.name} value={o.name}>{o.name}</option>)}
               </select>
             </div>
             <div>
               <Label>Какие владельцы переносятся</Label>
               <div className="mt-1 max-h-56 overflow-y-auto space-y-1 border border-slate-200 dark:border-slate-700 rounded-lg p-2">
-                {owners.filter(o => o.name !== mergeTarget).map(o => (
+                {mergeOwners.filter(o => o.name !== mergeTarget).map(o => (
                   <label key={o.name} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
                     <input type="checkbox" checked={mergeSources.includes(o.name)} onChange={() => toggleSource(o.name)} className="w-4 h-4 accent-amber-600" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-slate-900 dark:text-white truncate">{o.name}</p>
-                      <p className="text-[10px] text-slate-400">{o.salesCount} продаж · остаток {(o.owed - o.paid).toLocaleString()} с.</p>
+                      <p className="text-[10px] text-slate-400">
+                        {o.salesCount} продаж · остаток {(o.owed - o.paid).toLocaleString()} с.
+                        {o.boxesInStock ? ` · ${o.boxesInStock} кор. на реализации` : ''}
+                      </p>
                     </div>
                   </label>
                 ))}
