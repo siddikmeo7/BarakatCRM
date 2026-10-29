@@ -496,14 +496,19 @@ export default function Customers() {
               <p className="text-sm">Клиенты не найдены</p>
               <p className="text-xs mt-1">Попробуйте изменить фильтры</p>
             </div>
-          ) : paginatedCustomers.map(customer => {
+          ) : paginatedCustomers.map((customer, idx) => {
             const addedByName = customer.added_by_employee_name || customer.added_by_email;
             return (
               <div
                 key={customer.id}
                 onClick={() => setSelectedCustomer(customer)}
-                className="flex items-center gap-3 px-3 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
               >
+                {/* Порядковый номер клиента в списке */}
+                <span className="w-6 flex-shrink-0 text-right text-[11px] font-semibold tabular-nums text-slate-400 dark:text-slate-500">
+                  {(page - 1) * PAGE_SIZE + idx + 1}
+                </span>
+
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 flex items-center justify-center">

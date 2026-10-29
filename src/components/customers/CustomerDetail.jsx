@@ -391,88 +391,103 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
   return (
     <div className="space-y-3">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <button onClick={onBack} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-          <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+      <div className="flex items-center gap-2">
+        <button onClick={onBack} className="-ml-1.5 p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <ChevronLeft className="w-4 h-4" />
         </button>
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+          {c.name?.charAt(0)?.toUpperCase()}
+        </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-bold text-slate-900 dark:text-white truncate">{c.name}</h1>
-          <p className="text-xs text-slate-400">{can('view_customer_contacts') ? c.phone : '•••'}</p>
+          <h1 className="text-[15px] font-semibold leading-tight text-slate-900 dark:text-white truncate">{c.name}</h1>
+          <p className="text-[11px] text-slate-400 truncate">{can('view_customer_contacts') ? c.phone : '•••'}</p>
         </div>
         {can('manage_customers') && (
-          <button onClick={() => onEdit(c)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-            <Edit2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+          <button onClick={() => onEdit(c)} title="Изменить клиента" className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <Edit2 className="w-3.5 h-3.5" />
           </button>
         )}
         {can('delete_customers') && (
-          <button onClick={() => { onDelete(c.id); onBack(); }} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-            <Trash2 className="w-4 h-4 text-red-500" />
+          <button onClick={() => { onDelete(c.id); onBack(); }} title="Удалить клиента" className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
 
-      {/* Debt action buttons */}
-      <div className="flex gap-2 flex-wrap">
+      {/* Компактная панель действий */}
+      <div className="flex flex-wrap items-center gap-1.5">
         {can('add_debt_manual') && (
-          <Button size="sm" variant="outline" onClick={() => setAddDebtOpen(true)}
-            className="gap-1.5 text-xs border-orange-300 text-orange-700 hover:bg-orange-50 flex-1">
+          <button onClick={() => setAddDebtOpen(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:border-orange-300 hover:text-orange-600 transition-colors">
             <Plus className="w-3.5 h-3.5" /> Прибавить долг
-          </Button>
+          </button>
         )}
         {can('manage_debts') && totalRemaining > 0 && (
-          <Button size="sm" onClick={() => { setBulkPayOpen(true); setBulkPayAmount(''); setBulkNotifyChannels(notifyDefaults()); }}
-            className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 text-xs flex-1">
+          <button onClick={() => { setBulkPayOpen(true); setBulkPayAmount(''); setBulkNotifyChannels(notifyDefaults()); }}
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-emerald-600 text-white text-[11px] font-semibold hover:bg-emerald-700 transition-colors">
             <DollarSign className="w-3.5 h-3.5" /> Погасить долг
-          </Button>
+          </button>
         )}
         {can('send_debt_reminders') && (c.total_debt || 0) > 0 && whatsappNum && (
           <button onClick={sendReminder} disabled={sendingMsg}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 rounded-xl text-green-700 dark:text-green-400 text-xs font-medium flex-1">
-            <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20 text-[11px] font-medium text-green-700 dark:text-green-400 hover:bg-green-100 transition-colors disabled:opacity-60">
+            <MessageCircle className="w-3.5 h-3.5" /> Напомнить в WhatsApp
           </button>
+        )}
+        {totalRemaining <= 0 && debtSales.length > 0 && (
+          <span className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+            <CheckCircle className="w-3.5 h-3.5" /> Долг закрыт
+          </span>
         )}
       </div>
 
-      {/* Financial Summary */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Финансовая сводка</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
-            <p className="text-xs text-slate-400 mb-0.5">Всего куплено в долг</p>
-            <p className="text-lg font-bold text-slate-800 dark:text-slate-100">{totalDebtAmount.toLocaleString()} с.</p>
-          </div>
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3">
-            <p className="text-xs text-emerald-500 mb-0.5">Оплачено</p>
-            <p className="text-lg font-bold text-emerald-600">{totalPaidAmount.toLocaleString()} с.</p>
-          </div>
-          <div className={`rounded-xl p-3 ${totalRemaining > 0 ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20'}`}>
-            <p className={`text-xs mb-0.5 ${totalRemaining > 0 ? 'text-orange-500' : 'text-emerald-500'}`}>Остаток долга</p>
-            <p className={`text-lg font-bold ${totalRemaining > 0 ? 'text-orange-600' : 'text-emerald-600'}`}>
-              {totalRemaining > 0 ? `${totalRemaining.toLocaleString()} с.` : '✅ 0 с.'}
+      {/* Краткая сводка по долгам */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 p-3 space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Сводка по долгам</h3>
+          <span className="text-[10px] text-slate-400">с {formatDate(c.created_date)}</span>
+        </div>
+        <div className="grid grid-cols-4 gap-1.5">
+          <div className="rounded-lg bg-slate-50 dark:bg-slate-800/60 px-2 py-1.5">
+            <p className="text-[10px] text-slate-400 leading-tight">Куплено</p>
+            <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 tabular-nums">
+              {can('view_customer_debt') ? totalDebtAmount.toLocaleString() : '•••'}
             </p>
           </div>
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3">
-            <p className="text-xs text-blue-400 mb-0.5">Покупок в долг</p>
-            <p className="text-lg font-bold text-blue-600">{debtSales.length}</p>
+          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1.5">
+            <p className="text-[10px] text-emerald-600 leading-tight">Оплачено</p>
+            <p className="text-[13px] font-semibold text-emerald-700 tabular-nums">
+              {can('view_customer_debt') ? totalPaidAmount.toLocaleString() : '•••'}
+            </p>
+          </div>
+          <div className={`rounded-lg px-2 py-1.5 ${totalRemaining > 0 ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20'}`}>
+            <p className={`text-[10px] leading-tight ${totalRemaining > 0 ? 'text-orange-600' : 'text-emerald-600'}`}>Остаток</p>
+            <p className={`text-[13px] font-semibold tabular-nums ${totalRemaining > 0 ? 'text-orange-700' : 'text-emerald-700'}`}>
+              {can('view_customer_debt') ? (totalRemaining > 0 ? totalRemaining.toLocaleString() : '0') : '•••'}
+            </p>
+          </div>
+          <div className="rounded-lg bg-slate-50 dark:bg-slate-800/60 px-2 py-1.5">
+            <p className="text-[10px] text-slate-400 leading-tight">Покупок</p>
+            <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 tabular-nums">{totalPurchases}</p>
           </div>
         </div>
         {totalDebtAmount > 0 && (
           <div>
-            <div className="flex justify-between text-xs text-slate-400 mb-1">
+            <div className="flex justify-between text-[10px] text-slate-400 mb-1">
               <span>Прогресс оплаты</span>
-              <span>{Math.round((totalPaidAmount / totalDebtAmount) * 100)}%</span>
+              <span className="tabular-nums">{Math.round((totalPaidAmount / totalDebtAmount) * 100)}%</span>
             </div>
-            <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
               <div className={`h-full rounded-full transition-all ${totalRemaining <= 0 ? 'bg-emerald-500' : 'bg-orange-400'}`}
                 style={{ width: `${Math.min(100, (totalPaidAmount / totalDebtAmount) * 100)}%` }} />
             </div>
           </div>
         )}
         {c.debt_limit && (
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
-            <span className="text-slate-400">Лимит долга:</span>
-            <span className={`font-semibold ${(c.total_debt || 0) >= c.debt_limit ? 'text-red-600' : 'text-slate-600 dark:text-slate-300'}`}>
-              {c.debt_limit.toLocaleString()} с. {(c.total_debt || 0) >= c.debt_limit && '⚠️'}
+          <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-100 dark:border-slate-800">
+            <span className="text-slate-400">Лимит долга</span>
+            <span className={`font-semibold tabular-nums ${(c.total_debt || 0) >= c.debt_limit ? 'text-red-600' : 'text-slate-600 dark:text-slate-300'}`}>
+              {c.debt_limit.toLocaleString()} с.{(c.total_debt || 0) >= c.debt_limit && ' ⚠️'}
             </span>
           </div>
         )}
@@ -480,19 +495,19 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
 
       {/* Responsible employee */}
       {(responsibleEmp || c.added_by_employee_name || c.added_by_email) && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-            <User className="w-3.5 h-3.5" /> {topSellerEmail ? 'Ответственный сотрудник' : 'Кто добавил клиента'}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 p-3">
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <User className="w-3 h-3" /> {topSellerEmail ? 'Ответственный сотрудник' : 'Кто добавил клиента'}
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <EmployeeAvatar
               employee={topSellerEmail ? responsibleEmp : addedByEmployee}
               name={topSellerEmail ? (responsibleEmp?.name || c.added_by_employee_name) : (c.added_by_employee_name || c.added_by_email)}
               isAdmin={topSellerEmail ? responsibleEmp?.is_admin : (c.added_by_role === 'admin' || c.added_by_role === 'owner')}
-              sizeClass="w-12 h-12 rounded-2xl text-lg"
+              sizeClass="w-9 h-9 rounded-xl text-sm"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+              <p className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">
                 {topSellerEmail ? (responsibleEmp?.name || topSellerEmail) : (c.added_by_employee_name || c.added_by_email || 'Неизвестно')}
               </p>
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -516,60 +531,69 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
         </div>
       )}
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-3 border border-orange-100 dark:border-orange-800">
-          <div className="flex items-center gap-1.5 mb-1">
-            <CreditCard className="w-3.5 h-3.5 text-orange-500" />
-            <p className="text-xs text-slate-400">Долг</p>
-          </div>
-          {can('view_customer_debt') ? (
-            <p className="text-xl font-bold text-orange-600 dark:text-orange-400">{(c.total_debt || 0).toLocaleString()} с.</p>
-          ) : <p className="text-xl font-bold text-slate-300">•••</p>}
+      {/* Текущее состояние счёта клиента */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+        <div className="rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-2">
+          <p className="text-[10px] text-slate-400 flex items-center gap-1"><CreditCard className="w-3 h-3" /> Долг</p>
+          <p className="text-[13px] font-semibold text-orange-600 tabular-nums mt-0.5">
+            {can('view_customer_debt') ? `${(c.total_debt || 0).toLocaleString()} с.` : '•••'}
+          </p>
         </div>
-        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 border border-emerald-100 dark:border-emerald-800">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Wallet className="w-3.5 h-3.5 text-emerald-500" />
-            <p className="text-xs text-slate-400">Оплачено</p>
-          </div>
-          {can('view_customer_debt') ? (
-            <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{(c.total_paid || 0).toLocaleString()} с.</p>
-          ) : <p className="text-xl font-bold text-slate-300">•••</p>}
+        <div className="rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-2">
+          <p className="text-[10px] text-slate-400 flex items-center gap-1"><Wallet className="w-3 h-3" /> Оплачено</p>
+          <p className="text-[13px] font-semibold text-emerald-600 tabular-nums mt-0.5">
+            {can('view_customer_debt') ? `${(c.total_paid || 0).toLocaleString()} с.` : '•••'}
+          </p>
         </div>
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-100 dark:border-blue-800">
-          <div className="flex items-center gap-1.5 mb-1">
-            <ShoppingBag className="w-3.5 h-3.5 text-blue-500" />
-            <p className="text-xs text-slate-400">Покупок</p>
-          </div>
-          <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{totalPurchases}</p>
-          <p className="text-xs text-slate-400">{totalBoxes} коробок</p>
+        <div className="rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-2">
+          <p className="text-[10px] text-slate-400 flex items-center gap-1"><ShoppingBag className="w-3 h-3" /> Покупок</p>
+          <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 tabular-nums mt-0.5">
+            {totalPurchases} · {totalBoxes} кор.
+          </p>
         </div>
-        <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-3 border border-violet-100 dark:border-violet-800">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Clock className="w-3.5 h-3.5 text-violet-500" />
-            <p className="text-xs text-slate-400">Добавлен</p>
-          </div>
-          <p className="text-sm font-bold text-violet-600 dark:text-violet-400">{formatDate(c.created_date)}</p>
+        <div className="rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-2">
+          <p className="text-[10px] text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> Добавлен</p>
+          <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 mt-0.5">{formatDate(c.created_date)}</p>
         </div>
       </div>
 
       {/* Contact Info */}
       {can('view_customer_contacts') ? (
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800 space-y-2">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Контакты</p>
-          {c.phone && <p className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"><Phone className="w-4 h-4 text-slate-400" /> {c.phone}</p>}
-          {c.email && <p className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"><Mail className="w-4 h-4 text-slate-400" /> {c.email}</p>}
-          {c.address && <p className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"><MapPin className="w-4 h-4 text-slate-400" /> {c.address}</p>}
-          <div className="flex gap-2 pt-2">
-            <a href={`https://wa.me/${whatsappNum?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 rounded-xl text-green-700 dark:text-green-400 text-sm font-medium">
-              <MessageCircle className="w-4 h-4" /> WhatsApp
-            </a>
-            <a href={`https://t.me/${telegramNum?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 rounded-xl text-blue-700 dark:text-blue-400 text-sm font-medium">
-              <Send className="w-4 h-4" /> Telegram
-            </a>
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Контакты</p>
+          <div className="flex flex-wrap gap-1.5">
+            {c.phone && (
+              <a href={`tel:${c.phone.replace(/[^0-9+]/g, '')}`} className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md bg-slate-50 dark:bg-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                <Phone className="w-3 h-3 text-slate-400" /> {c.phone}
+              </a>
+            )}
+            {c.email && (
+              <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md bg-slate-50 dark:bg-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                <Mail className="w-3 h-3 text-slate-400" /> {c.email}
+              </a>
+            )}
+            {c.address && (
+              <span className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md bg-slate-50 dark:bg-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                <MapPin className="w-3 h-3 text-slate-400" /> {c.address}
+              </span>
+            )}
           </div>
+          {(whatsappNum || telegramNum) && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {whatsappNum && (
+                <a href={`https://wa.me/${whatsappNum.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-green-50 dark:bg-green-900/20 text-[11px] font-semibold text-green-700 dark:text-green-400 hover:bg-green-100 transition-colors">
+                  <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                </a>
+              )}
+              {telegramNum && (
+                <a href={`https://t.me/${telegramNum.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[11px] font-semibold text-blue-700 dark:text-blue-400 hover:bg-blue-100 transition-colors">
+                  <Send className="w-3.5 h-3.5" /> Telegram
+                </a>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center">
@@ -608,8 +632,8 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
 
       {/* Debt purchases with payment history */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Купленные товары в долг</h3>
+        <div className="px-3 py-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <h3 className="text-[13px] font-semibold text-slate-900 dark:text-white">Купленные товары в долг</h3>
           {debtSales.length > 0 && (
             <button
               onClick={() => {
@@ -645,10 +669,10 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
 
             return (
               <div key={sale.id} className={`divide-y divide-slate-50 ${isPaid ? 'bg-emerald-50/60 dark:bg-emerald-900/10' : isOverdue ? 'bg-red-50/40 dark:bg-red-900/10' : ''}`}>
-                <div className="p-3">
-                  <div className="flex items-start gap-3">
+                <div className="p-2.5">
+                  <div className="flex items-start gap-2.5">
                     <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-xs font-bold text-indigo-600 dark:text-indigo-300 flex-shrink-0 mt-0.5">{dIdx + 1}</span>
-                    <ProductPhoto photoUrl={prod?.photo_url} brand={prod?.brand} className="w-11 h-11 rounded-xl flex-shrink-0" textClassName="text-[10px]" />
+                    <ProductPhoto photoUrl={prod?.photo_url} brand={prod?.brand} className="w-9 h-9 rounded-lg flex-shrink-0" textClassName="text-[9px]" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         {sale.product_id === 'manual' ? (
@@ -687,8 +711,8 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
                       )}
 
                       {/* Financial summary */}
-                      <div className="grid grid-cols-3 gap-2 mt-2 text-xs">
-                        <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-2 text-center">
+                      <div className="grid grid-cols-3 gap-1.5 mt-2 text-[11px]">
+                        <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-1.5 text-center">
                           <p className="text-slate-400">Итого</p><p className="font-bold text-slate-800 dark:text-slate-100">{sale.total_amount?.toLocaleString()} с.</p>
                         </div>
                         <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2 text-center">

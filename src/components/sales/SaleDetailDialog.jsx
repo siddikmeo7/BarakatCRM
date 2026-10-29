@@ -25,6 +25,7 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
   const [editData, setEditData] = useState({
     boxes_sold: sale.boxes_sold,
     sale_price: sale.sale_price,
+    customer_name: sale.customer_name || customer?.name || '',
     note: ''
   });
   const [debtData, setDebtData] = useState({
@@ -63,6 +64,18 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
     try {
       const newBoxes = parseInt(editData.boxes_sold) || 0;
       const newPrice = parseFloat(editData.sale_price) || 0;
+      const newCustomerName = (editData.customer_name || '').trim();
+      const oldCustomerName = sale.customer_name || customer?.name || '';
+
+      // Кто именно вносит изменение — показываем в истории с профилем
+      let actor = { name: '', email: '' };
+      try {
+        const u = await base44.auth.me();
+        actor = {
+          name: window.__barakatEmployee?.name || u.full_name || u.email,
+          email: window.__barakatEmployee?.user_email || u.email
+        };
+      } catch (_) {}
 
       // Строим список изменений
       const changes = [];
@@ -75,9 +88,14 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
       if (newTotal !== sale.total_amount) {
         changes.push({ label: 'Итого', from: `${sale.total_amount?.toLocaleString()} с.`, to: `${newTotal.toLocaleString()} с.` });
       }
+      if (newCustomerName && newCustomerName !== oldCustomerName) {
+        changes.push({ label: 'Клиент', from: oldCustomerName || 'Не указан', to: newCustomerName });
+      }
 
       const historyEntry = {
         edited_at: new Date().toISOString(),
+        edited_by_name: actor.name,
+        edited_by_email: actor.email,
         boxes_sold: sale.boxes_sold,
         sale_price: sale.sale_price,
         total_amount: sale.total_amount,
@@ -94,13 +112,20 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
         sale_price: newPrice,
         total_amount: newTotal,
         profit: newProfit,
+        customer_name: newCustomerName || sale.customer_name || '',
         edit_count: editCount + 1,
         edit_history: [...editHistory, historyEntry]
       });
 
+      // Исправленное имя клиента сохраняем и в его карточке (если клиент из базы)
+      if (sale.customer_id && newCustomerName && newCustomerName !== oldCustomerName) {
+        try {
+          await base44.entities.Customer.update(sale.customer_id, { name: newCustomerName });
+        } catch (_) {}
+      }
+
       // Логируем в ActivityLog
       try {
-        const user = await base44.auth.me();
         await base44.entities.ActivityLog.create({
           business_id: sale.business_id,
           action_type: 'update',
@@ -108,12 +133,12 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
           entity_id: sale.id,
           entity_data: {
             changes,
-            old: { boxes_sold: sale.boxes_sold, sale_price: sale.sale_price, total_amount: sale.total_amount },
-            new: { boxes_sold: newBoxes, sale_price: newPrice, total_amount: newTotal },
+            old: { boxes_sold: sale.boxes_sold, sale_price: sale.sale_price, total_amount: sale.total_amount, customer_name: oldCustomerName },
+            new: { boxes_sold: newBoxes, sale_price: newPrice, total_amount: newTotal, customer_name: newCustomerName },
             note: editData.note
           },
-          user_email: user.email,
-          user_name: window.__barakatEmployee?.name || user.full_name || user.email,
+          user_email: actor.email,
+          user_name: actor.name,
           description: `Обновлена продажа (${changes.map(c => `${c.label}: ${c.from} → ${c.to}`).join(', ')})`
         });
       } catch (_) {}
@@ -357,6 +382,16 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
                 {can('view_sale_profit') && <span className="text-emerald-700">Прибыль: <b>+{newProfit.toLocaleString()} с.</b></span>}
               </div>
               <div>
+                <Label className="text-xs">Имя клиента</Label>
+                <Input
+                  value={editData.customer_name}
+                  onChange={(e) => setEditData({ ...editData, customer_name: e.target.value })}
+                  placeholder="Например: Далер"
+                  className="mt-1 h-9"
+                />
+                <p className="text-[11px] text-amber-700/80 mt-1">Исправьте, если имя покупателя было введено с ошибкой</p>
+              </div>
+              <div>
                 <Label className="text-xs">Причина изменения</Label>
                 <Input
                   value={editData.note}
@@ -403,13 +438,23 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
               </button>
               {showHistory && (
                 <div className="divide-y divide-slate-100">
-                  {[...editHistory].reverse().map((h, i) => (
+                  {[...editHistory].reverse().map((h, i) => {
+                    const actorEmp = employees.find(e => e.user_email && e.user_email === h.edited_by_email);
+                    const actorName = actorEmp?.name || h.edited_by_name || h.edited_by_email || 'Неизвестно';
+                    return (
                     <div key={i} className="p-3 text-sm">
-                      <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-slate-700">Изменение #{editHistory.length - i}</span>
                         <span className="text-xs text-slate-400">
-                          {format(parseISO(h.edited_at), 'dd.MM.yyyy HH:mm', { locale: ru })}
+                          {h.edited_at ? format(parseISO(h.edited_at), 'dd.MM.yyyy HH:mm', { locale: ru }) : ''}
                         </span>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
+                        <EmployeeAvatar employee={actorEmp} name={actorName} isAdmin={actorEmp?.is_admin} size="sm" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-slate-700 truncate">Изменил: {actorName}</p>
+                          {h.edited_by_email && <p className="text-[10px] text-slate-400 truncate">{h.edited_by_email}</p>}
+                        </div>
                       </div>
                       {h.changes && h.changes.length > 0 ? (
                         <div className="space-y-1">
@@ -427,7 +472,8 @@ export default function SaleDetailDialog({ sale, product, customer, onClose, onU
                       )}
                       {h.note && <p className="text-slate-400 italic text-xs mt-1">"{h.note}"</p>}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
