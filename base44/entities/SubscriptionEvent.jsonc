@@ -1,0 +1,121 @@
+{
+  "name": "SubscriptionEvent",
+  "type": "object",
+  "properties": {
+    "business_id": {
+      "type": "string",
+      "description": "ID \u0431\u0438\u0437\u043d\u0435\u0441\u0430, \u043a \u043a\u043e\u0442\u043e\u0440\u043e\u043c\u0443 \u043e\u0442\u043d\u043e\u0441\u0438\u0442\u0441\u044f \u0441\u043e\u0431\u044b\u0442\u0438\u0435"
+    },
+    "business_name": {
+      "type": "string",
+      "description": "\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u0431\u0438\u0437\u043d\u0435\u0441\u0430 (\u043a\u043e\u043f\u0438\u044f \u043d\u0430 \u043c\u043e\u043c\u0435\u043d\u0442 \u0441\u043e\u0431\u044b\u0442\u0438\u044f)"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "trial_started",
+        "activated",
+        "renewed",
+        "canceled",
+        "expired",
+        "exempt",
+        "blocked",
+        "restored"
+      ],
+      "description": "\u0422\u0438\u043f \u0441\u043e\u0431\u044b\u0442\u0438\u044f \u043f\u043e\u0434\u043f\u0438\u0441\u043a\u0438"
+    },
+    "status_before": {
+      "type": "string",
+      "description": "\u0421\u0442\u0430\u0442\u0443\u0441 \u043f\u043e\u0434\u043f\u0438\u0441\u043a\u0438 \u0434\u043e \u0441\u043e\u0431\u044b\u0442\u0438\u044f"
+    },
+    "status_after": {
+      "type": "string",
+      "description": "\u0421\u0442\u0430\u0442\u0443\u0441 \u043f\u043e\u0434\u043f\u0438\u0441\u043a\u0438 \u043f\u043e\u0441\u043b\u0435 \u0441\u043e\u0431\u044b\u0442\u0438\u044f"
+    },
+    "amount": {
+      "type": "number",
+      "description": "\u0421\u0443\u043c\u043c\u0430 \u043f\u043b\u0430\u0442\u0435\u0436\u0430, \u0435\u0441\u043b\u0438 \u0441\u043e\u0431\u044b\u0442\u0438\u0435 \u0441\u0432\u044f\u0437\u0430\u043d\u043e \u0441 \u043e\u043f\u043b\u0430\u0442\u043e\u0439"
+    },
+    "currency": {
+      "type": "string",
+      "description": "\u0412\u0430\u043b\u044e\u0442\u0430 \u043f\u043b\u0430\u0442\u0435\u0436\u0430"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "payments",
+        "manual",
+        "system"
+      ],
+      "default": "manual",
+      "description": "\u0418\u0441\u0442\u043e\u0447\u043d\u0438\u043a \u0441\u043e\u0431\u044b\u0442\u0438\u044f: \u043e\u043f\u043b\u0430\u0442\u0430, \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 \u0438\u043b\u0438 \u0441\u0438\u0441\u0442\u0435\u043c\u0430"
+    },
+    "actor_email": {
+      "type": "string",
+      "description": "\u041a\u0442\u043e \u0432\u044b\u0437\u0432\u0430\u043b \u0441\u043e\u0431\u044b\u0442\u0438\u0435 (\u0434\u043b\u044f \u0440\u0443\u0447\u043d\u044b\u0445 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0439)"
+    },
+    "actor_name": {
+      "type": "string",
+      "description": "\u0418\u043c\u044f \u0442\u043e\u0433\u043e, \u043a\u0442\u043e \u0432\u044b\u0437\u0432\u0430\u043b \u0441\u043e\u0431\u044b\u0442\u0438\u0435"
+    },
+    "note": {
+      "type": "string",
+      "description": "\u041f\u043e\u044f\u0441\u043d\u0435\u043d\u0438\u0435 \u043a \u0441\u043e\u0431\u044b\u0442\u0438\u044e"
+    },
+    "reference": {
+      "type": "string",
+      "description": "\u0423\u043d\u0438\u043a\u0430\u043b\u044c\u043d\u044b\u0439 \u043a\u043b\u044e\u0447 \u0434\u043b\u044f \u0437\u0430\u0449\u0438\u0442\u044b \u043e\u0442 \u0434\u0443\u0431\u043b\u0435\u0439 (\u043f\u043e\u043a\u0443\u043f\u043a\u0430, \u043f\u043e\u0434\u043f\u0438\u0441\u043a\u0430, \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435)"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u041a\u043e\u0433\u0434\u0430 \u043f\u0440\u043e\u0438\u0437\u043e\u0448\u043b\u043e \u0441\u043e\u0431\u044b\u0442\u0438\u0435"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "\u041a\u0440\u0430\u0442\u043a\u043e\u0435 \u043e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 (\u0434\u043e 1000 \u0441\u0438\u043c\u0432\u043e\u043b\u043e\u0432)"
+    }
+  },
+  "required": [
+    "business_id",
+    "event_type",
+    "occurred_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "data.is_platform_admin": true
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "data.is_platform_admin": true
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.is_platform_admin": true
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.is_platform_admin": true
+      }
+    }
+  }
+}

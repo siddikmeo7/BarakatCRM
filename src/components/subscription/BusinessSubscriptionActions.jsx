@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle2, Gift, CalendarPlus, Ban } from 'lucide-react';
 import { TRIAL_DAYS } from '@/lib/subscription';
+import { logSubscriptionEvent } from '@/lib/subscriptionLog';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -15,7 +16,22 @@ export default function BusinessSubscriptionActions({ business, onUpdated }) {
   const apply = async (key, patch) => {
     setBusy(key);
     try {
+      const statusBefore = business.subscription_status || 'trial';
       await base44.entities.Business.update(business.id, patch);
+      // История подписки: доступ меняется, данные бизнеса остаются на месте
+      const eventType =
+        key === 'active' ? (statusBefore === 'active' ? 'renewed' : 'activated') :
+        key === 'trial' ? 'trial_started' :
+        key === 'blocked' ? 'blocked' : 'exempt';
+      await logSubscriptionEvent({
+        business,
+        eventType,
+        statusBefore,
+        statusAfter: patch.subscription_status,
+        source: 'manual',
+        note: patch.subscription_note || '',
+        reference: `manual_${business.id}_${Date.now()}`,
+      });
       await onUpdated?.();
     } finally {
       setBusy('');

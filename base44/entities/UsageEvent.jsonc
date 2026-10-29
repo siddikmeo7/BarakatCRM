@@ -1,0 +1,82 @@
+{
+  "name": "UsageEvent",
+  "type": "object",
+  "properties": {
+    "business_id": {
+      "type": "string",
+      "description": "ID \u0431\u0438\u0437\u043d\u0435\u0441\u0430"
+    },
+    "business_name": {
+      "type": "string",
+      "description": "\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u0431\u0438\u0437\u043d\u0435\u0441\u0430"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\u041a\u0442\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043b\u0441\u044f \u0441\u0435\u0440\u0432\u0438\u0441\u043e\u043c"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "\u0418\u043c\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f"
+    },
+    "module": {
+      "type": "string",
+      "description": "\u0420\u0430\u0437\u0434\u0435\u043b \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u044f (Analytics, Sales, Products \u0438 \u0442.\u0434.)"
+    },
+    "action": {
+      "type": "string",
+      "default": "view",
+      "description": "\u0427\u0442\u043e \u0438\u043c\u0435\u043d\u043d\u043e \u0441\u0434\u0435\u043b\u0430\u043b \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u041a\u043e\u0433\u0434\u0430 \u0431\u044b\u043b\u0430 \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0441\u0442\u044c"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "\u041a\u0440\u0430\u0442\u043a\u043e\u0435 \u043e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 (\u0434\u043e 1000 \u0441\u0438\u043c\u0432\u043e\u043b\u043e\u0432)"
+    }
+  },
+  "required": [
+    "business_id",
+    "module",
+    "occurred_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "data.is_platform_admin": true
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "data.business_id": "{{user.data.business_id}}"
+        },
+        {
+          "user_condition": {
+            "data.is_platform_admin": true
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "data.is_platform_admin": true
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "data.is_platform_admin": true
+      }
+    }
+  }
+}

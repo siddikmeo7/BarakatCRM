@@ -50,6 +50,35 @@ function extractBuyerEmail(order: any): string | null {
   );
 }
 
+// Журнал событий подписки. Вебхуки приходят повторно, поэтому пишем ровно один раз
+// на ключ события (reference) — история остаётся без дублей.
+async function recordSubscriptionEvent(
+  db: any,
+  { business, eventType, statusAfter, amount = null, currency = null, note = "", reference }: any,
+): Promise<void> {
+  try {
+    if (!reference) return;
+    const existing = await db.entities.SubscriptionEvent.filter({ reference });
+    if (existing?.length) return;
+    await db.entities.SubscriptionEvent.create({
+      business_id: business.id,
+      business_name: business.name ?? "",
+      event_type: eventType,
+      status_before: business.subscription_status ?? "",
+      status_after: statusAfter ?? "",
+      amount,
+      currency: currency ?? "",
+      source: "payments",
+      note,
+      reference,
+      occurred_at: new Date().toISOString(),
+    });
+  } catch (err) {
+    // Журнал не должен ломать выдачу или отзыв доступа — только логируем.
+    console.error("payments-webhook: не удалось записать событие подписки", err);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   try {
     if (req.method !== "POST") {
@@ -155,6 +184,15 @@ async function handleOrderApproved(db: any, eventData: any): Promise<Response> {
         subscription_started_at: new Date().toISOString(),
         subscription_note: `Оплата Base44 Payments: ${purchase.amount ?? ""} ${purchase.currency ?? ""}`.trim(),
       });
+      await recordSubscriptionEvent(db, {
+        business,
+        eventType: "activated",
+        statusAfter: "active",
+        amount: Number(purchase.amount) || null,
+        currency: purchase.currency ?? null,
+        note: "Оплата Base44 Payments",
+        reference: `purchase_paid:${purchase.id}`,
+      });
       console.log("payments-webhook: подписка активирована", { businessId: business.id, buyerEmail });
     } else {
       console.error("payments-webhook: бизнес для оплатившего не найден — нужна ручная активация", { buyerEmail, purchaseId: purchase.id });
@@ -243,6 +281,13 @@ async function handleSubscriptionEnded(db: any, eventData: any): Promise<Respons
       await db.entities.Business.update(business.id, {
         subscription_status: "expired",
         subscription_note: "Подписка отменена или завершилась",
+      });
+      await recordSubscriptionEvent(db, {
+        business,
+        eventType: "canceled",
+        statusAfter: "expired",
+        note: "Подписка отменена или завершилась. Данные бизнеса сохранены.",
+        reference: `subscription_ended:${subscriptionId}`,
       });
       console.log("payments-webhook: доступ бизнеса закрыт", { businessId: business.id, subscriptionId });
     } else {

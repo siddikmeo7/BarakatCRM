@@ -8,6 +8,7 @@ import { countDueSalaries } from '@/lib/salaryPeriod';
 import SubscriptionGate from '@/components/subscription/SubscriptionGate';
 import { getSubscriptionState, fetchAccessState } from '@/lib/subscription';
 import { useAppTheme, applyThemeMode } from '@/lib/appTheme';
+import { trackUsage } from '@/lib/trackUsage';
 
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import EmployeeWelcomeScreen from '@/components/employees/EmployeeWelcomeScreen';
@@ -34,6 +35,7 @@ import {
   Moon,
   Sun,
   Wallet,
+  CreditCard,
 } from 'lucide-react';
 
 // Фоновое изображение терминала — единый стиль всех разделов
@@ -59,6 +61,7 @@ const ALL_MENU_ITEMS = [
 const ADMIN_MENU_ITEMS = [
   { name: 'AdminDashboard',  icon: LayoutDashboard, labelKey: 'nav_admin',      color: 'text-indigo-500', activeBg: 'bg-indigo-500' },
   { name: 'AdminBusinesses', icon: Building2,       labelKey: 'nav_businesses', color: 'text-blue-500',   activeBg: 'bg-blue-500' },
+  { name: 'AdminSubscriptions', icon: CreditCard,   labelKey: 'nav_subscriptions', color: 'text-emerald-500', activeBg: 'bg-emerald-500' },
 ];
 
 /* Оформление интерфейса — тёмное или светлое; переключается в шапке и в профиле. */
@@ -184,6 +187,12 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     setDrawerOpen(false);
   }, [currentPageName]);
+
+  // Отслеживание использования разделов: питает статистику подписок и активности
+  useEffect(() => {
+    if (loading || !business?.id || !currentPageName) return;
+    trackUsage({ module: currentPageName });
+  }, [loading, business?.id, currentPageName]);
 
   // При первом входе в приложение открываем раздел «Профиль»
   useEffect(() => {
