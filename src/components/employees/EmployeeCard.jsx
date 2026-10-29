@@ -221,6 +221,35 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
               )}
             </div>
           )}
+
+          {/* Действия по сотруднику — те же кнопки, что и на карточке */}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              onClick={() => onEdit(employee)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-indigo-200 text-indigo-600 text-xs font-semibold hover:bg-indigo-50"
+            >
+              <Shield className="w-3.5 h-3.5" /> Права доступа
+            </button>
+            <button
+              onClick={() => setShowHistory(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-purple-600 text-xs font-semibold hover:bg-purple-50"
+            >
+              <History className="w-3.5 h-3.5" /> История
+            </button>
+            <button
+              onClick={handleResendInviteEmail}
+              disabled={sendingEmail}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-green-200 text-green-600 text-xs font-semibold hover:bg-green-50 disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" /> Письмо
+            </button>
+            <button
+              onClick={() => onDelete(employee.id)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Удалить
+            </button>
+          </div>
         </div>
       )}
       {showHistory && (

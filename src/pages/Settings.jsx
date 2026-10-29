@@ -224,18 +224,26 @@ export default function Settings() {
     }
   };
 
+  // Удаление сотрудника: профиль удаляется из системы полностью — исчезает из раздела
+  // «Сотрудники», с дашбордов и из аналитики. Продажи, клиенты и прочая история остаются.
   const handleDeleteEmployee = async (employeeId) => {
-    if (confirm(t(lang, 'confirm_delete') + ' Данные и история сотрудника сохранятся и будут видны с пометкой «удалён».')) {
-      const emp = employees.find(e => e.id === employeeId);
-      const history = emp?.change_history || [];
-      await base44.entities.Employee.update(employeeId, {
-        is_active: false,
-        is_frozen: true,
-        deleted_at: new Date().toISOString(),
-        login_session_token: crypto.randomUUID(),
-        change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email || business?.owner_email || '', changes: [{ field: 'deleted_at', oldValue: '', newValue: 'удалён' }] }],
-      });
+    const emp = employees.find(e => e.id === employeeId);
+    const ok = confirm(
+      `Удалить сотрудника «${emp?.name || ''}» из системы?\n\n` +
+      'Профиль удаляется полностью: он исчезнет из раздела «Сотрудники», с дашбордов и из аналитики.\n' +
+      'Его продажи, клиенты и остальные данные сохранятся.\n\n' +
+      'Восстановить профиль будет нельзя.'
+    );
+    if (!ok) return;
+    try {
+      localStorage.removeItem(`barakat_emp_token_${employeeId}`);
+      await base44.entities.Employee.delete(employeeId);
+      setEditingEmployee(null);
+      setSelectedEmp(null);
       await loadData();
+    } catch (e) {
+      console.error('Error deleting employee:', e);
+      alert('Не удалось удалить сотрудника: ' + (e?.message || 'ошибка'));
     }
   };
 
@@ -607,8 +615,8 @@ export default function Settings() {
                   <div className="bg-slate-50 rounded-xl border border-slate-100 p-3 text-center"><p className="text-2xl font-bold text-slate-600">{employees.filter(e => e.is_frozen).length}</p><p className="text-xs text-slate-500">Заморожено</p></div>
                 </div>
               )}
-              {employees.map(employee => <EmployeeCard key={employee.id} employee={employee} business={business} onEdit={setEditingEmployee} onDelete={handleDeleteEmployee} />)}
-              {employees.length === 0 && <p className="text-center text-slate-500 py-8">{t(lang,'settings_emp_empty')}</p>}
+              {employees.filter(e => !e.deleted_at).map(employee => <EmployeeCard key={employee.id} employee={employee} business={business} onEdit={setEditingEmployee} onDelete={handleDeleteEmployee} />)}
+              {employees.filter(e => !e.deleted_at).length === 0 && <p className="text-center text-slate-500 py-8">{t(lang,'settings_emp_empty')}</p>}
             </div>
             {editingEmployee && <EmployeePermissionsDialog employee={editingEmployee} onClose={() => setEditingEmployee(null)} onSaved={loadData} />}
           </CollapsibleContent>
@@ -808,6 +816,8 @@ export default function Settings() {
                             <div className="flex items-center gap-2 text-xs"><span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">📞</span><span className="text-slate-400 w-20 flex-shrink-0">Телефон</span><span className="font-medium text-slate-700">{emp.phone || '—'}</span></div>
                             <div className="flex items-center gap-2 text-xs"><span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">🕐</span><span className="text-slate-400 w-20 flex-shrink-0">Вход</span><span className="font-medium text-slate-700">{lastLogin ? lastLogin.toLocaleString('ru') : 'Не входил'}</span></div>
                             <div className="flex items-center gap-2 text-xs"><span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">💻</span><span className="text-slate-400 w-20 flex-shrink-0">Устройство</span><span className="font-medium text-slate-700 truncate">{getDeviceLabel(emp.device_info)}</span></div>
+                            <div className="flex items-center gap-2 text-xs"><span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">🛡️</span><span className="text-slate-400 w-20 flex-shrink-0">Роль</span><span className="font-medium text-slate-700 truncate">{emp.is_admin ? '👑 Администратор' : (emp.role || 'Без роли')}</span></div>
+                            <div className="flex items-center gap-2 text-xs"><span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">🔐</span><span className="text-slate-400 w-20 flex-shrink-0">Права</span><span className="font-medium text-slate-700">{emp.is_admin ? 'Полный доступ' : `${Object.values(emp.permissions || {}).filter(Boolean).length} разрешений`}</span></div>
                           </div>
                           <div className="flex gap-2">
                             <button onClick={async (e) => { e.stopPropagation(); if (!confirm(`Сбросить сеанс ${emp.name}?`)) return; const history = emp.change_history || []; const newToken = crypto.randomUUID(); await base44.entities.Employee.update(emp.id, { login_session_token: newToken, change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'session', newValue: 'reset', oldValue: null }] }] }); localStorage.removeItem(`barakat_emp_token_${emp.id}`); setSelectedEmp(null); await loadData(); }} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-sm"><LogOut className="w-3.5 h-3.5" />Сбросить сеанс</button>
@@ -815,6 +825,10 @@ export default function Settings() {
                               ? <button onClick={async (e) => { e.stopPropagation(); if (!confirm(`Заморозить ${emp.name}?`)) return; const history = emp.change_history || []; await base44.entities.Employee.update(emp.id, { is_frozen: true, login_session_token: crypto.randomUUID(), change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: 'false', newValue: 'true' }] }] }); localStorage.removeItem(`barakat_emp_token_${emp.id}`); setSelectedEmp(null); await loadData(); }} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all shadow-sm">🧊 Заморозить</button>
                               : <button onClick={async (e) => { e.stopPropagation(); const history = emp.change_history || []; await base44.entities.Employee.update(emp.id, { is_frozen: false, change_history: [...history, { timestamp: new Date().toISOString(), by_email: user?.email, changes: [{ field: 'is_frozen', oldValue: 'true', newValue: 'false' }] }] }); setSelectedEmp(null); await loadData(); }} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-semibold transition-all shadow-sm"><RefreshCw className="w-3.5 h-3.5" />Разморозить</button>
                             }
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={(e) => { e.stopPropagation(); setEditingEmployee(emp); }} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-xs font-semibold hover:from-indigo-600 hover:to-violet-600 transition-all shadow-sm"><Shield className="w-3.5 h-3.5" />Права доступа</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteEmployee(emp.id); }} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-all shadow-sm"><Trash2 className="w-3.5 h-3.5" />Удалить</button>
                           </div>
                         </div>
                       )}
