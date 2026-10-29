@@ -112,11 +112,24 @@ export default function Settings() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(() => {
-      if (business?.id) base44.entities.Employee.filter({ business_id: business?.id }).then(setEmployees);
-    }, 15 * 60 * 1000);
+    const interval = setInterval(() => refreshEmployees(), 15 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Полный список сотрудников и ролей бизнеса. Загружается на сервере с проверкой
+  // прав: владелец бизнеса или администратор-сотрудник. Поэтому администратор видит
+  // и может менять всю команду, а не только свою запись.
+  const refreshEmployees = async (bizId) => {
+    const id = bizId || business?.id || window.__barakatBusiness?.id;
+    if (!id) return;
+    try {
+      const res = await base44.functions.invoke('listBusinessEmployees', { business_id: id });
+      if (res.data?.employees) setEmployees(res.data.employees);
+      if (res.data?.roles) setRoles(res.data.roles);
+    } catch (e) {
+      console.error('Ошибка загрузки сотрудников:', e);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -140,6 +153,8 @@ export default function Settings() {
             setLang(biz.language || 'ru');
             setFormData({ name: biz.name || '', phone: biz.phone || '', phone2: biz.phone2 || '', address: biz.address || '', language: biz.language || 'ru', default_color: biz.default_color || 'Чёрный', default_size_from: biz.default_size_from || 39, default_size_to: biz.default_size_to || 44, default_pairs_per_box: biz.default_pairs_per_box || 6, default_product_type: biz.default_product_type || 'Туфли', low_stock_limit: biz.low_stock_limit ?? 2, low_stock_digest_frequency: biz.low_stock_digest_frequency || 'monthly', default_consignment_owner: biz.default_consignment_owner || '', default_consignment_owner_email: biz.default_consignment_owner_email || '' });
           }
+          // Администратор-сотрудник управляет всей командой — грузим полный список
+          if (emp.is_admin) await refreshEmployees(biz?.id || emp.business_id);
         }
         setLoading(false);
         return;
@@ -160,8 +175,7 @@ export default function Settings() {
           rolesData = await base44.entities.Role.filter({ business_id: biz.id });
         }
         setRoles(rolesData);
-        const employeesData = await base44.entities.Employee.filter({ business_id: biz.id });
-        setEmployees(employeesData);
+        await refreshEmployees(biz.id);
       }
     } catch (error) {
       console.error('Error loading data:', error);
