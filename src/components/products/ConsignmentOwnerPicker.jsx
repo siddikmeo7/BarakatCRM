@@ -32,26 +32,44 @@ export default function ConsignmentOwnerPicker({ businessId, ownerName, ownerEma
   const [editEmail, setEditEmail] = useState('');
   const wrapRef = useRef(null);
 
-  // Загружаем уникальных владельцев из товаров на реализации
+  // Загружаем владельцев и сразу считаем по каждому:
+  // сколько мы ему должны, сколько его коробок продано и сколько ещё на руках.
   const loadOwners = () => {
     if (!businessId) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const items = await base44.entities.ConsignmentProduct.filter({ business_id: businessId });
+        const [items, saleItems, payouts] = await Promise.all([
+          base44.entities.ConsignmentProduct.filter({ business_id: businessId }),
+          base44.entities.ConsignmentSale.filter({ business_id: businessId }),
+          base44.entities.ConsignmentPayout.filter({ business_id: businessId }),
+        ]);
         if (cancelled) return;
         const map = new Map();
-        items.forEach(p => {
+        const ensure = (name, email) => {
+          const key = name.toLowerCase();
+          if (!map.has(key)) map.set(key, { name, email: email || '', stock: 0, soldBoxes: 0, owed: 0 });
+          const owner = map.get(key);
+          if (!owner.email && email) owner.email = email;
+          return owner;
+        };
+        (items || []).forEach(p => {
           const name = (p.owner_name || '').trim();
           if (!name) return;
-          const key = name.toLowerCase();
-          if (!map.has(key)) {
-            map.set(key, { name, email: p.owner_email || '' });
-          } else {
-            const existing = map.get(key);
-            if (!existing.email && p.owner_email) map.set(key, { ...existing, email: p.owner_email });
-          }
+          ensure(name, p.owner_email).stock += Number(p.boxes_in_stock) || 0;
+        });
+        (saleItems || []).filter(s => !s.is_cancelled).forEach(s => {
+          const name = (s.owner_name || '').trim();
+          if (!name) return;
+          const owner = ensure(name, s.owner_email);
+          owner.soldBoxes += Number(s.boxes_sold) || 0;
+          owner.owed += Number(s.owner_amount) || 0;
+        });
+        (payouts || []).forEach(p => {
+          const name = (p.owner_name || '').trim();
+          if (!name) return;
+          ensure(name, p.owner_email).owed -= Number(p.amount) || 0;
         });
         setOwners([...map.values()].sort((a, b) => a.name.localeCompare(b.name)));
       } catch (_) {
@@ -315,6 +333,18 @@ export default function ConsignmentOwnerPicker({ businessId, ownerName, ownerEma
                                 <Mail className="w-3 h-3" /> {owner.email}
                               </p>
                             )}
+                            {/* Итоги по владельцу: долг перед ним, продано и остаток на руках */}
+                            <div className="flex flex-wrap items-center gap-1 mt-1">
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${owner.owed > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                Долг: {(owner.owed || 0).toLocaleString()} с.
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300 font-semibold">
+                                Продано: {owner.soldBoxes || 0} кор.
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-semibold">
+                                В наличии: {owner.stock || 0} кор.
+                              </span>
+                            </div>
                           </div>
                         </button>
                         {/* Кнопки редактировать / удалить */}

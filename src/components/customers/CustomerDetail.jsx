@@ -377,6 +377,11 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
   });
   const topSellerEmail = Object.entries(sellerCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
   const responsibleEmp = topSellerEmail ? employees.find(e => e.user_email === topSellerEmail) : null;
+  // Сотрудник, добавивший клиента (или продавший ему), уже удалён из системы:
+  // имя остаётся в истории, но с пометкой.
+  const authorDeleted = topSellerEmail
+    ? !responsibleEmp
+    : (c.added_by_role === 'employee' && !addedByEmployee);
 
   const timeline = [
     ...debtSales.map(s => ({ type: 'sale', date: new Date(s.sale_date || s.created_date), data: s })),
@@ -501,7 +506,10 @@ export default function CustomerDetail({ customer, onBack, onEdit, onDelete, bus
                 {!topSellerEmail && c.added_by_role === 'employee' && (
                   <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full text-[10px] font-semibold">👤 Сотрудник</span>
                 )}
-                {topSellerEmail && <span className="text-[10px] text-slate-400">· клиент купил товары у этого сотрудника</span>}
+                {topSellerEmail && !authorDeleted && <span className="text-[10px] text-slate-400">· клиент купил товары у этого сотрудника</span>}
+                {authorDeleted && (
+                  <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full text-[10px] font-semibold">удалён</span>
+                )}
               </div>
             </div>
           </div>

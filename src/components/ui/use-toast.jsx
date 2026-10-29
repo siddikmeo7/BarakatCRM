@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 
 const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000000;
+// Небольшая задержка: уведомление успевает проиграть анимацию и исчезает.
+const TOAST_REMOVE_DELAY = 300;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -161,4 +162,4 @@ function useToast() {
   };
 }
 
-export { useToast, toast }; 
+export { useToast, toast };

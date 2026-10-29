@@ -172,6 +172,7 @@ function EmployeeCard({ employee, business, onDelete, onUpdate }) {
           </button>
           <button
             onClick={() => onDelete(employee.id)}
+            title="Полностью удалить сотрудника"
             className="p-2 hover:bg-red-50 rounded-lg text-red-400"
           >
             <Trash2 className="w-4 h-4" />
@@ -279,6 +280,8 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
   const [detailDialog, setDetailDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [availableRoles, setAvailableRoles] = useState([]);
+  const [showDeleted, setShowDeleted] = useState(false);
+  const deletedEmployees = employees.filter(e => e.deleted_at);
 
   useEffect(() => {
     if (business?.id) {
@@ -381,19 +384,25 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
     }
   };
 
+  // Полное удаление: профиль исчезает из раздела «Сотрудники» и с дашбордов,
+  // а его продажи, клиенты и другие записи остаются — в них сохраняется имя
+  // сотрудника с пометкой «удалён».
   const handleDelete = async (id) => {
-    if (confirm('Удалить этого сотрудника из команды? Его данные и история сохранятся и будут видны с пометкой «удалён».')) {
-      // Soft-delete: сохраняем запись для исторических отображений, помечаем удалённым
-      const emp = employees.find(e => e.id === id);
-      const history = emp?.change_history || [];
-      await base44.entities.Employee.update(id, {
-        is_active: false,
-        is_frozen: true,
-        deleted_at: new Date().toISOString(),
-        login_session_token: crypto.randomUUID(),
-        change_history: [...history, { timestamp: new Date().toISOString(), by_email: business?.owner_email || '', changes: [{ field: 'deleted_at', oldValue: '', newValue: 'удалён' }] }],
-      });
+    const emp = employees.find(e => e.id === id);
+    const ok = confirm(
+      `Полностью удалить сотрудника «${emp?.name || ''}» из системы?\n\n` +
+      'Профиль исчезнет из раздела «Сотрудники» и с дашбордов.\n' +
+      'Его продажи, клиенты и остальные данные сохранятся — в них останется его имя с пометкой «удалён».\n\n' +
+      'Действие необратимо.'
+    );
+    if (!ok) return;
+    try {
+      await base44.entities.Employee.delete(id);
+      toast({ title: 'Сотрудник удалён', description: `«${emp?.name || ''}» удалён из системы, его данные сохранены` });
       onUpdate();
+    } catch (e) {
+      console.error('Error deleting employee:', e);
+      toast({ title: 'Ошибка', description: 'Не удалось удалить сотрудника', variant: 'destructive' });
     }
   };
 
@@ -434,12 +443,16 @@ export default function EmployeeManager({ business, employees, onUpdate }) {
       </div>
 
       {/* Soft-deleted (frozen) employees — can be permanently removed */}
-      {employees.filter(e => e.deleted_at).length > 0 && (
+      {deletedEmployees.length > 0 && (
         <div className="space-y-2 pt-3 border-t border-slate-200">
-          <p className="text-xs text-slate-400 uppercase font-semibold">
-            Удалённые (замороженные) — {employees.filter(e => e.deleted_at).length}
-          </p>
-          {employees.filter(e => e.deleted_at).map(emp => (
+          <button
+            onClick={() => setShowDeleted(v => !v)}
+            className="flex items-center gap-2 text-xs text-slate-400 uppercase font-semibold w-full text-left hover:text-slate-600"
+          >
+            {showDeleted ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            Удалённые ранее — {deletedEmployees.length}
+          </button>
+          {showDeleted && deletedEmployees.map(emp => (
             <div key={emp.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 opacity-80">
               <EmployeeAvatar employee={emp} sizeClass="w-8 h-8 text-sm" />
               <div className="flex-1 min-w-0">

@@ -53,7 +53,9 @@ export default function TeamProfiles() {
       base44.entities.Role.filter({ business_id: biz.id }),
       base44.auth.me().catch(() => null),
     ])
-      .then(([emps, rls, me]) => {
+      .then(([allEmps, rls, me]) => {
+        // Удалённые сотрудники не показываются на дашборде
+        const emps = allEmps.filter(e => !e.deleted_at);
         const sorted = [...emps].sort((a, b) => {
           if (a.is_frozen !== b.is_frozen) return a.is_frozen ? 1 : -1;
           if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
