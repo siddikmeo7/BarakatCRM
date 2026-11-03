@@ -70,6 +70,8 @@ export default function Expenses() {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterAuthor, setFilterAuthor] = useState('all');
   const [filterSpentBy, setFilterSpentBy] = useState('all');
+  // Кому разрешено видеть все расходы, тот может переключиться на «только мои»
+  const [mineOnly, setMineOnly] = useState(false);
   const [form, setForm] = useState(DEFAULT_FORM);
 
   // Permissions
@@ -78,6 +80,8 @@ export default function Expenses() {
   const ownOnly = !isOwner && !employee?.is_admin && can('view_own_expenses_only');
   const hasAccess = isOwner || employee?.is_admin || can('view_expenses') || can('view_own_expenses_only');
   const canViewAll = !ownOnly && (isOwner || employee?.is_admin || can('view_all_expenses'));
+  // Фактический охват списка: все расходы только у тех, кому это разрешено и кто не включил «только мои»
+  const viewAll = canViewAll && !mineOnly;
   const canManageAny = isOwner || employee?.is_admin || can('manage_expenses');
   const canRecordOnBehalf = isOwner || employee?.is_admin || can('record_expenses_on_behalf');
   const canAdd = hasAccess;
@@ -237,7 +241,7 @@ export default function Expenses() {
   };
 
   // Permission filter: own vs all
-  const visible = canViewAll
+  const visible = viewAll
     ? expenses
     : expenses.filter(e => e.created_by_id === currentUser?.id);
 
@@ -273,7 +277,7 @@ export default function Expenses() {
   }));
   const spentByTotal = bySpentBy.reduce((s, item) => s + item.total, 0);
   const topSpentBy = bySpentBy[0] || null;
-  const showSide = canViewAll && bySpentBy.length > 0;
+  const showSide = viewAll && bySpentBy.length > 0;
 
   if (loading) {
     return (
@@ -314,7 +318,7 @@ export default function Expenses() {
             Расходы
           </h1>
           <p className="text-sm text-slate-600 mt-2">
-            {canViewAll ? 'Все затраты бизнеса' : 'Только ваши расходы'} — аренда, зарплата, еда, прочее
+            {viewAll ? 'Все затраты бизнеса' : 'Только ваши расходы'} — аренда, зарплата, еда, прочее
           </p>
         </div>
       </div>
@@ -343,7 +347,7 @@ export default function Expenses() {
             </span>
           </div>
 
-          {canViewAll && (
+          {viewAll && (
             <div className={`${CARD} p-6 flex-1 flex flex-col justify-center gap-2`}>
               <span className={CAP}>От имени других лиц</span>
               <span className="text-[30px] font-bold text-indigo-600 tabular-nums tracking-[-.4px]">−{fmtMoney(spentByTotal)} с.</span>
@@ -358,10 +362,30 @@ export default function Expenses() {
 
       {/* ── Фильтры ── */}
       <div className="sticky top-14 z-30 rounded-[22px] border border-slate-200/80 dark:border-slate-700/60 bg-white px-4 py-3.5 shadow-[0_8px_24px_rgba(15,23,42,.08)] flex items-center gap-2.5 flex-wrap">
-        <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[10px] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[12px] font-semibold text-slate-600 dark:text-slate-300">
-          <Users className="w-3.5 h-3.5" />
-          {canViewAll ? 'Все расходы' : 'Только мои'}
-        </span>
+        {canViewAll ? (
+          <button
+            type="button"
+            onClick={() => {
+              const nextMine = !mineOnly;
+              setMineOnly(nextMine);
+              if (nextMine) { setFilterAuthor('all'); setFilterSpentBy('all'); }
+            }}
+            title={mineOnly ? 'Снова показать расходы всех сотрудников' : 'Показать только ваши расходы'}
+            className={`exp-focus inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[10px] border text-[12px] font-semibold transition ${
+              mineOnly
+                ? 'border-indigo-600 bg-indigo-600 text-white'
+                : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-indigo-300'
+            }`}
+          >
+            {mineOnly ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
+            {mineOnly ? 'Показать все расходы' : 'Показать только мои'}
+          </button>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[10px] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[12px] font-semibold text-slate-600 dark:text-slate-300">
+            <Users className="w-3.5 h-3.5" />
+            Только мои
+          </span>
+        )}
 
         <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
 
@@ -375,7 +399,7 @@ export default function Expenses() {
           </SelectContent>
         </Select>
 
-        {canViewAll && authors.length > 0 && (
+        {viewAll && authors.length > 0 && (
           <Select value={filterAuthor} onValueChange={setFilterAuthor}>
             <SelectTrigger className={`${FILTER_SELECT} w-40`}>
               <SelectValue placeholder="Автор" />
@@ -387,7 +411,7 @@ export default function Expenses() {
           </Select>
         )}
 
-        {canViewAll && spentByNames.length > 0 && (
+        {viewAll && spentByNames.length > 0 && (
           <Select value={filterSpentBy} onValueChange={setFilterSpentBy}>
             <SelectTrigger className={`${FILTER_SELECT} w-44`}>
               <SelectValue placeholder="От имени" />
