@@ -63,7 +63,8 @@ export default function ProductStockBreakdown({ query, products = [], warehouses
         <div className="sh-bd-k"><b>{groups.length}</b><span>Складов</span></div>
       </div>
 
-      {/* Где и сколько лежит: по складам */}
+      {/* Где и сколько лежит: по складам — прокрутка внутри окна */}
+      <div className="sh-bd-scroll">
       {groups.map(g => (
         <div key={g.warehouse?.id || 'none'} className="sh-bd-wh">
           <div className="sh-bd-head">
@@ -97,6 +98,7 @@ export default function ProductStockBreakdown({ query, products = [], warehouses
           ))}
         </div>
       ))}
+      </div>
     </div>
   );
 }

@@ -1,11 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Package, ShoppingCart, Boxes, Warehouse as WarehouseIcon, Layers, DollarSign, Layers3 } from 'lucide-react';
 import ProductPhoto from '@/components/products/ProductPhoto';
+import WarehouseViewSwitch from '@/components/warehouses/WarehouseViewSwitch';
 import { createPageUrl } from '@/utils';
 
 // Сводка по найденным товарам: верхняя плашка закреплена (sticky), ниже — склады с их товарами
 export default function ProductSearchSummary({ query, products, sales, warehouses, can }) {
   const q = query.trim().toLowerCase();
+  const [view, setView] = useState('list');
 
   const matched = useMemo(() => {
     if (!q) return [];
@@ -69,7 +71,7 @@ export default function ProductSearchSummary({ query, products, sales, warehouse
   if (!q) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 sh-scroll" style={{ paddingRight: 4 }}>
       {/* === Закреплённая верхняя сводка === */}
       <div className="sticky top-0 z-20 bg-white/95 backdrop-blur rounded-xl shadow-sm border border-indigo-200 px-2.5 py-2">
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -90,6 +92,8 @@ export default function ProductSearchSummary({ query, products, sales, warehouse
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 text-[11px] font-semibold">
             <DollarSign className="w-3 h-3" /> {can('view_warehouse_cost') ? `${totalPurchaseValue.toLocaleString()} с.` : '•••••'}
           </span>
+          <span className="sh-sp" />
+          <WarehouseViewSwitch view={view} onChange={setView} />
         </div>
       </div>
 
@@ -98,7 +102,7 @@ export default function ProductSearchSummary({ query, products, sales, warehouse
         <h4 className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-1.5 px-1">
           <Layers3 className="w-4 h-4 text-indigo-500" /> По моделям
         </h4>
-        <div className="space-y-2">
+        <div className={view === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-2' : 'space-y-2'}>
           {byModel.map((g, i) => (
             <div key={i} className="bg-gradient-to-r from-white to-slate-50 border border-slate-200 rounded-2xl p-3 shadow-sm">
               <div className="flex items-center gap-3 mb-2.5">

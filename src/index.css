@@ -1118,9 +1118,80 @@ html:not(.dark) .tk-input { background: #ffffff; border-color: #cbd5e1; color: #
 .sh-pn .sh-tag { margin-top: 3px; }
 .sh-sw { width: 40px; height: 40px; border-radius: 10px; border: 1px solid #e2e8f0; background: linear-gradient(135deg, #ccfbf1, #e0f2fe); flex: none; display: flex; align-items: center; justify-content: center; object-fit: cover; }
 .sh-dt { font-size: 12.5px; color: #64748b; }
-.sh-scroll { overflow: auto; max-height: 62vh; }
+.sh-scroll { overflow: auto; max-height: 58vh; overscroll-behavior: contain; }
 .sh-scroll-in { min-width: 900px; }
 .sh-empty { padding: 28px; text-align: center; font-size: 13.5px; color: #64748b; border-bottom: 1px solid #eef2f6; }
+
+/* ===== Товары: вид «Сетка», переключатель вида и окна с прокруткой ===== */
+
+.sh-pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 14px; padding: 16px; }
+
+.sh-pcard {
+  position: relative; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden;
+  cursor: pointer; transition: border-color .15s, box-shadow .15s;
+}
+.sh-pcard:hover { border-color: #99d5cf; box-shadow: 0 8px 22px rgba(15, 118, 110, .14); }
+.sh-pcard.on { border-color: #0f766e; box-shadow: 0 0 0 2px rgba(15, 118, 110, .25); }
+.sh-pcard.off { opacity: .55; cursor: default; }
+
+.sh-pcard-ph { position: relative; aspect-ratio: 4 / 3; background: #f1f5f9; overflow: hidden; }
+.sh-pcard-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sh-pcard-cb {
+  position: absolute; top: 8px; left: 8px; width: 22px; height: 22px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+  background: rgba(255, 255, 255, .92); border: 1px solid #cbd5e1; color: #0f766e;
+}
+.sh-pcard-cb.on { background: #0f766e; border-color: #0f766e; color: #fff; }
+.sh-pcard-st { position: absolute; top: 8px; right: 8px; }
+
+.sh-pcard-b { padding: 10px 12px 12px; }
+.sh-pcard-n { font-size: 14px; font-weight: 600; line-height: 1.35; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-pcard-s { font-size: 11.5px; color: #64748b; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-pcard-m { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-top: 9px; padding-top: 9px; border-top: 1px solid #eef2f6; }
+.sh-pcard-m span {
+  display: block; font-size: 12.5px; font-weight: 600; color: #111827; font-variant-numeric: tabular-nums;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sh-pcard-m em {
+  display: block; font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: #94a3b8; margin-bottom: 1px;
+}
+
+/* Переключатель «Сетка / Список» */
+.sh-view { display: inline-flex; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #fff; }
+.sh-view button {
+  height: 32px; padding: 0 11px; display: inline-flex; align-items: center; gap: 5px;
+  font: inherit; font-size: 12px; font-weight: 600; color: #475569;
+  background: transparent; border: 0; cursor: pointer; transition: background .15s, color .15s;
+}
+.sh-view button:hover { background: #f0fdfa; color: #0f766e; }
+.sh-view button.on { background: #0f766e; color: #fff; }
+.sh-view button:focus-visible { outline: 2px solid #0f766e; outline-offset: -2px; }
+
+/* Окно разбивки по складам: прокрутка внутри */
+.sh-bd-scroll { max-height: 42vh; overflow-y: auto; overscroll-behavior: contain; }
+
+@media (max-width: 640px) {
+  .sh-pgrid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px; }
+  .sh-bd-scroll { max-height: 48vh; }
+}
+
+/* Тёмное оформление карточек и переключателя */
+.dark .sh-pcard { background: #12161d; border-color: #232a35; }
+.dark .sh-pcard:hover { border-color: #2dd4bf; box-shadow: 0 8px 22px rgba(45, 212, 191, .14); }
+.dark .sh-pcard.on { border-color: #2dd4bf; box-shadow: 0 0 0 2px rgba(45, 212, 191, .25); }
+.dark .sh-pcard-ph { background: #0f131a; }
+.dark .sh-pcard-n { color: #f2f4f8; }
+.dark .sh-pcard-s { color: #94a3b8; }
+.dark .sh-pcard-m { border-top-color: #1b212a; }
+.dark .sh-pcard-m span { color: #d7dbe2; }
+.dark .sh-pcard-m em { color: #7c8594; }
+.dark .sh-pcard-cb { background: rgba(18, 22, 29, .92); border-color: #334155; color: #6ee7b7; }
+.dark .sh-pcard-cb.on { background: #0f766e; border-color: #0f766e; color: #fff; }
+.dark .sh-view { background: #171c25; border-color: #232a35; }
+.dark .sh-view button { color: #d7dbe2; }
+.dark .sh-view button:hover { background: #1b212a; color: #2dd4bf; }
+.dark .sh-view button.on { background: #0f766e; color: #fff; }
 
 /* Раскрытый склад */
 .sh-sep { height: 1px; background: #e2e8f0; margin: 46px 0 6px; }
@@ -1214,7 +1285,7 @@ html:not(.dark) .tk-input { background: #ffffff; border-color: #cbd5e1; color: #
   .sh-page .sh-ov h2 { font-size: 24px; }
   .sh-dh .sh-ph { height: 180px; }
   .sh-band { flex-direction: column; align-items: flex-start; }
-  .sh-scroll { max-height: none; }
+  .sh-scroll { max-height: 70vh; }
 }
 
 /* «Витрина складов» в тёмном оформлении */

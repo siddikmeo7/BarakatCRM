@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ProductPhoto from '@/components/products/ProductPhoto';
+import ProductCardGrid from '@/components/warehouses/ProductCardGrid';
+import WarehouseViewSwitch from '@/components/warehouses/WarehouseViewSwitch';
 import { CheckSquare, Square, Trash2 } from 'lucide-react';
 
 // Таблица товаров склада: полоса остатка слева, метки состояния, зебра и липкие итоги
@@ -22,6 +24,7 @@ export default function WarehouseProductsTable({
   filtersRow,
 }) {
   const lowLimit = business?.low_stock_limit || 2;
+  const [view, setView] = useState('list');
 
   const totals = rows.reduce((acc, p) => {
     const boxes = p.boxes_in_stock || 0;
@@ -49,6 +52,7 @@ export default function WarehouseProductsTable({
       <div className="sh-tt">
         <h3>Товары на складе</h3>
         <span className="sh-sp" />
+        <WarehouseViewSwitch view={view} onChange={setView} />
         {canBulk && (
           <>
             <button className="sh-btn dg" onClick={onDeleteUnsoldWarehouse}>
@@ -65,6 +69,7 @@ export default function WarehouseProductsTable({
 
       {filtersRow && <div className="sh-fl">{filtersRow}</div>}
 
+      {view === 'list' ? (
       <div className="sh-scroll">
         <div className="sh-scroll-in">
           <div className="sh-dtr h" style={{ gridTemplateColumns: columns }}>
@@ -162,6 +167,40 @@ export default function WarehouseProductsTable({
           })}
         </div>
       </div>
+      ) : (
+        <div className="sh-scroll">
+          <ProductCardGrid
+            products={rows}
+            onOpen={onOpenProduct}
+            selectMode={selectMode}
+            selectedIds={selectedIds}
+            toggleSelect={toggleSelect}
+            isSelectable={(p) => !sales.some(s => s.product_id === p.id)}
+            emptyText={dateFilter !== 'all' ? 'Нет товаров за выбранный период' : 'На этом складе пока нет товаров'}
+            status={(p) => {
+              const boxes = p.boxes_in_stock || 0;
+              if (boxes === 0) return <span className="sh-tag r">Нет</span>;
+              if (boxes <= lowLimit) return <span className="sh-tag y">Мало</span>;
+              if (sales.some(s => s.product_id === p.id)) return <span className="sh-tag g">продавался</span>;
+              return null;
+            }}
+            meta={(p) => {
+              const boxes = p.boxes_in_stock || 0;
+              const pairs = boxes * (p.pairs_per_box || 6);
+              const wholesaleValue = boxes * (p.purchase_price || 0);
+              const saleValue = boxes * (p.sale_price || 0);
+              return (
+                <>
+                  <span><em>Коробок</em>{boxes}</span>
+                  <span><em>Пар</em>{pairs}</span>
+                  <span><em>Опт.</em>{can('view_stock_value') ? wholesaleValue.toLocaleString() : '•••••'}</span>
+                  <span><em>Продажа</em>{can('view_stock_value') ? saleValue.toLocaleString() : '•••••'}</span>
+                </>
+              );
+            }}
+          />
+        </div>
+      )}
 
       {rows.length > 0 && (
         <div className="sh-tot">
@@ -175,7 +214,7 @@ export default function WarehouseProductsTable({
         </div>
       )}
 
-      {rows.length === 0 && (
+      {view === 'list' && rows.length === 0 && (
         <div className="sh-empty">
           {dateFilter !== 'all' ? 'Нет товаров за выбранный период' : 'На этом складе пока нет товаров'}
         </div>
