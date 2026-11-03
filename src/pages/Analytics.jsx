@@ -331,6 +331,18 @@ export default function Analytics() {
   const money = (amount) => (
     <AnimatedValue value={toCurrency(amount)} format={v => `${formatCompact(v, lang)} ${symbol}`} />
   );
+  // Последняя партия товара: сумма, коробки и прибыль с явным знаком.
+  // Прибыльная партия — «+» зелёным, убыточная — «−» красным.
+  const lastBatch = (sale) => {
+    const profit = Number(sale?.profit) || 0;
+    return {
+      revenue: Number(sale?.total_amount) || 0,
+      boxes: Number(sale?.boxes_sold) || 0,
+      profit,
+      sign: profit < 0 ? '−' : '+',
+      color: profit < 0 ? T.neg : T.pos,
+    };
+  };
   // Знак суммы: плюс — зелёным, минус — красным
   const signClass = (amount) => (Number(amount) < 0 ? 'neg' : 'pos');
   const signCell = (amount) => (Number(amount) < 0 ? 'r' : 'g');
@@ -347,11 +359,15 @@ export default function Analytics() {
   const productStats = {};
   filteredSales.forEach(sale => {
     const pid = sale.product_id;
-    if (!productStats[pid]) productStats[pid] = { boxes: 0, revenue: 0, profit: 0, count: 0 };
+    if (!productStats[pid]) productStats[pid] = { boxes: 0, revenue: 0, profit: 0, count: 0, lastSale: null };
     productStats[pid].boxes += sale.boxes_sold || 0;
     productStats[pid].revenue += sale.total_amount || 0;
     productStats[pid].profit += sale.profit || 0;
     productStats[pid].count += 1;
+    // Запоминаем последнюю партию (самую свежую продажу товара за период)
+    const saleTime = sale.sale_date || sale.created_date || '';
+    const prevTime = productStats[pid].lastSale?.sale_date || productStats[pid].lastSale?.created_date || '';
+    if (!productStats[pid].lastSale || saleTime > prevTime) productStats[pid].lastSale = sale;
   });
 
   let productRows = Object.entries(productStats).map(([pid, stats]) => ({ pid, stats, product: resolveProductInfo(pid) })).filter(r => r.product);
@@ -645,10 +661,21 @@ export default function Analytics() {
                       <td>{row.stats.boxes} кор. · {row.stats.count} продаж</td>
                       <td className="n">
                         {(hideData || !can('view_revenue')) ? masked : `${formatCompact(row.stats.revenue, lang)} с.`}
+                        {!hideData && can('view_revenue') && row.stats.lastSale && (
+                          <small className="tk-muted" style={{ display: 'block', fontSize: 10, marginTop: 2 }}>
+                            посл. партия: {formatCompact(lastBatch(row.stats.lastSale).revenue, lang)} с. · {lastBatch(row.stats.lastSale).boxes} кор.
+                          </small>
+                        )}
                       </td>
                       {can('view_profit') && (
                         <td className="n" style={{ color: row.stats.profit >= 0 ? T.pos : T.neg }}>
                           {hideData ? masked : `${row.stats.profit >= 0 ? '+' : ''}${formatCompact(row.stats.profit, lang)} с.`}
+                          {!hideData && row.stats.lastSale && (
+                            <small style={{ display: 'block', fontSize: 10, marginTop: 2, color: lastBatch(row.stats.lastSale).color }}>
+                              посл. партия: {lastBatch(row.stats.lastSale).sign}
+                              {formatCompact(Math.abs(lastBatch(row.stats.lastSale).profit), lang)} с.
+                            </small>
+                          )}
                         </td>
                       )}
                       {showStockColumn && (
