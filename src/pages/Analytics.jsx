@@ -16,6 +16,8 @@ import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import BackButton from '@/components/ui/BackButton';
 import BrandedLoader from '@/components/ui/BrandedLoader';
 import { formatCompact } from '@/lib/formatCompact';
+import TerminalMenu from '@/components/analytics/TerminalMenu';
+import AnimatedValue from '@/components/analytics/AnimatedValue';
 import { useAppTheme, tkColors } from '@/lib/appTheme';
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Package, Calendar } from 'lucide-react';
@@ -322,6 +324,21 @@ export default function Analytics() {
 
   const symbol = getCurrencySymbol();
 
+  // Текущий курс: пересчёт для «живых» цифр
+  const currentRate = exchangeRates[currency] || DEFAULT_RATES[currency] || 1;
+  const toCurrency = (amount) => (Number(amount) || 0) * currentRate;
+  // Живая цифра: плавно пересчитывается при смене значения или валюты
+  const money = (amount) => (
+    <AnimatedValue value={toCurrency(amount)} format={v => `${formatCompact(v, lang)} ${symbol}`} />
+  );
+  // Знак суммы: плюс — зелёным, минус — красным
+  const signClass = (amount) => (Number(amount) < 0 ? 'neg' : 'pos');
+  const signCell = (amount) => (Number(amount) < 0 ? 'r' : 'g');
+  // Счётчик без денег: тоже «оживает» при изменении
+  const count = (value) => (
+    <AnimatedValue value={value} format={v => Math.round(v).toLocaleString('ru-RU')} />
+  );
+
   const periodLabel = dateRange?.from
     ? `${format(dateRange.from, 'dd MMM yyyy', { locale: ru })}${dateRange.to && !isSameDay(dateRange.from, dateRange.to) ? ` — ${format(dateRange.to, 'dd MMM yyyy', { locale: ru })}` : ''}`
     : '';
@@ -371,30 +388,29 @@ export default function Analytics() {
           <span className="tk-cap t">{t(lang, 'analytics_title')}</span>
           <DateFilter variant="terminal" dateRange={dateRange} onDateRangeChange={setDateRange} />
           <span className="tk-sp" />
-          <div className="tk-grp">
-            {CURRENCIES.map(c => (
-              <button
-                key={c.value}
-                className={cn('tk-btn', currency === c.value && 'on')}
-                onClick={() => setCurrency(c.value)}
-              >
-                {t(lang, c.labelKey)}
-              </button>
-            ))}
-            <button
-              className="tk-btn tk-ref"
-              onClick={() => loadExchangeRates(true)}
-              disabled={ratesLoading}
-            >
-              {ratesLoading ? t(lang, 'analytics_loading_rate') : t(lang, 'analytics_refresh_rate')}
-            </button>
-            {/* Место под курс всегда одного размера — при смене валюты кнопки не сдвигаются */}
-            <span className="tk-cap tk-rate">
-              {ratesDate && currency !== 'TJS' && exchangeRates[currency]
-                ? `1 с. = ${exchangeRates[currency]} ${currency}`
-                : ''}
-            </span>
-          </div>
+          {/* Валюта и курс — в одной кнопке, чтобы не было лишней информации */}
+          <TerminalMenu
+            label={t(lang, 'analytics_currency')}
+            value={currency}
+            items={CURRENCIES.map(c => ({ value: c.value, label: t(lang, c.labelKey) }))}
+            onSelect={setCurrency}
+            footer={
+              <>
+                <span className="tk-cap">
+                  {ratesDate && currency !== 'TJS' && exchangeRates[currency]
+                    ? `1 с. = ${exchangeRates[currency]} ${currency}`
+                    : ''}
+                </span>
+                <button
+                  className="tk-btn"
+                  onClick={() => loadExchangeRates(true)}
+                  disabled={ratesLoading}
+                >
+                  {ratesLoading ? t(lang, 'analytics_loading_rate') : t(lang, 'analytics_refresh_rate')}
+                </button>
+              </>
+            }
+          />
         </div>
 
         {/* Строка 2: подзаголовок, настройки графиков, отбор продаж, скрытие данных */}
@@ -405,10 +421,12 @@ export default function Analytics() {
             <Link to={createPageUrl('ChartSettings')} className="tk-btn">
               {t(lang, 'analytics_chart_settings')}
             </Link>
-            <button className={cn('tk-btn', !mySalesOnly && 'on')} onClick={() => setMySalesOnly(false)}>Все продажи</button>
-            <button className={cn('tk-btn', mySalesOnly && 'on')} onClick={() => setMySalesOnly(true)}>Мои продажи</button>
-            <button className={cn('tk-btn', hideData && 'on')} onClick={() => setHideData(true)}>{t(lang, 'analytics_hide')}</button>
-            <button className={cn('tk-btn', !hideData && 'on')} onClick={() => setHideData(false)}>{t(lang, 'analytics_show')}</button>
+            <button className={cn('tk-btn', mySalesOnly && 'on')} onClick={() => setMySalesOnly(v => !v)}>
+              {mySalesOnly ? 'Мои продажи' : 'Все продажи'}
+            </button>
+            <button className={cn('tk-btn', hideData && 'on')} onClick={() => setHideData(v => !v)}>
+              {hideData ? t(lang, 'analytics_show') : t(lang, 'analytics_hide')}
+            </button>
           </div>
         </div>
 
@@ -421,17 +439,13 @@ export default function Analytics() {
             ))}
           </div>
           <span className="tk-sp" />
-          <div className="tk-grp">
-            {CHART_TYPES.map(c => (
-              <button
-                key={c.value}
-                className={cn('tk-btn', chartType === c.value && 'on')}
-                onClick={() => setChartType(c.value)}
-              >
-                {t(lang, c.labelKey)}
-              </button>
-            ))}
-          </div>
+          {/* Тип графика — одна кнопка со списком всех вариантов */}
+          <TerminalMenu
+            label={t(lang, 'analytics_chart_type')}
+            value={chartType}
+            items={CHART_TYPES.map(c => ({ value: c.value, label: t(lang, c.labelKey) }))}
+            onSelect={setChartType}
+          />
         </div>
 
         {/* Приборная полоса метрик */}
@@ -439,7 +453,7 @@ export default function Analytics() {
           {can('view_revenue') ? (
             <div className="tk-cell">
               <span className="tk-cap">{t(lang, 'analytics_revenue')}</span>
-              <b className="tk-pulse">{convertCurrency(totalRevenue)} {symbol}</b>
+              <b className="tk-pulse">{hideData ? masked : money(totalRevenue)}</b>
             </div>
           ) : (
             <div className="tk-cell">
@@ -450,22 +464,24 @@ export default function Analytics() {
           )}
 
           {can('view_profit') && (
-            <div className="tk-cell g">
+            <div className={cn('tk-cell', signCell(totalProfit))}>
               <span className="tk-cap">{t(lang, 'analytics_profit')}</span>
-              <b>{hideData ? masked : `${formatCompact(totalProfit, lang)} ${symbol}`}</b>
+              <b className={signClass(totalProfit)}>{hideData ? masked : money(totalProfit)}</b>
             </div>
           )}
 
           {can('view_profit') && (
-            <div className="tk-cell">
+            <div className={cn('tk-cell', signCell(profitMargin))}>
               <span className="tk-cap">{t(lang, 'analytics_margin')}</span>
-              <b>{hideData ? masked : `${profitMargin}%`}</b>
+              <b className={signClass(profitMargin)}>
+                {hideData ? masked : <AnimatedValue value={profitMargin} format={v => `${Math.round(v)}%`} />}
+              </b>
             </div>
           )}
 
           <div className="tk-cell">
             <span className="tk-cap">{t(lang, 'analytics_boxes_sold')}</span>
-            <b>{totalBoxes}</b>
+            <b>{count(totalBoxes)}</b>
           </div>
 
           {can('view_profit') && (
@@ -474,31 +490,31 @@ export default function Analytics() {
               onClick={() => lossSales.length > 0 && setShowLossModal(true)}
             >
               <span className="tk-cap">Убыток от продаж</span>
-              <b>{hideData ? masked : `${formatCompact(totalLoss, lang)} с.`}</b>
+              <b className="neg">{hideData ? masked : money(totalLoss)}</b>
               <small>{lossSales.length} продаж ниже себестоимости</small>
             </button>
           )}
 
           <div className="tk-cell r">
             <span className="tk-cap">{canViewAllExpenses ? 'Расходы за период' : 'Ваши расходы за период'}</span>
-            <b>{hideData ? masked : `−${formatCompact(totalExpenses, lang)} с.`}</b>
+            <b className="neg">{hideData ? masked : <>−{money(totalExpenses)}</>}</b>
             <small>
               {displayedExpenses.length} транзакций ·{' '}
               <Link to={createPageUrl('Expenses')} className="tk-lnk">Управление →</Link>
             </small>
           </div>
 
-          <div className="tk-cell g">
+          <div className={cn('tk-cell', signCell(netProfit))}>
             <span className="tk-cap">Чистая прибыль</span>
-            <b>{hideData ? masked : `${formatCompact(netProfit, lang)} с.`}</b>
+            <b className={signClass(netProfit)}>{hideData ? masked : money(netProfit)}</b>
             <small>после расходов</small>
           </div>
 
-          <div className="tk-cell">
+          <div className={cn('tk-cell', signCell(consignmentProfit))}>
             <span className="tk-cap">Прибыль с реализации</span>
-            <b>{hideData ? masked : `${formatCompact(consignmentProfit, lang)} с.`}</b>
+            <b className={signClass(consignmentProfit)}>{hideData ? masked : money(consignmentProfit)}</b>
             <small>
-              {consignmentBoxes} кор. · владельцам: {hideData ? masked : `${formatCompact(consignmentOwnerAmount, lang)} с.`} ·{' '}
+              {count(consignmentBoxes)} кор. · владельцам: {hideData ? masked : money(consignmentOwnerAmount)} ·{' '}
               <Link to={createPageUrl('OwnerPayments')} className="tk-lnk">Управление →</Link>
             </small>
           </div>
@@ -506,7 +522,7 @@ export default function Analytics() {
           {can('view_stock_value') ? (
             <div className="tk-cell">
               <span className="tk-cap">{t(lang, 'analytics_stock_value')}</span>
-              <b>{convertCurrency(totalStockValue)} {symbol}</b>
+              <b>{hideData ? masked : money(totalStockValue)}</b>
             </div>
           ) : (
             <div className="tk-cell">
@@ -519,7 +535,7 @@ export default function Analytics() {
           {can('view_profit') ? (
             <div className="tk-cell g">
               <span className="tk-cap">{t(lang, 'analytics_potential_profit')}</span>
-              <b>{convertCurrency(potentialProfit)} {symbol}</b>
+              <b className="pos">{hideData ? masked : money(potentialProfit)}</b>
               <small>{t(lang, 'analytics_from_stock')}</small>
             </div>
           ) : (
@@ -532,12 +548,12 @@ export default function Analytics() {
 
           <div className="tk-cell">
             <span className="tk-cap">{t(lang, 'analytics_total_products')}</span>
-            <b>{products.length}</b>
+            <b>{count(products.length)}</b>
           </div>
 
           <div className="tk-cell">
             <span className="tk-cap">Коробок на складе</span>
-            <b>{hideData ? masked : totalBoxesInStock}</b>
+            <b>{hideData ? masked : count(totalBoxesInStock)}</b>
           </div>
         </div>
 

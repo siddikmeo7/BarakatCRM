@@ -623,18 +623,22 @@ export default function Layout({ children, currentPageName }) {
         className="tk-dfoot block p-3 transition-colors"
       >
         <div className={cn("tk-dcard flex items-center gap-3 px-3 py-2.5", currentPageName === 'Profile' && "on")}>
-          {currentEmployee ? (
-            <EmployeeAvatar employee={currentEmployee} size="sm" />
-          ) : (
-            <EmployeeAvatar
-              avatarUrl={user?.data?.avatar_url || user?.avatar_url}
-              name={user?.full_name || user?.email}
-              isAdmin
-              profileSticker={user?.data?.profile_sticker || user?.profile_sticker}
-              profileFrame={user?.data?.profile_frame || user?.profile_frame}
-              size="sm"
-            />
-          )}
+          {/* Фото профиля «оживает»: увеличивается при наведении и покачивается,
+              когда открыт раздел «Профиль» */}
+          <span className={cn('tk-prof-ava', currentPageName === 'Profile' && 'on')}>
+            {currentEmployee ? (
+              <EmployeeAvatar employee={currentEmployee} size="sm" />
+            ) : (
+              <EmployeeAvatar
+                avatarUrl={user?.data?.avatar_url || user?.avatar_url}
+                name={user?.full_name || user?.email}
+                isAdmin
+                profileSticker={user?.data?.profile_sticker || user?.profile_sticker}
+                profileFrame={user?.data?.profile_frame || user?.profile_frame}
+                size="sm"
+              />
+            )}
+          </span>
           <div className="flex-1 min-w-0">
             <p className="tk-dcard-name text-xs font-bold truncate">
               {currentEmployee ? currentEmployee.name : (user?.full_name || 'User')}

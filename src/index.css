@@ -768,6 +768,48 @@ button.tk-cell:focus-visible { outline: 2px solid #f5b23e; outline-offset: -2px;
 .tk-rate { display: inline-block; width: 150px; text-align: right; }
 .tk-ref { min-width: 120px; justify-content: center; }
 
+/* --- Одна кнопка с выпадающим списком: валюта, тип графика --- */
+.tk-dd { position: relative; display: inline-flex; }
+.tk-dd-caret { width: 12px; height: 12px; transition: transform .2s ease; }
+.tk-dd-caret.up { transform: rotate(180deg); }
+.tk-dd-pop {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 190px;
+  background: #12161d; border: 1px solid #232a35; box-shadow: 0 14px 30px rgba(0, 0, 0, .5);
+  display: flex; flex-direction: column; padding: 4px; animation: tk-rise .18s ease both;
+}
+.tk-dd-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: #aab2bf; background: transparent; border: 0; padding: 8px 10px; cursor: pointer; text-align: left;
+  transition: background .15s, color .15s;
+}
+.tk-dd-item:hover { background: #171c25; color: #f5b23e; }
+.tk-dd-item.on { color: #f5b23e; }
+.tk-dd-foot {
+  border-top: 1px solid #232a35; margin-top: 4px; padding: 8px 10px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+}
+html:not(.dark) .tk-dd-pop { background: #ffffff; border-color: #e2e8f0; box-shadow: 0 14px 30px rgba(15, 23, 42, .14); }
+html:not(.dark) .tk-dd-item { color: #475569; }
+html:not(.dark) .tk-dd-item:hover { background: #f1f5f9; color: #b45309; }
+html:not(.dark) .tk-dd-item.on { color: #b45309; }
+html:not(.dark) .tk-dd-foot { border-top-color: #e2e8f0; }
+
+/* --- Прибыль зелёным, минус красным --- */
+.tk-cell b.pos { color: #6ee7b7; }
+.tk-cell b.neg { color: #f87171; }
+html:not(.dark) .tk-cell b.pos { color: #047857; }
+html:not(.dark) .tk-cell b.neg { color: #b91c1c; }
+
+/* --- Фото профиля в меню: увеличивается и покачивается у раздела «Профиль» --- */
+.tk-prof-ava { display: inline-flex; flex: none; transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+.tk-dcard:hover .tk-prof-ava { transform: scale(1.14) rotate(-3deg); }
+.tk-prof-ava.on { animation: tk-prof-bob 2.6s ease-in-out infinite; }
+@keyframes tk-prof-bob {
+  0%, 100% { transform: scale(1.06) translateY(0) rotate(-2deg); }
+  50% { transform: scale(1.16) translateY(-2px) rotate(2deg); }
+}
+
 @keyframes tk-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes tk-grow { from { transform: scaleX(0); } }
 @keyframes tk-draw { to { stroke-dashoffset: 0; } }
