@@ -21,6 +21,7 @@ import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import ExpenseDonut from '@/components/expenses/ExpenseDonut';
 import ExpenseCard from '@/components/expenses/ExpenseCard';
 import SpentByPanel from '@/components/expenses/SpentByPanel';
+import SpentByPicker from '@/components/expenses/SpentByPicker';
 import { CAP, CARD, EXPENSE_HERO_IMG, fmtMoney } from '@/components/expenses/expenseDesign';
 
 const CATEGORIES = [
@@ -537,16 +538,13 @@ export default function Expenses() {
             {canRecordOnBehalf && (
               <div>
                 <label className={CAP}>От имени (другое лицо)</label>
-                <Input
-                  list="spent-by-options"
-                  placeholder="Имя незарегистрированного сотрудника / лица"
+                <SpentByPicker
                   value={form.spent_by_name}
-                  onChange={e => setForm(f => ({ ...f, spent_by_name: e.target.value }))}
+                  onChange={name => setForm(f => ({ ...f, spent_by_name: name }))}
+                  employees={employees}
+                  usedNames={spentByNames}
                   className={FIELD}
                 />
-                <datalist id="spent-by-options">
-                  {spentByNames.map(n => <option key={n} value={n} />)}
-                </datalist>
                 <p className="text-xs text-slate-400 mt-1">Укажите, если фиксируете чужой расход — позже увидите сумму по этому лицу.</p>
               </div>
             )}
