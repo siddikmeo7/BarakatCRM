@@ -648,6 +648,9 @@
 .tk-bar {
   display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #232a35;
   flex-wrap: wrap; animation: tk-rise .6s ease both;
+  /* Раскрытый список (валюта, тип графика) должен лежать поверх приборной полосы
+     и плит, которые идут ниже: строка управления поднимается над ними. */
+  position: relative; z-index: 30;
 }
 .tk-bar.flat { border: 0; padding: 8px 0 0; }
 .tk-bar.tight { border: 0; padding: 6px 0 0; }
