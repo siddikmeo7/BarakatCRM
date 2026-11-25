@@ -567,6 +567,9 @@ export default function Expenses() {
                   onChange={name => setForm(f => ({ ...f, spent_by_name: name }))}
                   employees={employees}
                   usedNames={spentByNames}
+                  businessId={business?.id}
+                  canManage={canManageAny}
+                  onChanged={loadData}
                   className={FIELD}
                 />
                 <p className="text-xs text-slate-400 mt-1">Укажите, если фиксируете чужой расход — позже увидите сумму по этому лицу.</p>
