@@ -460,35 +460,41 @@ export default function Expenses() {
             </button>
           )}
         </div>
-      ) : view === 'list' ? (
-        <ExpenseList
-          expenses={filtered}
-          maxEdits={MAX_EDITS}
-          getEmployee={getEmpByName}
-          canEdit={canEdit}
-          canDelete={canDelete}
-          deleting={deleting}
-          onOpen={setViewingExpense}
-          onEdit={openEditForm}
-          onDelete={handleDelete}
-        />
       ) : (
-        <div className="ep-feed">
-          {filtered.map((expense, i) => (
-            <ExpenseCard
-              key={expense.id}
-              expense={expense}
-              index={i}
-              maxEdits={MAX_EDITS}
-              authorEmployee={getEmpByName(expense.created_by_name)}
-              canEdit={canEdit(expense)}
-              canDelete={canDelete(expense)}
-              deleting={deleting}
-              onOpen={() => setViewingExpense(expense)}
-              onEdit={openEditForm}
-              onDelete={handleDelete}
-            />
-          ))}
+        <div className="ep-box">
+          <div className="ep-box-scroll">
+            {view === 'list' ? (
+              <ExpenseList
+                expenses={filtered}
+                maxEdits={MAX_EDITS}
+                getEmployee={getEmpByName}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                deleting={deleting}
+                onOpen={setViewingExpense}
+                onEdit={openEditForm}
+                onDelete={handleDelete}
+              />
+            ) : (
+              <div className="ep-feed">
+                {filtered.map((expense, i) => (
+                  <ExpenseCard
+                    key={expense.id}
+                    expense={expense}
+                    index={i}
+                    maxEdits={MAX_EDITS}
+                    authorEmployee={getEmpByName(expense.created_by_name)}
+                    canEdit={canEdit(expense)}
+                    canDelete={canDelete(expense)}
+                    deleting={deleting}
+                    onOpen={() => setViewingExpense(expense)}
+                    onEdit={openEditForm}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

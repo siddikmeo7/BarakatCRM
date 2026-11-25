@@ -5,63 +5,66 @@ import { getCategoryInfo } from './expenseCategories';
 import { formatExpenseDay, formatAddedAt } from './expenseTime';
 import { fmtMoney } from './expenseDesign';
 
-// Карточка расхода в ленте «Пульса трат»: мягкая подложка категории,
-// крупная сумма и точное время добавления в 24-часовом формате.
+// Компактная карточка расхода в ленте «Пульса трат»: одна строка в коробке —
+// иконка категории, дата и время добавления (24 ч), сумма и действия.
 export default function ExpenseCard({ expense, index = 0, maxEdits, authorEmployee, canEdit, canDelete, deleting, onOpen, onEdit, onDelete }) {
   const editsLeft = maxEdits - (expense.edit_count || 0);
   const cat = getCategoryInfo(expense.category);
   const Icon = cat.icon;
+  const hasTags = expense.recipient || expense.spent_by_name || (expense.edit_count || 0) > 0;
 
   return (
     <div
       onClick={onOpen}
-      style={{ '--soft': cat.soft, animationDelay: `${0.06 + index * 0.06}s` }}
+      style={{ '--soft': cat.soft, animationDelay: `${0.04 + index * 0.04}s` }}
       className="ep-card"
     >
-      <div className="ep-ct">
-        <span className="ep-ico">
-          <Icon style={{ color: cat.tone }} />
-        </span>
-        <div>
-          <div className="ep-cc">{expense.category}</div>
-          <div className="ep-cd">{formatExpenseDay(expense.expense_date)}</div>
+      <span className="ep-ico">
+        <Icon style={{ color: cat.tone }} />
+      </span>
+
+      <div className="ep-cmain">
+        <div className="ep-crow">
+          <span className="ep-cc">{expense.category}</span>
+          <span className="ep-cd">{formatExpenseDay(expense.expense_date)}</span>
         </div>
+
+        <div className="ep-cmeta">
+          <Clock />
+          <span>{formatAddedAt(expense.created_date)}</span>
+          {expense.created_by_name && (
+            <>
+              {authorEmployee
+                ? <EmployeeAvatar employee={authorEmployee} sizeClass="w-3.5 h-3.5 rounded-full text-[7px]" />
+                : <User />}
+              <span>{expense.created_by_name}</span>
+            </>
+          )}
+        </div>
+
+        {(expense.description || hasTags) && (
+          <div className="ep-ctags">
+            {expense.description && <span className="ep-nt-inline">{expense.description}</span>}
+            {expense.recipient && <span className="ep-s">{expense.recipient}</span>}
+            {expense.spent_by_name && (
+              <span className="ep-s by">
+                <UserCircle />
+                {expense.spent_by_name}
+              </span>
+            )}
+            {(expense.edit_count || 0) > 0 && (
+              <span className="ep-s">
+                <Pencil />
+                {expense.edit_count}/{maxEdits}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="ep-amt">
         −{fmtMoney(expense.amount)}
         <i>с.</i>
-      </div>
-
-      {expense.description && <p className="ep-nt">{expense.description}</p>}
-
-      <div className="ep-mt">
-        <Clock />
-        добавлен {formatAddedAt(expense.created_date)}
-      </div>
-
-      <div className="ep-st">
-        {expense.recipient && <span className="ep-s">{expense.recipient}</span>}
-        {expense.created_by_name && (
-          <span className="ep-s">
-            {authorEmployee
-              ? <EmployeeAvatar employee={authorEmployee} sizeClass="w-3 h-3 rounded-full text-[8px]" />
-              : <User />}
-            {expense.created_by_name}
-          </span>
-        )}
-        {expense.spent_by_name && (
-          <span className="ep-s by">
-            <UserCircle />
-            от имени: {expense.spent_by_name}
-          </span>
-        )}
-        {(expense.edit_count || 0) > 0 && (
-          <span className="ep-s">
-            <Pencil />
-            {expense.edit_count}/{maxEdits}
-          </span>
-        )}
       </div>
 
       <div className="ep-acts">

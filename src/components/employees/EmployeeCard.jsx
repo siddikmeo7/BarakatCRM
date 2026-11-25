@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ru as dateFnsRu } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
-import { Shield, Trash2, Phone, Mail, Clock, LogIn, ChevronDown, ChevronUp, Copy, Send, History } from 'lucide-react';
+import { Shield, Trash2, Phone, Mail, Clock, LogIn, ChevronDown, ChevronUp, Copy, Send, History, RotateCcw } from 'lucide-react';
 import EmployeeHistoryDialog from './EmployeeHistoryDialog';
 import { AvatarDisplay } from '@/components/settings/AvatarPicker';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
@@ -43,7 +43,7 @@ function getOnlineStatus(lastLoginAt) {
   return { label: formatDistanceToNow(new Date(lastLoginAt), { addSuffix: true, locale: dateFnsRu }), color: 'bg-slate-300', textColor: 'text-slate-400' };
 }
 
-export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails, business }) {
+export default function EmployeeCard({ employee, onEdit, onDelete, onRestore, onViewDetails, business }) {
   const [expanded, setExpanded] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -107,6 +107,9 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
               {employee.is_frozen && (
                 <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">🧊 Заморожен</span>
               )}
+              {employee.deleted_at && (
+                <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-medium">Удалён</span>
+              )}
             </div>
 
             <div className="flex items-center gap-1.5 mt-0.5">
@@ -134,6 +137,15 @@ export default function EmployeeCard({ employee, onEdit, onDelete, onViewDetails
 
           {/* Actions */}
           <div className="flex items-center gap-1 flex-shrink-0">
+            {employee.deleted_at && onRestore && (
+              <button
+                onClick={() => onRestore(employee.id)}
+                className="p-2 hover:bg-emerald-50 rounded-xl transition-colors"
+                title="Восстановить сотрудника"
+              >
+                <RotateCcw className="w-4 h-4 text-emerald-500" />
+              </button>
+            )}
             <button
               onClick={() => onEdit(employee)}
               className="p-2 hover:bg-indigo-50 rounded-xl transition-colors group"

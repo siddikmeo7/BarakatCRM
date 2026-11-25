@@ -422,52 +422,68 @@ select.ep-fld {
 .ep-met small { font-size: 13px; color: #9aa39b; }
 
 /* --- Заголовки разделов --- */
-.ep-sec { display: flex; align-items: baseline; gap: 12px; margin: 44px 0 18px; }
-.ep-sec h2 { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -.025em; color: #1f2a24; }
+.ep-sec { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 10px; }
+.ep-sec h2 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.02em; color: #1f2a24; }
 .ep-sec .ep-note { color: #9aa39b; }
 
 /* --- Разбивка по категориям --- */
-.ep-brk { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.ep-brk { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 8px; }
 .ep-br {
-  background: #fff; border-radius: 24px; padding: 16px 18px; display: flex; align-items: center; gap: 14px;
-  border: 1px solid #edf0e8; box-shadow: 0 6px 18px rgba(47,107,87,.06); animation: ep-rise .6s ease both;
+  background: #fff; border-radius: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 9px;
+  border: 1px solid #edf0e8; box-shadow: 0 2px 8px rgba(47,107,87,.05); animation: ep-rise .5s ease both;
 }
+.ep-br .ep-ico { width: 28px; height: 28px; }
+.ep-br .ep-ico svg { width: 13px; height: 13px; }
 .ep-ico {
   width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; flex: none;
   background: var(--soft, #eef1ea);
 }
 .ep-ico svg { width: 19px; height: 19px; }
-.ep-bn { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14.5px; font-weight: 600; }
-.ep-trk { display: block; height: 7px; border-radius: 99px; background: #eef1ea; overflow: hidden; }
+.ep-bn { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; }
+.ep-trk { display: block; height: 4px; border-radius: 99px; background: #eef1ea; overflow: hidden; }
 .ep-trk i { display: block; height: 100%; border-radius: 99px; }
-.ep-bv { text-align: right; font-size: 15px; font-weight: 600; white-space: nowrap; }
-.ep-bv em { display: block; font-style: normal; font-size: 12px; color: #9aa39b; font-weight: 500; margin-top: 2px; }
+.ep-bv { text-align: right; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.ep-bv em { display: block; font-style: normal; font-size: 10.5px; color: #9aa39b; font-weight: 500; margin-top: 1px; }
 
-/* --- Лента карточек расходов --- */
-.ep-feed { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.ep-card {
-  border-radius: 28px; padding: 22px; display: flex; flex-direction: column; gap: 12px;
-  background: var(--soft, #fff); box-shadow: 0 8px 24px rgba(47,107,87,.08); cursor: pointer;
-  transition: box-shadow .2s; animation: ep-rise .7s ease both;
+/* --- Коробка со всеми расходами: карточки или список внутри прокрутки --- */
+.ep-box {
+  background: #fff; border: 1px solid #edf0e8; border-radius: 24px; padding: 8px;
+  box-shadow: 0 8px 26px rgba(47,107,87,.08);
 }
-.ep-card:hover { box-shadow: 0 14px 34px rgba(47,107,87,.18); }
-.ep-ct { display: flex; align-items: center; gap: 12px; }
-.ep-card .ep-ico { width: 46px; height: 46px; background: #fff; }
-.ep-cc { font-size: 16px; font-weight: 600; line-height: 1.2; }
-.ep-cd { font-size: 12.5px; color: #6f7b73; margin-top: 2px; }
-.ep-amt { font-size: 36px; font-weight: 600; letter-spacing: -.035em; color: #e2574c; line-height: 1.1; }
-.ep-amt i { font-style: normal; font-size: 17px; margin-left: 3px; }
-.ep-nt { margin: 0; font-size: 13.5px; color: #3a463f; line-height: 1.4; }
-.ep-mt { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6f7b73; }
-.ep-mt svg { width: 12px; height: 12px; }
-.ep-st { display: flex; flex-wrap: wrap; gap: 6px; }
+.ep-box-scroll { max-height: 372px; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+.ep-box .ep-list { background: transparent; border: 0; box-shadow: none; padding: 0; }
+.ep-box .ep-scroll { max-height: none; overflow: visible; }
+
+/* --- Компактная карточка расхода: одна строка в коробке --- */
+.ep-feed { display: flex; flex-direction: column; gap: 6px; }
+.ep-card {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: 10px; align-items: center;
+  border-radius: 16px; padding: 9px 12px; background: var(--soft, #fff);
+  cursor: pointer; transition: box-shadow .2s; animation: ep-rise .5s ease both;
+}
+.ep-card:hover { box-shadow: 0 6px 18px rgba(47,107,87,.16); }
+.ep-card .ep-ico { width: 34px; height: 34px; background: #fff; }
+.ep-card .ep-ico svg { width: 15px; height: 15px; }
+.ep-cmain { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ep-crow { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.ep-cc { font-size: 13.5px; font-weight: 600; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep-cd { font-size: 11.5px; color: #6f7b73; white-space: nowrap; }
+.ep-cmeta { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #6f7b73; min-width: 0; }
+.ep-cmeta svg { width: 11px; height: 11px; flex: none; }
+.ep-cmeta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ep-ctags { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-width: 0; }
+.ep-nt-inline { font-size: 11.5px; color: #3a463f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; }
+.ep-amt { font-size: 15.5px; font-weight: 600; letter-spacing: -.02em; color: #e2574c; line-height: 1.1; white-space: nowrap; }
+.ep-amt i { font-style: normal; font-size: 11.5px; margin-left: 2px; }
+.ep-card .ep-s { padding: 2px 8px; font-size: 11px; }
+.ep-card .ep-act { width: 28px; height: 28px; }
 .ep-s {
   display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,.8);
   border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 500; color: #2b3a32;
 }
 .ep-s svg { width: 11px; height: 11px; }
 .ep-s.by { background: #fff; color: #2f6b57; }
-.ep-acts { display: flex; gap: 8px; margin-top: auto; }
+.ep-acts { display: flex; gap: 6px; }
 .ep-act {
   width: 34px; height: 34px; border-radius: 50%; border: 0; background: rgba(255,255,255,.85);
   color: #4d5c53; display: grid; place-items: center; cursor: pointer; transition: background .2s, color .2s;
@@ -654,6 +670,10 @@ select.ep-fld {
 .dark .ep-lcell, .dark .ep-bn { color: #ecebe5; }
 .dark .ep-card { background: #171a20; }
 .dark .ep-card .ep-ico, .dark .ep-ico { background: #1f242c; }
+.dark .ep-box { background: #13161b; border-color: #232a35; }
+.dark .ep-cc { color: #ecebe5; }
+.dark .ep-cd, .dark .ep-cmeta { color: #8b9591; }
+.dark .ep-nt-inline { color: #b6b3aa; }
 .dark .ep-s { background: rgba(255,255,255,.08); color: #d7dbe2; }
 .dark .ep-s.by { background: rgba(127,209,185,.14); color: #7fd1b9; }
 .dark .ep-nt { color: #b6b3aa; }

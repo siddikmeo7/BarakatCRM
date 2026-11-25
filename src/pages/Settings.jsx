@@ -261,6 +261,18 @@ export default function Settings() {
     }
   };
 
+  // Восстановление ранее удалённого сотрудника: профиль снова показывается в команде
+  // как действующий и может входить в систему.
+  const handleRestoreEmployee = async (id) => {
+    try {
+      await base44.entities.Employee.update(id, { deleted_at: null, is_active: true, is_frozen: false });
+      await loadData();
+    } catch (e) {
+      console.error('Error restoring employee:', e);
+      alert('Не удалось восстановить сотрудника: ' + (e?.message || 'ошибка'));
+    }
+  };
+
   const handleBackup = async () => {
     setBackupLoading(true);
     try {
@@ -629,8 +641,10 @@ export default function Settings() {
                   <div className="bg-slate-50 rounded-xl border border-slate-100 p-3 text-center"><p className="text-2xl font-bold text-slate-600">{employees.filter(e => e.is_frozen).length}</p><p className="text-xs text-slate-500">Заморожено</p></div>
                 </div>
               )}
-              {employees.filter(e => !e.deleted_at).map(employee => <EmployeeCard key={employee.id} employee={employee} business={business} onEdit={setEditingEmployee} onDelete={handleDeleteEmployee} />)}
-              {employees.filter(e => !e.deleted_at).length === 0 && <p className="text-center text-slate-500 py-8">{t(lang,'settings_emp_empty')}</p>}
+              {[...employees].sort((a, b) => (a.deleted_at ? 1 : 0) - (b.deleted_at ? 1 : 0)).map(employee => (
+                <EmployeeCard key={employee.id} employee={employee} business={business} onEdit={setEditingEmployee} onDelete={handleDeleteEmployee} onRestore={handleRestoreEmployee} />
+              ))}
+              {employees.length === 0 && <p className="text-center text-slate-500 py-8">{t(lang,'settings_emp_empty')}</p>}
             </div>
             {editingEmployee && <EmployeePermissionsDialog employee={editingEmployee} onClose={() => setEditingEmployee(null)} onSaved={loadData} />}
           </CollapsibleContent>
