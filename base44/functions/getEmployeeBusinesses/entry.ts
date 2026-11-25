@@ -14,8 +14,10 @@ export default async function(req) {
       is_active: true
     });
 
+    // Удалённые сотрудники (deleted_at) не входят в приложение: доступ возвращает
+    // только восстановление профиля в разделе «Сотрудники → История удалённых».
     const employees = allEmployees.filter(e =>
-      (e.user_email || '').toLowerCase().trim() === userEmailLower
+      (e.user_email || '').toLowerCase().trim() === userEmailLower && !e.deleted_at
     );
 
     if (employees.length === 0) {

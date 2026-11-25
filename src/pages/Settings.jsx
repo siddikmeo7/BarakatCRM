@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import EmployeePermissionsDialog from '@/components/employees/EmployeePermissionsDialog';
+import DeletedEmployeesDialog from '@/components/employees/DeletedEmployeesDialog';
 import EmployeeCard from '@/components/employees/EmployeeCard';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import SwitchAccountDialog from '@/components/settings/SwitchAccountDialog';
@@ -106,6 +107,7 @@ export default function Settings() {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [showAddEmployeeForm, setShowAddEmployeeForm] = useState(false);
+  const [deletedEmployeesOpen, setDeletedEmployeesOpen] = useState(false);
   const [empRefreshing, setEmpRefreshing] = useState(false);
   const [selectedEmp, setSelectedEmp] = useState(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
@@ -625,7 +627,7 @@ export default function Settings() {
         {canPerm('manage_employees') ? <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"><Collapsible open={expandedSections.employees} onOpenChange={(open) => setExpandedSections({...expandedSections, employees: open})}>
           <CollapsibleTrigger asChild>
             <div className={`p-4 cursor-pointer flex items-center justify-between transition-all ${expandedSections.employees ? 'bg-green-50' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.employees ? 'bg-green-600' : 'bg-green-100'}`}><Users className={`w-5 h-5 ${expandedSections.employees ? 'text-white' : 'text-green-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.employees ? 'text-green-700' : 'text-slate-900'}`}>{t(lang,'settings_employees')}</h3><p className="text-xs text-slate-500">{employees.length} сотрудник(ов) · <span className="text-emerald-600 font-medium">{employees.filter(e => e.last_login_at).length} входили</span></p></div></div>
+              <div className="flex items-center gap-3"><div className={`p-2 rounded-lg transition-colors ${expandedSections.employees ? 'bg-green-600' : 'bg-green-100'}`}><Users className={`w-5 h-5 ${expandedSections.employees ? 'text-white' : 'text-green-600'}`} /></div><div><h3 className={`font-semibold ${expandedSections.employees ? 'text-green-700' : 'text-slate-900'}`}>{t(lang,'settings_employees')}</h3><p className="text-xs text-slate-500">{employees.filter(e => !e.deleted_at).length} сотрудник(ов) · <span className="text-emerald-600 font-medium">{employees.filter(e => !e.deleted_at && e.last_login_at).length} входили</span></p></div></div>
               <ChevronDown className={`w-5 h-5 transition ${expandedSections.employees ? 'rotate-180 text-green-600' : 'text-slate-500'}`} />
             </div>
           </CollapsibleTrigger>
@@ -636,17 +638,30 @@ export default function Settings() {
             <div className="space-y-3">
               {employees.length > 0 && (
                 <div className="grid grid-cols-3 gap-2 mb-2">
-                  <div className="bg-white rounded-xl border border-slate-100 p-3 text-center"><p className="text-2xl font-bold text-slate-800">{employees.length}</p><p className="text-xs text-slate-500">Всего</p></div>
-                  <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-3 text-center"><p className="text-2xl font-bold text-emerald-700">{employees.filter(e => e.last_login_at && (Date.now() - new Date(e.last_login_at).getTime()) < 10 * 60 * 1000).length}</p><p className="text-xs text-emerald-600">Онлайн</p></div>
-                  <div className="bg-slate-50 rounded-xl border border-slate-100 p-3 text-center"><p className="text-2xl font-bold text-slate-600">{employees.filter(e => e.is_frozen).length}</p><p className="text-xs text-slate-500">Заморожено</p></div>
+                  <div className="bg-white rounded-xl border border-slate-100 p-3 text-center"><p className="text-2xl font-bold text-slate-800">{employees.filter(e => !e.deleted_at).length}</p><p className="text-xs text-slate-500">Всего</p></div>
+                  <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-3 text-center"><p className="text-2xl font-bold text-emerald-700">{employees.filter(e => !e.deleted_at && e.last_login_at && (Date.now() - new Date(e.last_login_at).getTime()) < 10 * 60 * 1000).length}</p><p className="text-xs text-emerald-600">Онлайн</p></div>
+                  <div className="bg-slate-50 rounded-xl border border-slate-100 p-3 text-center"><p className="text-2xl font-bold text-slate-600">{employees.filter(e => !e.deleted_at && e.is_frozen).length}</p><p className="text-xs text-slate-500">Заморожено</p></div>
                 </div>
               )}
-              {[...employees].sort((a, b) => (a.deleted_at ? 1 : 0) - (b.deleted_at ? 1 : 0)).map(employee => (
-                <EmployeeCard key={employee.id} employee={employee} business={business} onEdit={setEditingEmployee} onDelete={handleDeleteEmployee} onRestore={handleRestoreEmployee} />
+              <button
+                onClick={() => setDeletedEmployeesOpen(true)}
+                className="w-full mb-4 flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition-all text-slate-600 font-semibold text-sm"
+              >
+                <RotateCcw className="w-4 h-4" />
+                История удалённых сотрудников ({employees.filter(e => e.deleted_at).length})
+              </button>
+              {employees.filter(e => !e.deleted_at).map(employee => (
+                <EmployeeCard key={employee.id} employee={employee} business={business} onEdit={setEditingEmployee} onDelete={handleDeleteEmployee} />
               ))}
-              {employees.length === 0 && <p className="text-center text-slate-500 py-8">{t(lang,'settings_emp_empty')}</p>}
+              {employees.filter(e => !e.deleted_at).length === 0 && <p className="text-center text-slate-500 py-8">{t(lang,'settings_emp_empty')}</p>}
             </div>
             {editingEmployee && <EmployeePermissionsDialog employee={editingEmployee} onClose={() => setEditingEmployee(null)} onSaved={loadData} />}
+            <DeletedEmployeesDialog
+              open={deletedEmployeesOpen}
+              onOpenChange={setDeletedEmployeesOpen}
+              employees={employees.filter(e => e.deleted_at)}
+              onRestore={handleRestoreEmployee}
+            />
           </CollapsibleContent>
         </Collapsible></div> : null}
 

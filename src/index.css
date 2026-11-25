@@ -454,29 +454,30 @@ select.ep-fld {
 .ep-box .ep-list { background: transparent; border: 0; box-shadow: none; padding: 0; }
 .ep-box .ep-scroll { max-height: none; overflow: visible; }
 
-/* --- Компактная карточка расхода: одна строка в коробке --- */
-.ep-feed { display: flex; flex-direction: column; gap: 6px; }
+/* --- Карточки расходов: четыре в ряд внутри коробки --- */
+.ep-feed { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .ep-card {
-  display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: 10px; align-items: center;
-  border-radius: 16px; padding: 9px 12px; background: var(--soft, #fff);
+  position: relative; display: flex; flex-direction: column; gap: 5px;
+  border-radius: 16px; padding: 9px 10px; background: var(--soft, #fff);
   cursor: pointer; transition: box-shadow .2s; animation: ep-rise .5s ease both;
 }
 .ep-card:hover { box-shadow: 0 6px 18px rgba(47,107,87,.16); }
-.ep-card .ep-ico { width: 34px; height: 34px; background: #fff; }
-.ep-card .ep-ico svg { width: 15px; height: 15px; }
-.ep-cmain { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.ep-crow { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.ep-cc { font-size: 13.5px; font-weight: 600; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ep-cd { font-size: 11.5px; color: #6f7b73; white-space: nowrap; }
-.ep-cmeta { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #6f7b73; min-width: 0; }
-.ep-cmeta svg { width: 11px; height: 11px; flex: none; }
+.ep-ct { display: flex; align-items: center; gap: 8px; min-width: 0; padding-right: 54px; }
+.ep-card .ep-ico { width: 30px; height: 30px; background: #fff; }
+.ep-card .ep-ico svg { width: 14px; height: 14px; }
+.ep-cmain { min-width: 0; display: flex; flex-direction: column; }
+.ep-cc { font-size: 12.5px; font-weight: 600; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep-cd { font-size: 10.5px; color: #6f7b73; white-space: nowrap; }
+.ep-cmeta { display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: #6f7b73; min-width: 0; }
+.ep-cmeta svg { width: 10px; height: 10px; flex: none; }
 .ep-cmeta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ep-ctags { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-width: 0; }
-.ep-nt-inline { font-size: 11.5px; color: #3a463f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; }
-.ep-amt { font-size: 15.5px; font-weight: 600; letter-spacing: -.02em; color: #e2574c; line-height: 1.1; white-space: nowrap; }
-.ep-amt i { font-style: normal; font-size: 11.5px; margin-left: 2px; }
-.ep-card .ep-s { padding: 2px 8px; font-size: 11px; }
-.ep-card .ep-act { width: 28px; height: 28px; }
+.ep-ctags { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
+.ep-nt-inline { font-size: 11px; color: #3a463f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.ep-amt { font-size: 17px; font-weight: 600; letter-spacing: -.02em; color: #e2574c; line-height: 1.1; white-space: nowrap; }
+.ep-amt i { font-style: normal; font-size: 12px; margin-left: 2px; }
+.ep-card .ep-s { padding: 1px 7px; font-size: 10.5px; }
+.ep-card .ep-acts { position: absolute; top: 7px; right: 7px; display: flex; gap: 2px; }
+.ep-card .ep-act { width: 22px; height: 22px; background: transparent; }
 .ep-s {
   display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,.8);
   border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 500; color: #2b3a32;
@@ -606,8 +607,8 @@ select.ep-fld {
 
 /* Адаптив */
 @media (max-width: 1100px) {
-  .ep-brk { grid-template-columns: repeat(2, 1fr); }
-  .ep-feed { grid-template-columns: repeat(2, 1fr); }
+  .ep-brk { grid-template-columns: repeat(3, 1fr); }
+  .ep-feed { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
   .ep-page { padding: 0 20px 48px; }
@@ -629,7 +630,8 @@ select.ep-fld {
   .ep-title { font-size: 32px; }
   .ep-sub { font-size: 13.5px; }
   .ep-pill { border-radius: 28px; }
-  .ep-brk, .ep-feed { grid-template-columns: 1fr; }
+  .ep-brk { grid-template-columns: repeat(2, 1fr); }
+  .ep-feed { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ep-mets { gap: 12px; }
   .ep-met { padding: 18px; border-radius: 22px; }
   .ep-met b { font-size: 26px; }
