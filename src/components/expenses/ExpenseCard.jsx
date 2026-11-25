@@ -1,9 +1,9 @@
 import React from 'react';
-import { format, parseISO } from 'date-fns';
-import { ru } from 'date-fns/locale';
-import { Calendar, Pencil, Trash2, Loader2, User, UserCircle } from 'lucide-react';
+import { Pencil, Trash2, Loader2, User, UserCircle, Calendar, Clock } from 'lucide-react';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
-import { CARD, EXPENSE_RECEIPT_IMG, fmtMoney } from './expenseDesign';
+import { getCategoryInfo } from './expenseCategories';
+import { formatExpenseDay, formatAddedAt } from './expenseTime';
+import { CARD, fmtMoney } from './expenseDesign';
 
 const TAG = 'text-[11.5px] px-2.5 py-[3px] rounded-full inline-flex items-center gap-1.5 font-semibold';
 const ACT = 'exp-focus w-[30px] h-[30px] rounded-[10px] border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center text-slate-500 transition-colors hover:bg-slate-100 hover:text-indigo-600 active:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed';
@@ -11,6 +11,8 @@ const ACT = 'exp-focus w-[30px] h-[30px] rounded-[10px] border border-slate-200 
 // Карточка одного расхода в стене карточек
 export default function ExpenseCard({ expense, index = 0, maxEdits, authorEmployee, canEdit, canDelete, deleting, onOpen, onEdit, onDelete }) {
   const editsLeft = maxEdits - (expense.edit_count || 0);
+  const cat = getCategoryInfo(expense.category);
+  const Icon = cat.icon;
 
   return (
     <div
@@ -19,15 +21,22 @@ export default function ExpenseCard({ expense, index = 0, maxEdits, authorEmploy
       className={`${CARD} expense-rise p-[18px] flex flex-col gap-3 cursor-pointer transition-shadow hover:shadow-[0_10px_28px_rgba(79,70,229,.16)]`}
     >
       <div className="flex items-center gap-3">
-        <div className="w-14 h-14 rounded-[14px] overflow-hidden border border-slate-200/80 dark:border-slate-700 bg-white flex-none">
-          <img src={EXPENSE_RECEIPT_IMG} alt="" className="w-full h-full object-cover" />
+        {/* Значок категории расхода */}
+        <div className={`w-14 h-14 rounded-[14px] flex items-center justify-center flex-none border border-white/60 shadow-[inset_0_0_0_1px_rgba(255,255,255,.5)] ${cat.color}`}>
+          <Icon className="w-7 h-7" />
         </div>
         <div className="min-w-0">
           <p className="font-bold text-base text-slate-900 truncate">{expense.category}</p>
           <p className="text-[11.5px] text-slate-500 flex items-center gap-1.5 mt-0.5">
             <Calendar className="w-3 h-3 flex-none" />
-            {format(parseISO(expense.expense_date), 'dd MMM yyyy', { locale: ru })}
+            {formatExpenseDay(expense.expense_date)}
           </p>
+          {expense.created_date && (
+            <p className="text-[11.5px] text-slate-400 flex items-center gap-1.5 mt-0.5 tabular-nums">
+              <Clock className="w-3 h-3 flex-none" />
+              добавлен {formatAddedAt(expense.created_date)}
+            </p>
+          )}
         </div>
         <p className="ml-auto text-2xl font-bold text-red-600 tabular-nums tracking-[-.3px] flex-none">
           −{fmtMoney(expense.amount)} с.

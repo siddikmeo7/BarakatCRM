@@ -22,25 +22,13 @@ import ExpenseDonut from '@/components/expenses/ExpenseDonut';
 import ExpenseCard from '@/components/expenses/ExpenseCard';
 import SpentByPanel from '@/components/expenses/SpentByPanel';
 import SpentByPicker from '@/components/expenses/SpentByPicker';
+import ExpenseList from '@/components/expenses/ExpenseList';
+import ViewToggle from '@/components/ui/ViewToggle';
+import { CATEGORIES, getCategoryInfo } from '@/components/expenses/expenseCategories';
+import { formatExpenseDay, formatAddedAt } from '@/components/expenses/expenseTime';
 import { CAP, CARD, EXPENSE_HERO_IMG, fmtMoney } from '@/components/expenses/expenseDesign';
 
-const CATEGORIES = [
-  { value: 'Аренда', label: 'Аренда', icon: Home, color: 'bg-blue-100 text-blue-600', bar: '#4f46e5' },
-  { value: 'Зарплата', label: 'Зарплата', icon: Users, color: 'bg-green-100 text-green-600', bar: '#16a34a' },
-  { value: 'Транспорт', label: 'Транспорт', icon: Truck, color: 'bg-orange-100 text-orange-600', bar: '#ea580c' },
-  { value: 'Коммунальные', label: 'Коммунальные', icon: Zap, color: 'bg-yellow-100 text-yellow-600', bar: '#ca8a04' },
-  { value: 'Реклама', label: 'Реклама', icon: Megaphone, color: 'bg-purple-100 text-purple-600', bar: '#9333ea' },
-  { value: 'Еда', label: 'Еда', icon: UtensilsCrossed, color: 'bg-rose-100 text-rose-600', bar: '#06b6d4' },
-  { value: 'На дом', label: 'На дом', icon: ShoppingBasket, color: 'bg-amber-100 text-amber-600', bar: '#d97706' },
-  { value: 'Личные', label: 'Личные', icon: Heart, color: 'bg-pink-100 text-pink-600', bar: '#db2777' },
-  { value: 'Обучение', label: 'Обучение', icon: GraduationCap, color: 'bg-violet-100 text-violet-600', bar: '#7c3aed' },
-  { value: 'Налог', label: 'Налог', icon: Landmark, color: 'bg-cyan-100 text-cyan-600', bar: '#0891b2' },
-  { value: 'Патент', label: 'Патент', icon: ScrollText, color: 'bg-teal-100 text-teal-600', bar: '#0d9488' },
-  { value: 'Прочее', label: 'Прочее', icon: MoreHorizontal, color: 'bg-slate-100 text-slate-600', bar: '#64748b' },
-];
-
 const MAX_EDITS = 5;
-const getCategoryInfo = (cat) => CATEGORIES.find(c => c.value === cat) || CATEGORIES[CATEGORIES.length - 1];
 const DEFAULT_FORM = {
   category: 'Аренда',
   amount: '',
@@ -70,6 +58,8 @@ export default function Expenses() {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterAuthor, setFilterAuthor] = useState('all');
   const [filterSpentBy, setFilterSpentBy] = useState('all');
+  // Как показывать расходы: карточками или списком
+  const [view, setView] = useState('grid');
   // Кому разрешено видеть все расходы, тот может переключиться на «только мои»
   const [mineOnly, setMineOnly] = useState(false);
   const [form, setForm] = useState(DEFAULT_FORM);
@@ -425,6 +415,8 @@ export default function Expenses() {
 
         <SearchInput value={search} onChange={setSearch} placeholder="Поиск..." className="flex-1 min-w-32" />
 
+        <ViewToggle view={view} onChange={setView} />
+
         <div className="ml-auto text-right">
           <span className={CAP}>Итого за период</span>
           <p className="text-[26px] leading-[1.15] font-bold text-red-600 tabular-nums">−{fmtMoney(totalFiltered)} с.</p>
@@ -433,37 +425,51 @@ export default function Expenses() {
 
       {/* ── Стена карточек + панель лиц ── */}
       <div className={`grid grid-cols-1 gap-5 items-start ${showSide ? 'xl:grid-cols-[1fr_340px]' : ''}`}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filtered.length === 0 ? (
-            <div className={`${CARD} expense-rise col-span-full md:col-span-2 flex flex-col items-center gap-2.5 p-7 text-center`}>
-              <div className="w-[54px] h-[54px] rounded-full bg-red-100 text-red-400 flex items-center justify-center">
-                <Receipt className="w-[26px] h-[26px]" />
+        {view === 'list' && filtered.length > 0 ? (
+          <ExpenseList
+            expenses={filtered}
+            maxEdits={MAX_EDITS}
+            getEmployee={getEmpByName}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            deleting={deleting}
+            onOpen={setViewingExpense}
+            onEdit={openEditForm}
+            onDelete={handleDelete}
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filtered.length === 0 ? (
+              <div className={`${CARD} expense-rise col-span-full md:col-span-2 flex flex-col items-center gap-2.5 p-7 text-center`}>
+                <div className="w-[54px] h-[54px] rounded-full bg-red-100 text-red-400 flex items-center justify-center">
+                  <Receipt className="w-[26px] h-[26px]" />
+                </div>
+                <p className="font-semibold text-slate-500 text-sm">Расходов нет за выбранный период</p>
+                {canAdd && (
+                  <Button onClick={openAddForm} variant="outline" className={`${PILL_OUT} gap-2`}>
+                    <Plus className="w-4 h-4" /> Добавить первый расход
+                  </Button>
+                )}
               </div>
-              <p className="font-semibold text-slate-500 text-sm">Расходов нет за выбранный период</p>
-              {canAdd && (
-                <Button onClick={openAddForm} variant="outline" className={`${PILL_OUT} gap-2`}>
-                  <Plus className="w-4 h-4" /> Добавить первый расход
-                </Button>
-              )}
-            </div>
-          ) : (
-            filtered.map((expense, i) => (
-              <ExpenseCard
-                key={expense.id}
-                expense={expense}
-                index={i}
-                maxEdits={MAX_EDITS}
-                authorEmployee={getEmpByName(expense.created_by_name)}
-                canEdit={canEdit(expense)}
-                canDelete={canDelete(expense)}
-                deleting={deleting}
-                onOpen={() => setViewingExpense(expense)}
-                onEdit={openEditForm}
-                onDelete={handleDelete}
-              />
-            ))
-          )}
-        </div>
+            ) : (
+              filtered.map((expense, i) => (
+                <ExpenseCard
+                  key={expense.id}
+                  expense={expense}
+                  index={i}
+                  maxEdits={MAX_EDITS}
+                  authorEmployee={getEmpByName(expense.created_by_name)}
+                  canEdit={canEdit(expense)}
+                  canDelete={canDelete(expense)}
+                  deleting={deleting}
+                  onOpen={() => setViewingExpense(expense)}
+                  onEdit={openEditForm}
+                  onDelete={handleDelete}
+                />
+              ))
+            )}
+          </div>
+        )}
 
         {showSide && (
           <SpentByPanel
@@ -623,7 +629,10 @@ export default function Expenses() {
             </DialogHeader>
             <div className="space-y-4 pt-2">
               <div className={`rounded-2xl p-4 ${getCategoryInfo(viewingExpense.category).color}`}>
-                <p className="text-[10.5px] uppercase tracking-[.12em] font-bold opacity-80">Категория</p>
+                <div className="flex items-center gap-1.5">
+                  {(() => { const Icon = getCategoryInfo(viewingExpense.category).icon; return <Icon className="w-4 h-4" />; })()}
+                  <p className="text-[10.5px] uppercase tracking-[.12em] font-bold opacity-80">Категория</p>
+                </div>
                 <p className="text-lg font-bold">{viewingExpense.category}</p>
                 <p className="text-[30px] font-bold mt-2 tabular-nums tracking-[-.4px]">−{fmtMoney(viewingExpense.amount)} с.</p>
               </div>
@@ -634,9 +643,15 @@ export default function Expenses() {
                   <span className="text-sm font-semibold text-slate-800">{viewingExpense.recipient || '—'}</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className={CAP}>Дата и время</span>
+                  <span className={CAP}>Дата расхода</span>
                   <span className="text-sm font-semibold text-slate-800">
-                    {format(parseISO(viewingExpense.expense_date), 'dd MMM yyyy, HH:mm', { locale: ru })}
+                    {formatExpenseDay(viewingExpense.expense_date)}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className={CAP}>Добавлен</span>
+                  <span className="text-sm font-semibold text-slate-800 tabular-nums">
+                    {formatAddedAt(viewingExpense.created_date)}
                   </span>
                 </div>
                 <div className="col-span-2 flex flex-col gap-0.5">
