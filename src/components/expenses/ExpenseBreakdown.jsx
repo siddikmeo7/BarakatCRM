@@ -1,39 +1,32 @@
 import React from 'react';
 import { fmtMoney } from './expenseDesign';
 
-// Разбивка расходов по категориям в виде строк «книги»: значок, название,
-// полоса доли и сумма. Категория окрашивает только значок и полосу.
-export default function ExpenseBreakdown({ categories = [], total = 0, count = 0 }) {
+// Разбивка расходов по категориям: карточки с мягким кружком категории,
+// полосой доли и суммой за период.
+export default function ExpenseBreakdown({ categories = [], total = 0 }) {
   return (
-    <section className="ex-brk">
-      <div className="ex-sec">
-        <h2>Разбивка по категориям</h2>
-        <span className="ex-sp" />
-        <span className="ex-note">−{fmtMoney(total)} с. · {count} записей</span>
-      </div>
-      <div className="ex-brk-grid">
-        {categories.map((cat) => {
-          const Icon = cat.icon;
-          const share = total > 0 ? cat.total / total : 0;
-          return (
-            <div className="ex-brk-row" key={cat.value} style={{ color: cat.bar }}>
-              <span className="ex-ico">
-                <Icon className="w-3.5 h-3.5" />
+    <div className="ep-brk">
+      {categories.map((cat, i) => {
+        const Icon = cat.icon;
+        const share = total > 0 ? cat.total / total : 0;
+        return (
+          <div className="ep-br" key={cat.value} style={{ animationDelay: `${0.2 + i * 0.05}s` }}>
+            <span className="ep-ico" style={{ '--soft': cat.soft }}>
+              <Icon style={{ color: cat.tone }} />
+            </span>
+            <span className="ep-bn">
+              {cat.label}
+              <span className="ep-trk">
+                <i style={{ width: `${cat.total > 0 ? Math.max(2, share * 100) : 0}%`, background: cat.bar }} />
               </span>
-              <span className="ex-brk-name">
-                <span style={{ color: 'var(--ex-ink)' }}>{cat.label}</span>
-                <span className="ex-brk-trk">
-                  <i style={{ width: `${cat.total > 0 ? Math.max(2, share * 100) : 0}%` }} />
-                </span>
-              </span>
-              <span className="ex-brk-v">
-                {fmtMoney(cat.total)} с.
-                <em>{total > 0 ? Math.round(share * 100) : 0}%</em>
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </section>
+            </span>
+            <span className="ep-bv">
+              {fmtMoney(cat.total)} с.
+              <em>{total > 0 ? Math.round(share * 100) : 0}%</em>
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }

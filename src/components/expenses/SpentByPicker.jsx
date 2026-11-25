@@ -126,19 +126,19 @@ export default function SpentByPicker({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="ex-pick">
-        {/* Пустое значение — расход записывается на автора */}
-        <div className={`ex-pick-row ${value ? '' : 'on'}`}>
-          <button type="button" onClick={() => onChange('')} className="ex-pick-name">
-            {!value && <Check className="w-3.5 h-3.5 flex-none" style={{ color: 'var(--ex-stamp)' }} />}
-            <span>Не указано — расход на вас</span>
-          </button>
-        </div>
+    <div>
+      <div className="ep-st" style={{ alignItems: 'center', gap: 8 }}>
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className={`ep-chip ${value ? '' : 'on'}`}
+        >
+          Не указано — расход на вас
+        </button>
 
         {options.map((name) => (
           editingName === name ? (
-            <div key={name} className="ex-pick-row">
+            <span key={name} className="ep-chip on" style={{ gap: 4 }}>
               <Input
                 autoFocus
                 value={editDraft}
@@ -147,82 +147,84 @@ export default function SpentByPicker({
                   if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
                   if (e.key === 'Escape') setEditingName(null);
                 }}
-                className="ex-field h-8 flex-1"
+                className="ep-fld box"
+                style={{ height: 26, width: 120, padding: '0 10px', fontSize: 12 }}
               />
-              <button
-                type="button"
-                onClick={saveEdit}
-                disabled={!editDraft.trim() || busyName === name}
-                className="ex-pick-act"
-                title="Сохранить"
-              >
-                {busyName === name ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+              <button type="button" className="ep-chip-i" onClick={saveEdit} disabled={!editDraft.trim()} title="Сохранить">
+                {busyName === name ? <Loader2 style={{ width: 11, height: 11 }} className="animate-spin" /> : <Check style={{ width: 11, height: 11 }} />}
               </button>
-              <button type="button" onClick={() => setEditingName(null)} className="ex-pick-act" title="Отмена">
-                <X className="w-3.5 h-3.5" />
+              <button type="button" className="ep-chip-i" onClick={() => setEditingName(null)} title="Отмена">
+                <X style={{ width: 11, height: 11 }} />
               </button>
-            </div>
+            </span>
           ) : (
-            <div
+            <span
               key={name}
-              className={`ex-pick-row ${value === name ? 'on' : ''} ${isSelf(name) ? 'self' : ''}`}
+              className={`ep-chip ${value === name ? 'on' : ''} ${isSelf(name) ? 'self' : ''}`}
             >
-              <button type="button" onClick={() => onChange(name)} className="ex-pick-name">
-                {value === name && <Check className="w-3.5 h-3.5 flex-none" style={{ color: 'var(--ex-stamp)' }} />}
-                <span>{name}</span>
+              <button type="button" className="ep-chip-n" onClick={() => onChange(name)}>
+                {name}
                 {isSelf(name) && <em>это вы</em>}
               </button>
               {canManage && (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => startEdit(name)}
-                    className="ex-pick-act"
-                    title="Изменить имя"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
+                  <button type="button" className="ep-chip-i" onClick={() => startEdit(name)} title="Изменить имя">
+                    <Pencil style={{ width: 11, height: 11 }} />
                   </button>
                   <button
                     type="button"
+                    className="ep-chip-i"
                     onClick={() => setDeleteTarget({ name, isEmployee: !!findEmployee(name) })}
-                    className="ex-pick-act"
                     title="Удалить"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 style={{ width: 11, height: 11 }} />
                   </button>
                 </>
               )}
-            </div>
+            </span>
           )
         ))}
 
         {!adding && (
-          <button type="button" onClick={() => { setAdding(true); setAddError(''); }} className="ex-pick-add">
-            <Plus className="w-3.5 h-3.5" /> Добавить нового сотрудника
+          <button
+            type="button"
+            className="ep-btn"
+            style={{ height: 30, fontSize: 12, padding: '0 12px' }}
+            onClick={() => { setAdding(true); setAddError(''); }}
+          >
+            <Plus />
+            Добавить нового сотрудника
           </button>
         )}
       </div>
 
       {adding && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" style={{ marginTop: 8 }}>
           <Input
             autoFocus
             placeholder="Имя сотрудника"
             value={draft}
             onChange={e => { setDraft(e.target.value); setAddError(''); }}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); confirmNew(); } }}
-            className="ex-field flex-1"
+            className="ep-fld box"
+            style={{ height: 34, flex: 1 }}
           />
-          <button type="button" onClick={confirmNew} disabled={!draft.trim()} className="ex-btn pri" title="Добавить и выбрать">
-            <Check className="w-3.5 h-3.5" />
+          <button type="button" className="ep-btn" style={{ height: 34 }} onClick={confirmNew} disabled={!draft.trim()} title="Добавить и выбрать">
+            <Check />
           </button>
-          <button type="button" onClick={() => { setAdding(false); setDraft(''); setAddError(''); }} className="ex-btn" title="Отмена">
-            <X className="w-3.5 h-3.5" />
+          <button
+            type="button"
+            className="ep-btn"
+            style={{ height: 34 }}
+            onClick={() => { setAdding(false); setDraft(''); setAddError(''); }}
+            title="Отмена"
+          >
+            <X />
           </button>
         </div>
       )}
 
-      {addError && <div className="ex-warn">{addError}</div>}
+      {addError && <div className="ep-warn">{addError}</div>}
 
       <DeleteSpentByNameDialog
         open={!!deleteTarget}

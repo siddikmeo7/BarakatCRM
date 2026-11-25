@@ -15,10 +15,11 @@ import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import ExpenseCard from '@/components/expenses/ExpenseCard';
 import ExpenseList from '@/components/expenses/ExpenseList';
 import ExpenseBreakdown from '@/components/expenses/ExpenseBreakdown';
+import ExpenseRing from '@/components/expenses/ExpenseRing';
 import SpentByPicker from '@/components/expenses/SpentByPicker';
 import { CATEGORIES, getCategoryInfo } from '@/components/expenses/expenseCategories';
 import { formatExpenseDay, formatAddedAt, formatMoment } from '@/components/expenses/expenseTime';
-import { fmtMoney } from '@/components/expenses/expenseDesign';
+import { EXPENSE_HERO_IMG, fmtMoney } from '@/components/expenses/expenseDesign';
 
 const MAX_EDITS = 5;
 const DEFAULT_FORM = {
@@ -270,7 +271,7 @@ export default function Expenses() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
       </div>
     );
   }
@@ -293,210 +294,223 @@ export default function Expenses() {
   const getEmpByName = (nm) => employees.find(e => e.name === nm) || null;
 
   return (
-    <div className="ex-page">
-      <div className="ex-wrap">
+    <div className="ep-page">
 
-        {/* ── Шапка книги: название, итог, сводка, управление ── */}
-        <section className="ex-sheet">
-          <header className="ex-head">
-            <div className="ex-head-l">
-              <BackButton className="ex-btn mb-3" />
-              <p className="ex-eyebrow">
-                <TrendingDown className="w-3 h-3" />
-                Кассовая книга
-              </p>
-              <h1 className="ex-title">Расходы</h1>
-              <p className="ex-sub">
-                {viewAll ? 'Все затраты бизнеса' : 'Только ваши расходы'} — аренда, зарплата, еда, прочее
-              </p>
-            </div>
-            <div className="ex-head-r">
-              <span className="ex-cap">Итого за период</span>
-              <b className="ex-total">−{fmtMoney(totalFiltered)}<i>с.</i></b>
-              <span className="ex-head-note">{filtered.length} записей в книге</span>
-            </div>
-          </header>
-
-          <div className="ex-sum">
-            <div>
-              <span className="ex-cap">Записей</span>
-              <b>{filtered.length}</b>
-              <small>за выбранный период</small>
-            </div>
-            <div>
-              <span className="ex-cap">Средний расход</span>
-              <b className="red">{fmtMoney(Math.round(avgExpense))} с.</b>
-              <small>на одну запись</small>
-            </div>
-            <div>
-              <span className="ex-cap">Больше всего</span>
-              <b>{topCategory ? topCategory.label : '—'}</b>
-              <small>{topCategory ? `${fmtMoney(topCategory.total)} с.` : 'нет данных'}</small>
-            </div>
-            <div>
-              <span className="ex-cap">Дней с расходами</span>
-              <b>{daysWithExpenses}</b>
-              <small>уникальных дат</small>
-            </div>
+      {/* ── Шапка с иллюстрацией ── */}
+      <div className="ep-hero">
+        <img src={EXPENSE_HERO_IMG} alt="" />
+        <div className="ep-hin">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <BackButton className="ep-eb ep-back" />
+            <span className="ep-eb">
+              <TrendingDown />
+              Кассовая книга
+            </span>
           </div>
+          <h1 className="ep-title">Расходы</h1>
+          <p className="ep-sub">
+            {viewAll ? 'Все затраты бизнеса' : 'Только ваши расходы'} — аренда, зарплата, еда, прочее
+          </p>
+        </div>
+      </div>
 
-          <div className="ex-tools">
-            {canViewAll ? (
-              <button
-                type="button"
-                onClick={() => {
-                  const nextMine = !mineOnly;
-                  setMineOnly(nextMine);
-                  if (nextMine) setFilterAuthor('all');
-                }}
-                title={mineOnly ? 'Снова показать расходы всех сотрудников' : 'Показать только ваши расходы'}
-                className={`ex-btn ${mineOnly ? 'on' : ''}`}
-              >
-                {mineOnly ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
-                {mineOnly ? 'Все расходы' : 'Только мои'}
-              </button>
-            ) : (
-              <span className="ex-btn" style={{ cursor: 'default' }}>
-                <Users className="w-3.5 h-3.5" /> Только мои
-              </span>
-            )}
-
-            <div className="ex-date">
-              <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
-            </div>
-
-            <select
-              className="ex-field"
-              style={{ width: 150 }}
-              value={filterCategory}
-              onChange={e => setFilterCategory(e.target.value)}
-            >
-              <option value="all">Все категории</option>
-              {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-
-            {viewAll && authors.length > 0 && (
-              <select
-                className="ex-field"
-                style={{ width: 160 }}
-                value={filterAuthor}
-                onChange={e => setFilterAuthor(e.target.value)}
-              >
-                <option value="all">Все авторы</option>
-                {authors.map(a => <option key={a} value={a}>{a}</option>)}
-              </select>
-            )}
-
-            <label className="ex-search" style={{ width: 200 }}>
-              <Search className="w-3.5 h-3.5 flex-none" />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск по расходам" />
-            </label>
-
-            <span className="ex-sp" />
-
-            <div className="ex-seg">
-              <button
-                type="button"
-                onClick={() => setView('grid')}
-                className={view === 'grid' ? 'on' : ''}
-                title="Карточки"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setView('list')}
-                className={view === 'list' ? 'on' : ''}
-                title="Список"
-              >
-                <List className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {canAdd && (
-              <button type="button" onClick={openAddForm} className="ex-btn pri">
-                <Plus className="w-3.5 h-3.5" /> Новый расход
-              </button>
-            )}
-          </div>
-        </section>
-
-        {/* ── Профиль сотрудника ── */}
-        {employee && !isOwner && (
-          <EmployeeExpensesProfile
-            employee={employee}
-            total={totalFiltered}
-            count={filtered.length}
-            businessName={business?.name}
-          />
+      {/* ── Плавающая панель управления ── */}
+      <div className="ep-pill">
+        {canViewAll ? (
+          <button
+            type="button"
+            onClick={() => {
+              const nextMine = !mineOnly;
+              setMineOnly(nextMine);
+              if (nextMine) setFilterAuthor('all');
+            }}
+            title={mineOnly ? 'Снова показать расходы всех сотрудников' : 'Показать только ваши расходы'}
+            className="ep-btn"
+          >
+            {mineOnly ? <User /> : <Users />}
+            {mineOnly ? 'Все расходы' : 'Только мои'}
+          </button>
+        ) : (
+          <span className="ep-btn" style={{ cursor: 'default' }}>
+            <Users />
+            Только мои
+          </span>
         )}
 
-        {/* ── Разбивка по категориям ── */}
-        <ExpenseBreakdown categories={legend} total={totalFiltered} count={filtered.length} />
+        <select
+          className="ep-fld"
+          value={filterCategory}
+          onChange={e => setFilterCategory(e.target.value)}
+        >
+          <option value="all">Все категории</option>
+          {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+        </select>
 
-        {/* ── Записи книги ── */}
-        {filtered.length === 0 ? (
-          <div className="ex-empty">
-            <Receipt className="w-6 h-6" style={{ color: 'var(--ex-muted)' }} />
-            <p>Расходов нет за выбранный период</p>
-            {canAdd && (
-              <button type="button" onClick={openAddForm} className="ex-btn pri">
-                <Plus className="w-3.5 h-3.5" /> Добавить первый расход
-              </button>
-            )}
-          </div>
-        ) : view === 'list' ? (
-          <ExpenseList
-            expenses={filtered}
-            maxEdits={MAX_EDITS}
-            getEmployee={getEmpByName}
-            canEdit={canEdit}
-            canDelete={canDelete}
-            deleting={deleting}
-            onOpen={setViewingExpense}
-            onEdit={openEditForm}
-            onDelete={handleDelete}
-          />
-        ) : (
-          <div className="ex-cards">
-            {filtered.map((expense, i) => (
-              <ExpenseCard
-                key={expense.id}
-                expense={expense}
-                index={i}
-                maxEdits={MAX_EDITS}
-                authorEmployee={getEmpByName(expense.created_by_name)}
-                canEdit={canEdit(expense)}
-                canDelete={canDelete(expense)}
-                deleting={deleting}
-                onOpen={() => setViewingExpense(expense)}
-                onEdit={openEditForm}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
+        {viewAll && authors.length > 0 && (
+          <select
+            className="ep-fld"
+            value={filterAuthor}
+            onChange={e => setFilterAuthor(e.target.value)}
+          >
+            <option value="all">Все авторы</option>
+            {authors.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+        )}
+
+        <label className="ep-sbox">
+          <Search />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск по расходам" />
+        </label>
+
+        <span className="ep-sp" />
+
+        <div className="ep-seg">
+          <button
+            type="button"
+            onClick={() => setView('grid')}
+            className={view === 'grid' ? 'on' : ''}
+            title="Карточки"
+          >
+            <LayoutGrid />
+          </button>
+          <button
+            type="button"
+            onClick={() => setView('list')}
+            className={view === 'list' ? 'on' : ''}
+            title="Список"
+          >
+            <List />
+          </button>
+        </div>
+
+        {canAdd && (
+          <button type="button" onClick={openAddForm} className="ep-btn ep-add">
+            <Plus />
+            Новый расход
+          </button>
         )}
       </div>
 
+      {/* ── Период ── */}
+      <div className="ep-dates">
+        <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+      </div>
+
+      {/* ── Кольцо и метрики ── */}
+      <div className="ep-top">
+        <ExpenseRing categories={legend} total={totalFiltered} count={filtered.length} />
+
+        <div className="ep-mets">
+          <div className="ep-met">
+            <span className="ep-cap">Записей</span>
+            <b>{filtered.length}</b>
+            <small>за выбранный период</small>
+          </div>
+          <div className="ep-met">
+            <span className="ep-cap">Средний расход</span>
+            <b className="red">{fmtMoney(Math.round(avgExpense))} с.</b>
+            <small>на одну запись</small>
+          </div>
+          <div className="ep-met">
+            <span className="ep-cap">Больше всего</span>
+            <b>{topCategory ? topCategory.label : '—'}</b>
+            <small>{topCategory ? `${fmtMoney(topCategory.total)} с.` : 'нет данных'}</small>
+          </div>
+          <div className="ep-met">
+            <span className="ep-cap">Дней с расходами</span>
+            <b>{daysWithExpenses}</b>
+            <small>уникальных дат</small>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Профиль сотрудника ── */}
+      {employee && !isOwner && (
+        <EmployeeExpensesProfile
+          employee={employee}
+          total={totalFiltered}
+          count={filtered.length}
+          businessName={business?.name}
+        />
+      )}
+
+      {/* ── Разбивка по категориям ── */}
+      <div className="ep-sec">
+        <h2>Разбивка по категориям</h2>
+        <span className="ep-sp" />
+        <span className="ep-note">−{fmtMoney(totalFiltered)} с. · {filtered.length} записей</span>
+      </div>
+      <ExpenseBreakdown categories={legend} total={totalFiltered} />
+
+      {/* ── Записи ── */}
+      <div className="ep-sec">
+        <h2>Расходы</h2>
+        <span className="ep-sp" />
+        <span className="ep-note">{filtered.length} записей в книге</span>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="ep-empty">
+          <Receipt className="w-7 h-7" style={{ color: '#9aa39b' }} />
+          <p>Расходов нет за выбранный период</p>
+          {canAdd && (
+            <button type="button" onClick={openAddForm} className="ep-btn ep-add">
+              <Plus />
+              Добавить первый расход
+            </button>
+          )}
+        </div>
+      ) : view === 'list' ? (
+        <ExpenseList
+          expenses={filtered}
+          maxEdits={MAX_EDITS}
+          getEmployee={getEmpByName}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          deleting={deleting}
+          onOpen={setViewingExpense}
+          onEdit={openEditForm}
+          onDelete={handleDelete}
+        />
+      ) : (
+        <div className="ep-feed">
+          {filtered.map((expense, i) => (
+            <ExpenseCard
+              key={expense.id}
+              expense={expense}
+              index={i}
+              maxEdits={MAX_EDITS}
+              authorEmployee={getEmpByName(expense.created_by_name)}
+              canEdit={canEdit(expense)}
+              canDelete={canDelete(expense)}
+              deleting={deleting}
+              onOpen={() => setViewingExpense(expense)}
+              onEdit={openEditForm}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      )}
+
       {/* ── Диалог добавления/редактирования ── */}
       <Dialog open={showForm} onOpenChange={v => { if (!v) { setShowForm(false); setEditingExpense(null); } }}>
-        <DialogContent className="ex-dialog max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="ep-dialog max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="ex-dlg-title">
+            <DialogTitle className="ep-dlg-title">
               {editingExpense ? 'Изменить расход' : 'Новый расход'}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-3.5 pt-1">
+          <div className="space-y-4 pt-1">
             {editingExpense && (
-              <div className="ex-note-box">
+              <div className="ep-note-box">
                 Редактирование {(editingExpense.edit_count || 0) + 1} из {MAX_EDITS}. Каждое изменение сохраняется в историю.
               </div>
             )}
 
             <div>
-              <label className="ex-lbl">Категория</label>
-              <div className="ex-catpick">
+              <label className="ep-lbl">Категория</label>
+              <div className="ep-catpick">
                 {CATEGORIES.map(cat => {
                   const Icon = cat.icon;
                   const active = form.category === cat.value;
@@ -507,7 +521,7 @@ export default function Expenses() {
                       onClick={() => setForm(f => ({ ...f, category: cat.value }))}
                       className={active ? 'on' : ''}
                     >
-                      <Icon className="w-3.5 h-3.5" />
+                      <Icon style={{ width: 13, height: 13 }} />
                       {cat.label}
                     </button>
                   );
@@ -515,41 +529,42 @@ export default function Expenses() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="ex-lbl">Сумма (с.)</label>
+                <label className="ep-lbl">Сумма (с.)</label>
                 <Input
                   type="number"
                   placeholder="0"
                   value={form.amount}
                   onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                  className="ex-field ex-amount"
+                  className="ep-fld box"
+                  style={{ fontSize: 16, fontWeight: 600 }}
                 />
               </div>
               <div>
-                <label className="ex-lbl">Дата</label>
+                <label className="ep-lbl">Дата</label>
                 <Input
                   type="date"
                   value={form.expense_date}
                   onChange={e => setForm(f => ({ ...f, expense_date: e.target.value }))}
-                  className="ex-field"
+                  className="ep-fld box"
                 />
               </div>
             </div>
 
             <div>
-              <label className="ex-lbl">Кому / получатель</label>
+              <label className="ep-lbl">Кому / получатель</label>
               <Input
                 placeholder="Имя сотрудника, арендодатель..."
                 value={form.recipient}
                 onChange={e => setForm(f => ({ ...f, recipient: e.target.value }))}
-                className="ex-field"
+                className="ep-fld box"
               />
             </div>
 
             {canRecordOnBehalf && (
               <div>
-                <label className="ex-lbl">От имени (другое лицо)</label>
+                <label className="ep-lbl">От имени (другое лицо)</label>
                 <SpentByPicker
                   value={form.spent_by_name}
                   onChange={name => setForm(f => ({ ...f, spent_by_name: name }))}
@@ -560,13 +575,13 @@ export default function Expenses() {
                   selfName={selfName}
                   onChanged={loadData}
                 />
-                <p className="ex-hint">
+                <p className="ep-hint">
                   Если расход ваш — оставьте поле пустым: он автоматически запишется на ваше имя.
                   Выбирайте другое лицо только когда фиксируете чужой расход.
                 </p>
                 {ownNameSelected && (
-                  <div className="ex-warn">
-                    <AlertTriangle className="w-3.5 h-3.5 flex-none mt-[1px]" />
+                  <div className="ep-warn">
+                    <AlertTriangle className="w-4 h-4 flex-none mt-[1px]" />
                     <span>
                       Это ваше имя. Своё имя выбирать не нужно: уберите его из поля — расход и так
                       запишется на вас автоматически.
@@ -577,19 +592,19 @@ export default function Expenses() {
             )}
 
             <div>
-              <label className="ex-lbl">Комментарий</label>
+              <label className="ep-lbl">Комментарий</label>
               <Input
                 placeholder="За что? (необязательно)"
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                className="ex-field"
+                className="ep-fld box"
               />
             </div>
 
             <div className="flex gap-2 justify-end pt-1">
               <button
                 type="button"
-                className="ex-btn"
+                className="ep-btn"
                 onClick={() => { setShowForm(false); setEditingExpense(null); }}
               >
                 Отмена
@@ -599,9 +614,10 @@ export default function Expenses() {
                 onClick={handleSave}
                 disabled={saving || !form.amount || ownNameSelected}
                 title={ownNameSelected ? 'Уберите своё имя из поля «От имени»' : undefined}
-                className="ex-btn pri"
+                className="ep-btn"
+                style={{ background: '#2f6b57', borderColor: '#2f6b57', color: '#fff', fontWeight: 600 }}
               >
-                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : (editingExpense ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />)}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingExpense ? <Pencil /> : <Plus />)}
                 {editingExpense ? 'Сохранить' : 'Добавить'}
               </button>
             </div>
@@ -612,53 +628,52 @@ export default function Expenses() {
       {/* ── Чек: детали расхода ── */}
       {viewingExpense && (
         <Dialog open={true} onOpenChange={() => setViewingExpense(null)}>
-          <DialogContent className="ex-dialog max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogContent className="ep-dialog max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="ex-dlg-title">Чек расхода</DialogTitle>
+              <DialogTitle className="ep-dlg-title">Чек расхода</DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-3.5 pt-1">
-              <div
-                className="ex-detail-head"
-                style={{ borderLeftColor: getCategoryInfo(viewingExpense.category).bar }}
-              >
-                <span className="ex-ico" style={{ color: getCategoryInfo(viewingExpense.category).bar }}>
-                  {(() => { const Icon = getCategoryInfo(viewingExpense.category).icon; return <Icon className="w-3.5 h-3.5" />; })()}
+            <div className="space-y-4 pt-1">
+              <div className="ep-detail">
+                <span className="ep-ico" style={{ '--soft': getCategoryInfo(viewingExpense.category).soft }}>
+                  {(() => {
+                    const cat = getCategoryInfo(viewingExpense.category);
+                    const Icon = cat.icon;
+                    return <Icon style={{ color: cat.tone }} />;
+                  })()}
                 </span>
-                <div className="min-w-0">
-                  <span className="ex-cap">Категория</span>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--ex-ink)' }}>
-                    {viewingExpense.category}
-                  </p>
+                <div style={{ minWidth: 0 }}>
+                  <span className="ep-cap">Категория</span>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>{viewingExpense.category}</p>
                 </div>
                 <span className="v">−{fmtMoney(viewingExpense.amount)} с.</span>
               </div>
 
-              <div className="ex-kv">
+              <div className="ep-kv">
                 <div>
-                  <span className="ex-cap">Получатель</span>
+                  <span className="ep-cap">Получатель</span>
                   <b>{viewingExpense.recipient || '—'}</b>
                 </div>
                 <div>
-                  <span className="ex-cap">Дата расхода</span>
+                  <span className="ep-cap">Дата расхода</span>
                   <b>{formatExpenseDay(viewingExpense.expense_date)}</b>
                 </div>
                 <div className="full">
-                  <span className="ex-cap">Добавлен в систему (24 ч)</span>
+                  <span className="ep-cap">Добавлен в систему (24 ч)</span>
                   <b className="tabular-nums">{formatAddedAt(viewingExpense.created_date)}</b>
                 </div>
                 <div className="full">
-                  <span className="ex-cap">Автор расхода</span>
-                  <b className="flex items-center gap-1.5">
+                  <span className="ep-cap">Автор расхода</span>
+                  <b style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {(() => {
                       const em = getEmpByName(viewingExpense.created_by_name);
                       return em
                         ? <EmployeeAvatar employee={em} sizeClass="w-4 h-4 rounded-full text-[9px]" />
-                        : <User className="w-3.5 h-3.5" style={{ color: 'var(--ex-stamp)' }} />;
+                        : <User style={{ width: 14, height: 14, color: '#2f6b57' }} />;
                     })()}
                     {viewingExpense.created_by_name || '—'}
                     {viewingExpense.created_by_role && (
-                      <span style={{ fontSize: 10.5, fontWeight: 400, color: 'var(--ex-muted)' }}>
+                      <span style={{ fontSize: 11.5, fontWeight: 400, color: '#9aa39b' }}>
                         ({viewingExpense.created_by_role === 'owner' ? 'владелец' : viewingExpense.created_by_role === 'admin' ? 'админ' : 'сотрудник'})
                       </span>
                     )}
@@ -666,30 +681,30 @@ export default function Expenses() {
                 </div>
                 {viewingExpense.spent_by_name && (
                   <div className="full">
-                    <span className="ex-cap">От имени (другое лицо)</span>
-                    <b className="flex items-center gap-1.5">
-                      <UserCircle className="w-3.5 h-3.5" style={{ color: 'var(--ex-stamp)' }} />
+                    <span className="ep-cap">От имени (другое лицо)</span>
+                    <b style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <UserCircle style={{ width: 14, height: 14, color: '#2f6b57' }} />
                       {viewingExpense.spent_by_name}
                     </b>
                   </div>
                 )}
                 {viewingExpense.description && (
                   <div className="full">
-                    <span className="ex-cap">Комментарий</span>
+                    <span className="ep-cap">Комментарий</span>
                     <b>{viewingExpense.description}</b>
                   </div>
                 )}
               </div>
 
               {(viewingExpense.edit_count || 0) > 0 && (viewingExpense.edit_history || []).length > 0 && (
-                <div className="ex-log">
-                  <p className="ex-log-t">
+                <div className="ep-log">
+                  <p className="ep-log-t">
                     <History className="w-3 h-3" />
                     История изменений ({viewingExpense.edit_count}/{MAX_EDITS})
                   </p>
                   <div className="space-y-1.5 max-h-48 overflow-y-auto">
                     {(viewingExpense.edit_history || []).map((h, i) => (
-                      <div key={i} className="ex-log-row">
+                      <div key={i} className="ep-log-row">
                         <div className="flex items-center justify-between gap-2">
                           <span><b>{h.by_name || h.by_email}</b></span>
                           <span className="tabular-nums">{formatMoment(h.edited_at)}</span>
@@ -706,15 +721,16 @@ export default function Expenses() {
               )}
 
               <div className="flex gap-2 justify-end pt-1">
-                <button type="button" className="ex-btn" onClick={() => setViewingExpense(null)}>Закрыть</button>
+                <button type="button" className="ep-btn" onClick={() => setViewingExpense(null)}>Закрыть</button>
                 {canEdit(viewingExpense) && (
                   <button
                     type="button"
                     onClick={() => { setViewingExpense(null); openEditForm(viewingExpense); }}
                     disabled={(viewingExpense.edit_count || 0) >= MAX_EDITS}
-                    className="ex-btn pri"
+                    className="ep-btn"
+                    style={{ background: '#2f6b57', borderColor: '#2f6b57', color: '#fff', fontWeight: 600 }}
                   >
-                    <Pencil className="w-3.5 h-3.5" /> Редактировать
+                    <Pencil /> Редактировать
                   </button>
                 )}
               </div>

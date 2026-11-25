@@ -3,21 +3,22 @@ import {
   Heart, GraduationCap, Landmark, ScrollText, MoreHorizontal,
 } from 'lucide-react';
 
-// Категории расходов: значок, подпись и цвета — используются и в форме,
-// и в карточке, и в списке, и в чеке (деталях) расхода.
+// Категории расходов: значок, подпись и цвета.
+// soft — мягкая подложка (кружок значка и фон карточки),
+// tone — цвет значка, bar — цвет полосы и дуги диаграммы.
 export const CATEGORIES = [
-  { value: 'Аренда', label: 'Аренда', icon: Home, color: 'bg-blue-100 text-blue-600', bar: '#4f46e5' },
-  { value: 'Зарплата', label: 'Зарплата', icon: Users, color: 'bg-green-100 text-green-600', bar: '#16a34a' },
-  { value: 'Транспорт', label: 'Транспорт', icon: Truck, color: 'bg-orange-100 text-orange-600', bar: '#ea580c' },
-  { value: 'Коммунальные', label: 'Коммунальные', icon: Zap, color: 'bg-yellow-100 text-yellow-600', bar: '#ca8a04' },
-  { value: 'Реклама', label: 'Реклама', icon: Megaphone, color: 'bg-purple-100 text-purple-600', bar: '#9333ea' },
-  { value: 'Еда', label: 'Еда', icon: UtensilsCrossed, color: 'bg-rose-100 text-rose-600', bar: '#06b6d4' },
-  { value: 'На дом', label: 'На дом', icon: ShoppingBasket, color: 'bg-amber-100 text-amber-600', bar: '#d97706' },
-  { value: 'Личные', label: 'Личные', icon: Heart, color: 'bg-pink-100 text-pink-600', bar: '#db2777' },
-  { value: 'Обучение', label: 'Обучение', icon: GraduationCap, color: 'bg-violet-100 text-violet-600', bar: '#7c3aed' },
-  { value: 'Налог', label: 'Налог', icon: Landmark, color: 'bg-cyan-100 text-cyan-600', bar: '#0891b2' },
-  { value: 'Патент', label: 'Патент', icon: ScrollText, color: 'bg-teal-100 text-teal-600', bar: '#0d9488' },
-  { value: 'Прочее', label: 'Прочее', icon: MoreHorizontal, color: 'bg-slate-100 text-slate-600', bar: '#64748b' },
+  { value: 'Аренда', label: 'Аренда', icon: Home, soft: '#fbeccb', tone: '#b9852a', bar: '#e8b04a' },
+  { value: 'Зарплата', label: 'Зарплата', icon: Users, soft: '#e0efe5', tone: '#2f6b57', bar: '#2f6b57' },
+  { value: 'Транспорт', label: 'Транспорт', icon: Truck, soft: '#e3e8f6', tone: '#5c70b8', bar: '#7a8fd6' },
+  { value: 'Коммунальные', label: 'Коммунальные', icon: Zap, soft: '#fbeccb', tone: '#b9852a', bar: '#e8b04a' },
+  { value: 'Реклама', label: 'Реклама', icon: Megaphone, soft: '#f1e2f1', tone: '#a05ca0', bar: '#a05ca0' },
+  { value: 'Еда', label: 'Еда', icon: UtensilsCrossed, soft: '#fbe3df', tone: '#e2574c', bar: '#e2574c' },
+  { value: 'На дом', label: 'На дом', icon: ShoppingBasket, soft: '#e0efe5', tone: '#2f6b57', bar: '#2f6b57' },
+  { value: 'Личные', label: 'Личные', icon: Heart, soft: '#e3e8f6', tone: '#5c70b8', bar: '#7a8fd6' },
+  { value: 'Обучение', label: 'Обучение', icon: GraduationCap, soft: '#f1e2f1', tone: '#a05ca0', bar: '#a05ca0' },
+  { value: 'Налог', label: 'Налог', icon: Landmark, soft: '#fbeccb', tone: '#b9852a', bar: '#e8b04a' },
+  { value: 'Патент', label: 'Патент', icon: ScrollText, soft: '#e0efe5', tone: '#2f6b57', bar: '#2f6b57' },
+  { value: 'Прочее', label: 'Прочее', icon: MoreHorizontal, soft: '#e3e8f6', tone: '#5c70b8', bar: '#7a8fd6' },
 ];
 
 export const getCategoryInfo = (cat) =>
