@@ -7,7 +7,7 @@ import { fmtMoney } from './expenseDesign';
 
 // Компактная карточка расхода для сетки «Пульса трат»: категория с иконкой,
 // сумма, дата и время добавления в 24-часовом формате, автор и действия.
-export default function ExpenseCard({ expense, index = 0, maxEdits, authorEmployee, canEdit, canDelete, deleting, onOpen, onEdit, onDelete }) {
+export default function ExpenseCard({ expense, index = 0, maxEdits, authorEmployee, spentByEmployee, canEdit, canDelete, deleting, onOpen, onEdit, onDelete }) {
   const editsLeft = maxEdits - (expense.edit_count || 0);
   const cat = getCategoryInfo(expense.category);
   const Icon = cat.icon;
@@ -46,14 +46,16 @@ export default function ExpenseCard({ expense, index = 0, maxEdits, authorEmploy
               {authorEmployee
                 ? <EmployeeAvatar employee={authorEmployee} sizeClass="w-3 h-3 rounded-full text-[7px]" />
                 : <User />}
-              {expense.created_by_name}
+              {expense.created_by_name.trim()}
             </span>
           )}
           {expense.recipient && <span className="ep-s">{expense.recipient}</span>}
           {expense.spent_by_name && (
             <span className="ep-s by">
-              <UserCircle />
-              {expense.spent_by_name}
+              {spentByEmployee
+                ? <EmployeeAvatar employee={spentByEmployee} sizeClass="w-3 h-3 rounded-full text-[7px]" />
+                : <UserCircle />}
+              {expense.spent_by_name.trim()}
             </span>
           )}
         </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import PageHeader from '@/components/ui/PageHeader';
+import { SALARY_HERO_IMG } from '@/components/salary/salaryDesign';
 import DateFilter from '@/components/filters/DateFilter';
 import BackButton from '@/components/ui/BackButton';
 import NoAccess from '@/components/ui/NoAccess';
@@ -344,10 +344,14 @@ export default function Salary() {
     <div className="space-y-5">
       <BackButton className="mb-2" />
 
-      <PageHeader
-        title="Зарплата сотрудников"
-        subtitle={`Расчёт по выбранному методу · ${periodLabel}`}
-      />
+      {/* Шапка с фото выдачи зарплаты — как в разделе «Расходы» */}
+      <div className="sal-hero">
+        <img src={SALARY_HERO_IMG} alt="" />
+        <div className="sal-hero-in">
+          <h1 className="sal-hero-t">Зарплата сотрудников</h1>
+          <div className="sal-hero-s">Расчёт по выбранному методу · {periodLabel}</div>
+        </div>
+      </div>
 
       {/* Светящийся счётчик: сколько сотрудников ждут выплату */}
       {dueCount > 0 && (

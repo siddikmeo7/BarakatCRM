@@ -1,0 +1,2 @@
+// Общие значения раздела «Зарплата»: фото шапки (выдача зарплаты)
+export const SALARY_HERO_IMG = 'https://media.base44.com/images/public/698ff18fde0fc6a87223fd69/80386688e6093e9fe9fffa1800f99d56_generated_image.png';

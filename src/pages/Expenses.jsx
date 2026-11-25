@@ -291,7 +291,17 @@ export default function Expenses() {
   const isOwnExpense = (e) => e.created_by_id === currentUser?.id;
   const canEdit = (e) => canManageAny || (isOwnExpense(e) && hasAccess);
   const canDelete = (e) => canManageAny || isOwnExpense(e);
-  const getEmpByName = (nm) => employees.find(e => e.name === nm) || null;
+  // Поиск сотрудника по имени из записи расхода: имена в расходах могут содержать
+  // лишние пробелы и другой регистр, поэтому сравниваем нормализованно.
+  const normName = (nm) => (nm || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const getEmpByName = (nm) => {
+    const key = normName(nm);
+    if (!key) return null;
+    const live = employees.filter(e => !e.deleted_at);
+    return live.find(e => normName(e.name) === key || normName(e.full_name) === key)
+      || employees.find(e => normName(e.name) === key)
+      || null;
+  };
 
   return (
     <div className="ep-page">
@@ -484,6 +494,7 @@ export default function Expenses() {
                     index={i}
                     maxEdits={MAX_EDITS}
                     authorEmployee={getEmpByName(expense.created_by_name)}
+                    spentByEmployee={getEmpByName(expense.spent_by_name)}
                     canEdit={canEdit(expense)}
                     canDelete={canDelete(expense)}
                     deleting={deleting}
@@ -689,8 +700,13 @@ export default function Expenses() {
                   <div className="full">
                     <span className="ep-cap">От имени (другое лицо)</span>
                     <b style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <UserCircle style={{ width: 14, height: 14, color: '#2f6b57' }} />
-                      {viewingExpense.spent_by_name}
+                      {(() => {
+                        const em = getEmpByName(viewingExpense.spent_by_name);
+                        return em
+                          ? <EmployeeAvatar employee={em} sizeClass="w-4 h-4 rounded-full text-[9px]" />
+                          : <UserCircle style={{ width: 14, height: 14, color: '#2f6b57' }} />;
+                      })()}
+                      {viewingExpense.spent_by_name.trim()}
                     </b>
                   </div>
                 )}

@@ -25,6 +25,7 @@ export default function ExpenseList({ expenses, maxEdits, getEmployee, canEdit, 
           const cat = getCategoryInfo(expense.category);
           const Icon = cat.icon;
           const emp = getEmployee(expense.created_by_name);
+          const byEmp = getEmployee(expense.spent_by_name);
           const editsLeft = maxEdits - (expense.edit_count || 0);
           const editable = typeof canEdit === 'function' ? canEdit(expense) : canEdit;
           const deletable = typeof canDelete === 'function' ? canDelete(expense) : canDelete;
@@ -54,7 +55,7 @@ export default function ExpenseList({ expenses, maxEdits, getEmployee, canEdit, 
                     {emp
                       ? <EmployeeAvatar employee={emp} sizeClass="w-4 h-4 rounded-full text-[8px]" />
                       : <User />}
-                    <span>{expense.created_by_name}</span>
+                    <span>{expense.created_by_name.trim()}</span>
                   </>
                 ) : <span>—</span>}
               </div>
@@ -62,8 +63,10 @@ export default function ExpenseList({ expenses, maxEdits, getEmployee, canEdit, 
               <div className="ep-lcell ep-c-by">
                 {expense.spent_by_name ? (
                   <>
-                    <UserCircle />
-                    <span>{expense.spent_by_name}</span>
+                    {byEmp
+                      ? <EmployeeAvatar employee={byEmp} sizeClass="w-4 h-4 rounded-full text-[8px]" />
+                      : <UserCircle />}
+                    <span>{expense.spent_by_name.trim()}</span>
                   </>
                 ) : <span>—</span>}
               </div>
