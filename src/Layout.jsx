@@ -6,7 +6,10 @@ import { t } from '@/components/i18n/translations';
 import { mergePermissions } from '@/components/permissions/permissionsHelper';
 import { countDueSalaries } from '@/lib/salaryPeriod';
 import SubscriptionGate from '@/components/subscription/SubscriptionGate';
+import SubscriptionLockBanner from '@/components/subscription/SubscriptionLockBanner';
 import { getSubscriptionState, fetchAccessState } from '@/lib/subscription';
+import { setLockState } from '@/lib/subscriptionLock';
+import { toast } from '@/components/ui/use-toast';
 import { useAppTheme, applyThemeMode } from '@/lib/appTheme';
 import { trackUsage } from '@/lib/trackUsage';
 
@@ -134,6 +137,28 @@ export default function Layout({ children, currentPageName }) {
     if (!business?.id) { setServerAccess(null); return; }
     fetchAccessState(business.id).then(setServerAccess).catch(() => setServerAccess(null));
   }, [business?.id, business?.subscription_status]);
+
+  // Неоплаченная подписка не закрывает приложение: владелец и сотрудники входят,
+  // видят свои данные, но ничего не могут изменить (режим «только просмотр»).
+  useEffect(() => {
+    // Запасной расчёт, если серверная проверка недоступна: подписка истекла
+    const local = getSubscriptionState(business, { isPlatformAdmin: user?.email === ADMIN_EMAIL });
+    const frozen = serverAccess
+      ? serverAccess.allowed === false && serverAccess.status !== 'blocked'
+      : local.status === 'expired';
+    setLockState({ frozen, access: serverAccess, isOwner: !currentEmployee });
+  }, [serverAccess, currentEmployee, business, user]);
+
+  // Попытка изменить данные в режиме «только просмотр» — показываем понятное объяснение
+  useEffect(() => {
+    const onBlocked = () => toast({
+      title: 'Подписка не оплачена',
+      description: 'Изменения заблокированы — сейчас доступен только просмотр данных.',
+      variant: 'destructive',
+    });
+    window.addEventListener('barakatWriteBlocked', onBlocked);
+    return () => window.removeEventListener('barakatWriteBlocked', onBlocked);
+  }, []);
 
   // Счётчик «пора выплатить зарплату» для пункта меню «Зарплата»:
   // обновляется при выплате (событие + realtime) и исчезает, когда все выплаты закрыты.
@@ -500,10 +525,12 @@ export default function Layout({ children, currentPageName }) {
     if (fresh) setBusiness(fresh);
   };
 
-  // Пробный месяц закончился (или доступ закрыт) — вместо приложения показываем экран оплаты.
-  // Решение принимает серверная проверка, локальный расчёт — только запасной вариант.
-  const accessBlocked = serverAccess ? serverAccess.allowed === false : subscriptionState.blocked;
-  if (business && accessBlocked) {
+  // Полностью закрываем приложение только когда доступ запрещён администратором системы.
+  // Закончившаяся подписка приложение не закрывает — работаем в режиме «только просмотр».
+  const hardBlocked = serverAccess
+    ? serverAccess.status === 'blocked'
+    : subscriptionState.status === 'blocked';
+  if (business && hardBlocked) {
     return (
       <SubscriptionGate
         business={business}
@@ -745,7 +772,11 @@ export default function Layout({ children, currentPageName }) {
                 <img src={HERO_IMAGE} alt="" />
               </div>
             )}
-            <div className="tk-appbody">{children}</div>
+            <div className="tk-appbody">
+              {/* В профиле вместо полосы показывается подробное уведомление о подписке */}
+              {currentPageName !== 'Profile' && <SubscriptionLockBanner />}
+              {children}
+            </div>
           </div>
         </motion.div>
       </main>

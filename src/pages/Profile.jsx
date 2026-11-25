@@ -5,6 +5,7 @@ import SubscriptionDialog from '@/components/subscription/SubscriptionDialog';
 import ProfileIdentityCard from '@/components/profile/ProfileIdentityCard';
 import ProfileBusinessCard from '@/components/profile/ProfileBusinessCard';
 import ProfileSubscriptionCard from '@/components/profile/ProfileSubscriptionCard';
+import SubscriptionLockNotice from '@/components/profile/SubscriptionLockNotice';
 import PaymentHistoryCard from '@/components/profile/PaymentHistoryCard';
 import ProfileNavCard from '@/components/profile/ProfileNavCard';
 import DarkModeToggle from '@/components/settings/DarkModeToggle';
@@ -106,6 +107,9 @@ export default function Profile() {
       </AnimatePresence>
 
       <ProfileBusinessCard business={business} showCodes={isOwner || !!employee?.is_admin} />
+
+      {/* Подписка не оплачена — все изменения заморожены, доступен только просмотр */}
+      <SubscriptionLockNotice />
 
       <ProfileSubscriptionCard
         business={business}
