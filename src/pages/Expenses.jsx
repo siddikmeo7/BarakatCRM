@@ -1,32 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
-  Plus, Loader2, Receipt, TrendingDown, Pencil, Users,
-  Home, Truck, Zap, Megaphone, MoreHorizontal, UtensilsCrossed,
-  History, User, ShoppingBasket, Heart, GraduationCap, Landmark,
-  ScrollText, UserCircle
+  Plus, Loader2, Receipt, TrendingDown, Pencil, Users, User,
+  History, UserCircle, Search, LayoutGrid, List, AlertTriangle,
 } from 'lucide-react';
-import { format, parseISO, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { parseISO, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import DateFilter from '@/components/filters/DateFilter';
-import SearchInput from '@/components/filters/SearchInput';
 import { useEmployeeAccess } from '@/components/permissions/useEmployeeAccess';
 import EmployeeExpensesProfile from '@/components/expenses/EmployeeExpensesProfile';
 import BackButton from '@/components/ui/BackButton';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
-import ExpenseDonut from '@/components/expenses/ExpenseDonut';
 import ExpenseCard from '@/components/expenses/ExpenseCard';
-import SpentByPanel from '@/components/expenses/SpentByPanel';
-import SpentByPicker from '@/components/expenses/SpentByPicker';
 import ExpenseList from '@/components/expenses/ExpenseList';
-import ViewToggle from '@/components/ui/ViewToggle';
+import ExpenseBreakdown from '@/components/expenses/ExpenseBreakdown';
+import SpentByPicker from '@/components/expenses/SpentByPicker';
 import { CATEGORIES, getCategoryInfo } from '@/components/expenses/expenseCategories';
-import { formatExpenseDay, formatAddedAt } from '@/components/expenses/expenseTime';
-import { CAP, CARD, EXPENSE_HERO_IMG, fmtMoney } from '@/components/expenses/expenseDesign';
+import { formatExpenseDay, formatAddedAt, formatMoment } from '@/components/expenses/expenseTime';
+import { fmtMoney } from '@/components/expenses/expenseDesign';
 
 const MAX_EDITS = 5;
 const DEFAULT_FORM = {
@@ -37,9 +29,6 @@ const DEFAULT_FORM = {
   spent_by_name: '',
   expense_date: new Date().toISOString().slice(0, 10),
 };
-const FIELD = 'mt-1.5 h-9 rounded-[11px] bg-slate-50 dark:bg-slate-800';
-const PILL_OUT = 'exp-focus rounded-full border-slate-300 bg-white px-5 py-2.5 font-bold text-slate-700 hover:bg-slate-100 active:bg-slate-200';
-const FILTER_SELECT = 'h-[34px] rounded-[11px] border-slate-200 bg-white text-xs text-slate-700 hover:border-indigo-300 hover:shadow-[0_2px_8px_rgba(79,70,229,.12)] transition';
 
 export default function Expenses() {
   const { can, isOwner, employee } = useEmployeeAccess();
@@ -57,7 +46,6 @@ export default function Expenses() {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterAuthor, setFilterAuthor] = useState('all');
-  const [filterSpentBy, setFilterSpentBy] = useState('all');
   // Как показывать расходы: карточками или списком
   const [view, setView] = useState('grid');
   // Кому разрешено видеть все расходы, тот может переключиться на «только мои»
@@ -129,6 +117,14 @@ export default function Expenses() {
 
   const handleSave = async () => {
     if (!form.amount || !form.category) return;
+
+    // Проверка: своё имя в поле «От имени» указывать не нужно —
+    // без него расход автоматически записывается на автора.
+    if (canRecordOnBehalf && isOwnName(form.spent_by_name)) {
+      alert('Вы указали собственное имя. Своё имя выбирать не нужно: оставьте поле пустым — расход запишется на вас.');
+      return;
+    }
+
     setSaving(true);
     try {
       const user = await base44.auth.me().catch(() => ({ email: 'unknown' }));
@@ -244,7 +240,6 @@ export default function Expenses() {
     }
     if (filterCategory !== 'all' && e.category !== filterCategory) return false;
     if (filterAuthor !== 'all' && (e.created_by_name || '') !== filterAuthor) return false;
-    if (filterSpentBy !== 'all' && (e.spent_by_name || '') !== filterSpentBy) return false;
     if (search) {
       const q = search.toLowerCase();
       const hay = `${e.category} ${e.description || ''} ${e.recipient || ''} ${e.created_by_name || ''} ${e.spent_by_name || ''}`.toLowerCase();
@@ -256,18 +251,21 @@ export default function Expenses() {
   const totalFiltered = filtered.reduce((s, e) => s + (e.amount || 0), 0);
   const authors = [...new Set(visible.map(e => e.created_by_name).filter(Boolean))];
   const spentByNames = [...new Set(visible.map(e => e.spent_by_name).filter(Boolean))];
-  const bySpentBy = spentByNames
-    .map(name => ({ name, total: visible.filter(e => e.spent_by_name === name).reduce((s, e) => s + (e.amount || 0), 0) }))
-    .sort((a, b) => b.total - a.total);
 
   // Легенда диаграммы: все категории в объявленном порядке, с суммами за выбранный период
   const legend = CATEGORIES.map(cat => ({
     ...cat,
     total: filtered.filter(e => e.category === cat.value).reduce((s, e) => s + (e.amount || 0), 0),
   }));
-  const spentByTotal = bySpentBy.reduce((s, item) => s + item.total, 0);
-  const topSpentBy = bySpentBy[0] || null;
-  const showSide = viewAll && bySpentBy.length > 0;
+
+  const avgExpense = filtered.length > 0 ? totalFiltered / filtered.length : 0;
+  const topCategory = [...legend].filter(c => c.total > 0).sort((a, b) => b.total - a.total)[0] || null;
+  const daysWithExpenses = new Set(filtered.map(e => String(e.expense_date).slice(0, 10))).size;
+
+  // Своё имя: указывать его в поле «От имени» не нужно
+  const selfName = (employee?.name || currentUser?.full_name || '').trim();
+  const isOwnName = (name) => !!selfName && (name || '').trim().toLowerCase() === selfName.toLowerCase();
+  const ownNameSelected = isOwnName(form.spent_by_name);
 
   if (loading) {
     return (
@@ -295,137 +293,159 @@ export default function Expenses() {
   const getEmpByName = (nm) => employees.find(e => e.name === nm) || null;
 
   return (
-    <div className="-m-4 lg:-m-8 min-h-[calc(100vh-3.5rem)] bg-slate-100 dark:bg-slate-950 p-4 lg:p-8 pb-32 space-y-5">
+    <div className="ex-page">
+      <div className="ex-wrap">
 
-      {/* ── Hero ── */}
-      <div className="relative overflow-hidden rounded-[28px] min-h-[230px] flex items-end justify-between gap-6 px-6 py-7 lg:px-9 shadow-[0_12px_32px_rgba(15,23,42,.12)]">
-        <img src={EXPENSE_HERO_IMG} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-white/[.94] via-white/[.82] to-white/[.25]"></div>
-        <div className="relative">
-          <BackButton className="exp-focus mb-3.5 bg-white border border-slate-200 rounded-xl px-3.5 py-[7px] text-[13px] font-semibold text-slate-600 hover:shadow-[0_4px_12px_rgba(15,23,42,.1)] active:bg-slate-100" />
-          <h1 className="text-3xl lg:text-[40px] font-bold leading-[1.1] tracking-[-.5px] text-slate-900 flex items-center gap-2.5">
-            <TrendingDown className="w-7 h-7 lg:w-[34px] lg:h-[34px] text-red-500 flex-none" />
-            Расходы
-          </h1>
-          <p className="text-sm text-slate-600 mt-2">
-            {viewAll ? 'Все затраты бизнеса' : 'Только ваши расходы'} — аренда, зарплата, еда, прочее
-          </p>
-        </div>
-      </div>
+        {/* ── Шапка книги: название, итог, сводка, управление ── */}
+        <section className="ex-sheet">
+          <header className="ex-head">
+            <div className="ex-head-l">
+              <BackButton className="ex-btn mb-3" />
+              <p className="ex-eyebrow">
+                <TrendingDown className="w-3 h-3" />
+                Кассовая книга
+              </p>
+              <h1 className="ex-title">Расходы</h1>
+              <p className="ex-sub">
+                {viewAll ? 'Все затраты бизнеса' : 'Только ваши расходы'} — аренда, зарплата, еда, прочее
+              </p>
+            </div>
+            <div className="ex-head-r">
+              <span className="ex-cap">Итого за период</span>
+              <b className="ex-total">−{fmtMoney(totalFiltered)}<i>с.</i></b>
+              <span className="ex-head-note">{filtered.length} записей в книге</span>
+            </div>
+          </header>
 
-      {/* ── Профиль сотрудника ── */}
-      {employee && !isOwner && (
-        <EmployeeExpensesProfile
-          employee={employee}
-          total={totalFiltered}
-          count={filtered.length}
-          businessName={business?.name}
-        />
-      )}
-
-      {/* ── Диаграмма + плитки ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_330px] gap-5 items-stretch">
-        <ExpenseDonut categories={legend} total={totalFiltered} />
-
-        <div className="flex flex-col gap-5">
-          <div className={`${CARD} p-6 flex-1 flex flex-col justify-center gap-2`}>
-            <span className={CAP}>Расходы</span>
-            <span className="text-[30px] font-bold text-red-600 tabular-nums tracking-[-.4px]">−{fmtMoney(totalFiltered)} с.</span>
-            <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
-              <TrendingDown className="w-[15px] h-[15px] text-indigo-600 flex-none" />
-              Итого за период
-            </span>
+          <div className="ex-sum">
+            <div>
+              <span className="ex-cap">Записей</span>
+              <b>{filtered.length}</b>
+              <small>за выбранный период</small>
+            </div>
+            <div>
+              <span className="ex-cap">Средний расход</span>
+              <b className="red">{fmtMoney(Math.round(avgExpense))} с.</b>
+              <small>на одну запись</small>
+            </div>
+            <div>
+              <span className="ex-cap">Больше всего</span>
+              <b>{topCategory ? topCategory.label : '—'}</b>
+              <small>{topCategory ? `${fmtMoney(topCategory.total)} с.` : 'нет данных'}</small>
+            </div>
+            <div>
+              <span className="ex-cap">Дней с расходами</span>
+              <b>{daysWithExpenses}</b>
+              <small>уникальных дат</small>
+            </div>
           </div>
 
-          {viewAll && (
-            <div className={`${CARD} p-6 flex-1 flex flex-col justify-center gap-2`}>
-              <span className={CAP}>От имени других лиц</span>
-              <span className="text-[30px] font-bold text-indigo-600 tabular-nums tracking-[-.4px]">−{fmtMoney(spentByTotal)} с.</span>
-              <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
-                <UserCircle className="w-[15px] h-[15px] text-cyan-500 flex-none" />
-                {topSpentBy?.name || 'нет данных'}
+          <div className="ex-tools">
+            {canViewAll ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const nextMine = !mineOnly;
+                  setMineOnly(nextMine);
+                  if (nextMine) setFilterAuthor('all');
+                }}
+                title={mineOnly ? 'Снова показать расходы всех сотрудников' : 'Показать только ваши расходы'}
+                className={`ex-btn ${mineOnly ? 'on' : ''}`}
+              >
+                {mineOnly ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
+                {mineOnly ? 'Все расходы' : 'Только мои'}
+              </button>
+            ) : (
+              <span className="ex-btn" style={{ cursor: 'default' }}>
+                <Users className="w-3.5 h-3.5" /> Только мои
               </span>
+            )}
+
+            <div className="ex-date">
+              <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* ── Фильтры ── */}
-      <div className="sticky top-14 z-30 rounded-[22px] border border-slate-200/80 dark:border-slate-700/60 bg-white px-4 py-3.5 shadow-[0_8px_24px_rgba(15,23,42,.08)] flex items-center gap-2.5 flex-wrap">
-        {canViewAll ? (
-          <button
-            type="button"
-            onClick={() => {
-              const nextMine = !mineOnly;
-              setMineOnly(nextMine);
-              if (nextMine) { setFilterAuthor('all'); setFilterSpentBy('all'); }
-            }}
-            title={mineOnly ? 'Снова показать расходы всех сотрудников' : 'Показать только ваши расходы'}
-            className={`exp-focus inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[10px] border text-[12px] font-semibold transition ${
-              mineOnly
-                ? 'border-indigo-600 bg-indigo-600 text-white'
-                : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-indigo-300'
-            }`}
-          >
-            {mineOnly ? <User className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
-            {mineOnly ? 'Показать все расходы' : 'Показать только мои'}
-          </button>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[10px] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[12px] font-semibold text-slate-600 dark:text-slate-300">
-            <Users className="w-3.5 h-3.5" />
-            Только мои
-          </span>
+            <select
+              className="ex-field"
+              style={{ width: 150 }}
+              value={filterCategory}
+              onChange={e => setFilterCategory(e.target.value)}
+            >
+              <option value="all">Все категории</option>
+              {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+
+            {viewAll && authors.length > 0 && (
+              <select
+                className="ex-field"
+                style={{ width: 160 }}
+                value={filterAuthor}
+                onChange={e => setFilterAuthor(e.target.value)}
+              >
+                <option value="all">Все авторы</option>
+                {authors.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            )}
+
+            <label className="ex-search" style={{ width: 200 }}>
+              <Search className="w-3.5 h-3.5 flex-none" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск по расходам" />
+            </label>
+
+            <span className="ex-sp" />
+
+            <div className="ex-seg">
+              <button
+                type="button"
+                onClick={() => setView('grid')}
+                className={view === 'grid' ? 'on' : ''}
+                title="Карточки"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('list')}
+                className={view === 'list' ? 'on' : ''}
+                title="Список"
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {canAdd && (
+              <button type="button" onClick={openAddForm} className="ex-btn pri">
+                <Plus className="w-3.5 h-3.5" /> Новый расход
+              </button>
+            )}
+          </div>
+        </section>
+
+        {/* ── Профиль сотрудника ── */}
+        {employee && !isOwner && (
+          <EmployeeExpensesProfile
+            employee={employee}
+            total={totalFiltered}
+            count={filtered.length}
+            businessName={business?.name}
+          />
         )}
 
-        <DateFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+        {/* ── Разбивка по категориям ── */}
+        <ExpenseBreakdown categories={legend} total={totalFiltered} count={filtered.length} />
 
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className={`${FILTER_SELECT} w-36`}>
-            <SelectValue placeholder="Категория" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Все категории</SelectItem>
-            {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
-
-        {viewAll && authors.length > 0 && (
-          <Select value={filterAuthor} onValueChange={setFilterAuthor}>
-            <SelectTrigger className={`${FILTER_SELECT} w-40`}>
-              <SelectValue placeholder="Автор" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все авторы</SelectItem>
-              {authors.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )}
-
-        {viewAll && spentByNames.length > 0 && (
-          <Select value={filterSpentBy} onValueChange={setFilterSpentBy}>
-            <SelectTrigger className={`${FILTER_SELECT} w-44`}>
-              <SelectValue placeholder="От имени" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все лица</SelectItem>
-              {spentByNames.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )}
-
-        <SearchInput value={search} onChange={setSearch} placeholder="Поиск..." className="flex-1 min-w-32" />
-
-        <ViewToggle view={view} onChange={setView} />
-
-        <div className="ml-auto text-right">
-          <span className={CAP}>Итого за период</span>
-          <p className="text-[26px] leading-[1.15] font-bold text-red-600 tabular-nums">−{fmtMoney(totalFiltered)} с.</p>
-        </div>
-      </div>
-
-      {/* ── Стена карточек + панель лиц ── */}
-      <div className={`grid grid-cols-1 gap-5 items-start ${showSide ? 'xl:grid-cols-[1fr_340px]' : ''}`}>
-        {view === 'list' && filtered.length > 0 ? (
+        {/* ── Записи книги ── */}
+        {filtered.length === 0 ? (
+          <div className="ex-empty">
+            <Receipt className="w-6 h-6" style={{ color: 'var(--ex-muted)' }} />
+            <p>Расходов нет за выбранный период</p>
+            {canAdd && (
+              <button type="button" onClick={openAddForm} className="ex-btn pri">
+                <Plus className="w-3.5 h-3.5" /> Добавить первый расход
+              </button>
+            )}
+          </div>
+        ) : view === 'list' ? (
           <ExpenseList
             expenses={filtered}
             maxEdits={MAX_EDITS}
@@ -438,94 +458,56 @@ export default function Expenses() {
             onDelete={handleDelete}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.length === 0 ? (
-              <div className={`${CARD} expense-rise col-span-full md:col-span-2 flex flex-col items-center gap-2.5 p-7 text-center`}>
-                <div className="w-[54px] h-[54px] rounded-full bg-red-100 text-red-400 flex items-center justify-center">
-                  <Receipt className="w-[26px] h-[26px]" />
-                </div>
-                <p className="font-semibold text-slate-500 text-sm">Расходов нет за выбранный период</p>
-                {canAdd && (
-                  <Button onClick={openAddForm} variant="outline" className={`${PILL_OUT} gap-2`}>
-                    <Plus className="w-4 h-4" /> Добавить первый расход
-                  </Button>
-                )}
-              </div>
-            ) : (
-              filtered.map((expense, i) => (
-                <ExpenseCard
-                  key={expense.id}
-                  expense={expense}
-                  index={i}
-                  maxEdits={MAX_EDITS}
-                  authorEmployee={getEmpByName(expense.created_by_name)}
-                  canEdit={canEdit(expense)}
-                  canDelete={canDelete(expense)}
-                  deleting={deleting}
-                  onOpen={() => setViewingExpense(expense)}
-                  onEdit={openEditForm}
-                  onDelete={handleDelete}
-                />
-              ))
-            )}
+          <div className="ex-cards">
+            {filtered.map((expense, i) => (
+              <ExpenseCard
+                key={expense.id}
+                expense={expense}
+                index={i}
+                maxEdits={MAX_EDITS}
+                authorEmployee={getEmpByName(expense.created_by_name)}
+                canEdit={canEdit(expense)}
+                canDelete={canDelete(expense)}
+                deleting={deleting}
+                onOpen={() => setViewingExpense(expense)}
+                onEdit={openEditForm}
+                onDelete={handleDelete}
+              />
+            ))}
           </div>
-        )}
-
-        {showSide && (
-          <SpentByPanel
-            items={bySpentBy}
-            activeName={filterSpentBy}
-            onToggle={(name) => setFilterSpentBy(prev => prev === name ? 'all' : name)}
-            onReset={() => setFilterSpentBy('all')}
-            getEmployee={getEmpByName}
-          />
         )}
       </div>
 
-      {/* ── Плавающая кнопка добавления ── */}
-      {canAdd && (
-        <button
-          onClick={openAddForm}
-          className="exp-focus animate-float-pill fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-indigo-600 to-cyan-500 px-6 py-3.5 text-[15px] font-bold text-white shadow-[0_14px_30px_rgba(79,70,229,.4)] transition hover:shadow-[0_18px_38px_rgba(79,70,229,.5)] hover:brightness-105 active:brightness-95"
-        >
-          <Plus className="w-4 h-4" />
-          Добавить расход
-        </button>
-      )}
-
       {/* ── Диалог добавления/редактирования ── */}
       <Dialog open={showForm} onOpenChange={v => { if (!v) { setShowForm(false); setEditingExpense(null); } }}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-3xl">
+        <DialogContent className="ex-dialog max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
-              <TrendingDown className="w-5 h-5 text-red-500" />
-              <span className="text-[17px] font-bold">{editingExpense ? 'Редактировать расход' : 'Добавить расход'}</span>
+            <DialogTitle className="ex-dlg-title">
+              {editingExpense ? 'Изменить расход' : 'Новый расход'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
+
+          <div className="space-y-3.5 pt-1">
             {editingExpense && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-700">
+              <div className="ex-note-box">
                 Редактирование {(editingExpense.edit_count || 0) + 1} из {MAX_EDITS}. Каждое изменение сохраняется в историю.
               </div>
             )}
 
             <div>
-              <label className={CAP}>Категория</label>
-              <div className="grid grid-cols-3 gap-2 mt-1.5">
+              <label className="ex-lbl">Категория</label>
+              <div className="ex-catpick">
                 {CATEGORIES.map(cat => {
                   const Icon = cat.icon;
                   const active = form.category === cat.value;
                   return (
                     <button
                       key={cat.value}
+                      type="button"
                       onClick={() => setForm(f => ({ ...f, category: cat.value }))}
-                      className={`exp-focus flex flex-col items-center gap-1.5 p-2.5 rounded-2xl border-2 text-xs font-semibold transition-all ${
-                        active
-                          ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                          : 'border-slate-200 text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/40'
-                      }`}
+                      className={active ? 'on' : ''}
                     >
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-3.5 h-3.5" />
                       {cat.label}
                     </button>
                   );
@@ -535,172 +517,186 @@ export default function Expenses() {
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className={CAP}>Сумма (с.)</label>
+                <label className="ex-lbl">Сумма (с.)</label>
                 <Input
                   type="number"
                   placeholder="0"
                   value={form.amount}
                   onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                  className={`${FIELD} text-lg font-bold`}
+                  className="ex-field ex-amount"
                 />
               </div>
               <div>
-                <label className={CAP}>Дата</label>
+                <label className="ex-lbl">Дата</label>
                 <Input
                   type="date"
                   value={form.expense_date}
                   onChange={e => setForm(f => ({ ...f, expense_date: e.target.value }))}
-                  className={FIELD}
+                  className="ex-field"
                 />
               </div>
             </div>
 
             <div>
-              <label className={CAP}>Кому / Получатель</label>
+              <label className="ex-lbl">Кому / получатель</label>
               <Input
                 placeholder="Имя сотрудника, арендодатель..."
                 value={form.recipient}
                 onChange={e => setForm(f => ({ ...f, recipient: e.target.value }))}
-                className={FIELD}
+                className="ex-field"
               />
             </div>
 
             {canRecordOnBehalf && (
               <div>
-                <label className={CAP}>От имени (другое лицо)</label>
+                <label className="ex-lbl">От имени (другое лицо)</label>
                 <SpentByPicker
                   value={form.spent_by_name}
                   onChange={name => setForm(f => ({ ...f, spent_by_name: name }))}
                   employees={employees}
                   usedNames={spentByNames}
                   businessId={business?.id}
-                  canManage={canManageAny}
+                  canManage={canRecordOnBehalf}
+                  selfName={selfName}
                   onChanged={loadData}
-                  className={FIELD}
                 />
-                <p className="text-xs text-slate-400 mt-1">Укажите, если фиксируете чужой расход — позже увидите сумму по этому лицу.</p>
+                <p className="ex-hint">
+                  Если расход ваш — оставьте поле пустым: он автоматически запишется на ваше имя.
+                  Выбирайте другое лицо только когда фиксируете чужой расход.
+                </p>
+                {ownNameSelected && (
+                  <div className="ex-warn">
+                    <AlertTriangle className="w-3.5 h-3.5 flex-none mt-[1px]" />
+                    <span>
+                      Это ваше имя. Своё имя выбирать не нужно: уберите его из поля — расход и так
+                      запишется на вас автоматически.
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
             <div>
-              <label className={CAP}>Комментарий</label>
+              <label className="ex-lbl">Комментарий</label>
               <Input
                 placeholder="За что? (необязательно)"
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                className={FIELD}
+                className="ex-field"
               />
             </div>
 
-            {!editingExpense && (
-              <p className="text-xs text-slate-400 flex items-center gap-1">
-                <User className="w-3 h-3" /> Расход будет записан на ваше имя автоматически
-              </p>
-            )}
-
-            <div className="flex gap-2.5 justify-end pt-1">
-              <Button variant="outline" className={PILL_OUT} onClick={() => { setShowForm(false); setEditingExpense(null); }}>
-                Отмена
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={saving || !form.amount}
-                className={`exp-focus rounded-full px-5 py-2.5 gap-2 font-bold text-white transition hover:brightness-105 ${
-                  editingExpense ? 'bg-indigo-600' : 'bg-gradient-to-br from-cyan-500 to-cyan-600'
-                }`}
+            <div className="flex gap-2 justify-end pt-1">
+              <button
+                type="button"
+                className="ex-btn"
+                onClick={() => { setShowForm(false); setEditingExpense(null); }}
               >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingExpense ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />)}
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving || !form.amount || ownNameSelected}
+                title={ownNameSelected ? 'Уберите своё имя из поля «От имени»' : undefined}
+                className="ex-btn pri"
+              >
+                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : (editingExpense ? <Pencil className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />)}
                 {editingExpense ? 'Сохранить' : 'Добавить'}
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ── Диалог деталей ── */}
+      {/* ── Чек: детали расхода ── */}
       {viewingExpense && (
         <Dialog open={true} onOpenChange={() => setViewingExpense(null)}>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-3xl">
+          <DialogContent className="ex-dialog max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                {(() => { const Icon = getCategoryInfo(viewingExpense.category).icon; return <Icon className="w-5 h-5 text-red-500" />; })()}
-                <span className="text-[17px] font-bold">Детали расхода</span>
-              </DialogTitle>
+              <DialogTitle className="ex-dlg-title">Чек расхода</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 pt-2">
-              <div className={`rounded-2xl p-4 ${getCategoryInfo(viewingExpense.category).color}`}>
-                <div className="flex items-center gap-1.5">
-                  {(() => { const Icon = getCategoryInfo(viewingExpense.category).icon; return <Icon className="w-4 h-4" />; })()}
-                  <p className="text-[10.5px] uppercase tracking-[.12em] font-bold opacity-80">Категория</p>
+
+            <div className="space-y-3.5 pt-1">
+              <div
+                className="ex-detail-head"
+                style={{ borderLeftColor: getCategoryInfo(viewingExpense.category).bar }}
+              >
+                <span className="ex-ico" style={{ color: getCategoryInfo(viewingExpense.category).bar }}>
+                  {(() => { const Icon = getCategoryInfo(viewingExpense.category).icon; return <Icon className="w-3.5 h-3.5" />; })()}
+                </span>
+                <div className="min-w-0">
+                  <span className="ex-cap">Категория</span>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--ex-ink)' }}>
+                    {viewingExpense.category}
+                  </p>
                 </div>
-                <p className="text-lg font-bold">{viewingExpense.category}</p>
-                <p className="text-[30px] font-bold mt-2 tabular-nums tracking-[-.4px]">−{fmtMoney(viewingExpense.amount)} с.</p>
+                <span className="v">−{fmtMoney(viewingExpense.amount)} с.</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-0.5">
-                  <span className={CAP}>Получатель</span>
-                  <span className="text-sm font-semibold text-slate-800">{viewingExpense.recipient || '—'}</span>
+              <div className="ex-kv">
+                <div>
+                  <span className="ex-cap">Получатель</span>
+                  <b>{viewingExpense.recipient || '—'}</b>
                 </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className={CAP}>Дата расхода</span>
-                  <span className="text-sm font-semibold text-slate-800">
-                    {formatExpenseDay(viewingExpense.expense_date)}
-                  </span>
+                <div>
+                  <span className="ex-cap">Дата расхода</span>
+                  <b>{formatExpenseDay(viewingExpense.expense_date)}</b>
                 </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className={CAP}>Добавлен</span>
-                  <span className="text-sm font-semibold text-slate-800 tabular-nums">
-                    {formatAddedAt(viewingExpense.created_date)}
-                  </span>
+                <div className="full">
+                  <span className="ex-cap">Добавлен в систему (24 ч)</span>
+                  <b className="tabular-nums">{formatAddedAt(viewingExpense.created_date)}</b>
                 </div>
-                <div className="col-span-2 flex flex-col gap-0.5">
-                  <span className={CAP}>Автор расхода</span>
-                  <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                    {(() => { const em = getEmpByName(viewingExpense.created_by_name); return em
-                      ? <EmployeeAvatar employee={em} sizeClass="w-5 h-5 rounded-full text-[10px]" />
-                      : <User className="w-4 h-4 text-indigo-500" />; })()}
+                <div className="full">
+                  <span className="ex-cap">Автор расхода</span>
+                  <b className="flex items-center gap-1.5">
+                    {(() => {
+                      const em = getEmpByName(viewingExpense.created_by_name);
+                      return em
+                        ? <EmployeeAvatar employee={em} sizeClass="w-4 h-4 rounded-full text-[9px]" />
+                        : <User className="w-3.5 h-3.5" style={{ color: 'var(--ex-stamp)' }} />;
+                    })()}
                     {viewingExpense.created_by_name || '—'}
                     {viewingExpense.created_by_role && (
-                      <span className="text-xs font-normal text-slate-400">
+                      <span style={{ fontSize: 10.5, fontWeight: 400, color: 'var(--ex-muted)' }}>
                         ({viewingExpense.created_by_role === 'owner' ? 'владелец' : viewingExpense.created_by_role === 'admin' ? 'админ' : 'сотрудник'})
                       </span>
                     )}
-                  </span>
+                  </b>
                 </div>
                 {viewingExpense.spent_by_name && (
-                  <div className="col-span-2 flex flex-col gap-0.5">
-                    <span className={CAP}>От имени (другое лицо)</span>
-                    <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                      <UserCircle className="w-4 h-4 text-cyan-600" />
+                  <div className="full">
+                    <span className="ex-cap">От имени (другое лицо)</span>
+                    <b className="flex items-center gap-1.5">
+                      <UserCircle className="w-3.5 h-3.5" style={{ color: 'var(--ex-stamp)' }} />
                       {viewingExpense.spent_by_name}
-                    </span>
+                    </b>
                   </div>
                 )}
                 {viewingExpense.description && (
-                  <div className="col-span-2 flex flex-col gap-0.5">
-                    <span className={CAP}>Комментарий</span>
-                    <span className="text-sm font-semibold text-slate-800">{viewingExpense.description}</span>
+                  <div className="full">
+                    <span className="ex-cap">Комментарий</span>
+                    <b>{viewingExpense.description}</b>
                   </div>
                 )}
               </div>
 
               {(viewingExpense.edit_count || 0) > 0 && (viewingExpense.edit_history || []).length > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
-                  <p className="text-[12.5px] font-bold text-amber-800 mb-1.5 flex items-center gap-1.5">
-                    <History className="w-3.5 h-3.5 text-amber-500" />
+                <div className="ex-log">
+                  <p className="ex-log-t">
+                    <History className="w-3 h-3" />
                     История изменений ({viewingExpense.edit_count}/{MAX_EDITS})
                   </p>
                   <div className="space-y-1.5 max-h-48 overflow-y-auto">
                     {(viewingExpense.edit_history || []).map((h, i) => (
-                      <div key={i} className="text-[12.5px] text-amber-700">
+                      <div key={i} className="ex-log-row">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-semibold">{h.by_name || h.by_email}</span>
-                          <span className="text-amber-600/80">{format(parseISO(h.edited_at), 'dd MMM yyyy, HH:mm', { locale: ru })}</span>
+                          <span><b>{h.by_name || h.by_email}</b></span>
+                          <span className="tabular-nums">{formatMoment(h.edited_at)}</span>
                         </div>
                         {(h.changes || []).map((c, j) => (
                           <div key={j}>
-                            <span className="font-semibold">{c.field}:</span> {String(c.oldValue)} → <span className="font-semibold">{String(c.newValue)}</span>
+                            {c.field}: {String(c.oldValue)} → <b>{String(c.newValue)}</b>
                           </div>
                         ))}
                       </div>
@@ -709,16 +705,17 @@ export default function Expenses() {
                 </div>
               )}
 
-              <div className="flex gap-2.5 justify-end pt-1">
-                <Button variant="outline" className={PILL_OUT} onClick={() => setViewingExpense(null)}>Закрыть</Button>
+              <div className="flex gap-2 justify-end pt-1">
+                <button type="button" className="ex-btn" onClick={() => setViewingExpense(null)}>Закрыть</button>
                 {canEdit(viewingExpense) && (
-                  <Button
+                  <button
+                    type="button"
                     onClick={() => { setViewingExpense(null); openEditForm(viewingExpense); }}
                     disabled={(viewingExpense.edit_count || 0) >= MAX_EDITS}
-                    className="exp-focus rounded-full px-5 py-2.5 gap-2 font-bold text-white bg-indigo-600 transition hover:brightness-105"
+                    className="ex-btn pri"
                   >
-                    <Pencil className="w-4 h-4" /> Редактировать
-                  </Button>
+                    <Pencil className="w-3.5 h-3.5" /> Редактировать
+                  </button>
                 )}
               </div>
             </div>

@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
-import { Check, Plus, X, Pencil, Trash2, Settings2, Loader2 } from 'lucide-react';
+import { Check, Plus, X, Pencil, Trash2, Loader2 } from 'lucide-react';
 import DeleteSpentByNameDialog from './DeleteSpentByNameDialog';
 
 // Выбор сотрудника, от имени которого фиксируется расход.
-// В списке — сотрудники бизнеса и ранее указанные лица; если человека ещё нет,
-// его можно добавить прямо здесь и сразу выбрать. Любое имя из списка можно
-// переименовать или удалить (удаление — в три этапа подтверждения).
+// Показываем имена всех сотрудников бизнеса и все ранее указанные лица.
+// У каждого имени есть две кнопки — «Изменить» и «Удалить» (удаление в три этапа).
+// Своё имя выбирать не нужно: расход и так записывается на автора.
 export default function SpentByPicker({
   value,
   onChange,
@@ -18,21 +16,35 @@ export default function SpentByPicker({
   usedNames = [],
   businessId,
   canManage = true,
+  selfName = '',
   onChanged,
-  className,
 }) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
+  const [addError, setAddError] = useState('');
   const [extras, setExtras] = useState([]);
-  const [managing, setManaging] = useState(false);
   const [editingName, setEditingName] = useState(null);
   const [editDraft, setEditDraft] = useState('');
   const [busyName, setBusyName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
 
+  const self = (selfName || '').trim().toLowerCase();
+  const isSelf = (name) => !!self && (name || '').trim().toLowerCase() === self;
+
   const activeEmployees = employees.filter(e => !e.deleted_at);
   const teamNames = activeEmployees.map(e => e.name).filter(Boolean);
-  const options = [...new Set([...teamNames, ...usedNames, ...extras].filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+  // Одинаковые имена, записанные по-разному, показываем один раз
+  const seen = new Set();
+  const options = [...teamNames, ...usedNames, ...extras]
+    .filter(Boolean)
+    .filter((name) => {
+      const key = name.trim().toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => a.localeCompare(b));
 
   const findEmployee = (name) => activeEmployees.find(
     e => (e.name || '').trim().toLowerCase() === (name || '').trim().toLowerCase()
@@ -41,7 +53,12 @@ export default function SpentByPicker({
   const confirmNew = () => {
     const name = draft.trim();
     if (!name) return;
-    setExtras(prev => (prev.includes(name) ? prev : [...prev, name]));
+    if (isSelf(name)) {
+      setAddError('Это ваше имя. Своё имя добавлять не нужно — расход и так запишется на вас.');
+      return;
+    }
+    setAddError('');
+    setExtras(prev => (prev.some(n => n.trim().toLowerCase() === name.toLowerCase()) ? prev : [...prev, name]));
     onChange(name);
     setDraft('');
     setAdding(false);
@@ -109,29 +126,82 @@ export default function SpentByPicker({
   };
 
   return (
-    <div className="mt-1.5 space-y-2">
-      <Select
-        value={value || '__none__'}
-        onValueChange={(v) => {
-          if (v === '__new__') { setAdding(true); return; }
-          onChange(v === '__none__' ? '' : v);
-        }}
-      >
-        <SelectTrigger className={className}>
-          <SelectValue placeholder="Не указано" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="__none__">Не указано</SelectItem>
-          {options.map(name => (
-            <SelectItem key={name} value={name}>{name}</SelectItem>
-          ))}
-          <SelectItem value="__new__" className="font-semibold text-indigo-600">
-            <span className="inline-flex items-center gap-1.5">
-              <Plus className="w-3.5 h-3.5" /> Добавить нового сотрудника
-            </span>
-          </SelectItem>
-        </SelectContent>
-      </Select>
+    <div className="space-y-2">
+      <div className="ex-pick">
+        {/* Пустое значение — расход записывается на автора */}
+        <div className={`ex-pick-row ${value ? '' : 'on'}`}>
+          <button type="button" onClick={() => onChange('')} className="ex-pick-name">
+            {!value && <Check className="w-3.5 h-3.5 flex-none" style={{ color: 'var(--ex-stamp)' }} />}
+            <span>Не указано — расход на вас</span>
+          </button>
+        </div>
+
+        {options.map((name) => (
+          editingName === name ? (
+            <div key={name} className="ex-pick-row">
+              <Input
+                autoFocus
+                value={editDraft}
+                onChange={e => setEditDraft(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
+                  if (e.key === 'Escape') setEditingName(null);
+                }}
+                className="ex-field h-8 flex-1"
+              />
+              <button
+                type="button"
+                onClick={saveEdit}
+                disabled={!editDraft.trim() || busyName === name}
+                className="ex-pick-act"
+                title="Сохранить"
+              >
+                {busyName === name ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+              </button>
+              <button type="button" onClick={() => setEditingName(null)} className="ex-pick-act" title="Отмена">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div
+              key={name}
+              className={`ex-pick-row ${value === name ? 'on' : ''} ${isSelf(name) ? 'self' : ''}`}
+            >
+              <button type="button" onClick={() => onChange(name)} className="ex-pick-name">
+                {value === name && <Check className="w-3.5 h-3.5 flex-none" style={{ color: 'var(--ex-stamp)' }} />}
+                <span>{name}</span>
+                {isSelf(name) && <em>это вы</em>}
+              </button>
+              {canManage && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(name)}
+                    className="ex-pick-act"
+                    title="Изменить имя"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget({ name, isEmployee: !!findEmployee(name) })}
+                    className="ex-pick-act"
+                    title="Удалить"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+            </div>
+          )
+        ))}
+
+        {!adding && (
+          <button type="button" onClick={() => { setAdding(true); setAddError(''); }} className="ex-pick-add">
+            <Plus className="w-3.5 h-3.5" /> Добавить нового сотрудника
+          </button>
+        )}
+      </div>
 
       {adding && (
         <div className="flex items-center gap-2">
@@ -139,119 +209,20 @@ export default function SpentByPicker({
             autoFocus
             placeholder="Имя сотрудника"
             value={draft}
-            onChange={e => setDraft(e.target.value)}
+            onChange={e => { setDraft(e.target.value); setAddError(''); }}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); confirmNew(); } }}
-            className={className}
+            className="ex-field flex-1"
           />
-          <Button
-            type="button"
-            onClick={confirmNew}
-            disabled={!draft.trim()}
-            className="h-9 rounded-[11px] px-3 bg-indigo-600 text-white font-bold"
-            title="Добавить и выбрать"
-          >
-            <Check className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => { setAdding(false); setDraft(''); }}
-            className="h-9 rounded-[11px] px-2.5 border-slate-300"
-            title="Отмена"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
-
-      {canManage && options.length > 0 && (
-        <div>
-          <button
-            type="button"
-            onClick={() => { setManaging(v => !v); setEditingName(null); }}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors"
-          >
-            <Settings2 className="w-3.5 h-3.5" />
-            Управление именами ({options.length})
+          <button type="button" onClick={confirmNew} disabled={!draft.trim()} className="ex-btn pri" title="Добавить и выбрать">
+            <Check className="w-3.5 h-3.5" />
           </button>
-
-          {managing && (
-            <div className="mt-1.5 max-h-56 overflow-y-auto custom-scroll rounded-[11px] border border-slate-200 bg-white divide-y divide-slate-100">
-              {options.map(name => (
-                <div key={name} className="flex items-center gap-2 px-3 py-1.5">
-                  {editingName === name ? (
-                    <>
-                      <Input
-                        autoFocus
-                        value={editDraft}
-                        onChange={e => setEditDraft(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
-                          if (e.key === 'Escape') setEditingName(null);
-                        }}
-                        className="h-8 flex-1 rounded-lg bg-slate-50 text-sm"
-                      />
-                      <Button
-                        type="button"
-                        onClick={saveEdit}
-                        disabled={!editDraft.trim() || busyName === name}
-                        className="h-8 w-8 rounded-lg bg-indigo-600 px-0 text-white"
-                        title="Сохранить"
-                      >
-                        {busyName === name
-                          ? <Loader2 className="w-4 h-4 animate-spin" />
-                          : <Check className="w-4 h-4" />}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setEditingName(null)}
-                        className="h-8 w-8 rounded-lg px-0 border-slate-300"
-                        title="Отмена"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => onChange(name)}
-                        className="flex-1 truncate text-left text-sm font-medium text-slate-700 hover:text-indigo-600"
-                      >
-                        {name}
-                        {value === name && (
-                          <span className="ml-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-600">
-                            выбрано
-                          </span>
-                        )}
-                      </button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => startEdit(name)}
-                        className="h-7 w-7 rounded-lg px-0 text-slate-400 hover:text-indigo-600"
-                        title="Изменить имя"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => setDeleteTarget({ name, isEmployee: !!findEmployee(name) })}
-                        className="h-7 w-7 rounded-lg px-0 text-slate-400 hover:text-red-600"
-                        title="Удалить"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          <button type="button" onClick={() => { setAdding(false); setDraft(''); setAddError(''); }} className="ex-btn" title="Отмена">
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
+
+      {addError && <div className="ex-warn">{addError}</div>}
 
       <DeleteSpentByNameDialog
         open={!!deleteTarget}

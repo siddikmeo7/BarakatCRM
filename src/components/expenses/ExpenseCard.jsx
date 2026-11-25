@@ -1,14 +1,12 @@
 import React from 'react';
-import { Pencil, Trash2, Loader2, User, UserCircle, Calendar, Clock } from 'lucide-react';
+import { Pencil, Trash2, Loader2, User, UserCircle, Clock } from 'lucide-react';
 import EmployeeAvatar from '@/components/employees/EmployeeAvatar';
 import { getCategoryInfo } from './expenseCategories';
 import { formatExpenseDay, formatAddedAt } from './expenseTime';
-import { CARD, fmtMoney } from './expenseDesign';
+import { fmtMoney } from './expenseDesign';
 
-const TAG = 'text-[11.5px] px-2.5 py-[3px] rounded-full inline-flex items-center gap-1.5 font-semibold';
-const ACT = 'exp-focus w-[30px] h-[30px] rounded-[10px] border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center text-slate-500 transition-colors hover:bg-slate-100 hover:text-indigo-600 active:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed';
-
-// Карточка одного расхода в стене карточек
+// Карточка расхода в «кассовой книге»: цветная линия категории слева,
+// сумма справа, точная дата и время добавления в 24-часовом формате.
 export default function ExpenseCard({ expense, index = 0, maxEdits, authorEmployee, canEdit, canDelete, deleting, onOpen, onEdit, onDelete }) {
   const editsLeft = maxEdits - (expense.edit_count || 0);
   const cat = getCategoryInfo(expense.category);
@@ -17,67 +15,61 @@ export default function ExpenseCard({ expense, index = 0, maxEdits, authorEmploy
   return (
     <div
       onClick={onOpen}
-      style={{ animationDelay: `${0.2 + index * 0.12}s` }}
-      className={`${CARD} expense-rise p-[18px] flex flex-col gap-3 cursor-pointer transition-shadow hover:shadow-[0_10px_28px_rgba(79,70,229,.16)]`}
+      style={{ animationDelay: `${0.06 + index * 0.05}s`, borderLeftColor: cat.bar }}
+      className="ex-card"
     >
-      <div className="flex items-center gap-3">
-        {/* Значок категории расхода */}
-        <div className={`w-14 h-14 rounded-[14px] flex items-center justify-center flex-none border border-white/60 shadow-[inset_0_0_0_1px_rgba(255,255,255,.5)] ${cat.color}`}>
-          <Icon className="w-7 h-7" />
-        </div>
+      <div className="ex-card-top">
+        <span className="ex-ico" style={{ color: cat.bar }}>
+          <Icon className="w-3.5 h-3.5" />
+        </span>
         <div className="min-w-0">
-          <p className="font-bold text-base text-slate-900 truncate">{expense.category}</p>
-          <p className="text-[11.5px] text-slate-500 flex items-center gap-1.5 mt-0.5">
-            <Calendar className="w-3 h-3 flex-none" />
-            {formatExpenseDay(expense.expense_date)}
-          </p>
-          {expense.created_date && (
-            <p className="text-[11.5px] text-slate-400 flex items-center gap-1.5 mt-0.5 tabular-nums">
-              <Clock className="w-3 h-3 flex-none" />
-              добавлен {formatAddedAt(expense.created_date)}
-            </p>
-          )}
+          <p className="ex-card-cat">{expense.category}</p>
+          <p className="ex-card-date">{formatExpenseDay(expense.expense_date)}</p>
         </div>
-        <p className="ml-auto text-2xl font-bold text-red-600 tabular-nums tracking-[-.3px] flex-none">
-          −{fmtMoney(expense.amount)} с.
+        <p className="ex-card-amt">
+          −{fmtMoney(expense.amount)}
+          <i>с.</i>
         </p>
       </div>
 
-      {expense.description && <p className="text-[12.5px] text-slate-500">{expense.description}</p>}
+      {expense.description && <p className="ex-card-note">{expense.description}</p>}
 
-      <div className="flex flex-wrap gap-1.5">
-        {expense.recipient && (
-          <span className={`${TAG} bg-slate-100 text-slate-600`}>{expense.recipient}</span>
-        )}
+      <div className="ex-meta">
+        <Clock className="w-3 h-3 flex-none" />
+        добавлен {formatAddedAt(expense.created_date)}
+      </div>
+
+      <div className="ex-stamps">
+        {expense.recipient && <span className="ex-stamp">{expense.recipient}</span>}
         {expense.created_by_name && (
-          <span className={`${TAG} bg-indigo-50 text-indigo-600`}>
+          <span className="ex-stamp">
             {authorEmployee
-              ? <EmployeeAvatar employee={authorEmployee} sizeClass="w-4 h-4 rounded-full text-[9px]" />
-              : <User className="w-3 h-3" />}
+              ? <EmployeeAvatar employee={authorEmployee} sizeClass="w-3.5 h-3.5 rounded-full text-[8px]" />
+              : <User className="w-2.5 h-2.5" />}
             {expense.created_by_name}
           </span>
         )}
         {expense.spent_by_name && (
-          <span className={`${TAG} bg-cyan-50 text-cyan-700`}>
-            <UserCircle className="w-3 h-3" />
+          <span className="ex-stamp by">
+            <UserCircle className="w-2.5 h-2.5" />
             от имени: {expense.spent_by_name}
           </span>
         )}
         {(expense.edit_count || 0) > 0 && (
-          <span className={`${TAG} bg-amber-50 text-amber-600`}>
-            <Pencil className="w-3 h-3" />
+          <span className="ex-stamp edit">
+            <Pencil className="w-2.5 h-2.5" />
             {expense.edit_count}/{maxEdits}
           </span>
         )}
       </div>
 
-      <div className="flex gap-1.5 mt-auto justify-end">
+      <div className="ex-card-acts">
         {canEdit && (
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(expense); }}
             disabled={editsLeft <= 0}
             title={editsLeft <= 0 ? 'Лимит редактирований исчерпан' : `Осталось редактирований: ${editsLeft}`}
-            className={ACT}
+            className="ex-act"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
@@ -86,7 +78,8 @@ export default function ExpenseCard({ expense, index = 0, maxEdits, authorEmploy
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(expense); }}
             disabled={deleting === expense.id}
-            className={ACT}
+            className="ex-act"
+            title="Удалить расход"
           >
             {deleting === expense.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
           </button>
