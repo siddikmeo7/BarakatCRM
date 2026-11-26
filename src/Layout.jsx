@@ -7,6 +7,7 @@ import { mergePermissions } from '@/components/permissions/permissionsHelper';
 import { countDueSalaries } from '@/lib/salaryPeriod';
 import SubscriptionGate from '@/components/subscription/SubscriptionGate';
 import SubscriptionLockBanner from '@/components/subscription/SubscriptionLockBanner';
+import SubscriptionActiveMark from '@/components/subscription/SubscriptionActiveMark';
 import { getSubscriptionState, fetchAccessState } from '@/lib/subscription';
 import { setLockState } from '@/lib/subscriptionLock';
 import { toast } from '@/components/ui/use-toast';
@@ -541,7 +542,6 @@ export default function Layout({ children, currentPageName }) {
   }
 
   const isAdmin = user?.email === ADMIN_EMAIL;
-  const isAdminPage = currentPageName?.startsWith('Admin');
   // Владелец = нет записи сотрудника. Админ-сотрудник — это currentEmployee,
   // он НЕ владелец: его доступ регулируется canAccess (явные отключения учитываются).
   const isOwner = !currentEmployee;
@@ -576,7 +576,8 @@ export default function Layout({ children, currentPageName }) {
   // владелец видит всё, админ — всё кроме явно отключённого, обычный сотрудник — по разрешениям.
   const MENU_ITEMS = ALL_MENU_ITEMS.filter(canAccessItem);
 
-  const currentMenu = isAdmin && isAdminPage ? ADMIN_MENU_ITEMS : MENU_ITEMS;
+  // Владелец платформы видит админ-разделы в меню всегда, из любого раздела
+  const currentMenu = isAdmin ? [...MENU_ITEMS, ...ADMIN_MENU_ITEMS] : MENU_ITEMS;
 
   // Название текущего раздела для верхней панели (стиль терминала)
   const currentMenuLabel = currentPageName === 'Profile'
@@ -596,7 +597,10 @@ export default function Layout({ children, currentPageName }) {
           </div>
           <div className="min-w-0">
             <p className="tk-cap" style={{ fontSize: 9 }}>Бизнес</p>
-            <p className="tk-dcard-name font-bold text-sm truncate">{business?.name || 'Бизнес'}</p>
+            <p className="tk-dcard-name font-bold text-sm flex items-center gap-1 min-w-0">
+              <span className="truncate">{business?.name || 'Бизнес'}</span>
+              <SubscriptionActiveMark business={business} size={13} />
+            </p>
           </div>
         </div>
         <button
@@ -611,7 +615,7 @@ export default function Layout({ children, currentPageName }) {
       {/* Разделы */}
       <nav className="flex-1 overflow-y-auto">
         <div className="px-4 pt-3 pb-1">
-          <span className="tk-cap">{isAdmin && isAdminPage ? 'Платформа' : 'Разделы'}</span>
+          <span className="tk-cap">Разделы</span>
         </div>
         <div>
           {currentMenu.map((item) => {
@@ -676,7 +680,12 @@ export default function Layout({ children, currentPageName }) {
                   ? (currentEmployee.is_admin ? 'Админ' : (roleName || 'Сотрудник'))
                   : 'Владелец'}
               </span>
-              {business?.name && <span className="tk-cap truncate" style={{ fontSize: 9 }}>{business.name}</span>}
+              {business?.name && (
+                <span className="tk-cap truncate flex items-center gap-1" style={{ fontSize: 9 }}>
+                  {business.name}
+                  <SubscriptionActiveMark business={business} size={11} />
+                </span>
+              )}
             </div>
           </div>
         </div>

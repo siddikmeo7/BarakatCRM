@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { 
   Building2, 
   Ban,
+  BadgeCheck,
   CheckCircle,
   Trash2,
   Eye,
@@ -15,6 +16,9 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import SubscriptionStatusBadge from '@/components/subscription/SubscriptionStatusBadge';
+import SubscriptionActiveMark from '@/components/subscription/SubscriptionActiveMark';
+import BusinessEmployeesList from '@/components/admin/BusinessEmployeesList';
+import { logSubscriptionEvent } from '@/lib/subscriptionLog';
 import BusinessSubscriptionActions from '@/components/subscription/BusinessSubscriptionActions';
 import PlanEditorCard from '@/components/subscription/PlanEditorCard';
 import FreeAccessPanel from '@/components/subscription/FreeAccessPanel';
@@ -27,6 +31,7 @@ export default function AdminBusinesses() {
   const [allProducts, setAllProducts] = useState([]);
   const [allWarehouses, setAllWarehouses] = useState([]);
   const [allCustomers, setAllCustomers] = useState([]);
+  const [allEmployees, setAllEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [search, setSearch] = useState('');
@@ -49,12 +54,13 @@ export default function AdminBusinesses() {
       
       setIsAdmin(true);
 
-      const [businessesData, salesData, productsData, warehousesData, customersData] = await Promise.all([
+      const [businessesData, salesData, productsData, warehousesData, customersData, employeesData] = await Promise.all([
         base44.entities.Business.list(),
         base44.entities.Sale.list(),
         base44.entities.Product.list(),
         base44.entities.Warehouse.list(),
-        base44.entities.Customer.list()
+        base44.entities.Customer.list(),
+        base44.entities.Employee.list()
       ]);
 
       setBusinesses(businessesData);
@@ -62,6 +68,7 @@ export default function AdminBusinesses() {
       setAllProducts(productsData);
       setAllWarehouses(warehousesData);
       setAllCustomers(customersData);
+      setAllEmployees(employeesData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -84,6 +91,30 @@ export default function AdminBusinesses() {
     await base44.entities.Business.update(business.id, { is_active: !newStatus });
     await loadData();
   };
+
+  // Быстрая активация подписки прямо из списка: бизнес и его сотрудники
+  // сразу видят галочку «подписка активна» в меню и профиле.
+  const handleActivateSubscription = async (business) => {
+    const statusBefore = business.subscription_status || 'trial';
+    await base44.entities.Business.update(business.id, {
+      subscription_status: 'active',
+      subscription_started_at: new Date().toISOString(),
+      subscription_note: 'Активировано администратором',
+    });
+    await logSubscriptionEvent({
+      business,
+      eventType: statusBefore === 'active' ? 'renewed' : 'activated',
+      statusBefore,
+      statusAfter: 'active',
+      source: 'manual',
+      note: 'Активировано администратором',
+      reference: `manual_${business.id}_${Date.now()}`,
+    });
+    await reloadBusinesses();
+  };
+
+  const getBusinessEmployees = (businessId) =>
+    allEmployees.filter(e => e.business_id === businessId);
 
   const handleDelete = async (businessId) => {
     if (confirm('Вы уверены? Это действие удалит бизнес и все связанные данные!')) {
@@ -169,6 +200,7 @@ export default function AdminBusinesses() {
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-600">Бизнес</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Товаров</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Складов</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Сотрудников</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-slate-600">Продаж</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Выручка</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-slate-600">Прибыль</th>
@@ -189,13 +221,17 @@ export default function AdminBusinesses() {
                           <Building2 className="w-5 h-5 text-indigo-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900">{biz.name}</p>
+                          <p className="font-medium text-slate-900 flex items-center gap-1">
+                            {biz.name}
+                            <SubscriptionActiveMark business={biz} size={14} />
+                          </p>
                           <p className="text-xs text-slate-500">{biz.owner_email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-center text-slate-600">{stats.productsCount}</td>
                     <td className="px-4 py-4 text-center text-slate-600">{stats.warehousesCount}</td>
+                    <td className="px-4 py-4 text-center text-slate-600">{getBusinessEmployees(biz.id).filter(e => !e.deleted_at).length}</td>
                     <td className="px-4 py-4 text-center text-slate-600">{stats.salesCount}</td>
                     <td className="px-4 py-4 text-right font-semibold text-slate-900">
                       {stats.revenue.toLocaleString()} с.
@@ -217,6 +253,16 @@ export default function AdminBusinesses() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center justify-center gap-1">
+                        {!['active', 'exempt'].includes(biz.subscription_status || 'trial') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Активировать подписку"
+                            onClick={() => handleActivateSubscription(biz)}
+                          >
+                            <BadgeCheck className="w-4 h-4 text-emerald-500" />
+                          </Button>
+                        )}
                         <Button 
                           variant="ghost" 
                           size="icon"
@@ -272,7 +318,10 @@ export default function AdminBusinesses() {
                     <Building2 className="w-8 h-8 text-indigo-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900">{selectedBusiness.name}</h3>
+                    <h3 className="text-xl font-bold text-slate-900 flex items-center gap-1.5">
+                      {selectedBusiness.name}
+                      <SubscriptionActiveMark business={selectedBusiness} size={18} />
+                    </h3>
                     <p className="text-slate-500">{selectedBusiness.owner_email}</p>
                     {selectedBusiness.phone && (
                       <p className="text-sm text-slate-500">{selectedBusiness.phone}</p>
@@ -309,6 +358,8 @@ export default function AdminBusinesses() {
                     <p className="text-sm text-slate-500">Складов</p>
                   </div>
                 </div>
+
+                <BusinessEmployeesList employees={getBusinessEmployees(selectedBusiness.id)} />
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
                   <div>

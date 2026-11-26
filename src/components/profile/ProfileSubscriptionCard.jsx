@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import SubscriptionStatusBadge from '@/components/subscription/SubscriptionStatusBadge';
+import SubscriptionActiveMark from '@/components/subscription/SubscriptionActiveMark';
 import { getSubscriptionState, loadPlan, formatPrice, fetchAccessState, providerLabel } from '@/lib/subscription';
 import { CreditCard, RefreshCw, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -73,7 +74,10 @@ export default function ProfileSubscriptionCard({ business, canPay, isPlatformAd
           <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 dark:text-white">Подписка</p>
+          <p className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+            Подписка
+            <SubscriptionActiveMark business={business} size={15} />
+          </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">{state.label}</p>
         </div>
         <SubscriptionStatusBadge business={business} isPlatformAdmin={isPlatformAdmin} />
