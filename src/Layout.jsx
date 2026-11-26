@@ -46,7 +46,7 @@ import {
 const HERO_IMAGE = 'https://media.base44.com/images/public/698ff18fde0fc6a87223fd69/76318279a_generated_f6b51210.jpg';
 import { cn } from '@/lib/utils';
 
-const ADMIN_EMAIL = 'siddikme2007@gmail.com';
+import { isPlatformAdmin } from '@/lib/platformAdmin';
 
 const ALL_MENU_ITEMS = [
   { name: 'Analytics',   icon: TrendingUp,       labelKey: 'nav_analytics', color: 'text-emerald-500', activeBg: 'bg-emerald-500', activeText: 'text-emerald-600', permKey: 'view_analytics' },
@@ -143,7 +143,7 @@ export default function Layout({ children, currentPageName }) {
   // видят свои данные, но ничего не могут изменить (режим «только просмотр»).
   useEffect(() => {
     // Запасной расчёт, если серверная проверка недоступна: подписка истекла
-    const local = getSubscriptionState(business, { isPlatformAdmin: user?.email === ADMIN_EMAIL });
+    const local = getSubscriptionState(business, { isPlatformAdmin: isPlatformAdmin(user) });
     const frozen = serverAccess
       ? serverAccess.allowed === false && serverAccess.status !== 'blocked'
       : local.status === 'expired';
@@ -233,7 +233,7 @@ export default function Layout({ children, currentPageName }) {
   // Если текущая страница недоступна сотруднику — редирект на первую доступную
   useEffect(() => {
     if (loading || !user) return;
-    if (user.email === ADMIN_EMAIL) return;
+    if (isPlatformAdmin(user)) return;
     if (!currentEmployee) return; // владелец — полный доступ, без редиректа
     const activeItem = ALL_MENU_ITEMS.find(item => item.name === currentPageName);
     if (!activeItem) return;
@@ -416,7 +416,7 @@ export default function Layout({ children, currentPageName }) {
             // По умолчанию: если есть свой бизнес — владелец
             if (businesses.length > 0) {
               // Persist business_id for RLS security (серверная привязка)
-              if (currentUser.email !== ADMIN_EMAIL && currentUser.data?.business_id !== businesses[0].id) {
+              if (!isPlatformAdmin(currentUser) && currentUser.data?.business_id !== businesses[0].id) {
                 await bindBusiness(businesses[0].id);
               }
               setBusiness(businesses[0]);
@@ -518,7 +518,7 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  const subscriptionState = getSubscriptionState(business, { isPlatformAdmin: user?.email === ADMIN_EMAIL });
+  const subscriptionState = getSubscriptionState(business, { isPlatformAdmin: isPlatformAdmin(user) });
 
   const refreshBusiness = async () => {
     if (!business?.id) return;
@@ -541,7 +541,7 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdmin = isPlatformAdmin(user);
   // Владелец = нет записи сотрудника. Админ-сотрудник — это currentEmployee,
   // он НЕ владелец: его доступ регулируется canAccess (явные отключения учитываются).
   const isOwner = !currentEmployee;
@@ -587,6 +587,32 @@ export default function Layout({ children, currentPageName }) {
         return activeItem ? t(lang, activeItem.labelKey) : '';
       })();
 
+  // Пункт меню: одинаковый вид для разделов бизнеса и для админ-панели
+  const renderNavItem = (item) => {
+    const isActive = currentPageName === item.name;
+    return (
+      <Link
+        key={item.name}
+        to={createPageUrl(item.name)}
+        onClick={() => setDrawerOpen(false)}
+        className={cn(
+          "tk-dnavitem flex items-center gap-3 px-4 py-2.5",
+          isActive && "on"
+        )}
+      >
+        <item.icon className="w-4 h-4 flex-shrink-0" />
+        <span className="flex-1 text-[11px] font-bold tracking-[0.1em] uppercase truncate">
+          {t(lang, item.labelKey)}
+        </span>
+        {item.name === 'Salary' && dueSalaryCount > 0 && (
+          <span className="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center animate-salary-due">
+            {dueSalaryCount}
+          </span>
+        )}
+      </Link>
+    );
+  };
+
   const DrawerContent = () => (
     <div className="tk-drawer flex flex-col h-full">
       {/* Шапка панели меню */}
@@ -618,31 +644,20 @@ export default function Layout({ children, currentPageName }) {
           <span className="tk-cap">Разделы</span>
         </div>
         <div>
-          {currentMenu.map((item) => {
-            const isActive = currentPageName === item.name;
-            return (
-              <Link
-                key={item.name}
-                to={createPageUrl(item.name)}
-                onClick={() => setDrawerOpen(false)}
-                className={cn(
-                  "tk-dnavitem flex items-center gap-3 px-4 py-2.5",
-                  isActive && "on"
-                )}
-              >
-                <item.icon className="w-4 h-4 flex-shrink-0" />
-                <span className="flex-1 text-[11px] font-bold tracking-[0.1em] uppercase truncate">
-                  {t(lang, item.labelKey)}
-                </span>
-                {item.name === 'Salary' && dueSalaryCount > 0 && (
-                  <span className="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center animate-salary-due">
-                    {dueSalaryCount}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+          {MENU_ITEMS.map(renderNavItem)}
         </div>
+
+        {/* Админ-панель — видна только администратору системы */}
+        {isAdmin && (
+          <div className="mt-2 pt-1 border-t border-slate-200 dark:border-slate-800">
+            <div className="px-4 pt-2 pb-1">
+              <span className="tk-cap">Админ-панель</span>
+            </div>
+            <div>
+              {ADMIN_MENU_ITEMS.map(renderNavItem)}
+            </div>
+          </div>
+        )}
 
       </nav>
 

@@ -12,7 +12,7 @@ import DarkModeToggle from '@/components/settings/DarkModeToggle';
 import MyProfileSection from '@/components/profile/MyProfileSection';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ADMIN_EMAIL = 'siddikme2007@gmail.com';
+import { isPlatformAdmin } from '@/lib/platformAdmin';
 
 export default function Profile() {
   const [employee, setEmployee] = useState(window.__barakatEmployee || null);
@@ -71,7 +71,7 @@ export default function Profile() {
   if (loading) return <BrandedLoader fullScreen message="Загрузка профиля..." />;
 
   const isOwner = !employee;
-  const isPlatformAdmin = user?.email === ADMIN_EMAIL;
+  const platformAdmin = isPlatformAdmin(user);
 
   return (
     <div className="w-full space-y-4 pb-24">
@@ -113,8 +113,8 @@ export default function Profile() {
 
       <ProfileSubscriptionCard
         business={business}
-        isPlatformAdmin={isPlatformAdmin}
-        canPay={isOwner || isPlatformAdmin}
+        isPlatformAdmin={platformAdmin}
+        canPay={isOwner || platformAdmin}
         onPay={() => setSubOpen(true)}
         onRefresh={() => refreshBusiness()}
       />
@@ -134,7 +134,7 @@ export default function Profile() {
         open={subOpen}
         onOpenChange={setSubOpen}
         onRefresh={() => refreshBusiness()}
-        canPay={isOwner || isPlatformAdmin}
+        canPay={isOwner || platformAdmin}
       />
     </div>
   );

@@ -15,7 +15,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-const ADMIN_EMAIL = 'siddikme2007@gmail.com';
+import { isPlatformAdmin } from '@/lib/platformAdmin';
 
 export default function AdminDashboard() {
   const [businesses, setBusinesses] = useState([]);
@@ -33,7 +33,7 @@ export default function AdminDashboard() {
     try {
       const user = await base44.auth.me();
       
-      if (user.email !== ADMIN_EMAIL) {
+      if (!isPlatformAdmin(user)) {
         setIsAdmin(false);
         setLoading(false);
         return;

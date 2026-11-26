@@ -11,7 +11,7 @@ import UsageByModule from '@/components/subscriptions/UsageByModule';
 import UsageActiveUsers from '@/components/subscriptions/UsageActiveUsers';
 import RetentionPolicyPanel from '@/components/subscriptions/RetentionPolicyPanel';
 
-const ADMIN_EMAIL = 'siddikme2007@gmail.com';
+import { isPlatformAdmin } from '@/lib/platformAdmin';
 const WINDOW_DAYS = 30;
 
 const asList = (res) => (Array.isArray(res) ? res : (res?.items ?? []));
@@ -33,7 +33,7 @@ export default function AdminSubscriptions() {
     setLoading(true);
     try {
       const me = await base44.auth.me();
-      if (me?.email !== ADMIN_EMAIL) {
+      if (!isPlatformAdmin(me)) {
         setAllowed(false);
         return;
       }
