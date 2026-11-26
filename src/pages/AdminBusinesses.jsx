@@ -303,7 +303,7 @@ export default function AdminBusinesses() {
 
       {/* Business Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Детали бизнеса</DialogTitle>
           </DialogHeader>

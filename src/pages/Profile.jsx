@@ -77,6 +77,18 @@ export default function Profile() {
     <div className="w-full space-y-4 pb-24">
       <h1 className="text-2xl font-black text-slate-900 dark:text-white">Профиль</h1>
 
+      {/* Подписка — первой карточкой профиля, чтобы статус сразу бросался в глаза */}
+      <ProfileSubscriptionCard
+        business={business}
+        isPlatformAdmin={platformAdmin}
+        canPay={isOwner || platformAdmin}
+        onPay={() => setSubOpen(true)}
+        onRefresh={() => refreshBusiness()}
+      />
+
+      {/* Подписка не оплачена — все изменения заморожены, доступен только просмотр */}
+      <SubscriptionLockNotice />
+
       <ProfileIdentityCard
         user={user}
         employee={employee}
@@ -107,17 +119,6 @@ export default function Profile() {
       </AnimatePresence>
 
       <ProfileBusinessCard business={business} showCodes={isOwner || !!employee?.is_admin} />
-
-      {/* Подписка не оплачена — все изменения заморожены, доступен только просмотр */}
-      <SubscriptionLockNotice />
-
-      <ProfileSubscriptionCard
-        business={business}
-        isPlatformAdmin={platformAdmin}
-        canPay={isOwner || platformAdmin}
-        onPay={() => setSubOpen(true)}
-        onRefresh={() => refreshBusiness()}
-      />
 
       <PaymentHistoryCard ownerEmail={business?.owner_email} />
 

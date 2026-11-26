@@ -4,8 +4,22 @@ import { Button } from '@/components/ui/button';
 import SubscriptionStatusBadge from '@/components/subscription/SubscriptionStatusBadge';
 import SubscriptionActiveMark from '@/components/subscription/SubscriptionActiveMark';
 import { getSubscriptionState, loadPlan, formatPrice, fetchAccessState, providerLabel } from '@/lib/subscription';
-import { CreditCard, RefreshCw, Loader2 } from 'lucide-react';
+import { CreditCard, RefreshCw, Loader2, BadgeCheck } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { cn } from '@/lib/utils';
+
+// Сколько неудачных попыток оплаты показываем построчно
+const ATTEMPTS_LIMIT = 5;
+
+// Шапка карточки окрашивается по статусу подписки
+const HEADER_TONES = {
+  active: 'bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600',
+  exempt: 'bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-600',
+  trial: 'bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500',
+  expired: 'bg-gradient-to-br from-rose-500 via-rose-600 to-red-600',
+  blocked: 'bg-gradient-to-br from-slate-600 via-slate-700 to-slate-900',
+  admin: 'bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-600',
+};
 
 // Подписка бизнеса: статус, сроки, стоимость и оплата — всё внутри профиля
 export default function ProfileSubscriptionCard({ business, canPay, isPlatformAdmin, onPay, onRefresh }) {
@@ -36,7 +50,6 @@ export default function ProfileSubscriptionCard({ business, canPay, isPlatformAd
   const state = getSubscriptionState(business, { isPlatformAdmin });
 
   // Успешные оплаты показываем полностью, а неудачные попытки — отдельным списком «Не оплачено»
-  const ATTEMPTS_LIMIT = 5;
   const paidPayments = payments.filter(p => p.status === 'ok');
   const unpaidPayments = payments.filter(p => p.status !== 'ok');
 
@@ -67,23 +80,53 @@ export default function ProfileSubscriptionCard({ business, canPay, isPlatformAd
     }
   };
 
+  const tone = HEADER_TONES[state.status] || HEADER_TONES.trial;
+  const isActive = ['active', 'exempt'].includes(state.status);
+
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
-      <div className="p-4 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
-        <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
-          <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+    <div className="rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+      {/* Шапка: статус подписки крупно, с галочкой */}
+      <div className={cn('relative px-5 py-5 text-white', tone)}>
+        <div className="absolute -right-8 -top-10 w-40 h-40 rounded-full bg-white/10" />
+        <div className="absolute -right-2 -bottom-16 w-32 h-32 rounded-full bg-white/10" />
+
+        <div className="relative flex items-start gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0">
+            {isActive ? <BadgeCheck className="w-7 h-7" /> : <CreditCard className="w-6 h-6" />}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-[.18em] text-white/70">Подписка</p>
+            <p className="text-xl font-black leading-tight flex items-center gap-1.5 mt-0.5">
+              {state.label}
+              <SubscriptionActiveMark business={business} size={17} className="text-white" />
+            </p>
+            <p className="text-xs text-white/80 mt-0.5 truncate">
+              {business?.name || 'Бизнес'}
+            </p>
+          </div>
+
+          <SubscriptionStatusBadge business={business} isPlatformAdmin={isPlatformAdmin} className="flex-shrink-0" />
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
-            Подписка
-            <SubscriptionActiveMark business={business} size={15} />
-          </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{state.label}</p>
+
+        <div className="relative mt-4 grid grid-cols-2 gap-2">
+          <div className="rounded-2xl bg-white/15 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[.12em] text-white/70">Оплачено до</p>
+            <p className="text-sm font-bold">
+              {access?.paidUntil ? format(new Date(access.paidUntil), 'dd.MM.yyyy') : '—'}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-white/15 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[.12em] text-white/70">Стоимость в месяц</p>
+            <p className="text-sm font-bold">
+              {access?.price ? `${access.price} ${access.currency || ''}`.trim() : (formatPrice(plan) || '—')}
+            </p>
+          </div>
         </div>
-        <SubscriptionStatusBadge business={business} isPlatformAdmin={isPlatformAdmin} />
       </div>
 
-      <div className="p-4 grid sm:grid-cols-3 gap-3">
+      {/* Сроки и способ оплаты */}
+      <div className="px-4 pt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
         <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
           <p className="text-[11px] text-slate-400">Бесплатный период до</p>
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
@@ -97,44 +140,32 @@ export default function ProfileSubscriptionCard({ business, canPay, isPlatformAd
           </p>
         </div>
         <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
-          <p className="text-[11px] text-slate-400">Стоимость в месяц</p>
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-            {access?.price ? `${access.price} ${access.currency || ''}`.trim() : (formatPrice(plan) || '—')}
-          </p>
-        </div>
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
-          <p className="text-[11px] text-slate-400">Оплачено до</p>
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-            {access?.paidUntil ? format(new Date(access.paidUntil), 'dd.MM.yyyy') : '—'}
-          </p>
-        </div>
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
           <p className="text-[11px] text-slate-400">Автопродление</p>
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
             {access?.autoRenew ? 'Включено' : 'Выключено'}
           </p>
         </div>
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
+        <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 col-span-2 sm:col-span-3">
           <p className="text-[11px] text-slate-400">Способ оплаты</p>
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{providerLabel(access)}</p>
         </div>
       </div>
 
       {access?.exempt && (
-        <p className="px-4 pb-3 text-xs text-emerald-700 dark:text-emerald-300">
+        <p className="px-4 pt-3 text-xs text-emerald-700 dark:text-emerald-300">
           Бесплатный доступ{access.exemptReason ? `: ${access.exemptReason}` : ''}
           {access.exemptUntil ? ` (до ${format(new Date(access.exemptUntil), 'dd.MM.yyyy')})` : ''}
         </p>
       )}
 
       {business?.subscription_note && (
-        <p className="px-4 pb-3 text-xs text-slate-500 dark:text-slate-400">
+        <p className="px-4 pt-3 text-xs text-slate-500 dark:text-slate-400">
           Способ оплаты / примечание: {business.subscription_note}
         </p>
       )}
 
       {(paidPayments.length > 0 || unpaidPayments.length > 0) && (
-        <div className="px-4 pb-3 space-y-1.5">
+        <div className="px-4 pt-3 space-y-1.5">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">История оплат</p>
 
           {paidPayments.map((p, index) => (
@@ -171,7 +202,7 @@ export default function ProfileSubscriptionCard({ business, canPay, isPlatformAd
         </div>
       )}
 
-      <div className="px-4 pb-4 flex flex-wrap gap-2">
+      <div className="px-4 py-4 flex flex-wrap gap-2">
         {canPay && (
           <Button onClick={onPay} className="gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700">
             <CreditCard className="w-4 h-4" />

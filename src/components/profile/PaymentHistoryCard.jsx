@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Receipt, Loader2 } from 'lucide-react';
+import { Receipt, Loader2, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import PaymentRow from './PaymentRow';
 
@@ -19,6 +19,8 @@ export default function PaymentHistoryCard({ ownerEmail }) {
   const [purchases, setPurchases] = useState([]);
   const [period, setPeriod] = useState('all');
   const [loading, setLoading] = useState(true);
+  // История скрыта по умолчанию — раскрывается кнопкой
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -46,7 +48,11 @@ export default function PaymentHistoryCard({ ownerEmail }) {
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
-      <div className="p-4 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full p-4 flex items-center gap-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
+      >
         <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0">
           <Receipt className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
         </div>
@@ -57,8 +63,14 @@ export default function PaymentHistoryCard({ ownerEmail }) {
             {' · '}{paidRows.length} платёж(ей)
           </p>
         </div>
-      </div>
+        <span className="flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+          {open ? 'Скрыть' : 'Показать'}
+          <ChevronDown className={cn('w-4 h-4 transition-transform', open && 'rotate-180')} />
+        </span>
+      </button>
 
+      {open && (
+      <>
       <div className="px-4 pt-3 flex flex-wrap gap-1.5">
         {PERIODS.map(p => (
           <button
@@ -106,6 +118,8 @@ export default function PaymentHistoryCard({ ownerEmail }) {
             </>
           )}
         </div>
+      )}
+      </>
       )}
     </div>
   );

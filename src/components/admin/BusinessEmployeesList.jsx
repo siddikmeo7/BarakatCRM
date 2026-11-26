@@ -16,7 +16,7 @@ export default function BusinessEmployeesList({ employees = [] }) {
       {live.length === 0 ? (
         <p className="px-4 py-3 text-sm text-slate-500">Сотрудников пока нет</p>
       ) : (
-        <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {live.map(emp => (
             <div key={emp.id} className="px-4 py-2.5 flex items-center gap-3">
               <EmployeeAvatar employee={emp} size="sm" />
